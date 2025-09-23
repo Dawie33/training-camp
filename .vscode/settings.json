@@ -1,0 +1,23 @@
+{
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "eslint.workingDirectories": [
+        "frontend",
+        "backend"
+    ],
+    "eslint.validate": [
+        "javascript",
+        "typescript",
+        "javascriptreact",
+        "typescriptreact"
+    ],
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}

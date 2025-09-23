@@ -1,0 +1,31 @@
+{
+  "name": "training-camp",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm --workspace frontend run dev\" \"npm --workspace backend run start:dev\"",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/helmet": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "concurrently": "^9.0.0",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.44.1"
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "helmet": "^8.1.0"
+  }
+}
