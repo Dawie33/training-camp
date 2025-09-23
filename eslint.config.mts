@@ -1,25 +1,26 @@
-import pluginJs from "@eslint/js"
-import globals from "globals"
-import tseslint from "typescript-eslint"
+import js from '@eslint/js'
+import globals from 'globals'
 
 export default [
+  js.configs.recommended,
   {
-    files: ["**/*.{js,mjs,cjs,ts}"],
     languageOptions: {
       globals: {
-        ...globals.browser,
         ...globals.node,
       },
     },
-  },
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
     rules: {
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-      "@typescript-eslint/explicit-function-return-type": "off",
-      "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/no-explicit-any": "warn",
+      // Règles communes très basiques
+      'no-console': 'warn',
+      'prefer-const': 'error',
     },
+  },
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.next/**',
+    ],
   },
 ];
