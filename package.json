@@ -5,10 +5,10 @@
     "frontend",
     "backend"
   ],
-  "scripts": {
-    "dev": "concurrently \"npm --workspace frontend run dev\" \"npm --workspace backend run start:dev\"",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix"
+   "scripts": {
+    "dev": "concurrently \"npm --workspace backend run start:dev\" \"npm --workspace frontend run dev\"",
+    "lint": "npm --workspace backend run lint && npm --workspace frontend run lint",
+    "lint:fix": "npm --workspace backend run lint:fix && npm --workspace frontend run lint:fix"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
