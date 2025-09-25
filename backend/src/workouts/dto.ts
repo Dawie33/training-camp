@@ -1,0 +1,59 @@
+export class CreateWorkoutDto {
+  name: string;
+  slug: string;
+  description?: string;
+  type: string;
+  structure: any;
+  estimated_duration?: number;
+  intensity: string;
+  difficulty: string;
+  scaling_options?: any;
+  equipment_required?: any;
+  bodyweight_only?: boolean;
+  muscle_groups_targeted?: any;
+  energy_systems?: any;
+  ai_generated?: boolean;
+  ai_parameters?: any;
+  created_by_user_id?: number;
+  scoring_type?: string;
+  usage_count?: number;
+  average_rating?: number;
+  total_ratings?: number;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  isPublic?: boolean;
+  is_benchmark?: boolean;
+  is_hero_wod?: boolean;
+  coach_notes?: string;
+  tags?: any;
+}
+
+export class UpdateWorkoutDto {
+  name?: string;
+  slug?: string;
+  description?: string;
+  type?: string;
+  structure?: any;
+  estimated_duration?: number;
+  intensity?: string;
+  difficulty?: string;
+  scaling_options?: any;
+  equipment_required?: any;
+  bodyweight_only?: boolean;
+  muscle_groups_targeted?: any;
+  energy_systems?: any;
+  ai_generated?: boolean;
+  ai_parameters?: any;
+  created_by_user_id?: number;
+  scoring_type?: string;
+  usage_count?: number;
+  average_rating?: number;
+  total_ratings?: number;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  isPublic?: boolean;
+  is_benchmark?: boolean;
+  is_hero_wod?: boolean;
+  coach_notes?: string;
+  tags?: any;
+}

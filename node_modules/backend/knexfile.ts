@@ -1,17 +1,16 @@
-import { config } from 'dotenv'
-import type { Knex } from 'knex'
-
-config();
-
-const knexConfig: { [key: string]: Knex.Config } = {
+export default{
   development: {
     client: 'postgresql',
     connection: {
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      database: process.env.DB_NAME || 'training_camp',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'password',
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT ?? '5434', 10),
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    },
+    pool: {
+      min: 2,
+      max: 10,
     },
     migrations: {
       directory: './src/database/migrations',
@@ -20,13 +19,5 @@ const knexConfig: { [key: string]: Knex.Config } = {
       directory: './src/database/seeds',
     },
   },
-  production: {
-    client: 'postgresql',
-    connection: process.env.DATABASE_URL,
-    migrations: {
-      directory: './src/database/migrations',
-    },
-  },
 };
 
-export default knexConfig;
