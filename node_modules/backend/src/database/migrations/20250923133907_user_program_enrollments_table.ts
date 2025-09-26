@@ -1,13 +1,17 @@
 import type { Knex } from "knex"
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('user_program_enrollments', (table) => {
-    table.increments('id').primary();
+  await knex.schema.createTable('user_program_enrollments', (table) => {
+    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     
     // Relations
-    table.integer('user_id').unsigned().notNullable();
-    table.integer('program_id').unsigned().notNullable();
-    
+    table.uuid('user_id').notNullable()
+    .references('id').inTable('users')
+    .onDelete('CASCADE');
+    table.uuid('program_id').notNullable()
+    .references('id').inTable('training_programs')
+    .onDelete('CASCADE');
+
     // Dates importantes
     table.timestamp('enrolled_at').notNullable();
     table.timestamp('started_at').nullable(); // Début effectif
@@ -51,10 +55,6 @@ export async function up(knex: Knex): Promise<void> {
     
     table.timestamps(true, true);
     
-    // Relations
-    table.foreign('user_id').references('id').inTable('users').onDelete('CASCADE');
-    table.foreign('program_id').references('id').inTable('training_programs').onDelete('CASCADE');
-    
     // Contraintes
     table.unique(['user_id', 'program_id', 'enrolled_at']); // Un user peut refaire le même programme
     
@@ -70,5 +70,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists('user_program_enrollments');
+  await knex.schema.dropTableIfExists('user_program_enrollments');
 }

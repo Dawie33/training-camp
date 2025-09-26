@@ -1,12 +1,15 @@
 import type { Knex } from "knex"
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('workout_exercises', (table) => {
-    table.increments('id').primary();
-    
+  await knex.schema.createTable('workout_exercises', (table) => {
+    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));    
     // Relations
-    table.integer('workout_id').unsigned().notNullable();
-    table.integer('exercise_id').unsigned().notNullable();
+    table.uuid('workout_id').notNullable()
+    .references('id').inTable('workouts')
+    .onDelete('CASCADE');
+    table.uuid('exercise_id').notNullable()
+    .references('id').inTable('exercises')
+    .onDelete('CASCADE');
     
     // Structure dans le workout
     table.integer('order_index').notNullable(); // Ordre dans le WOD
@@ -27,10 +30,6 @@ export async function up(knex: Knex): Promise<void> {
     
     table.timestamps(true, true);
     
-    // Relations
-    table.foreign('workout_id').references('id').inTable('workouts').onDelete('CASCADE');
-    table.foreign('exercise_id').references('id').inTable('exercises').onDelete('CASCADE');
-    
     // Index
     table.index(['workout_id']);
     table.index(['exercise_id']);
@@ -40,5 +39,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists('workout_exercises');
+  await knex.schema.dropTableIfExists('workout_exercises');
 }

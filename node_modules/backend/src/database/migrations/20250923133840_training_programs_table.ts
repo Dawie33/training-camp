@@ -1,9 +1,9 @@
 import type { Knex } from "knex"
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('training_programs', (table) => {
-    table.increments('id').primary();
-    
+  await knex.schema.createTable('training_programs', (table) => {
+    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+
     // Informations de base
     table.string('name').notNullable();
     table.string('slug').notNullable().unique();
@@ -11,7 +11,9 @@ export async function up(knex: Knex): Promise<void> {
     table.text('objectives').nullable(); // Objectifs du programme
     
     // Sport et niveau
-    table.integer('sport_id').unsigned().notNullable();
+    table.uuid('sport_id').notNullable()
+    .references('id').inTable('sports')
+    .onDelete('CASCADE');
     table.enum('target_level', ['beginner', 'intermediate', 'advanced', 'elite']).notNullable();
     
     // Structure temporelle
@@ -61,8 +63,7 @@ export async function up(knex: Knex): Promise<void> {
     
     table.timestamps(true, true);
     
-    // Relations
-    table.foreign('sport_id').references('id').inTable('sports').onDelete('CASCADE');
+ 
     
     // Index
     table.index(['sport_id']);
@@ -75,5 +76,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists('training_programs');
+  await knex.schema.dropTableIfExists('training_programs');
 }

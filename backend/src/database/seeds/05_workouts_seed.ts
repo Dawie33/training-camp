@@ -4,7 +4,6 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('workouts').del();
   await knex('workouts').insert([
     {
-      id: 1,
       name: 'Cindy',
       slug: 'cindy',
       description: 'AMRAP 20 min: 5 Pull-Ups, 10 Push-Ups, 15 Air Squats',

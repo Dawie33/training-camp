@@ -4,7 +4,6 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('exercises').del();
   await knex('exercises').insert([
     {
-      id: 1,
       name: 'Air Squat',
       slug: 'air-squat',
       description: 'Squat au poids du corps.',
@@ -23,7 +22,6 @@ export async function seed(knex: Knex): Promise<void> {
       isActive: true
     },
     {
-      id: 2,
       name: 'Pull-Up',
       slug: 'pull-up',
       description: 'Traction à la barre fixe.',

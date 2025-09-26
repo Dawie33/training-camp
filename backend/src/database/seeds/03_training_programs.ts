@@ -1,15 +1,15 @@
 import type { Knex } from "knex"
 
 export async function seed(knex: Knex): Promise<void> {
+  const crossfitSport = await knex('sports').where({ slug: 'crossfit' }).first();
   await knex('training_programs').del();
   await knex('training_programs').insert([
     {
-      id: 1,
       name: 'CrossFit - Débutant',
       slug: 'crossfit-debutant',
       description: 'Programme CrossFit pour débutants sur 4 semaines.',
       objectives: 'Découverte des mouvements et amélioration de la condition physique.',
-      sport_id: 1,
+      sport_id: crossfitSport.id,
       target_level: 'beginner',
       duration_weeks: 4,
       sessions_per_week: 3,
@@ -25,12 +25,11 @@ export async function seed(knex: Knex): Promise<void> {
       is_featured: true
     },
     {
-      id: 2,
       name: 'Running - 5K',
       slug: 'running-5k',
       description: 'Programme pour préparer une course de 5 kilomètres.',
       objectives: 'Améliorer l’endurance et la vitesse.',
-      sport_id: 2,
+      sport_id: crossfitSport.id,
       target_level: 'beginner',
       duration_weeks: 6,
       sessions_per_week: 4,

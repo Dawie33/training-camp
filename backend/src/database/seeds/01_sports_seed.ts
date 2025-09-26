@@ -1,10 +1,11 @@
-import type { Knex } from "knex";
+import type { Knex } from "knex"
 
 export async function seed(knex: Knex): Promise<void> {
+
   await knex('sports').del();
   await knex('sports').insert([
     {
-      id: 1,
+
       name: 'CrossFit',
       slug: 'crossfit',
       icon: '🏋️‍♂️',
@@ -17,7 +18,7 @@ export async function seed(knex: Knex): Promise<void> {
       sort_order: 1
     },
     {
-      id: 2,
+
       name: 'Running',
       slug: 'running',
       icon: '🏃‍♂️',
@@ -30,7 +31,7 @@ export async function seed(knex: Knex): Promise<void> {
       sort_order: 2
     },
     {
-      id: 3,
+
       name: 'Cycling',
       slug: 'cycling',
       icon: '🚴‍♂️',

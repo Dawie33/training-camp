@@ -1,13 +1,16 @@
-import type { Knex } from "knex";
+import type { Knex } from "knex"
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('user_sport_profiles', (table) => {
-    table.increments('id').primary();
-    
+  await knex.schema.createTable('user_sport_profiles', (table) => {
+    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));    
     // Relations
-    table.integer('user_id').unsigned().notNullable();
-    table.integer('sport_id').unsigned().notNullable();
-    
+    table.uuid('user_id').notNullable()
+    .references('id').inTable('users')
+    .onDelete('CASCADE');
+      table.uuid('sport_id').notNullable()
+    .references('id').inTable('sports')
+    .onDelete('CASCADE');
+
     // Niveau spécifique au sport
     table.enum('sport_level', ['beginner', 'intermediate', 'advanced', 'elite']).notNullable();
     table.decimal('experience_years', 4, 1).nullable(); // Années de pratique
@@ -30,11 +33,7 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp('last_activity_at').nullable(); // Dernière activité
     
     table.timestamps(true, true);
-    
-    // Relations
-    table.foreign('user_id').references('id').inTable('users').onDelete('CASCADE');
-    table.foreign('sport_id').references('id').inTable('sports').onDelete('CASCADE');
-    
+  
     // Contraintes
     table.unique(['user_id', 'sport_id']);
     
@@ -47,5 +46,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists('user_sport_profiles');
+  await knex.schema.dropTableIfExists('user_sport_profiles');
 }

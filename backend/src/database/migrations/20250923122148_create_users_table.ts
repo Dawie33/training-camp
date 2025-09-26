@@ -1,9 +1,12 @@
 import type { Knex } from "knex"
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('users', (table) => {
+
+  await knex.raw(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
+  
+  await knex.schema.createTable('users', (table) => {
     // Clé primaire
-    table.increments('id').primary();
+    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     
     // Informations de base
     table.string('email').notNullable().unique();
@@ -67,5 +70,6 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists('users');
+    await knex.schema.dropTableIfExists('users');
+  await knex.schema.raw('DROP EXTENSION IF EXISTS pgcrypto');
 }
