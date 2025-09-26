@@ -1,8 +1,8 @@
-import type { Knex } from "knex";
+import type { Knex } from "knex"
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('sports', (table) => {
-    table.increments('id').primary();
+  await knex.schema.createTable('sports', (table) => {
+   table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     
     // Informations de base
     table.string('name').notNullable().unique(); // CrossFit, Running, Cycling
@@ -32,5 +32,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists('sports');
+  await knex.schema.dropTableIfExists('sports');
 }

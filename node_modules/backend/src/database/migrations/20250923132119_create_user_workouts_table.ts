@@ -1,8 +1,8 @@
 import type { Knex } from "knex"
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('user_workouts', (table) => {
-    table.increments('id').primary();
+  await knex.schema.createTable('user_workouts', (table) => {
+   table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     
     // Informations de base
     table.string('name').notNullable();
@@ -42,7 +42,9 @@ export async function up(knex: Knex): Promise<void> {
     // IA et personnalisation
     table.boolean('ai_generated').defaultTo(false);
     table.json('ai_parameters').nullable(); // Paramètres utilisés pour la génération IA
-    table.integer('created_by_user_id').unsigned().nullable(); // Utilisateur créateur
+    table.uuid('created_by_user_id').nullable()
+    .references('id').inTable('users')
+    .onDelete('SET NULL');
     
     // Scoring et résultats
     table.enum('scoring_type', [
@@ -88,11 +90,9 @@ export async function up(knex: Knex): Promise<void> {
     table.index(['scoring_type']);
     table.index(['created_by_user_id']);
     
-    // Relation avec users (créateur)
-    table.foreign('created_by_user_id').references('id').inTable('users').onDelete('SET NULL');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists('workouts');
+await knex.schema.dropTableIfExists('user_workouts');
 }

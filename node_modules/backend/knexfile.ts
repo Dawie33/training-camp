@@ -1,23 +1,25 @@
-export default{
+import 'dotenv/config'
+
+import type { Knex } from 'knex'
+
+const config: { [key: string]: Knex.Config } = {
   development: {
-    client: 'postgresql',
+    client: 'pg',
     connection: {
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT ?? '5434', 10),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+      host: process.env.DATABASE_HOST,
+      port: Number(process.env.DATABASE_PORT),
+      user: process.env.DATABASE_USER,
+      password: String(process.env.DATABASE_PASSWORD ?? ''), 
+      database: process.env.DATABASE_NAME,
     },
-    pool: {
-      min: 2,
-      max: 10,
-    },
-    migrations: {
+   migrations: {
       directory: './src/database/migrations',
     },
     seeds: {
       directory: './src/database/seeds',
     },
+    pool: { min: 0, max: 10 },
   },
 };
 
+export default config;

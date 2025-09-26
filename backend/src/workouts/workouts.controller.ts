@@ -14,8 +14,8 @@ export class WorkoutController {
  * @returns The generated workout
  */
   @Post('generate')
-  async generate(@Body() userProfile: any) {
-    return await this.workoutAiService.generateWorkout(userProfile);
+async generate(@Body() body: { prompt: string }) {
+    return await this.workoutAiService.generateWorkout(body.prompt);
   }
 
 /** * Creates a new workout entry.
