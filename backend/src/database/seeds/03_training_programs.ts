@@ -5,6 +5,7 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('training_programs').del();
   await knex('training_programs').insert([
     {
+      id: knex.raw('gen_random_uuid()'),
       name: 'CrossFit - Débutant',
       slug: 'crossfit-debutant',
       description: 'Programme CrossFit pour débutants sur 4 semaines.',
@@ -25,6 +26,7 @@ export async function seed(knex: Knex): Promise<void> {
       is_featured: true
     },
     {
+      id: knex.raw('gen_random_uuid()'),  
       name: 'Running - 5K',
       slug: 'running-5k',
       description: 'Programme pour préparer une course de 5 kilomètres.',

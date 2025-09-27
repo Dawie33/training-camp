@@ -1,3 +1,6 @@
+import { Type } from "class-transformer"
+import { IsArray, IsIn, IsISO8601, IsOptional, IsString, IsUUID } from "class-validator"
+
 export class CreateWorkoutDto {
   name: string;
   slug: string;
@@ -56,4 +59,41 @@ export class UpdateWorkoutDto {
   is_hero_wod?: boolean;
   coach_notes?: string;
   tags?: any;
+}
+
+export class GenerateWeeklyWorkoutDto {
+  @IsISO8601()
+  date!: string;               
+
+  @IsUUID()
+  sportId!: string;                     
+
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
+
+  @IsOptional()
+  seed?: any;                           
+}
+
+export class QueryDto {
+  @IsOptional()
+  @Type(() => String)
+  @IsString()
+
+  limit?: string;
+
+  @IsOptional()
+  @Type(() => String)
+  @IsString()
+  offset?: string;
+
+  @IsOptional()
+  @IsString()
+  orderBy?: string
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  orderDir?: 'asc' | 'desc'
+
 }

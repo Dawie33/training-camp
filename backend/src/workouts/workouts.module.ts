@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common'
-import { WorkoutAiService } from './workout-ai.service'
-import { WorkoutController } from './workouts.controller'
-import { WorkoutService } from './workouts.service'
+import { AdminWorkoutController } from './controllers/admin.controller'
+import { UserWorkoutController } from './controllers/user.controller'
+import { WorkoutAiService } from './services/workout-ai.service'
+import { WorkoutService } from './services/workouts.service'
 @Module({
-  controllers: [WorkoutController],
+  controllers: [AdminWorkoutController, UserWorkoutController],
   providers: [WorkoutService, WorkoutAiService],
-  exports: [WorkoutService, WorkoutAiService],
 })
 export class WorkoutsModule {}
