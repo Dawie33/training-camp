@@ -4,6 +4,7 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('exercises').del();
   await knex('exercises').insert([
     {
+      id: knex.raw('gen_random_uuid()'),
       name: 'Air Squat',
       slug: 'air-squat',
       description: 'Squat au poids du corps.',
@@ -22,6 +23,7 @@ export async function seed(knex: Knex): Promise<void> {
       isActive: true
     },
     {
+      id: knex.raw('gen_random_uuid()'),
       name: 'Pull-Up',
       slug: 'pull-up',
       description: 'Traction à la barre fixe.',

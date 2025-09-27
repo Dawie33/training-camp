@@ -6,13 +6,13 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule);
 
   // Sécurité basique
 
   // Préfixe global (optionnel) : http://localhost:3001/api/...
   app.setGlobalPrefix('api');
-
+  app.enableCors();
   // Validation DTO
   app.useGlobalPipes(
     new ValidationPipe({
