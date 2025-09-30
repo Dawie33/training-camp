@@ -1,7 +1,7 @@
 import { Body, Controller, Get, NotFoundException, Param, Patch, Post } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { UpdateBaseWorkoutDto } from '../dto.ts/update-base-workout.dto'
+import { UpdateBaseWorkoutDto } from '../dto/update-base-workout.dto'
 import { AdminWorkoutService } from '../services/admin-workout.service'
 import { WorkoutService } from '../services/workouts.service'
 

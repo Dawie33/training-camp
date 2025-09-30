@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
-import { QueryDto } from "src/workouts/dto.ts/dto"
+import { QueryDto } from "../workouts/dto/workout.dto"
 
 @Injectable()
 export class SportsService {
-    constructor(@InjectModel() private readonly knex: Knex) {}
+    constructor(@InjectModel() private readonly knex: Knex) { }
 
     /**
      * Retrieves a paginated list of sports.
@@ -14,16 +14,16 @@ export class SportsService {
      */
     async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc' }: QueryDto) {
         try {
-            const rows= await this.knex("sports")
-            .select("*")
-            .limit(Number(limit))
-            .offset(Number(offset))
-            .orderBy(orderBy, orderDir)
+            const rows = await this.knex("sports")
+                .select("*")
+                .limit(Number(limit))
+                .offset(Number(offset))
+                .orderBy(orderBy, orderDir)
 
-            const count  = await this.knex("sports").count({ count: "*" });
-            return { rows, count };
+            const count = await this.knex("sports").count({ count: "*" })
+            return { rows, count }
         } catch (error) {
-            throw new Error(`Error fetching sports: ${error.message}`);
+            throw new Error(`Error fetching sports: ${error.message}`)
         }
     }
 

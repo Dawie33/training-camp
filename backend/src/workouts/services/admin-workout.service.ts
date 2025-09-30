@@ -3,9 +3,9 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { OpenAI } from 'openai'
-import { buildSystemPromptForSport, exampleSchemaForSport } from '../workouts.prompts'
-import { DailyPlanSchema } from '../workouts.schemas'
-import { DailyPlan, SportRef, SportSlug, WorkoutBlocks } from '../workouts.types'
+import { buildSystemPromptForSport, exampleSchemaForSport } from '../constants/prompts'
+import { DailyPlanSchema } from '../constants/schemas'
+import { DailyPlan, SportRef, SportSlug, WorkoutBlocks } from '../types/workout.types'
 
 @Injectable()
 export class AdminWorkoutService {
