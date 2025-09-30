@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { QueryDto } from '../dto.ts/dto'
-import { WorkoutBlocks } from '../workouts.types'
+import { QueryDto } from '../dto/workout.dto'
+import { WorkoutBlocks } from '../types/workout.types'
 
 
 @Injectable()

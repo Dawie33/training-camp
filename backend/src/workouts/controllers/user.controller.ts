@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common'
-import { QueryDto } from '../dto.ts/dto'
+import { QueryDto } from '../dto/workout.dto'
 import { WorkoutService } from '../services/workouts.service'
 
 @Controller('workouts')

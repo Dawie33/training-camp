@@ -1,5 +1,5 @@
-import { EQUIPMENT } from "./workouts.schemas"
-import { SportSlug } from "./workouts.types"
+import { EQUIPMENT } from "./schemas"
+import { SportSlug } from "../types/workout.types"
 
 const equipmentList = EQUIPMENT.join('", "');
 /**
