@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { QueryDto } from 'src/dto'
+import { QueryDto } from '../dto.ts/dto'
 import { WorkoutBlocks } from '../workouts.types'
 
 
@@ -22,9 +22,9 @@ export class WorkoutService {
         .orderBy(orderBy, orderDir);
 
 
-      const [{ count }] = await this.knex("users").count({ count: "*" });
+      const count = await this.knex("users").count({ count: "*" });
 
-      return { rows, count: Number(count) };
+      return { rows, count };
     } catch (error) {
       throw new Error('Failed to retrieve workouts: ' + error.message);
     }
@@ -39,16 +39,14 @@ export class WorkoutService {
    */
   async insertBaseDaily(
     day: { date: string; sportId: string; tags: string[]; blocks: WorkoutBlocks },
-    status: 'draft'|'published' = 'draft',
-    createdBy?: string,
   ) {
     const record = {
       wod_date: day.date,
-      status,
+      status: 'draft',
       blocks_json: JSON.stringify(day.blocks),
       tags_json: JSON.stringify(day.tags ?? []),
       sport_id: day.sportId,
-      created_by: createdBy ?? null,
+      created_by: 'admin',
     };
 
     const [row] = await this.knex('workout_bases')
