@@ -12,6 +12,10 @@ export default [
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+       parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       'react-hooks': reactHooks,
@@ -28,6 +32,7 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
     },
+
   },
   {
     ignores: ['.next/**', 'node_modules/**'],
