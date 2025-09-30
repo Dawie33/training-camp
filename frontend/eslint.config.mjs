@@ -5,6 +5,9 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default [
+  {
+    ignores: ['.next/**', 'node_modules/**', 'out/**', '.turbo/**'],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -12,7 +15,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
-       parserOptions: {
+      parserOptions: {
         project: './tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
@@ -32,9 +35,5 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
     },
-
-  },
-  {
-    ignores: ['.next/**', 'node_modules/**'],
   },
 ];
