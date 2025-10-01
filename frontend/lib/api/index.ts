@@ -1,2 +1,3 @@
 export * from './client'
 export * from './sports'
+export * from './auth'
