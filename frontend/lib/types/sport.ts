@@ -24,14 +24,15 @@ export interface Sport {
 }
 
 export interface QueryDto {
-  page?: number
+  offset?: number
   limit?: number
-  sort?: string
-  order?: 'asc' | 'desc'
+  orderBy?: string
+  orderDir?: 'asc' | 'desc'
 }
 
 export interface PaginatedResponse<T> {
-  data: T[]
+  rows: T[]
+  count: number
   meta: {
     total: number
     page: number

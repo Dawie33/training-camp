@@ -20,7 +20,8 @@ export class SportsService {
                 .offset(Number(offset))
                 .orderBy(orderBy, orderDir)
 
-            const count = await this.knex("sports").count({ count: "*" })
+            const countResult = await this.knex("sports").count({ count: "*" }).first()
+            const count = Number(countResult?.count)
             return { rows, count }
         } catch (error) {
             throw new Error(`Error fetching sports: ${error.message}`)
