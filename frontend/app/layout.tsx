@@ -1,5 +1,6 @@
-import SiteHeader from "@/components/layout/site-header"
+import ConditionalHeader from "@/components/layout/ConditionalHeader"
 import { ThemeProvider } from "@/components/layout/theme-provider"
+import { AuthProvider } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
 import { Geist_Mono, Poppins } from "next/font/google"
 import { Toaster } from "sonner"
@@ -33,9 +34,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SiteHeader />
-          {children}
-          <Toaster />
+          <AuthProvider>
+            <ConditionalHeader />
+            {children}
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

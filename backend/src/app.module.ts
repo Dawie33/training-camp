@@ -6,6 +6,7 @@ import { envValidationSchema } from './common/config/env.validation'
 import { HealthcheckModule } from './healthcheck/healthcheck.module'
 import { SportsModule } from './sports/sports.module'
 import { WorkoutsModule } from './workouts/workouts.module'
+import { AuthModule } from './auth/auth.module'
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { WorkoutsModule } from './workouts/workouts.module'
       validationSchema: envValidationSchema,
     }),
     KnexModule.forRoot({ config: knexConfig[process.env.NODE_ENV || 'development'] }),
+    AuthModule,
     WorkoutsModule,
     HealthcheckModule,
     SportsModule,
