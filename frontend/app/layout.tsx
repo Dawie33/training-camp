@@ -1,4 +1,3 @@
-import ConditionalHeader from "@/components/layout/ConditionalHeader"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
@@ -35,7 +34,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <ConditionalHeader />
             {children}
             <Toaster />
           </AuthProvider>

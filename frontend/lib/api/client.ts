@@ -14,16 +14,21 @@ export class ApiClient {
     const url = `${this.baseUrl}${endpoint}`
 
     const response = await fetch(url, {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
         ...options?.headers,
       },
-      ...options,
     })
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: response.statusText }))
-      throw new Error(error.message || `API Error: ${response.status}`)
+
+      const errorMessage = Array.isArray(error.message)
+        ? error.message.join(', ')
+        : error.message || error.error || `API Error: ${response.status}`
+
+      throw new Error(errorMessage)
     }
 
     return response.json()
@@ -45,6 +50,14 @@ export class ApiClient {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  }
+
+  patch<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     })
   }

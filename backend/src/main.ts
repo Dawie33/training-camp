@@ -17,8 +17,12 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false, // Permet les propriétés non listées
       transform: true,
+      skipMissingProperties: false, // Valide même les propriétés manquantes
+      transformOptions: {
+        enableImplicitConversion: true, // Conversion automatique des types
+      },
     }),
   );
 

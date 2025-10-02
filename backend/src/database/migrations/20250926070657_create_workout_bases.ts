@@ -11,7 +11,6 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('created_by').nullable()
       .references('id').inTable('users').onDelete('SET NULL');
     table.timestamps(true, true); // created_at / updated_at
-    table.unique(['wod_date', 'sport_id']);
   });
 
   // Indexes utiles
