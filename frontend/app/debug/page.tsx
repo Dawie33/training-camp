@@ -4,9 +4,68 @@ import { useAuth } from '@/hooks/useAuth'
 import { apiClient } from '@/lib/api'
 import { useState } from 'react'
 
+type userProfile = {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  dateOfBirth: string
+  gender: string
+  primary_sport: string
+  sports_practiced: string[]
+  overall_level: string
+  height: string
+  weight: string
+  resting_heart_rate: string
+  max_heart_rate: string
+  body_fat_percentage: string
+  global_goals: object
+  injuries: string[]
+  medical_notes: string
+  physical_limitations: string[]
+  equipment_available: string[]
+  training_location: string
+  training_preferences: object
+  schedule_preferences: object
+  isActive: boolean
+  emailVerified: boolean
+  lastLoginAt: string
+  has_coach: boolean
+  coach_id: string
+  premium_member: boolean
+}
 export default function DebugPage() {
   const { user, isAuthenticated, loading } = useAuth()
-  const [profileData, setProfileData] = useState<any>(null)
+  const [profileData, setProfileData] = useState<userProfile>({
+    id: '',
+    email: '',
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    gender: '',
+    primary_sport: '',
+    sports_practiced: [],
+    overall_level: '',
+    height: '',
+    weight: '',
+    resting_heart_rate: '',
+    max_heart_rate: '',
+    body_fat_percentage: '',
+    global_goals: {},
+    injuries: [],
+    medical_notes: '',
+    physical_limitations: [],
+    equipment_available: [],
+    training_location: '',
+    training_preferences: {},
+    schedule_preferences: {},
+    isActive: false,
+    emailVerified: false,
+    lastLoginAt: '',
+    has_coach: false,
+    coach_id: '',
+    premium_member: false,
+  })
 
   const checkToken = () => {
     const token = localStorage.getItem('access_token')
@@ -15,8 +74,8 @@ export default function DebugPage() {
 
   const fetchProfile = async () => {
     try {
-      const response = await apiClient.get('/api/auth/profile')
-      setProfileData(response.data)
+      const response: userProfile = await apiClient.get('/api/auth/profile')
+      setProfileData(response)
     } catch (error) {
       console.error('Error:', error)
       alert('Erreur: ' + error)
