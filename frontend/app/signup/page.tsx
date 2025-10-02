@@ -1,9 +1,9 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function SignupPage() {
   const { signup } = useAuth()
@@ -25,7 +25,7 @@ export default function SignupPage() {
 
     try {
       await signup(formData)
-      router.push('/dashboard')
+      router.push('/onboarding')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')
     } finally {
@@ -37,9 +37,9 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold">Create Account</h2>
+          <h2 className="text-3xl font-bold">Créer un compte</h2>
           <p className="mt-2 text-muted-foreground">
-            Join us to start your training journey!
+            Rejoins nous pour commencer ton entrainement
           </p>
         </div>
 
@@ -54,7 +54,7 @@ export default function SignupPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium">
-                  First Name
+                  Prénom
                 </label>
                 <input
                   id="firstName"
@@ -68,7 +68,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="lastName" className="block text-sm font-medium">
-                  Last Name
+                  Nom
                 </label>
                 <input
                   id="lastName"
@@ -118,19 +118,19 @@ export default function SignupPage() {
                 >
                   {showPassword ? (
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                      <line x1="2" y1="2" x2="22" y2="22"/>
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="2" y1="2" x2="22" y2="22" />
                     </svg>
                   ) : (
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   )}
                 </button>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Must be at least 6 characters
+                Saisie au moins 6 caractères
               </p>
             </div>
           </div>
@@ -138,15 +138,15 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Creating account...' : 'Sign up'}
+            {loading ? 'Création en cours...' : 'Créer mon compte'}
           </button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{' '}
+            Tu as déja un compte?{' '}
             <Link href="/login" className="font-medium text-primary hover:underline">
-              Login
+              Se connecter
             </Link>
           </p>
         </form>

@@ -1,10 +1,19 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+/**
+ * Page de connexion à l'application.
+ * @remarks
+ * Cette page permet à l'utilisateur de se connecter à son compte Training Camp.
+ * Elle affiche un formulaire de connexion avec des champs pour l'email et le mot de passe.
+ * Lorsque l'utilisateur valide le formulaire, la page appelle la fonction de connexion du hook d'authentification.
+ * Si la connexion réussit, la page redirige l'utilisateur vers la page de dashboard.
+ * Sinon, la page affiche un message d'erreur.
+ */
 export default function LoginPage() {
   const { login } = useAuth()
   const router = useRouter()
@@ -33,9 +42,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-lg space-y-8 p-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold">Login</h2>
+          <h2 className="text-3xl font-bold">Se connecter</h2>
           <p className="mt-2 text-muted-foreground">
-            Connectes toi pour accéder à ton compte Training Camp
+            Accède à ton compte Training Camp
           </p>
         </div>
 
@@ -106,9 +115,9 @@ export default function LoginPage() {
           </button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Tu n'as pas encore de compte?{' '}
             <Link href="/signup" className="font-medium text-primary hover:underline">
-              Sign up
+              S'inscrire
             </Link>
           </p>
         </form>
