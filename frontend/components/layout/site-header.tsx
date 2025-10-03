@@ -1,5 +1,6 @@
 'use client'
 
+import { SportSwitcher } from '@/components/layout/SportSwitcher'
 import { ModeToggle } from '@/components/layout/theme-toggle'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,10 @@ export default function SiteHeader() {
     return (
         <header className="sticky top-0 z-50 border-b bg-gray-900 backdrop-blur">
             <div className="mx-auto flex h-14 items-center justify-between px-4">
-                <Link href="/" className="font-bold text-lg text-white">Training Camp</Link>
+                <div className="flex items-center gap-4">
+                    <Link href="/" className="font-bold text-lg text-white">Training Camp</Link>
+                    {isAuthenticated && <SportSwitcher />}
+                </div>
                 <nav className="hidden md:flex items-center gap-8 text-sm text-white/80">
                     <Link href="/" className="hover:text-white hover:scale-110 transition-all">Accueil</Link>
                     <Link href="/sports" className="hover:text-white hover:scale-110 transition-all">Les Sports</Link>

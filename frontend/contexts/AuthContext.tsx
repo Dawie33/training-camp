@@ -3,7 +3,6 @@
 import { authService } from '@/lib/api'
 import type { LoginDto, SignupDto, User } from '@/lib/types/auth'
 import { AuthContext } from '@/hooks/useAuth'
-import ConditionalHeader from '@/components/layout/ConditionalHeader'
 import { ReactNode, useEffect, useState } from 'react'
 
 /**
@@ -92,10 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           </div>
         </div>
       ) : (
-        <>
-          <ConditionalHeader />
-          {children}
-        </>
+        children
       )}
     </AuthContext.Provider>
   )
