@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { SportProvider } from "@/contexts/SportContext"
 import { cn } from "@/lib/utils"
 import { Geist_Mono, Poppins } from "next/font/google"
 import { Toaster } from "sonner"
@@ -34,8 +35,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
-            <Toaster />
+            <SportProvider>
+              {children}
+              <Toaster />
+            </SportProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
