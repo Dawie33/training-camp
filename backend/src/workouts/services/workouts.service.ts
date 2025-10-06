@@ -70,7 +70,6 @@ export class WorkoutService {
    * @returns Le workout du jour publié pour ce sport
    */
   async getDailyWorkoutBySport(sportId: string, date?: string) {
-    console.log('getDailyWorkoutBySport called with:', { sportId, date })
 
     const query = this.knex('workout_bases')
       .where({ sport_id: sportId })
