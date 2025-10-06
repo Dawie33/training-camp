@@ -28,4 +28,8 @@ export class SportsService {
         }
     }
 
+    async getById(id: string) {
+        return this.knex("sports").where({ id }).first()
+    }
+
 }

@@ -1,20 +1,17 @@
-import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsObject, IsOptional, IsString } from 'class-validator'
 import type { WorkoutBlocks } from '../types/workout.types'
 
 export class UpdateBaseWorkoutDto {
   @IsOptional()
-  @IsString() 
-  title?: string;
+  @IsString()
+  wod_date?: string
 
   @IsOptional()
   @IsArray()
-  tags?: string[];
+  tags?: string[]
 
   @IsOptional()
   @IsObject()
-  blocks?: WorkoutBlocks; 
+  blocks?: WorkoutBlocks
 
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

@@ -13,7 +13,7 @@ export class AdminWorkoutService {
 
   constructor(
     @InjectModel() private readonly knex: Knex,
-  ) {}
+  ) { }
 
   /**
    * Génération journalière par sport.
@@ -26,14 +26,14 @@ export class AdminWorkoutService {
     seed?: Partial<WorkoutBlocks>,
     tags: string[] = [],
   ): Promise<DailyPlan> {
-    const system = buildSystemPromptForSport(sport.slug as SportSlug, date, seed?.availableEquipment);
-    const schema = exampleSchemaForSport(sport.slug as SportSlug);
+    const system = buildSystemPromptForSport(sport.slug as SportSlug, date, seed?.availableEquipment)
+    const schema = exampleSchemaForSport(sport.slug as SportSlug)
 
     const user = `date: ${date}
     sportId: ${sport.id}
     sportSlug: ${sport.slug}
     tags globaux: ${JSON.stringify(tags)}
-    seed: ${JSON.stringify(seed ?? {})}`;
+    seed: ${JSON.stringify(seed ?? {})}`
 
     const res = await this.openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -45,21 +45,21 @@ export class AdminWorkoutService {
         { role: 'user', content: `Schéma à respecter: ${schema}` },
         { role: 'user', content: user },
       ],
-    });
+    })
 
-    const raw = res.choices[0]?.message?.content ?? '{}';
-    let day: DailyPlan;
+    const raw = res.choices[0]?.message?.content ?? '{}'
+    let day: DailyPlan
 
     try {
-      day = DailyPlanSchema.parse(JSON.parse(raw));
+      day = DailyPlanSchema.parse(JSON.parse(raw))
     } catch (err) {
-      throw new Error( `IA: JSON invalide (parse) - ${err} - RAW: ${raw}`);
+      throw new Error(`IA: JSON invalide (parse) - ${err} - RAW: ${raw}`)
     }
 
     if (!day || !day.date || !day.blocks) {
-      throw new Error('IA: JSON invalide (séance journalière)');
+      throw new Error('IA: JSON invalide (séance journalière)')
     }
-    return { ...day, sportId: sport.id };
+    return { ...day, sportId: sport.id }
   }
 
   /**
@@ -67,17 +67,17 @@ export class AdminWorkoutService {
    * @return Liste des entraînements de base du jour
    * @throws Erreur si la récupération échoue
    */
-  async getWorkoutOfDay() {
+  async getWorkoutOfDay(wod_date?: string, status?: string) {
     try {
       const rows = await this.knex('workout_bases')
         .select('*')
         .where((qb) => {
-          qb.where('wod_date', '=', this.knex.raw('CURRENT_DATE'))
-            .andWhere('status', '=', 'draft');
-        })    
-      return rows;
+          qb.where('wod_date', '=', this.knex.raw(`'${wod_date}'`))
+            .andWhere('status', '=', status ?? 'draft')
+        })
+      return rows
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération de l'entraînement de base - ${error}`);
+      throw new Error(`Erreur lors de la récupération de l'entraînement de base - ${error}`)
     }
   }
 
@@ -85,30 +85,29 @@ export class AdminWorkoutService {
    * Éditer un workout de base en statut draft/review.
    * Seuls les champs définis sont patchés.
    */
-  async updateBaseWorkout(id: string, patch: Partial<{ title: string; tags: string[]; blocks: any; notes: string }>) {
-    const data: Record<string, unknown> = {};
-    if (patch.title !== undefined)  data.title  = patch.title;
-    if (patch.tags  !== undefined)  data.tags   = patch.tags;      
-    if (patch.blocks !== undefined) data.blocks = patch.blocks;
-    if (patch.notes !== undefined)  data.notes  = patch.notes;
+  async updateBaseWorkout(id: string, patch: Partial<{ tags: string[]; blocks: any; wod_date: string }>) {
+    const data: Record<string, unknown> = {}
+    if (patch.wod_date !== undefined) data.wod_date = this.knex.raw(`?::date`, [patch.wod_date])
+    if (patch.tags !== undefined) data.tags = patch.tags
+    if (patch.blocks !== undefined) data.blocks = patch.blocks
 
     if (Object.keys(data).length === 0) {
-      throw new BadRequestException('Aucune donnée à mettre à jour');
+      throw new BadRequestException('Aucune donnée à mettre à jour')
     }
 
-    data.updated_at = this.knex.fn.now();
+    data.updated_at = this.knex.fn.now()
 
-    const rows = await this.knex('workouts')
+    const rows = await this.knex('workout_bases')
       .where({ id })
-      .whereIn('status', ['draft', 'review']) 
+      .andWhere('status', '!=', 'published')
       .update(data)
-      .returning('*');
+      .returning('*')
 
     if (!rows.length) {
-      throw new NotFoundException("Workout introuvable ou non éditable (déjà publié ?)");
+      throw new NotFoundException("Workout introuvable ou non éditable (déjà publié ?)")
     }
 
-    return rows[0];
+    return rows[0]
   }
 
   /**
@@ -118,40 +117,27 @@ export class AdminWorkoutService {
    * - (optionnel) empêche les doublons publiés (même date/sport)
    */
   async publishBaseWorkout(id: string) {
-    return this.knex.transaction(async (trx) => {
+    this.knex.transaction(async (trx) => {
       // On récupère le draft
-      const draft = await trx('workouts')
+      const draft = await trx('workout_bases')
         .where({ id })
-        .first();
+        .first()
 
-      if (!draft) throw new NotFoundException('Workout introuvable');
+      if (!draft) throw new NotFoundException('Workout introuvable')
       if (draft.status === 'published') {
-        throw new ConflictException('Déjà publié');
+        throw new ConflictException('Déjà publié')
       }
 
-      // (Optionnel) empêcher plusieurs "published" pour la même date/sport
-      const already = await trx('workouts')
-        .where({ date: draft.date, sport_id: draft.sport_id, status: 'published' })
-        .andWhereNot({ id })
-        .first();
+      const rows = await trx('workout_bases')
+        .where({ id: draft.id })
+        .update({
+          status: 'published',
+          updated_at: trx.fn.now(),
+        })
+        .returning('*')
 
-      if (already) {
-        throw new ConflictException('Un workout déjà publié existe pour cette date et ce sport');
-      }
-
-      const rows = await trx('workouts')
-        .where({ id })
-        .update(
-          {
-            status: 'published',
-            published_at: trx.fn.now(),
-            updated_at: trx.fn.now(),
-          },
-          '*',
-        );
-
-      return rows[0];
-    });
+      return rows[0]
+    })
   }
 
 }

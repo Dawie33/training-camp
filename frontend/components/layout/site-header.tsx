@@ -1,7 +1,6 @@
 'use client'
 
 import { SportSwitcher } from '@/components/layout/SportSwitcher'
-import { ModeToggle } from '@/components/layout/theme-toggle'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -21,29 +20,31 @@ export default function SiteHeader() {
     }
 
     return (
-        <header className="sticky top-0 z-50 border-b bg-gray-900 backdrop-blur">
-            <div className="mx-auto flex h-14 items-center justify-between px-4">
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="font-bold text-lg text-white">Training Camp</Link>
+        <header className="sticky top-0 z-50 border-b border-border/40 bg-[#1a1a1a]/95 backdrop-blur supports-[backdrop-filter]:bg-[#1a1a1a]/80">
+            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+                <div className="flex items-center gap-8">
+                    <Link href="/" className="font-bold text-xl tracking-tight">
+                        TRAINING CAMP
+                    </Link>
                     {isAuthenticated && <SportSwitcher />}
                 </div>
-                <nav className="hidden md:flex items-center gap-8 text-sm text-white/80">
-                    <Link href="/" className="hover:text-white hover:scale-110 transition-all">Accueil</Link>
-                    <Link href="/sports" className="hover:text-white hover:scale-110 transition-all">Les Sports</Link>
-                    <Link href="/workouts" className="hover:text-white hover:scale-110 transition-all">Entrainements</Link>
-                    <Link href="/calendar" className="hover:text-white hover:scale-110 transition-all">Plans</Link>
-                    <Link href="/settings" className="hover:text-white hover:scale-110 transition-all">Mes Entrainements</Link>
+                <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+                    <Link href="/dashboard" className="hover:text-foreground transition-colors">HOME</Link>
+                    <Link href="/explore" className="hover:text-foreground transition-colors">EXPLORE</Link>
+                    <Link href="/plans" className="hover:text-foreground transition-colors">PLANS</Link>
+                    <Link href="/learn" className="hover:text-foreground transition-colors">LEARN</Link>
+                    <Link href="/shop" className="hover:text-foreground transition-colors">SHOP</Link>
+                    <Link href="/workouts" className="hover:text-foreground transition-colors">MY WORKOUTS</Link>
                 </nav>
-                <div className="flex items-center gap-2">
-
-                    <Button variant="ghost" size="icon" className="text-white hover:text-gray-400 hover:scale-120 transition-all hover:bg-transparent cursor-pointer">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" className="hover:bg-accent">
                         <Search className="h-5 w-5" />
                     </Button>
                     {isAuthenticated && user ? (
-                        <DropdownMenu className="r">
+                        <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-8 w-8 rounded-full ">
-                                    <Avatar className="h-8 w-8 cursor-pointer">
+                                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                                    <Avatar className="h-9 w-9 cursor-pointer">
                                         <AvatarImage src={undefined} alt={`${user.firstName} ${user.lastName}`} />
                                         <AvatarFallback>{getInitials(`${user.firstName} ${user.lastName}`)}</AvatarFallback>
                                     </Avatar>
@@ -70,7 +71,6 @@ export default function SiteHeader() {
                     ) : (
                         <Button asChild size="sm"><Link href="/login">Sign in</Link></Button>
                     )}
-                    <ModeToggle />
                 </div>
             </div>
         </header>

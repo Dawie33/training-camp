@@ -7,7 +7,7 @@ import { WorkoutBlocks } from '../types/workout.types'
 
 @Injectable()
 export class WorkoutService {
-  constructor(@InjectModel() private readonly knex: Knex) {}
+  constructor(@InjectModel() private readonly knex: Knex) { }
 
   /**
    * Retrieves all workouts from the database.
@@ -19,14 +19,14 @@ export class WorkoutService {
         .select('*')
         .limit(Number(limit))
         .offset(Number(offset))
-        .orderBy(orderBy, orderDir);
+        .orderBy(orderBy, orderDir)
 
 
-      const count = await this.knex("users").count({ count: "*" });
+      const count = await this.knex("users").count({ count: "*" })
 
-      return { rows, count };
+      return { rows, count }
     } catch (error) {
-      throw new Error('Failed to retrieve workouts: ' + error.message);
+      throw new Error('Failed to retrieve workouts: ' + error.message)
     }
   }
 
@@ -46,21 +46,57 @@ export class WorkoutService {
       blocks_json: JSON.stringify(day.blocks),
       tags_json: JSON.stringify(day.tags ?? []),
       sport_id: day.sportId,
-      created_by: 'admin',
-    };
+      created_by: null, // Génération automatique, pas d'utilisateur spécifique
+    }
 
     const [row] = await this.knex('workout_bases')
       .insert(record)
-      .onConflict(['wod_date','sport_id'])
+      .onConflict(['wod_date', 'sport_id'])
       .merge({
         blocks_json: record.blocks_json,
         tags_json: record.tags_json,
         status: record.status,
         updated_at: this.knex.fn.now(),
       })
-      .returning('*');
+      .returning('*')
 
-    return row;
+    return row
+  }
+
+  /**
+   * Récupère le workout du jour pour un sport donné
+   * @param sportId ID du sport
+   * @param date Date (format YYYY-MM-DD), par défaut aujourd'hui
+   * @returns Le workout du jour publié pour ce sport
+   */
+  async getDailyWorkoutBySport(sportId: string, date?: string) {
+    console.log('getDailyWorkoutBySport called with:', { sportId, date })
+
+    const query = this.knex('workout_bases')
+      .where({ sport_id: sportId })
+
+    // Ajouter la condition de date
+    if (date) {
+      query.where('wod_date', '=', date)
+    } else {
+      query.whereRaw('wod_date = CURRENT_DATE')
+    }
+
+    query.where({ status: 'published' })
+
+    const workout = await query.first()
+
+    if (!workout) {
+      return null
+    }
+
+    // Extraire blocks_json et tags_json, retourner le reste + blocks et tags
+    const { blocks_json, tags_json, ...rest } = workout
+    return {
+      ...rest,
+      blocks: blocks_json,
+      tags: tags_json,
+    }
   }
 
 
