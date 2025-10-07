@@ -1,7 +1,7 @@
-import { EQUIPMENT } from "./schemas"
 import { SportSlug } from "../types/workout.types"
+import { EQUIPMENT } from "./schemas"
 
-const equipmentList = EQUIPMENT.join('", "');
+const equipmentList = EQUIPMENT.join('", "')
 /**
  * Génère un prompt système pour un sport donné et une date.
  * @param sport Liste des sports supportés
@@ -10,58 +10,79 @@ const equipmentList = EQUIPMENT.join('", "');
  */
 export function buildSystemPromptForSport(sport: SportSlug, date: string, availableEquipment?: string[]) {
 
-    const inv = availableEquipment && availableEquipment.length
-    ? `Inventaire disponible (ne choisir QUE dedans): ["${availableEquipment.join('", "')}"].`
-    : `Si aucun matériel requis, mets ["bodyweight"].`;
+  const inv = availableEquipment && availableEquipment.length
+    ? `Équipement disponible (utilise SEULEMENT ce qui est dans cette liste): ["${availableEquipment.join('", "')}"].
+    Tu peux utiliser tout cet équipement librement pour créer des workouts variés et complets.`
+    : `Équipement: Tu as accès à tout l'équipement d'une salle de sport moderne. Utilise librement:
+    - Free weights: barbell, plates, rack, bench, dumbbell, kettlebell
+    - Machines: cable-machine, lat-pulldown, leg-press, chest-press-machine, seated-row-machine, etc.
+    - Cardio: treadmill, stationary-bike, rower, assault-bike
+    - Accessories: mat, band, box, pull-up-bar, jump-rope, medicine-ball, etc.`
 
-    const commonRules = `
-    Tu es un coach ${sport}. Retourne EXCLUSIVEMENT du JSON valide.
+  const commonRules = `
+    Tu es un coach ${sport} expérimenté. Retourne EXCLUSIVEMENT du JSON valide.
     - La séance doit être prévue pour la date ${date} (champ "date" dans le JSON).
-    - Chaque mouvement DOIT inclure "equipment": string[] avec des slugs parmi: ["${equipmentList}"].
+    - Chaque mouvement PEUT inclure "equipment": string[] avec des slugs parmi: ["${equipmentList}"].
     - ${inv}
-    - Interdiction d'inventer de nouveaux slugs d'équipement.
+    - Crée des workouts variés et efficaces en utilisant l'équipement disponible.
     - Durée totale <= 60 minutes.
-    - Pas de texte hors JSON.`;
 
-    
-    switch (sport) {
-      case 'crossfit':
+    CHAMPS OBLIGATOIRES:
+    - "name": Nom accrocheur du workout (ex: "Killer Legs", "Sweet Spot Crusher", "Upper Body Pump")
+    - "workout_type": Type du workout (amrap, for_time, emom, intervals, strength, endurance, tempo, fartlek, etc.)
+    - "difficulty": Niveau requis ("beginner", "intermediate", "advanced")
+    - "intensity": Intensité ("low", "moderate", "high", "very_high")
+    - "description": 1-2 phrases décrivant l'objectif du workout
+    - "coach_notes": Conseils techniques pour bien réaliser le workout (échauffement, technique, récupération, etc.)
+
+    - Pas de texte hors JSON.`
+
+
+  switch (sport) {
+    case 'crossfit':
       return `${commonRules}
     Structure: warmup + (strength optionnel) + metcon + accessory + (cooldown optionnel).
-    Le metcon peut être "For Time", "AMRAP" ou "EMOM". Utilise "substitutions" si l'inventaire ne contient pas le matériel idéal.`;
+    Le metcon peut être "For Time", "AMRAP" ou "EMOM". Utilise "substitutions" si l'inventaire ne contient pas le matériel idéal.`
 
 
-      case 'running':
-        return `${commonRules}
+    case 'running':
+      return `${commonRules}
     Structure: warmup (Z1), metcon au format "Intervals" (parts avec distance_m ou duration_min + target_zone + r_rest_sec), cooldown.
     target_zone ∈ {"E","M","T","I","R"} (selon Daniels).
-    Pas de strength lourd ici, "strength" doit rester absent sauf renfo léger en accessory.`;
+    Pas de strength lourd ici, "strength" doit rester absent sauf renfo léger en accessory.`
 
-      case 'cycling':
-        return `Tu es un coach Cycling. Retourne EXCLUSIVEMENT du JSON valide.
+    case 'cycling':
+      return `Tu es un coach Cycling. Retourne EXCLUSIVEMENT du JSON valide.
     - Structure: warmup, metcon au format "Intervals" (parts avec duration_min + target_pct_ftp + r_rest_sec), cooldown.
     - target_pct_ftp ∈ [0.5..1.2] réaliste, par ex. 0.85-0.95 pour sweet spot.
-    - Pas de texte hors JSON.`;
+    - Pas de texte hors JSON.`
 
-      case 'musculation':
-        return `Tu es un coach de Musculation (hypertrophie/force). Retourne EXCLUSIVEMENT du JSON valide.
+    case 'musculation':
+      return `${commonRules}
     - Structure: warmup (articulaire/léger), strength (mouvement(s) principal(aux)), accessory (2-4 exos), cooldown (étirements).
     - "strength.scheme" doit rendre lisible les séries/répetitions/intensité, ex: "5x5 @75%1RM" ou "4x8 @RIR2".
     - Pas de metcon ici (laisse "metcon" vide ou absent).
-    Ex: bench → ["barbell","plates","bench","rack"] ou dumbbell → ["dumbbell","bench"].`;
+    - Tu peux utiliser librement: barbell, dumbbell, machines (leg-press, lat-pulldown, cable-machine, chest-press-machine, etc.), ou bodyweight.
+    - Varie les exercices et les méthodes (composés puis isolation, free weights puis machines, etc.).`
 
-      default:
-        return `Tu es un coach multi-sports. Retourne EXCLUSIVEMENT du JSON valide.
-    - Si sport inconnu, génère une structure générique: warmup + bloc principal (Intervals ou Strength) + accessory + cooldown.`;
-    }
+    default:
+      return `Tu es un coach multi-sports. Retourne EXCLUSIVEMENT du JSON valide.
+    - Si sport inconnu, génère une structure générique: warmup + bloc principal (Intervals ou Strength) + accessory + cooldown.`
   }
+}
 
-  export function exampleSchemaForSport(sport: SportSlug): string {
-    if (sport === 'running') {
-      return `{
+export function exampleSchemaForSport(sport: SportSlug): string {
+  if (sport === 'running') {
+    return `{
   "date":"YYYY-MM-DD",
   "sportId":"uuid",
+  "name":"VO2max Crusher",
+  "workout_type":"intervals",
+  "difficulty":"intermediate",
+  "intensity":"very_high",
   "tags":["endurance","intervals"],
+  "description":"Séance de VO2max pour améliorer ta vitesse maximale aérobie avec des intervalles courts.",
+  "coach_notes":"Échauffement progressif obligatoire. Chaque intervalle à 95-100% de ton effort max. Récupération active en trottinant légèrement. Hydrate-toi bien.",
   "blocks":{
     "duration_min":50,
     "stimulus":"VO2max focus",
@@ -76,13 +97,19 @@ export function buildSystemPromptForSport(sport: SportSlug, date: string, availa
     },
     "cooldown":[{"movement":"Jog Easy","duration_sec":300}]
   }
-}`;
-    }
-    if (sport === 'cycling') {
-      return `{
+}`
+  }
+  if (sport === 'cycling') {
+    return `{
   "date":"YYYY-MM-DD",
   "sportId":"uuid",
+   "name":"Sweet Spot",
+  "workout_type":"intervals",
+  "difficulty":"intermediate",
+  "intensity":"moderate",
   "tags":["bike","sweetspot"],
+  "description":"Travail au sweet spot (88-93% FTP) pour développer ton endurance de force.",
+  "coach_notes":"Maintiens une cadence constante entre 85-95 rpm. Concentre-toi sur un pédalage fluide. Reste en position aéro si possible. Bois régulièrement.",
   "blocks":{
     "duration_min":55,
     "stimulus":"Tempo/Sweetspot",
@@ -97,13 +124,19 @@ export function buildSystemPromptForSport(sport: SportSlug, date: string, availa
     },
     "cooldown":[{"movement":"Spin Easy","duration_sec":300}]
   }
-}`;
-    }
-    if (sport === 'musculation') {
-      return `{
+}`
+  }
+  if (sport === 'musculation') {
+    return `{
   "date":"YYYY-MM-DD",
   "sportId":"uuid",
+   "name":"Push Hypertrophy",
+  "workout_type":"strength",
+  "difficulty":"advanced",
+  "intensity":"high",
   "tags":["hypertrophy","upper"],
+  "description":"Séance push hypertrophie pour développer pecs, épaules et triceps avec un focus sur le volume.",
+  "coach_notes":"Échauffement articulaire important. Sur le bench, descente contrôlée en 2s, pause 1s en bas. Garde les omoplates serrées. Sur les accessoires, cherche la congestion musculaire.",
   "blocks":{
     "duration_min":60,
     "stimulus":"Upper push focus",
@@ -116,13 +149,19 @@ export function buildSystemPromptForSport(sport: SportSlug, date: string, availa
     ],
     "cooldown":[{"movement":"Doorway Pec Stretch","duration_sec":60}]
   }
-}`;
-    }
-    // default/crossfit
-    return `{
+}`
+  }
+  // default/crossfit
+  return `{
   "date":"YYYY-MM-DD",
   "sportId":"uuid",
+   "name":"Strength + Short Sprint",
+  "workout_type":"strength",
+  "difficulty":"advanced",
+  "intensity":"high",
   "tags":["strength","metcon","short"],
+  "description":"Séance combinant force sur le squat et un metcon court et intense style 21-15-9 pour travailler l'explosivité.",
+  "coach_notes":"Concentre-toi sur la technique au squat, descente contrôlée. Sur le metcon, casse les séries si besoin mais garde un rythme soutenu. Respiration cruciale sur les burpees.",
   "blocks":{
     "duration_min":45,
     "stimulus":"Lower strength + short sprint",
@@ -144,5 +183,5 @@ export function buildSystemPromptForSport(sport: SportSlug, date: string, availa
     "accessory":[{"movement":"Side Plank","scheme":"3x30s/side"}],
     "cooldown":[{"movement":"Quad stretch","duration_sec":60}]
   }
-}`;
-  }
+}`
+}
