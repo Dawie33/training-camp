@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { QueryDto } from '../dto/workout.dto'
+import { BasesWorkoutDto, QueryDto } from '../dto/workout.dto'
 import { WorkoutBlocks } from '../types/workout.types'
 
 
@@ -70,20 +70,18 @@ export class WorkoutService {
    * @returns Le workout du jour publié pour ce sport
    */
   async getDailyWorkoutBySport(sportId: string, date?: string) {
+    console.log('🔍 getDailyWorkoutBySport called with:', { sportId, date, dateType: typeof date })
 
-    const query = this.knex('workout_bases')
-      .where({ sport_id: sportId })
-
+    const query = this.knex('workout_bases').where({ sport_id: sportId, status: 'published' })
+    let workout: BasesWorkoutDto
     // Ajouter la condition de date
-    if (date) {
+    if (date && date.trim() !== '') {
       query.where('wod_date', '=', date)
+      workout = await query.first()
     } else {
-      query.whereRaw('wod_date = CURRENT_DATE')
+      // Récupérer le dernier workout créé pour ce sport
+      workout = await query.orderBy('created_at', 'desc').first()
     }
-
-    query.where({ status: 'published' })
-
-    const workout = await query.first()
 
     if (!workout) {
       return null

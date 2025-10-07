@@ -1,5 +1,6 @@
 import { Type } from "class-transformer"
 import { IsArray, IsIn, IsISO8601, IsOptional, IsString, IsUUID } from "class-validator"
+import { WorkoutBlocks } from "../types/workout.types"
 
 export class CreateWorkoutDto {
   name: string
@@ -98,8 +99,14 @@ export class QueryDto {
 
 }
 
-export class basesWorkoutDto {
+export class BasesWorkoutDto {
+  id: string
   wod_date: string
   status: string
+  blocks_json: WorkoutBlocks
+  tags_json: string[]
+  created_at: string
+  updated_at: string
+  sport_id: string
 
 }

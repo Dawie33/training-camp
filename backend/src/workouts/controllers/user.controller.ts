@@ -33,13 +33,6 @@ export class UserWorkoutController {
     return workout
   }
 
-  // @Get('today')
-  // async today(@Req() req: any, @Query() q: { fatigueRPE?: number; timeBudgetMin?: number }) {
-  //   const userId = req.user?.id ?? 'demo-user';
-  //   return this.service.getDailyWorkouts(userId, q);
-  // }
-
-
 }
 
 
