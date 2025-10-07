@@ -5,39 +5,35 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
 
     // Informations de base
-    table.string('name').notNullable();
-    table.string('slug').notNullable().unique();
+    table.string('name').nullable();
+    table.string('slug').nullable().unique();
     table.text('description').nullable();
-    
-    // Type de WOD
-    table.enum('type', [
-      'amrap',        // As Many Rounds As Possible
-      'for_time',     // For Time
-      'emom',         // Every Minute On the Minute
-      'tabata',       // Tabata Protocol
-      'rounds',       // X Rounds for Time
-      'strength',     // Strength Training
-      'hero',         // Hero WODs
-      'benchmark',    // Benchmark WODs (Fran, Murph, etc.)
-      'custom'        // Custom workout
-    ]).notNullable();
-    
-    // Structure du workout
-    table.json('structure').notNullable(); // Structure complète du WOD
+
+    // Type de workout (adapté multi-sport)
+    table.string('workout_type').nullable(); // amrap, for_time, interval, endurance, strength, fartlek, tempo, etc.
+
+    // Sport
+    table.uuid('sport_id')
+      .nullable()
+      .references('id')
+      .inTable('sports')
+      .onDelete('SET NULL');
+
+    // Structure du workout (format flexible multi-sport)
+    table.jsonb('blocks').nullable(); // warmup, main, cooldown - structure adaptée selon le sport
     table.integer('estimated_duration').nullable(); // en minutes
-    table.enum('intensity', ['low', 'moderate', 'high', 'very_high']).notNullable();
-    
+    table.string('intensity').nullable(); // low, moderate, high, very_high, recovery, tempo, threshold, vo2max
+
     // Difficulté et niveau
-    table.enum('difficulty', ['beginner', 'intermediate', 'advanced']).notNullable();
-    table.json('scaling_options').nullable(); // Options pour différents niveaux
-    
-    // Matériel requis
-    table.json('equipment_required').nullable(); // ['barbell', 'pull_up_bar', 'dumbbells']
-    table.boolean('bodyweight_only').defaultTo(false);
-    
-    // Ciblage
-    table.json('muscle_groups_targeted').nullable(); // ['legs', 'back', 'core']
-    table.json('energy_systems').nullable(); // ['aerobic', 'anaerobic', 'phosphocreatine']
+    table.string('difficulty').nullable(); // beginner, intermediate, advanced
+    table.json('scaling_options').nullable(); // Options pour adapter le workout
+
+    // Matériel/équipement requis (générique pour tous sports)
+    table.json('equipment_required').nullable(); // bike, shoes, weights, pool, etc.
+
+    // Ciblage (applicable à tous sports)
+    table.json('focus_areas').nullable(); // endurance, speed, power, technique, etc.
+    table.json('metrics_tracked').nullable(); // distance, pace, heart_rate, power, cadence, etc.
     
     // IA et personnalisation
     table.boolean('ai_generated').defaultTo(false);
@@ -45,15 +41,8 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('created_by_user_id').nullable()
     .references('id').inTable('users')
     .onDelete('SET NULL');
-    // Scoring et résultats
-    table.enum('scoring_type', [
-      'time',         // Temps pour compléter
-      'rounds',       // Nombre de rounds
-      'reps',         // Nombre de répétitions
-      'weight',       // Poids soulevé
-      'distance',     // Distance parcourue
-      'points'        // Système de points
-    ]).nullable();
+    // Objectifs et résultats (multi-sport)
+    table.json('target_metrics').nullable(); // {distance: 10km, pace: '5:00/km', duration: 3600, power: 250, etc.}
     
     // Statistiques d'usage
     table.integer('usage_count').defaultTo(0); // Combien de fois utilisé
@@ -64,30 +53,36 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean('isActive').defaultTo(true);
     table.boolean('isFeatured').defaultTo(false);
     table.boolean('isPublic').defaultTo(true); // Visible par tous ou privé
-    
-    // Catégories spéciales
-    table.boolean('is_benchmark').defaultTo(false); // Fran, Murph, etc.
-    table.boolean('is_hero_wod').defaultTo(false); // Hero WODs
+    table.string('status').defaultTo('published'); // draft, published, archived
+
+    // Planification (workouts journaliers pour tous sports)
+    table.date('scheduled_date').nullable(); // Date de planification du workout
+
+    // Catégories spéciales (applicable à tous sports)
+    table.boolean('is_benchmark').defaultTo(false); // Workouts de référence (ex: FTP test, 5k time trial, Fran, etc.)
     
     // Métadonnées
     table.text('coach_notes').nullable(); // Notes pour les coachs
     table.json('tags').nullable(); // Tags pour filtrer (cardio, strength, etc.)
     
     table.timestamps(true, true);
-    
+
+    // Contrainte unique pour éviter les doublons de workouts journaliers
+    table.unique(['scheduled_date', 'sport_id']);
+
     // Index pour optimisation
-    table.index(['type']);
+    table.index(['workout_type']);
     table.index(['difficulty']);
     table.index(['intensity']);
-    table.index(['bodyweight_only']);
     table.index(['ai_generated']);
     table.index(['isActive']);
     table.index(['isFeatured']);
     table.index(['isPublic']);
     table.index(['is_benchmark']);
-    table.index(['is_hero_wod']);
-    table.index(['scoring_type']);
     table.index(['created_by_user_id']);
+    table.index(['sport_id']);
+    table.index(['scheduled_date']);
+    table.index(['status']);
    });
 }
 

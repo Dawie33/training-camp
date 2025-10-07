@@ -2,6 +2,8 @@ import { Knex } from 'knex'
 
 export async function seed(knex: Knex): Promise<void> {
   // Supprime les entrées existantes pour éviter les doublons
+  await knex('sports').del();
+
   await knex('sports').insert([
     {
       id: knex.raw('gen_random_uuid()'),
