@@ -41,13 +41,28 @@ export class AdminWorkoutController {
     // Générer un workout pour chaque sport
     for (const sport of sports) {
       try {
-        const plan = await this.adminService.generateDaily(
+        const aiWorkout = await this.adminService.generateDaily(
           dto.date,
           { id: sport.id, slug: sport.slug },
           dto.seed,
           dto.tags ?? []
         )
-        const row = await this.service.insertBaseDaily(plan)
+
+        // Enrichir les données du workout avec les métadonnées (sans date = workout de bibliothèque)
+        const enrichedWorkout = {
+          sportId: aiWorkout.sportId,
+          tags: aiWorkout.tags,
+          blocks: aiWorkout.blocks,
+          name: aiWorkout.name,
+          workout_type: aiWorkout.workout_type,
+          difficulty: aiWorkout.difficulty,
+          estimated_duration: aiWorkout.blocks.duration_min || 45,
+          intensity: aiWorkout.intensity,
+          description: aiWorkout.description,
+          coach_notes: aiWorkout.coach_notes,
+        }
+
+        const row = await this.service.insertWorkout(enrichedWorkout)
         results.push({ sport: sport.name, success: true, workout: row })
       } catch (error) {
         results.push({ sport: sport.name, success: false, error: error.message })

@@ -63,31 +63,31 @@ export class AdminWorkoutService {
   }
 
   /**
-   * Récupère l'entraînement de base du jour (draft)
-   * @return Liste des entraînements de base du jour
+   * Récupère les workouts du jour (draft)
+   * @return Liste des workouts du jour
    * @throws Erreur si la récupération échoue
    */
   async getWorkoutOfDay(wod_date?: string, status?: string) {
     try {
-      const rows = await this.knex('workout_bases')
+      const rows = await this.knex('workouts')
         .select('*')
         .where((qb) => {
-          qb.where('wod_date', '=', this.knex.raw(`'${wod_date}'`))
+          qb.where('scheduled_date', '=', this.knex.raw(`'${wod_date}'`))
             .andWhere('status', '=', status ?? 'draft')
         })
       return rows
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération de l'entraînement de base - ${error}`)
+      throw new Error(`Erreur lors de la récupération de l'entraînement - ${error}`)
     }
   }
 
   /**
-   * Éditer un workout de base en statut draft/review.
+   * Éditer un workout en statut draft/review.
    * Seuls les champs définis sont patchés.
    */
   async updateBaseWorkout(id: string, patch: Partial<{ tags: string[]; blocks: any; wod_date: string }>) {
     const data: Record<string, unknown> = {}
-    if (patch.wod_date !== undefined) data.wod_date = this.knex.raw(`?::date`, [patch.wod_date])
+    if (patch.wod_date !== undefined) data.scheduled_date = this.knex.raw(`?::date`, [patch.wod_date])
     if (patch.tags !== undefined) data.tags = patch.tags
     if (patch.blocks !== undefined) data.blocks = patch.blocks
 
@@ -97,7 +97,7 @@ export class AdminWorkoutService {
 
     data.updated_at = this.knex.fn.now()
 
-    const rows = await this.knex('workout_bases')
+    const rows = await this.knex('workouts')
       .where({ id })
       .andWhere('status', '!=', 'published')
       .update(data)
@@ -111,15 +111,14 @@ export class AdminWorkoutService {
   }
 
   /**
-   * Publier un workout de base.
+   * Publier un workout.
    * - passe le statut à 'published'
-   * - pose published_at
    * - (optionnel) empêche les doublons publiés (même date/sport)
    */
   async publishBaseWorkout(id: string) {
-    this.knex.transaction(async (trx) => {
+    return this.knex.transaction(async (trx) => {
       // On récupère le draft
-      const draft = await trx('workout_bases')
+      const draft = await trx('workouts')
         .where({ id })
         .first()
 
@@ -128,7 +127,7 @@ export class AdminWorkoutService {
         throw new ConflictException('Déjà publié')
       }
 
-      const rows = await trx('workout_bases')
+      const rows = await trx('workouts')
         .where({ id: draft.id })
         .update({
           status: 'published',
