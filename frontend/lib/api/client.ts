@@ -28,7 +28,9 @@ export class ApiClient {
         ? error.message.join(', ')
         : error.message || error.error || `API Error: ${response.status}`
 
-      throw new Error(errorMessage)
+      const apiError = new Error(errorMessage) as Error & { statusCode: number }
+      apiError.statusCode = response.status
+      throw apiError
     }
 
     return response.json()

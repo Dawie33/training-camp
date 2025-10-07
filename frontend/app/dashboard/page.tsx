@@ -23,6 +23,11 @@ function DashboardContent() {
   const [workoutLoading, setWorkoutLoading] = useState(false)
 
   useEffect(() => {
+    /**
+     * Récupère les sports pratiqués par l'utilisateur en consultant le profil de l'utilisateur et la liste des sports disponibles.
+     * Met à jour l'état du contexte sportif avec la liste des sports de l'utilisateur.
+     * En cas d'erreur, met à jour l'état d'erreur et le statut de chargement.
+     */
     const fetchUserSports = async () => {
       try {
         setLoading(true)
@@ -70,8 +75,14 @@ function DashboardContent() {
     }
   }, [user, setUserSports])
 
-  // Récupérer le workout du jour quand le sport actif change
+
   useEffect(() => {
+    /**
+     * Récupère le workout du jour pour le sport actif.
+     * Si le sport actif n'est pas défini, ne fait rien.
+     * Si une erreur survient lors de la récupération, affiche null comme workout du jour.
+     * Met à jour le statut de chargement du workout du jour.
+     */
     const fetchDailyWorkout = async () => {
       if (!activeSport) return
 
@@ -82,7 +93,22 @@ function DashboardContent() {
         setDailyWorkout(workout)
       } catch (err) {
         console.error('Error fetching daily workout:', err)
-        setDailyWorkout(null) // Pas de workout disponible
+
+        // Si 404, essayer de récupérer le dernier workout créé
+        if (err instanceof Error && 'statusCode' in err) {
+          const errorWithStatus = err as Error & { statusCode: number }
+          if (errorWithStatus.statusCode === 404) {
+            try {
+              const latestWorkout = await workoutsService.getDailyWorkout(activeSport.id)
+              setDailyWorkout(latestWorkout)
+              return
+            } catch (latestErr) {
+              console.error('Error fetching latest workout:', latestErr)
+            }
+          }
+        }
+
+        setDailyWorkout(null)
       } finally {
         setWorkoutLoading(false)
       }
@@ -197,17 +223,45 @@ function DashboardContent() {
                           <span className="text-xs font-semibold px-2 py-1 bg-primary/90 text-primary-foreground rounded">
                             WORKOUT DU JOUR
                           </span>
-                          <span className="text-sm text-white/90">{new Date(dailyWorkout.wod_date).toLocaleDateString('fr-FR')}</span>
+                          <span className="text-sm text-white/90">{new Date(dailyWorkout.scheduled_date).toLocaleDateString('fr-FR')}</span>
                         </div>
+
                         {dailyWorkout.blocks.duration_min && (
-                          <span className="text-sm font-semibold px-2 py-1 bg-black/50 text-white rounded">
-                            {dailyWorkout.blocks.duration_min} min
-                          </span>
+                          <div>
+                            <span className="text-sm font-semibold px-2 py-1 bg-black/50 text-white rounded">
+                              {dailyWorkout.blocks.duration_min} min
+                            </span>
+                          </div>
+
                         )}
                       </div>
 
                       <div>
-                        <h2 className="text-3xl font-bold text-white mb-2">{activeSport?.name} Workout</h2>
+                        <h2 className="text-3xl font-bold text-white mb-2">
+                          {dailyWorkout.name || `${activeSport?.name} Workout`}
+                        </h2>
+
+                        {/* Type, Difficulté et Durée */}
+                        <div className="flex items-center gap-3 mb-3 flex-wrap">
+                          {dailyWorkout.workout_type && (
+                            <span className="text-sm font-medium px-3 py-1 bg-primary/90 text-primary-foreground rounded-full uppercase">
+                              {dailyWorkout.workout_type}
+                            </span>
+                          )}
+                          {dailyWorkout.difficulty && (
+                            <span className="text-sm font-medium px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full">
+                              {dailyWorkout.difficulty === 'beginner' && '🟢 Débutant'}
+                              {dailyWorkout.difficulty === 'intermediate' && '🟡 Intermédiaire'}
+                              {dailyWorkout.difficulty === 'advanced' && '🔴 Avancé'}
+                            </span>
+                          )}
+                          {dailyWorkout.estimated_duration && (
+                            <span className="text-sm font-medium px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full">
+                              ⏱️ {dailyWorkout.estimated_duration} min
+                            </span>
+                          )}
+                        </div>
+
                         {dailyWorkout.blocks.stimulus && (
                           <p className="text-white/90 text-sm mb-3">{dailyWorkout.blocks.stimulus}</p>
                         )}
