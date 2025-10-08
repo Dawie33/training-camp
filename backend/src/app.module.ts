@@ -5,6 +5,7 @@ import knexConfig from '../knexfile'
 import { AuthModule } from './auth/auth.module'
 import { envValidationSchema } from './common/config/env.validation'
 import { EquipmentsModule } from './equipments/equipments.module'
+import { ExercisesModule } from './exercises/exercises.module'
 import { HealthcheckModule } from './healthcheck/healthcheck.module'
 import { SportsModule } from './sports/sports.module'
 import { WorkoutsModule } from './workouts/workouts.module'
@@ -20,7 +21,8 @@ import { WorkoutsModule } from './workouts/workouts.module'
     WorkoutsModule,
     HealthcheckModule,
     SportsModule,
-    EquipmentsModule
+    EquipmentsModule,
+    ExercisesModule
   ],
 })
 export class AppModule { }
