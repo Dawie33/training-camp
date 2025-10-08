@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
-import { UsersQueryDto } from "../users.dto"
+import { UserQueryDto } from "src/users/dto"
 
 
 @Injectable()
@@ -10,7 +10,7 @@ export class AdminUsersService {
 
 
 
-    async findAll({ limit = '20', offset = '0', search = '', role = '' }: UsersQueryDto
+    async findAll({ limit = '20', offset = '0', search = '', role, orderBy = 'created_at', orderDir = 'desc' }: UserQueryDto
     ) {
         let query = this.knex('users')
             .select('users.*')
@@ -33,7 +33,7 @@ export class AdminUsersService {
         const rows = await query
             .limit(Number(limit))
             .offset(Number(offset))
-            .orderBy('users.created_at', 'desc')
+            .orderBy(orderBy, orderDir)
 
         // Masquer les mots de passe
         const sanitizedRows = rows.map(user => {

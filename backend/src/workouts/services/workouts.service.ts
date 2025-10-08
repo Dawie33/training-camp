@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { format } from 'date-fns'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { QueryDto } from '../dto/workout.dto'
+import { WorkoutQueryDto } from '../dto/workout.dto'
 import { WorkoutBlocks } from '../types/workout.types'
 
 
@@ -14,7 +14,7 @@ export class WorkoutService {
    * Recherche tous les workouts.
    * @returns Tous les workouts.
    */
-  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc' }: QueryDto) {
+  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc' }: WorkoutQueryDto) {
     try {
       const rows = await this.knex('workouts')
         .select('*')

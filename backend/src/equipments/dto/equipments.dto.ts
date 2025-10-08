@@ -50,3 +50,11 @@ export class UserEquipmentDto {
     @IsObject()
     meta?: Record<string, any>
 }
+
+export class EquipmentQueryDto {
+    limit?: string
+    offset?: string
+    search?: string
+    orderBy?: string
+    orderDir?: string
+}

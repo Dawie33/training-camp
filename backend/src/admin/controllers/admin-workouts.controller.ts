@@ -1,13 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Query } from '@nestjs/common'
-import { QueryDto } from 'src/workouts/dto/workout.dto'
 import { AdminWorkoutService } from '../services/admin-workouts.service'
+import { WorkoutQueryDto } from 'src/workouts/dto'
 
 @Controller('admin/workouts')
 export class AdminWorkoutsController {
   constructor(private readonly service: AdminWorkoutService) { }
 
   @Get()
-  async findAll(@Query() query: QueryDto
+  async findAll(@Query() query: WorkoutQueryDto
   ) {
     return this.service.findAll(query)
   }

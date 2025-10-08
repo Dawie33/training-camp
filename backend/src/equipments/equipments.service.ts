@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
-import { QueryDto } from "src/workouts/dto/workout.dto"
+import { EquipmentQueryDto } from "./dto"
 
 @Injectable()
 export class EquipmentsService {
@@ -9,10 +9,10 @@ export class EquipmentsService {
 
     /**
      * Récupération de la liste des equipements.
-     * @param param0 { limit, offset, orderBy, orderDir }
+     * @param param0 { limit, offset, search, orderBy, orderDir }
      * @returns A promise that resolves to an object containing the rows and count.
      */
-    async findAll({ limit = '50', offset = '0', search = 'name', orderBy = 'created_at', orderDir = 'desc' }: QueryDto) {
+    async findAll({ limit = '50', offset = '0', search, orderBy = 'created_at', orderDir = 'desc' }: EquipmentQueryDto) {
         let query = this.knex('equipments').select('*')
 
         if (search) {

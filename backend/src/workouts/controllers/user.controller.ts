@@ -1,5 +1,5 @@
 import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common'
-import { QueryDto } from '../dto/workout.dto'
+import { WorkoutQueryDto } from '../dto/workout.dto'
 import { WorkoutService } from '../services/workouts.service'
 
 @Controller('workouts')
@@ -11,7 +11,7 @@ export class UserWorkoutController {
    * @returns All workouts
    */
   @Get()
-  async findAll(@Query() query: QueryDto) {
+  async findAll(@Query() query: WorkoutQueryDto) {
     return await this.service.findAll(query)
   }
 

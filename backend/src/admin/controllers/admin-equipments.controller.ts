@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
-import { QueryDto } from 'src/workouts/dto/workout.dto'
+import { EquipmentQueryDto } from 'src/equipments/dto'
 import { AdminEquipmentsService } from '../services/admin-equipments.service'
 
 @Controller('admin/equipments')
@@ -7,7 +7,7 @@ export class AdminEquipmentsController {
   constructor(private readonly service: AdminEquipmentsService) { }
 
   @Get()
-  async findAll(@Query() query: QueryDto) {
+  async findAll(@Query() query: EquipmentQueryDto) {
     return await this.service.findAll(query)
   }
 

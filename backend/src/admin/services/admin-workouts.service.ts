@@ -3,11 +3,11 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { OpenAI } from 'openai'
-import { QueryDto } from 'src/workouts/dto/workout.dto'
+import { WorkoutQueryDto } from 'src/workouts/dto/workout.dto'
 import { UpdateWorkoutDto } from '../../workouts/dto/workout.dto'
+import { DailyPlan, SportRef, SportSlug, WorkoutBlocks } from '../../workouts/types/workout.types'
 import { buildSystemPromptForSport, exampleSchemaForSport } from '../constants/prompts'
 import { DailyPlanSchema } from '../constants/schemas'
-import { DailyPlan, SportRef, SportSlug, WorkoutBlocks } from '../types/workout.types'
 
 @Injectable()
 export class AdminWorkoutService {
@@ -15,7 +15,7 @@ export class AdminWorkoutService {
 
     constructor(@InjectModel() private readonly knex: Knex) { }
 
-    async findAll({ limit = '20', offset = '0', search = '', status = '', schedule_date = '' }: QueryDto
+    async findAll({ limit = '20', offset = '0', search = '', status = '', scheduled_date }: WorkoutQueryDto
     ) {
         let query = this.knex('workouts')
             .select('workouts.*', 'sports.name as sport_name')
@@ -43,8 +43,8 @@ export class AdminWorkoutService {
             countQuery.where('status', status)
         }
 
-        if (schedule_date) {
-            countQuery.where('scheduled_date', schedule_date)
+        if (scheduled_date) {
+            countQuery.where('scheduled_date', scheduled_date)
         }
 
         const countResult = await countQuery.first()
@@ -117,7 +117,7 @@ export class AdminWorkoutService {
         if (data.isPublic !== undefined) updateData.isPublic = data.isPublic
         if (data.blocks !== undefined) updateData.blocks = JSON.stringify(data.blocks)
         if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags)
-        if (data.schedule_date !== undefined) updateData.schedule_date = data.schedule_date
+        if (data.scheduled_date !== undefined) updateData.schedule_date = data.scheduled_date
         const [row] = await this.knex('workouts')
             .where({ id })
             .update(updateData)

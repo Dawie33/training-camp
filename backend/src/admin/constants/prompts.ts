@@ -1,4 +1,4 @@
-import { SportSlug } from "../types/workout.types"
+import { SportSlug } from "../../workouts/types/workout.types"
 import { EQUIPMENT } from "./schemas"
 
 const equipmentList = EQUIPMENT.join('", "')

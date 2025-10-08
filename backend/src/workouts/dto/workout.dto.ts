@@ -1,72 +1,172 @@
 import { Type } from "class-transformer"
-import { IsArray, IsIn, IsISO8601, IsOptional, IsString, IsUUID } from "class-validator"
-import { WorkoutBlocks } from "../types/workout.types"
+import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from "class-validator"
 
 export class CreateWorkoutDto {
-  name: string
-  slug: string
+  @IsString()
+  @IsNotEmpty()
+  name!: string
+
+  @IsString()
+  @IsOptional()
+  slug?: string
+
+  @IsString()
+  @IsOptional()
   description?: string
-  type: string
-  structure: any
+
+  @IsString()
+  @IsOptional()
+  workout_type?: string
+
+  @IsUUID()
+  @IsOptional()
+  sport_id?: string
+
+  @IsOptional()
+  blocks?: Record<string, unknown>
+
+  @IsInt()
+  @IsOptional()
   estimated_duration?: number
-  intensity: string
-  difficulty: string
-  scaling_options?: any
-  equipment_required?: any
-  bodyweight_only?: boolean
-  muscle_groups_targeted?: any
-  energy_systems?: any
+
+  @IsString()
+  @IsOptional()
+  intensity?: string
+
+  @IsString()
+  @IsOptional()
+  difficulty?: string
+
+  @IsOptional()
+  scaling_options?: Record<string, unknown>
+
+  @IsArray()
+  @IsOptional()
+  equipment_required?: string[]
+
+  @IsArray()
+  @IsOptional()
+  focus_areas?: string[]
+
+  @IsArray()
+  @IsOptional()
+  metrics_tracked?: string[]
+
+  @IsBoolean()
+  @IsOptional()
   ai_generated?: boolean
-  ai_parameters?: any
-  created_by_user_id?: number
-  scoring_type?: string
+
+  @IsOptional()
+  ai_parameters?: Record<string, unknown>
+
+  @IsUUID()
+  @IsOptional()
+  created_by_user_id?: string
+
+  @IsOptional()
+  target_metrics?: Record<string, unknown>
+
+  @IsInt()
+  @IsOptional()
   usage_count?: number
+
+  @IsNumber()
+  @IsOptional()
   average_rating?: number
+
+  @IsInt()
+  @IsOptional()
   total_ratings?: number
+
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean
+
+  @IsBoolean()
+  @IsOptional()
   isFeatured?: boolean
+
+  @IsBoolean()
+  @IsOptional()
   isPublic?: boolean
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['draft', 'published', 'archived'])
+  status?: string
+
+  @IsString()
+  @IsOptional()
+  scheduled_date?: string
+
+  @IsBoolean()
+  @IsOptional()
   is_benchmark?: boolean
-  is_hero_wod?: boolean
+
+  @IsString()
+  @IsOptional()
   coach_notes?: string
-  tags?: any
+
+  @IsArray()
+  @IsOptional()
+  tags?: string[]
 }
 
 export class UpdateWorkoutDto {
+  @IsString()
+  @IsOptional()
   name?: string
-  slug?: string
+
+  @IsString()
+  @IsOptional()
   description?: string
-  type?: string
-  structure?: any
-  estimated_duration?: string
-  intensity?: string
-  difficulty?: string
-  scaling_options?: any
-  equipment_required?: any
-  bodyweight_only?: boolean
-  muscle_groups_targeted?: any
-  energy_systems?: any
-  ai_generated?: boolean
-  ai_parameters?: any
-  created_by_user_id?: number
-  scoring_type?: string
-  usage_count?: number
-  average_rating?: number
-  total_ratings?: number
-  isActive?: boolean
-  isFeatured?: boolean
-  isPublic?: boolean
-  is_benchmark?: boolean
-  is_hero_wod?: boolean
-  coach_notes?: string
-  tags?: any
-  status?: string
+
+  @IsString()
+  @IsOptional()
   workout_type?: string
-  blocks?: WorkoutBlocks
-  schedule_date?: string
+
+  @IsInt()
+  @IsOptional()
+  estimated_duration?: string
+
+  @IsString()
+  @IsOptional()
+  intensity?: string
+
+  @IsString()
+  @IsOptional()
+  difficulty?: string
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['draft', 'published', 'archived'])
+  status?: string
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean
+
+  @IsBoolean()
+  @IsOptional()
+  isFeatured?: boolean
+
+  @IsBoolean()
+  @IsOptional()
+  isPublic?: boolean
+
+  @IsOptional()
+  blocks?: Record<string, unknown>
+
+  @IsArray()
+  @IsOptional()
+  tags?: string[]
+
+  @IsString()
+  @IsOptional()
+  scheduled_date?: string
 }
 
-export class GenerateWeeklyWorkoutDto {
+export class GenerateWorkoutDto {
   @IsISO8601()
   date!: string
 
@@ -78,14 +178,13 @@ export class GenerateWeeklyWorkoutDto {
   tags?: string[]
 
   @IsOptional()
-  seed?: any
+  seed?: Record<string, unknown>
 }
 
-export class QueryDto {
+export class WorkoutQueryDto {
   @IsOptional()
   @Type(() => String)
   @IsString()
-
   limit?: string
 
   @IsOptional()
@@ -107,22 +206,14 @@ export class QueryDto {
 
   @IsOptional()
   @Type(() => String)
+  @IsIn(['draft', 'published', 'archived'])
   status?: string
 
   @IsOptional()
   @Type(() => String)
-  schedule_date?: string
+  scheduled_date?: string
 
-}
-
-export class BasesWorkoutDto {
-  id: string
-  wod_date: string
-  status: string
-  blocks_json: WorkoutBlocks
-  tags_json: string[]
-  created_at: string
-  updated_at: string
-  sport_id: string
-
+  @IsOptional()
+  @IsUUID()
+  sport_id?: string
 }

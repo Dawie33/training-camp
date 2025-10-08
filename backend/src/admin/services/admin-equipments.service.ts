@@ -2,8 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
 import { slugify } from "src/common/utils/utils"
-import { CreateEquipmentDto, UpdateEquipmentDto } from "src/equipments/dto/equipments.dto"
-import { QueryDto } from "src/workouts/dto/workout.dto"
+import { CreateEquipmentDto, EquipmentQueryDto, UpdateEquipmentDto } from "src/equipments/dto/equipments.dto"
 
 @Injectable()
 export class AdminEquipmentsService {
@@ -20,7 +19,7 @@ export class AdminEquipmentsService {
     * @param {string} query.orderDir - Sens de l'ordre. Par défaut : « desc ».
     * @returns {Promise<{rows: Equipment[], count: number}>} - Promesse qui renvoie un objet contenant les lignes et le nombre.
      **/
-    async findAll({ limit = '50', offset = '0', search = '', orderBy = 'created_at', orderDir = 'desc' }: QueryDto) {
+    async findAll({ limit = '50', offset = '0', search = '', orderBy = 'created_at', orderDir = 'desc' }: EquipmentQueryDto) {
         let query = this.knex('equipments').select('*')
 
         if (search) {

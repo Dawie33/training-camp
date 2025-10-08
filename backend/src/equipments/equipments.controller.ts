@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from "@nestjs/common"
-import { QueryDto } from "src/workouts/dto/workout.dto"
+import { EquipmentQueryDto } from "./dto"
 import { EquipmentsService } from "./equipments.service"
 
 
@@ -10,7 +10,7 @@ export class EquipmentsController {
     ) { }
 
     @Get()
-    async findAll(@Query() query: QueryDto) {
+    async findAll(@Query() query: EquipmentQueryDto) {
         return this.service.findAll(query)
     }
 }
