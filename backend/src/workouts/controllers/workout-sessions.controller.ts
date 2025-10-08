@@ -26,7 +26,6 @@ export class WorkoutSessionsController {
    */
   @Post()
   async create(@Req() req: any, @Body() data: CreateWorkoutSessionDto) {
-    console.log('🎯 Creating workout session:', { userId: req.user.id, data })
     const userId = req.user.id
     return this.sessionsService.create(userId, data)
   }

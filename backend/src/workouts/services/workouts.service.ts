@@ -18,12 +18,13 @@ export class WorkoutService {
     try {
       const rows = await this.knex('workouts')
         .select('*')
+        .where({ status: 'published' })
         .limit(Number(limit))
         .offset(Number(offset))
         .orderBy(orderBy, orderDir)
 
 
-      const countResult = await this.knex("workouts").count({ count: "*" }).first()
+      const countResult = await this.knex("workouts").where({ status: 'published' }).count({ count: "*" }).first()
       const count = Number(countResult?.count)
       return { rows, count }
 

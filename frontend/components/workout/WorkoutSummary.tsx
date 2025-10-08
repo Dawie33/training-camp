@@ -1,6 +1,6 @@
 'use client'
 
-import { workoutsService, type DailyWorkout, type WorkoutSession } from '@/lib/api'
+import { workoutsService, type DailyWorkout } from '@/lib/api'
 import { Check, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -125,11 +125,10 @@ export function WorkoutSummary({
                 className="transition-transform hover:scale-110"
               >
                 <Star
-                  className={`w-10 h-10 ${
-                    star <= (hoveredRating || rating)
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-muted-foreground'
-                  }`}
+                  className={`w-10 h-10 ${star <= (hoveredRating || rating)
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-muted-foreground'
+                    }`}
                 />
               </button>
             ))}
@@ -222,11 +221,10 @@ export function WorkoutSummary({
                 <button
                   key={level}
                   onClick={() => setMetrics({ ...metrics, perceived_effort: level })}
-                  className={`flex-1 py-2 rounded border transition-colors ${
-                    metrics.perceived_effort === level
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'border-border hover:bg-accent'
-                  }`}
+                  className={`flex-1 py-2 rounded border transition-colors ${metrics.perceived_effort === level
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border hover:bg-accent'
+                    }`}
                 >
                   {level}
                 </button>
@@ -254,14 +252,14 @@ export function WorkoutSummary({
         <div className="flex gap-4">
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex-1 px-6 py-4 border border-border rounded-lg font-semibold hover:bg-accent transition-colors"
+            className="flex-1 px-6 py-4 border border-border rounded-lg font-semibold hover:bg-accent transition-colors cursor-pointer"
           >
             Ignorer
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 bg-primary text-primary-foreground px-6 py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-primary text-primary-foreground px-6 py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSaving ? 'Sauvegarde...' : 'Enregistrer'}
           </button>

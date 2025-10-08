@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common"
+import { BadRequestException, Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
 import { QueryDto } from "../workouts/dto/workout.dto"
@@ -29,7 +29,17 @@ export class SportsService {
     }
 
     async getById(id: string) {
-        return this.knex("sports").where({ id }).first()
+
+        if (!id) {
+            throw new BadRequestException('id du sport manquant')
+        }
+        const sport = await this.knex("sports").where({ id }).first()
+
+        if (!sport) {
+            throw new BadRequestException('Sport introuvable')
+        }
+
+        return sport
     }
 
 }
