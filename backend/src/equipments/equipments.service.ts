@@ -12,19 +12,31 @@ export class EquipmentsService {
      * @param param0 { limit, offset, orderBy, orderDir }
      * @returns A promise that resolves to an object containing the rows and count.
      */
-    async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc' }: QueryDto) {
-        try {
-            const rows = await this.knex("equipments")
-                .select("*")
-                .limit(Number(limit))
-                .offset(Number(offset))
-                .orderBy(orderBy, orderDir)
+    async findAll({ limit = '50', offset = '0', search = 'name', orderBy = 'created_at', orderDir = 'desc' }: QueryDto) {
+        let query = this.knex('equipments').select('*')
 
-            const countResult = await this.knex("equipments").count({ count: "*" }).first()
-            const count = Number(countResult?.count)
-            return { rows, count }
-        } catch (error) {
-            throw new Error(`Error fetching equipments: ${error.message}`)
+        if (search) {
+            query = query.where('label', 'ilike', `%${search}%`)
+        }
+
+        const rows = await query
+            .limit(Number(limit))
+            .offset(Number(offset))
+            .orderBy(orderBy, orderDir)
+
+        const countResult = await this.knex('equipments')
+            .count('* as count')
+            .where((builder) => {
+                if (search) {
+                    builder.where('label', 'ilike', `%${search}%`)
+                }
+            })
+            .first()
+
+        return {
+            rows,
+            count: Number(countResult?.count || 0),
         }
     }
+
 }

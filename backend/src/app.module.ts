@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { KnexModule } from 'nest-knexjs'
 import knexConfig from '../knexfile'
+import { AdminModule } from './admin/admin.module'
 import { AuthModule } from './auth/auth.module'
 import { envValidationSchema } from './common/config/env.validation'
 import { EquipmentsModule } from './equipments/equipments.module'
@@ -22,7 +23,8 @@ import { WorkoutsModule } from './workouts/workouts.module'
     HealthcheckModule,
     SportsModule,
     EquipmentsModule,
-    ExercisesModule
+    ExercisesModule,
+    AdminModule
   ],
 })
 export class AppModule { }

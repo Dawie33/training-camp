@@ -1,7 +1,7 @@
 import { IsArray, IsObject, IsOptional, IsString } from 'class-validator'
-import type { WorkoutBlocks } from '../types/workout.types'
+import type { WorkoutBlocks } from './types/workout.types'
 
-export class UpdateBaseWorkoutDto {
+export class UpdateWorkoutDto {
   @IsOptional()
   @IsString()
   wod_date?: string

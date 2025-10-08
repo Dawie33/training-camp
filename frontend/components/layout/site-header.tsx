@@ -35,6 +35,7 @@ export default function SiteHeader() {
                     <Link href="/learn" className="hover:text-foreground transition-colors">LEARN</Link>
                     <Link href="/shop" className="hover:text-foreground transition-colors">SHOP</Link>
                     <Link href="/workouts" className="hover:text-foreground transition-colors">MY WORKOUTS</Link>
+                    <Link href="/admin" className="hover:text-foreground transition-colors text-orange-500">ADMIN</Link>
                 </nav>
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" className="hover:bg-accent">

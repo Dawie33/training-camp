@@ -2,7 +2,7 @@ import type { PaginatedResponse, QueryDto, Sport } from '../types/sport'
 import { apiClient } from './client'
 
 export class SportsService {
-  private endpoint = '/api/sports'
+  private endpoint = '/sports'
 
   /**
    * Get all sports with optional pagination and filtering

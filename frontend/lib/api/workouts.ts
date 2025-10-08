@@ -50,6 +50,7 @@ export interface DailyWorkout {
   description: string
   scheduled_date: string
   tags: string[]
+  status: string
 }
 
 export interface WorkoutSessionCreate {
@@ -82,7 +83,7 @@ export const workoutsService = {
    * @returns Le workout
    */
   async getDailyWorkoutById(workoutId: string): Promise<DailyWorkout> {
-    return apiClient.get<DailyWorkout>(`/api/workouts/daily/${workoutId}`)
+    return apiClient.get<DailyWorkout>(`/workouts/daily/${workoutId}`)
   },
 
   /**
@@ -92,7 +93,7 @@ export const workoutsService = {
    * @returns Le workout du jour
    */
   async getDailyWorkout(sportId: string, date?: string): Promise<DailyWorkout> {
-    const url = `/api/workouts/daily/sports/${sportId}${date ? `?date=${date}` : ''}`
+    const url = `/workouts/daily/sports/${sportId}${date ? `?date=${date}` : ''}`
     return apiClient.get<DailyWorkout>(url)
   },
 
@@ -116,7 +117,7 @@ export const workoutsService = {
    */
   async updateSession(sessionId: string, data: WorkoutSessionUpdate): Promise<WorkoutSession> {
     const token = localStorage.getItem('access_token')
-    return apiClient.patch<WorkoutSession>(`/api/workout-sessions/${sessionId}`, data, {
+    return apiClient.patch<WorkoutSession>(`/workout-sessions/${sessionId}`, data, {
       headers: { Authorization: `Bearer ${token}` }
     })
   },
@@ -128,7 +129,7 @@ export const workoutsService = {
    */
   async getSession(sessionId: string): Promise<WorkoutSession> {
     const token = localStorage.getItem('access_token')
-    return apiClient.get<WorkoutSession>(`/api/workout-sessions/${sessionId}`, {
+    return apiClient.get<WorkoutSession>(`/workout-sessions/${sessionId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
   },

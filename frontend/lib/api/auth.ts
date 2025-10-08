@@ -2,7 +2,7 @@ import type { AuthResponse, LoginDto, SignupDto, User } from '../types/auth'
 import { apiClient } from './client'
 
 export class AuthService {
-  private endpoint = '/api/auth'
+  private endpoint = '/auth'
 
   /**
    * Inscrire un nouvel utilisateur.

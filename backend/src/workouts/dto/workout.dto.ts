@@ -38,7 +38,7 @@ export class UpdateWorkoutDto {
   description?: string
   type?: string
   structure?: any
-  estimated_duration?: number
+  estimated_duration?: string
   intensity?: string
   difficulty?: string
   scaling_options?: any
@@ -60,6 +60,10 @@ export class UpdateWorkoutDto {
   is_hero_wod?: boolean
   coach_notes?: string
   tags?: any
+  status?: string
+  workout_type?: string
+  blocks?: WorkoutBlocks
+  schedule_date?: string
 }
 
 export class GenerateWeeklyWorkoutDto {
@@ -96,6 +100,18 @@ export class QueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   orderDir?: 'asc' | 'desc'
+
+  @IsOptional()
+  @Type(() => String)
+  search?: string
+
+  @IsOptional()
+  @Type(() => String)
+  status?: string
+
+  @IsOptional()
+  @Type(() => String)
+  schedule_date?: string
 
 }
 

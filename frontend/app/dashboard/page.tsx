@@ -34,7 +34,7 @@ function DashboardContent() {
 
         // Récupérer le profil complet de l'utilisateur
         const token = localStorage.getItem('access_token')
-        const profile = await apiClient.get<UserProfile>('/api/auth/profile', {
+        const profile = await apiClient.get<UserProfile>('/auth/profile', {
           headers: { Authorization: `Bearer ${token}` }
         })
 
