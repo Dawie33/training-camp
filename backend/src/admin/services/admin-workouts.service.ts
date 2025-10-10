@@ -3,6 +3,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { OpenAI } from 'openai'
+import { slugify } from 'src/common/utils/utils'
 import { WorkoutQueryDto } from 'src/workouts/dto/workout.dto'
 import { UpdateWorkoutDto } from '../../workouts/dto/workout.dto'
 import { DailyPlan, SportRef, SportSlug, WorkoutBlocks } from '../../workouts/types/workout.types'
@@ -15,11 +16,9 @@ export class AdminWorkoutService {
 
     constructor(@InjectModel() private readonly knex: Knex) { }
 
-    async findAll({ limit = '20', offset = '0', search = '', status = '', scheduled_date }: WorkoutQueryDto
+    async findAll({ limit = '20', offset = '0', search = '', status = '', scheduled_date, sport_id }: WorkoutQueryDto
     ) {
-        let query = this.knex('workouts')
-            .select('workouts.*', 'sports.name as sport_name')
-            .leftJoin('sports', 'workouts.sport_id', 'sports.id')
+        let query = this.knex('workouts').select('*')
 
         if (search) {
             query = query.where('workouts.name', 'ilike', `%${search}%`)
@@ -27,6 +26,14 @@ export class AdminWorkoutService {
 
         if (status) {
             query = query.where('workouts.status', status)
+        }
+
+        if (scheduled_date) {
+            query = query.where('workouts.scheduled_date', scheduled_date)
+        }
+
+        if (sport_id) {
+            query = query.where('workouts.sport_id', sport_id)
         }
 
         const rows = await query
@@ -45,6 +52,10 @@ export class AdminWorkoutService {
 
         if (scheduled_date) {
             countQuery.where('scheduled_date', scheduled_date)
+        }
+
+        if (sport_id) {
+            countQuery.where('sport_id', sport_id)
         }
 
         const countResult = await countQuery.first()
@@ -137,7 +148,7 @@ export class AdminWorkoutService {
      * @param date ISO (yyyy-mm-dd)
      * @param sport {id, slug}
      */
-    async generateDaily(
+    async generate(
         date: string,
         sport: SportRef,
         seed?: Partial<WorkoutBlocks>,
@@ -176,7 +187,186 @@ export class AdminWorkoutService {
         if (!day || !day.date || !day.blocks) {
             throw new Error('IA: JSON invalide (séance journalière)')
         }
-        return { ...day, sportId: sport.id }
+
+        const insertedWorkout = await this.insertWorkout({
+            date: day.date,
+            sportId: sport.id,
+            tags,
+            blocks: day.blocks,
+            name: day.name,
+            workout_type: day.workout_type,
+            difficulty: day.difficulty,
+            estimated_duration: day.estimated_duration,
+            intensity: day.intensity,
+            description: day.description,
+            coach_notes: day.coach_notes,
+        })
+
+        return { success: true, ...insertedWorkout }
+    }
+
+    /**
+  * Ajoute un nouveau workout.
+  * @param workout Données du workout incluant métadonnées
+  * @returns
+  */
+    async insertWorkout(
+        workout: {
+            date?: string // Optionnel maintenant
+            sportId: string
+            tags: string[]
+            blocks: WorkoutBlocks
+            name?: string
+            workout_type?: string
+            difficulty?: string
+            estimated_duration?: number
+            intensity?: string
+            description?: string
+            coach_notes?: string
+        },
+    ) {
+        const trx = await this.knex.transaction()
+
+        try {
+            const record: any = {
+                status: 'draft',
+                blocks: typeof workout.blocks === 'string' ? workout.blocks : JSON.stringify(workout.blocks),
+                tags: typeof workout.tags === 'string' ? workout.tags : JSON.stringify(workout.tags ?? []),
+                sport_id: workout.sportId,
+                created_by_user_id: null, // Génération automatique, pas d'utilisateur spécifique
+                ai_generated: true,
+            }
+
+            // Ajouter scheduled_date seulement si fourni
+            if (workout.date) {
+                record.scheduled_date = workout.date
+            }
+
+            // Ajouter les champs optionnels s'ils existent
+            if (workout.name) record.name = workout.name
+            if (workout.workout_type) record.workout_type = workout.workout_type
+            if (workout.difficulty) record.difficulty = workout.difficulty
+            if (workout.estimated_duration) record.estimated_duration = workout.estimated_duration
+            if (workout.intensity) record.intensity = workout.intensity
+            if (workout.description) record.description = workout.description
+            if (workout.coach_notes) record.coach_notes = workout.coach_notes
+
+            // Insérer le workout
+            let row: any
+            if (workout.date) {
+                [row] = await trx('workouts')
+                    .insert(record)
+                    .onConflict(['scheduled_date', 'sport_id'])
+                    .merge({
+                        ...record,
+                        updated_at: trx.fn.now(),
+                    })
+                    .returning('*')
+            } else {
+                [row] = await trx('workouts')
+                    .insert(record)
+                    .returning('*')
+            }
+
+            // Extraire et insérer les exercices et équipements depuis les blocks
+            await this.extractAndInsertExercisesAndEquipments(trx, row.id, workout.blocks, workout.difficulty)
+
+            await trx.commit()
+            return row
+        } catch (error) {
+            await trx.rollback()
+            throw error
+        }
+    }
+
+    /**
+     * Extrait les exercices et équipements depuis les blocks et les insère dans les tables
+     * @param trx Transaction Knex
+     * @param workoutId ID du workout
+     * @param blocks Blocks du workout
+     * @param difficulty Difficulté du workout
+     */
+    private async extractAndInsertExercisesAndEquipments(
+        trx: Knex.Transaction,
+        workoutId: string,
+        blocks: WorkoutBlocks,
+        difficulty?: string,
+    ) {
+        const blocksData = typeof blocks === 'string' ? JSON.parse(blocks) : blocks
+        const equipmentSet = new Set<string>()
+        let orderIndex = 0
+
+        // Parcourir tous les blocks (warmup, main, cooldown, etc.)
+        for (const [blockType, blockData] of Object.entries(blocksData)) {
+            if (!blockData || typeof blockData !== 'object') continue
+
+            const exercises = (blockData as any).exercises || []
+
+            for (const ex of exercises) {
+                if (!ex.name) continue
+
+                const slug = slugify(ex.name)
+
+                // 1. Insérer l'exercice s'il n'existe pas déjà
+                const [exercise] = await trx('exercises')
+                    .insert({
+                        name: ex.name,
+                        slug,
+                        description: ex.description || null,
+                        category: ex.category || 'strength',
+                        difficulty: difficulty || 'intermediate',
+                        measurement_type: ex.measurement_type || 'reps',
+                        equipment_required: ex.equipment ? JSON.stringify([ex.equipment]) : null,
+                        muscle_groups: ex.muscle_groups ? JSON.stringify(ex.muscle_groups) : null,
+                        instructions: ex.instructions || null,
+                    })
+                    .onConflict('slug')
+                    .ignore()
+                    .returning('id')
+
+                // Récupérer l'ID si déjà existant
+                const exerciseId =
+                    exercise?.id || (await trx('exercises').where('slug', slug).first()).id
+
+                // 2. Lier l'exercice au workout dans workout_exercises
+                await trx('workout_exercises').insert({
+                    workout_id: workoutId,
+                    exercise_id: exerciseId,
+                    order_index: orderIndex++,
+                    sets: ex.sets || null,
+                    reps: ex.reps || null,
+                    weight: ex.weight || null,
+                    distance: ex.distance || null,
+                    time: ex.time || ex.duration || null,
+                    specific_instructions: ex.notes || null,
+                    is_warmup: blockType.toLowerCase().includes('warmup'),
+                    is_cooldown: blockType.toLowerCase().includes('cooldown'),
+                    is_main_workout: blockType.toLowerCase().includes('main') || blockType.toLowerCase().includes('metcon'),
+                })
+
+                // 3. Collecter les équipements
+                if (ex.equipment) {
+                    if (Array.isArray(ex.equipment)) {
+                        ex.equipment.forEach((eq: string) => equipmentSet.add(eq))
+                    } else {
+                        equipmentSet.add(ex.equipment)
+                    }
+                }
+            }
+        }
+
+        // 4. Insérer les équipements dans la table equipments
+        for (const equipment of equipmentSet) {
+            const slug = slugify(equipment)
+            await trx('equipments')
+                .insert({
+                    slug,
+                    label: equipment,
+                    meta: JSON.stringify({}),
+                })
+                .onConflict('slug')
+                .ignore()
+        }
     }
 
 

@@ -77,7 +77,8 @@ export type DailyPlan = {
   name?: string
   workout_type?: string         // Type: amrap, for_time, intervals, strength, etc.
   difficulty?: string           // Difficulté
-  intensity?: string            // Intensité
+  intensity?: string
+  estimated_duration?: number           // Intensité
 }
 
 

@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Query } from '@nestjs/common'
-import { AdminWorkoutService } from '../services/admin-workouts.service'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
 import { WorkoutQueryDto } from 'src/workouts/dto'
+import { WorkoutBlocks } from 'src/workouts/types/workout.types'
+import { AdminWorkoutService } from '../services/admin-workouts.service'
 
 @Controller('admin/workouts')
 export class AdminWorkoutsController {
@@ -21,6 +22,21 @@ export class AdminWorkoutsController {
   async getWorkoutExercises(@Param('id') id: string) {
     return this.service.getWorkoutExercises(id)
   }
+
+  @Post('generate')
+  async generate(
+    @Body()
+    body: {
+      date: string
+      sport: { id: string; slug: string }
+      seed?: Partial<WorkoutBlocks>
+      tags?: string[]
+    },
+  ) {
+    const { date, sport, seed, tags = [] } = body
+    return this.service.generate(date, sport, seed, tags)
+  }
+
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() data: any) {

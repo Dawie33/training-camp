@@ -21,7 +21,7 @@ export class SportsService {
         isActive = false,
         search = ''
     }: SportsQueryDto) {
-        let query = this.knex("exercises").select("*")
+        let query = this.knex("sports").select("*")
 
         // Recherche par nom
         if (search) {
@@ -44,7 +44,7 @@ export class SportsService {
             .orderBy(orderBy, orderDir)
 
         // Count avec les mêmes filtres
-        let countQuery = this.knex("exercises").count({ count: "*" })
+        let countQuery = this.knex("sports").count({ count: "*" })
 
         if (search) {
             countQuery = countQuery.where('name', 'ilike', `%${search}%`)
