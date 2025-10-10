@@ -1,5 +1,5 @@
 import type { AuthResponse, LoginDto, SignupDto, User } from '../types/auth'
-import { apiClient } from './client'
+import { apiClient } from './apiClient'
 
 export class AuthService {
   private endpoint = '/auth'

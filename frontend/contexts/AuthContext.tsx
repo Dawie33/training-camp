@@ -6,7 +6,7 @@ import { AuthContext } from '@/hooks/useAuth'
 import { ReactNode, useEffect, useState } from 'react'
 
 /**
-* Contexte React qui fournit l'état et les fonctions liés à l'authentification.
+* Contexte qui fournit l'état et les fonctions liés à l'authentification.
 *
 * Il utilise `authService` pour vérifier si l'utilisateur est authentifié au montage, et
 * pour se connecter, s'inscrire et se déconnecter.

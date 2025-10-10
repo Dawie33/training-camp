@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { AdminWorkout, getWorkout, updateWorkout } from '@/lib/api/admin'
+import { createWorkout, getWorkout, updateWorkout } from '@/lib/api/admin'
+import type { AdminWorkout } from '@/lib/types/workout'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -17,7 +18,8 @@ import { toast } from 'sonner'
 
 export default function WorkoutEditPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const isNewMode = params.id === 'new'
+  const [loading, setLoading] = useState(!isNewMode)
   const [saving, setSaving] = useState(false)
   const [workout, setWorkout] = useState<AdminWorkout | null>(null)
   const [formData, setFormData] = useState({
@@ -31,9 +33,19 @@ export default function WorkoutEditPage({ params }: { params: { id: string } }) 
     isActive: true,
     isFeatured: false,
     isPublic: true,
+    is_benchmark: false,
+    ai_generated: false,
+    sport_id: '',
     blocks: '',
     tags: '',
-    schedule_date: '',
+    scheduled_date: '',
+    scaling_options: '',
+    equipment_required: '',
+    focus_areas: '',
+    metrics_tracked: '',
+    coach_notes: '',
+    target_metrics: '',
+    ai_parameters: '',
   })
 
   useEffect(() => {
@@ -44,6 +56,12 @@ export default function WorkoutEditPage({ params }: { params: { id: string } }) 
   * Enfin, l'état de chargement est défini sur faux.
   */
     const fetchWorkout = async () => {
+      // En mode création, ne pas charger de workout
+      if (isNewMode) {
+        setLoading(false)
+        return
+      }
+
       try {
         const data = await getWorkout(params.id)
         setWorkout(data)
@@ -58,9 +76,19 @@ export default function WorkoutEditPage({ params }: { params: { id: string } }) 
           isActive: data.isActive !== undefined ? data.isActive : true,
           isFeatured: data.isFeatured || false,
           isPublic: data.isPublic !== undefined ? data.isPublic : true,
-          blocks: '',
-          tags: '',
-          schedule_date: data.scheduled_date || '',
+          is_benchmark: false,
+          ai_generated: data.ai_generated || false,
+          sport_id: data.sport_id || '',
+          blocks: data.blocks ? JSON.stringify(data.blocks, null, 2) : '',
+          tags: data.tags ? data.tags.join(', ') : '',
+          scheduled_date: data.scheduled_date || '',
+          scaling_options: '',
+          equipment_required: '',
+          focus_areas: '',
+          metrics_tracked: '',
+          coach_notes: '',
+          target_metrics: '',
+          ai_parameters: '',
         })
       } catch (error) {
         console.error('Erreur lors du chargement du workout', error)
@@ -71,12 +99,12 @@ export default function WorkoutEditPage({ params }: { params: { id: string } }) 
     }
 
     fetchWorkout()
-  }, [params.id])
+  }, [params.id, isNewMode])
 
 
   /**
-   * Envoie le formulaire de modification d'entraînement à l'API.
-   * Si la modification réussit, affiche un message de succès et redirige vers la page de la liste des entraînements.
+   * Envoie le formulaire de création/modification d'entraînement à l'API.
+   * Si la création/modification réussit, affiche un message de succès et redirige vers la page de la liste des entraînements.
    * Sinon, affiche un message d'erreur.
    * Enfin, défini l'état de chargement sur faux.
    */
@@ -85,12 +113,46 @@ export default function WorkoutEditPage({ params }: { params: { id: string } }) 
     setSaving(true)
 
     try {
-      await updateWorkout(params.id, formData)
-      toast.success('Workout updated')
+      // Helper pour parser JSON ou comma-separated values
+      const parseJsonOrArray = (value: string) => {
+        if (!value.trim()) return undefined
+        try {
+          return JSON.parse(value)
+        } catch {
+          return value.split(',').map(v => v.trim()).filter(Boolean)
+        }
+      }
+
+      // Préparer les données: convertir les strings en objets/arrays
+      const submitData: any = {
+        name: formData.name,
+        description: formData.description || undefined,
+        workout_type: formData.workout_type || undefined,
+        difficulty: formData.difficulty,
+        intensity: formData.intensity || undefined,
+        estimated_duration: formData.estimated_duration || undefined,
+        status: formData.status,
+        isActive: formData.isActive,
+        isFeatured: formData.isFeatured,
+        isPublic: formData.isPublic,
+        sport_id: formData.sport_id || undefined,
+        scheduled_date: formData.scheduled_date || undefined,
+        tags: parseJsonOrArray(formData.tags),
+        blocks: formData.blocks ? JSON.parse(formData.blocks) : undefined,
+      }
+
+      if (isNewMode) {
+        await createWorkout(submitData)
+        toast.success('Workout créé avec succès')
+      } else {
+        await updateWorkout(params.id, submitData)
+        toast.success('Workout mis à jour')
+      }
+
       router.push('/admin/workouts')
     } catch (error) {
       console.error(error)
-      toast.error('Erreur lors de la mise à jour du workout')
+      toast.error(isNewMode ? 'Erreur lors de la création du workout' : 'Erreur lors de la mise à jour du workout')
     } finally {
       setSaving(false)
     }
@@ -110,17 +172,36 @@ export default function WorkoutEditPage({ params }: { params: { id: string } }) 
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Edit Workout</CardTitle>
-            <CardDescription>Sport: {workout?.name || 'N/A'}</CardDescription>
+            <CardTitle>{isNewMode ? 'Créer un Workout' : 'Modifier le Workout'}</CardTitle>
+            <CardDescription>
+              {isNewMode ? 'Créez un nouvel entraînement' : `Sport: ${workout?.name || 'N/A'}`}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
+            {isNewMode && (
+              <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <h3 className="text-sm font-medium mb-2">🤖 Génération IA</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Générez automatiquement un workout personnalisé avec l'IA
+                </p>
+                <Button type="button" variant="outline" className="w-full">
+                  ✨ Générer un Workout avec l'IA
+                </Button>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Informations de base</h3>
+
+                <div>
+                  <label className="text-sm font-medium">Name *</label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
               </div>
 
               <div>
@@ -230,14 +311,119 @@ export default function WorkoutEditPage({ params }: { params: { id: string } }) 
                     Public
                   </label>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_benchmark"
+                    checked={formData.is_benchmark}
+                    onChange={(e) => setFormData({ ...formData, is_benchmark: e.target.checked })}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="is_benchmark" className="text-sm font-medium">
+                    Benchmark
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Détails avancés</h3>
+
+                <div>
+                  <label className="text-sm font-medium">Sport ID</label>
+                  <Input
+                    value={formData.sport_id}
+                    onChange={(e) => setFormData({ ...formData, sport_id: e.target.value })}
+                    placeholder="UUID du sport"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Scheduled Date</label>
+                  <Input
+                    type="date"
+                    value={formData.scheduled_date}
+                    onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Coach Notes</label>
+                  <Textarea
+                    value={formData.coach_notes}
+                    onChange={(e) => setFormData({ ...formData, coach_notes: e.target.value })}
+                    rows={3}
+                    placeholder="Notes pour les coachs..."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Tags (séparés par des virgules)</label>
+                  <Input
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    placeholder="cardio, strength, endurance"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Scaling Options (JSON ou comma-separated)</label>
+                  <Textarea
+                    value={formData.scaling_options}
+                    onChange={(e) => setFormData({ ...formData, scaling_options: e.target.value })}
+                    rows={2}
+                    placeholder='["rx", "scaled", "beginner"]'
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Equipment Required (JSON ou comma-separated)</label>
+                  <Textarea
+                    value={formData.equipment_required}
+                    onChange={(e) => setFormData({ ...formData, equipment_required: e.target.value })}
+                    rows={2}
+                    placeholder='["barbell", "pull-up bar", "rower"]'
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Focus Areas (JSON ou comma-separated)</label>
+                  <Textarea
+                    value={formData.focus_areas}
+                    onChange={(e) => setFormData({ ...formData, focus_areas: e.target.value })}
+                    rows={2}
+                    placeholder='["endurance", "strength", "technique"]'
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Metrics Tracked (JSON ou comma-separated)</label>
+                  <Textarea
+                    value={formData.metrics_tracked}
+                    onChange={(e) => setFormData({ ...formData, metrics_tracked: e.target.value })}
+                    rows={2}
+                    placeholder='["time", "rounds", "reps"]'
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Blocks (JSON)</label>
+                  <Textarea
+                    value={formData.blocks}
+                    onChange={(e) => setFormData({ ...formData, blocks: e.target.value })}
+                    rows={8}
+                    placeholder='{"warmup": [], "strength": {}, "metcon": {}}'
+                    className="font-mono text-xs"
+                  />
+                </div>
               </div>
 
               <div className="flex gap-4 pt-4">
                 <Button type="submit" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save'}
+                  {saving ? 'Enregistrement...' : isNewMode ? 'Créer' : 'Sauvegarder'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => router.back()}>
-                  Cancel
+                  Annuler
                 </Button>
               </div>
             </form>

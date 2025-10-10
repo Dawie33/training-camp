@@ -4,7 +4,8 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { WorkoutCard } from '@/components/workout/WorkoutCard'
 import { useSport } from '@/contexts/SportContext'
 import { useAuth } from '@/hooks/useAuth'
-import { apiClient, sportsService, workoutsService, type DailyWorkout } from '@/lib/api'
+import { apiClient, sportsService, workoutsService } from '@/lib/api'
+import { Workouts } from '@/lib/types/workout'
 import { getSportImage } from '@/lib/utils/sport-images'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -19,7 +20,7 @@ function DashboardContent() {
   const { activeSport, setUserSports } = useSport()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [dailyWorkout, setDailyWorkout] = useState<DailyWorkout | null>(null)
+  const [dailyWorkout, setDailyWorkout] = useState<Workouts | null>(null)
   const [workoutLoading, setWorkoutLoading] = useState(false)
 
   useEffect(() => {

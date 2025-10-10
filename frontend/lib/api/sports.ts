@@ -1,59 +1,79 @@
-import type { PaginatedResponse, QueryDto, Sport } from '../types/sport'
-import { apiClient } from './client'
+import { ResourceApi } from './resourceApi'
+import type { CreateSportDTO, Sport, SportCategory, SportQueryParams, UpdateSportDTO } from '../types/sport'
+
+
+/**
+ * API Sports - Gestion des sports
+ * Utilise ResourceApi pour les opérations CRUD standard
+ */
+export const sportsApi = new ResourceApi<Sport, CreateSportDTO, UpdateSportDTO>('/sports')
+
 
 export class SportsService {
-  private endpoint = '/sports'
-
   /**
-   * Get all sports with optional pagination and filtering
+   * Récupère tous les sports avec pagination et filtres
+   * @param query Paramètres de requête (limit, offset, orderBy, etc.)
+   * @returns { rows: Sport[], count: number }
    */
-  async getAll(query?: QueryDto): Promise<PaginatedResponse<Sport>> {
-    const params = new URLSearchParams()
-
-    if (query?.offset) params.append('offset', query.offset.toString())
-    if (query?.limit) params.append('limit', query.limit.toString())
-    if (query?.orderBy) params.append('orderBy', query.orderBy)
-    if (query?.orderDir) params.append('orderDir', query.orderDir)
-
-    const queryString = params.toString()
-    const url = queryString ? `${this.endpoint}?${queryString}` : this.endpoint
-
-    return apiClient.get<PaginatedResponse<Sport>>(url)
+  async getAll(query?: SportQueryParams) {
+    return sportsApi.getAll(query)
   }
 
   /**
-   * Get a single sport by ID
+   * Récupère un sport par son ID
+   * @param id Identifiant du sport
+   * @returns Le sport correspondant
    */
   async getById(id: string): Promise<Sport> {
-    return apiClient.get<Sport>(`${this.endpoint}/${id}`)
+    return sportsApi.getOne(id)
   }
 
   /**
-   * Get sports by category
+   * Récupère les sports par catégorie
+   * @param category Catégorie du sport
+   * @param query Paramètres de requête optionnels
+   * @returns { rows: Sport[], count: number }
    */
-  async getByCategory(category: string, query?: QueryDto): Promise<PaginatedResponse<Sport>> {
-    const params = new URLSearchParams({ category })
-
-    if (query?.offset) params.append('offset', query.offset.toString())
-    if (query?.limit) params.append('limit', query.limit.toString())
-    if (query?.orderBy) params.append('orderBy', query.orderBy)
-    if (query?.orderDir) params.append('orderDir', query.orderDir)
-
-    return apiClient.get<PaginatedResponse<Sport>>(`${this.endpoint}?${params.toString()}`)
+  async getByCategory(category: SportCategory, query?: SportQueryParams) {
+    return sportsApi.getAll({ ...query, category })
   }
 
   /**
-   * Get only active sports
+   * Récupère uniquement les sports actifs
+   * @param query Paramètres de requête optionnels
+   * @returns { rows: Sport[], count: number }
    */
-  async getActive(query?: QueryDto): Promise<PaginatedResponse<Sport>> {
-    const params = new URLSearchParams({ isActive: 'true' })
+  async getActive(query?: SportQueryParams) {
+    return sportsApi.getAll({ ...query, isActive: true })
+  }
 
-    if (query?.offset) params.append('offset', query.offset.toString())
-    if (query?.limit) params.append('limit', query.limit.toString())
-    if (query?.orderBy) params.append('orderBy', query.orderBy)
-    if (query?.orderDir) params.append('orderDir', query.orderDir)
-    return apiClient.get<PaginatedResponse<Sport>>(`${this.endpoint}?${params.toString()}`)
+  /**
+   * Crée un nouveau sport
+   * @param data Données du sport à créer
+   * @returns Le sport créé
+   */
+  async create(data: CreateSportDTO): Promise<Sport> {
+    return sportsApi.create(data)
+  }
+
+  /**
+   * Met à jour un sport
+   * @param id Identifiant du sport
+   * @param data Données à mettre à jour
+   * @returns Le sport mis à jour
+   */
+  async update(id: string, data: UpdateSportDTO): Promise<Sport> {
+    return sportsApi.update(id, data)
+  }
+
+  /**
+   * Supprime un sport
+   * @param id Identifiant du sport
+   */
+  async delete(id: string): Promise<void> {
+    return sportsApi.delete(id)
   }
 }
+
 
 export const sportsService = new SportsService()

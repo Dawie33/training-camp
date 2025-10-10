@@ -1,12 +1,12 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { deleteEquipment, getEquipments } from '@/lib/api/admin'
 import { Edit, Plus, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 export default function EquipmentsPage() {
@@ -15,22 +15,23 @@ export default function EquipmentsPage() {
   const [search, setSearch] = useState('')
   const [total, setTotal] = useState(0)
 
-  const loadEquipments = async () => {
+  const fetchEquipments = useCallback(async () => {
     setLoading(true)
     try {
       const data = await getEquipments({ limit: 100, search })
       setEquipments(data.rows)
       setTotal(data.count)
     } catch (error) {
+      console.error('Failed to load equipments', error)
       toast.error('Failed to load equipments')
     } finally {
       setLoading(false)
     }
-  }
+  }, [search])
 
   useEffect(() => {
-    loadEquipments()
-  }, [search])
+    fetchEquipments()
+  }, [fetchEquipments])
 
   const handleDelete = async (id: string, label: string) => {
     if (!confirm(`Delete equipment "${label}"?`)) return
@@ -38,8 +39,9 @@ export default function EquipmentsPage() {
     try {
       await deleteEquipment(id)
       toast.success('Equipment deleted')
-      loadEquipments()
+      fetchEquipments()
     } catch (error) {
+      console.error('Failed to delete equipment', error)
       toast.error('Failed to delete equipment')
     }
   }

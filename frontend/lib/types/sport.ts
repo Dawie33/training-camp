@@ -23,20 +23,30 @@ export interface Sport {
   updated_at: string
 }
 
-export interface QueryDto {
-  offset?: number
-  limit?: number
-  orderBy?: string
-  orderDir?: 'asc' | 'desc'
+/**
+ * Types pour l'API Sports
+ */
+export interface CreateSportDTO {
+  name: string
+  slug?: string
+  icon?: string | null
+  description?: string | null
+  category: SportCategory
+  common_metrics?: string[]
+  equipment_categories?: string[] | null
+  isActive?: boolean
+  requires_premium?: boolean
+  sort_order?: number
 }
 
-export interface PaginatedResponse<T> {
-  rows: T[]
-  count: number
-  meta: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-  }
+export type UpdateSportDTO = Partial<CreateSportDTO>
+
+export interface SportQueryParams {
+  limit?: number
+  offset?: number
+  orderBy?: string
+  orderDir?: 'asc' | 'desc'
+  category?: SportCategory
+  isActive?: boolean
+  [key: string]: string | number | boolean | undefined
 }

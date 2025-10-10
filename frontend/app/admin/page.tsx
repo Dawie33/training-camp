@@ -2,12 +2,13 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAdminStats } from '@/lib/api/admin'
+import { AdminStats } from '@/lib/types/auth'
 import { Dumbbell, Grid3x3, Package, Users, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 export default function AdminPage() {
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<AdminStats>()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

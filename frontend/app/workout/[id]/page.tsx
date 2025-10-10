@@ -3,8 +3,9 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { useSport } from '@/contexts/SportContext'
-import { workoutsService, type DailyWorkout } from '@/lib/api'
+import { workoutsService } from '@/lib/api'
 import { blockTypeColors } from '@/lib/constants/workout-blocks'
+import { Workouts } from '@/lib/types/workout'
 import { getSportImage } from '@/lib/utils/sport-images'
 import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react'
 import Link from 'next/link'
@@ -14,7 +15,7 @@ import { useEffect, useState } from 'react'
 function WorkoutDetailContent() {
   const params = useParams()
   const { activeSport } = useSport()
-  const [workout, setWorkout] = useState<DailyWorkout | null>(null)
+  const [workout, setWorkout] = useState<Workouts | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeSession, setActiveSession] = useState<string | null>(null)

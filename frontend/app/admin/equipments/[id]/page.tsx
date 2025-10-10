@@ -44,6 +44,7 @@ export default function EquipmentEditPage({ params }: { params: { id: string } }
       }
       router.push('/admin/equipments')
     } catch (error) {
+      console.error('Failed to save equipment', error)
       toast.error('Failed to save equipment')
     } finally {
       setSaving(false)
