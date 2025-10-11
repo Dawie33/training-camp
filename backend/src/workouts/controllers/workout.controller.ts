@@ -21,7 +21,7 @@ export class UserWorkoutController {
    * @param date Date du workout (optionnel, par défaut aujourd'hui)
    * @returns Le workout du jour pour ce sport
    */
-  @Get('daily/sports/:sportId')
+  @Get('daily/:sportId')
   async getDailyWorkout(
     @Param('sportId') sportId: string,
     @Query('date') date?: string
@@ -38,7 +38,7 @@ export class UserWorkoutController {
    * @param id ID du workout
    * @returns Le workout
    */
-  @Get('daily/:id')
+  @Get(':id')
   async getWorkoutById(@Param('id') id: string) {
     const workout = await this.service.getWorkoutById(id)
     if (!workout) {

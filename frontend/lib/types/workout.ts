@@ -26,7 +26,6 @@ export interface AdminWorkout {
     description?: string
     workout_type?: string
     sport_id?: string
-    sport_name?: string
     blocks?: Record<string, unknown>
     estimated_duration?: number
     intensity?: string
@@ -44,7 +43,7 @@ export interface AdminWorkout {
 }
 
 export interface CreateWorkoutDTO {
-    name: string
+    name?: string
     description?: string
     workout_type?: string
     sport_id?: string
@@ -69,6 +68,36 @@ export interface WorkoutQueryParams {
     status?: string
     sport_id?: string
     [key: string]: string | number | boolean | undefined
+}
+
+/**
+ * DTO pour la génération de workout via IA
+ */
+export interface GenerateWorkoutDto {
+    /** Date de planification du workout (format: YYYY-MM-DD) */
+    date: string
+    /** Informations sur le sport */
+    sport: {
+        /** UUID du sport */
+        id: string
+        /** Slug du sport (ex: "crossfit", "running", "cycling") */
+        slug: string
+    }
+    /** Paramètres optionnels pour influencer la génération */
+    seed?: {
+        /** Durée souhaitée en minutes */
+        duration_min?: number
+        /** Intensité souhaitée (low, moderate, high, very_high) */
+        intensity?: string
+        /** Difficulté (beginner, intermediate, advanced) */
+        difficulty?: string
+        /** Type de workout (amrap, for_time, emom, interval, etc.) */
+        workout_type?: string
+        /** Blocs spécifiques à inclure */
+        blocks?: WorkoutBlocks
+    }
+    /** Tags optionnels pour catégoriser le workout */
+    tags?: string[]
 }
 
 

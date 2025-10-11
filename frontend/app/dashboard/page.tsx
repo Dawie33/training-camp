@@ -227,10 +227,10 @@ function DashboardContent() {
                           <span className="text-sm text-white/90">{new Date(dailyWorkout.scheduled_date).toLocaleDateString('fr-FR')}</span>
                         </div>
 
-                        {dailyWorkout.blocks.duration_min && (
+                        {dailyWorkout.blocks?.duration_min && (
                           <div>
                             <span className="text-sm font-semibold px-2 py-1 bg-black/50 text-white rounded">
-                              {dailyWorkout.blocks.duration_min} min
+                              {dailyWorkout.blocks?.duration_min} min
                             </span>
                           </div>
 
@@ -263,8 +263,8 @@ function DashboardContent() {
                           )}
                         </div>
 
-                        {dailyWorkout.blocks.stimulus && (
-                          <p className="text-white/90 text-sm mb-3">{dailyWorkout.blocks.stimulus}</p>
+                        {dailyWorkout.blocks?.stimulus && (
+                          <p className="text-white/90 text-sm mb-3">{dailyWorkout.blocks?.stimulus}</p>
                         )}
                         {dailyWorkout.tags && dailyWorkout.tags.length > 0 && (
                           <div className="flex gap-2 flex-wrap">

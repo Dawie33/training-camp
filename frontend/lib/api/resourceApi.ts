@@ -117,27 +117,7 @@ export class ResourceApi<T, CreateDTO = Partial<T>, UpdateDTO = Partial<T>> {
     return apiClient.patch<T>(`${this.endpoint}/${id}`, data, options)
   }
 
-  /**
-   * Remplace complètement une ressource existante (PUT)
-   * Tous les champs doivent être fournis
-   *
-   * @param id Identifiant de la ressource à remplacer
-   * @param data Données complètes de remplacement
-   * @param options Options de requête supplémentaires
-   * @returns Promesse contenant la ressource remplacée
-   *
-   * @example
-   * ```typescript
-   * const replaced = await exercisesApi.replace('123', {
-   *   name: 'New Exercise',
-   *   category: 'Cardio',
-   *   description: 'Remplacement complet'
-   * })
-   * ```
-   */
-  async replace(id: string | number, data: CreateDTO, options?: RequestOptions): Promise<T> {
-    return apiClient.put<T>(`${this.endpoint}/${id}`, data, options)
-  }
+
 
   /**
    * Supprime une ressource

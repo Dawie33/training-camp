@@ -54,6 +54,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
     }
   }
@@ -98,6 +99,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
     }
   }
@@ -111,7 +113,7 @@ export class AuthService {
   async validateUser(userId: string) {
     const user = await this.knex('users')
       .where({ id: userId })
-      .first(['id', 'email', 'firstName', 'lastName', 'isActive'])
+      .first(['id', 'email', 'firstName', 'lastName', 'role', 'isActive'])
 
     if (!user || !user.isActive) {
       return null

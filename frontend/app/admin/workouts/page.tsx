@@ -68,8 +68,8 @@ export default function WorkoutsPage() {
     fetchWorkouts()
   }, [fetchWorkouts])
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Supprimer l'entraînement "${name || id}" ?`)) return
+  const handleDelete = async (id: string, name?: string) => {
+    if (!confirm(`Supprimer l'entraînement "${name}" ?`)) return
 
     try {
       await deleteWorkout(id)
@@ -97,7 +97,7 @@ export default function WorkoutsPage() {
           <p className="text-muted-foreground">Total: {total}</p>
         </div>
         <Link href="/admin/workouts/new">
-          <Button>
+          <Button className='hover:bg-red-500 hover:text-white'>
             <Plus className="mr-2 h-4 w-4" />
             New Workout
           </Button>
@@ -137,7 +137,7 @@ export default function WorkoutsPage() {
                   <Card
                     key={sport.id}
                     onClick={() => setSelectedSport(sport.id === selectedSport ? null : sport.id)}
-                    className={`cursor-pointer transition-transform hover:scale-105 ${sport.id === selectedSport ? 'border-primary shadow-lg' : ''
+                    className={`cursor-pointer transition-transform hover:bg-black hover:text-white hover:scale-105 ${sport.id === selectedSport ? 'border-primary shadow-lg' : ''
                       }`}
                   >
                     <div className="flex justify-center items-center py-6 font-medium">
@@ -178,7 +178,7 @@ export default function WorkoutsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(workout.id, workout.name)}
+                        onClick={() => handleDelete(workout.id, workout?.name)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

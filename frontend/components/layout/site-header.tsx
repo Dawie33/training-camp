@@ -10,7 +10,7 @@ import Link from 'next/link'
 
 export default function SiteHeader() {
     const { isAuthenticated, user, logout } = useAuth()
-
+    console.log(user)
     const getInitials = (name: string) => {
         return name
             .split(' ')
@@ -35,7 +35,9 @@ export default function SiteHeader() {
                     <Link href="/learn" className="hover:text-foreground transition-colors">LEARN</Link>
                     <Link href="/shop" className="hover:text-foreground transition-colors">SHOP</Link>
                     <Link href="/workouts" className="hover:text-foreground transition-colors">MY WORKOUTS</Link>
-                    <Link href="/admin" className="hover:text-foreground transition-colors text-orange-500">ADMIN</Link>
+                    {user && user.role === 'admin' ? (
+                        <Link href="/admin" className="hover:text-foreground transition-colors text-orange-500">ADMIN</Link>
+                    ) : null}
                 </nav>
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" className="hover:bg-accent">

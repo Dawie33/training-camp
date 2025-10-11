@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsDateString, IsIn } from 'class-validator'
+import { IsDateString, IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator'
 
 /**
  * DTOs pour l'authentification
@@ -42,5 +42,6 @@ export class AuthResponseDto {
     email: string
     firstName: string
     lastName: string
+    role: string
   }
 }

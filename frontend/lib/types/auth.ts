@@ -22,20 +22,24 @@ export interface User {
   id: string
   email: string
   username: string
-  first_name?: string
-  last_name?: string
+  firstName?: string
+  lastName?: string
   role: string
   is_active: boolean
   created_at: string
   updated_at: string
+  stats?: {
+    workouts: number
+    sessions: number
+  }
 }
 
 export interface CreateUserDTO {
   email: string
   username: string
   password: string
-  first_name?: string
-  last_name?: string
+  firstName?: string
+  lastName?: string
   role?: string
 }
 
@@ -43,8 +47,8 @@ export interface UpdateUserDTO {
   email?: string
   username?: string
   password?: string
-  first_name?: string
-  last_name?: string
+  firstName?: string
+  lastName?: string
   role?: string
   is_active?: boolean
 }

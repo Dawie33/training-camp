@@ -112,7 +112,7 @@ export class AdminWorkoutService {
             isPublic: boolean
             blocks: string
             tags: string
-            schedule_date: string
+            scheduled_date: string
         }> = {}
 
 
@@ -128,10 +128,70 @@ export class AdminWorkoutService {
         if (data.isPublic !== undefined) updateData.isPublic = data.isPublic
         if (data.blocks !== undefined) updateData.blocks = JSON.stringify(data.blocks)
         if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags)
-        if (data.scheduled_date !== undefined) updateData.schedule_date = data.scheduled_date
+        if (data.scheduled_date !== undefined) updateData.scheduled_date = data.scheduled_date
         const [row] = await this.knex('workouts')
             .where({ id })
             .update(updateData)
+            .returning('*')
+
+        return row
+    }
+
+    async create(data: any) {
+        // Ensure sport_id is provided
+        if (!data.sport_id) {
+            throw new Error('sport_id is required')
+        }
+
+        // Helper function to safely stringify JSON fields
+        const safeJsonStringify = (value: any, defaultValue: any = null) => {
+            if (value === undefined || value === null || value === '') {
+                return defaultValue === null ? null : JSON.stringify(defaultValue)
+            }
+            if (typeof value === 'string') {
+                return value
+            }
+            if (typeof value === 'object') {
+                if (Array.isArray(value)) {
+                    return value.length > 0 ? JSON.stringify(value) : JSON.stringify([])
+                }
+                return Object.keys(value).length > 0 ? JSON.stringify(value) : JSON.stringify({})
+            }
+            return JSON.stringify(value)
+        }
+
+        // Build the record with proper JSON handling
+        const record: any = {
+            name: data.name || null,
+            slug: data.slug || null,
+            description: data.description || null,
+            workout_type: data.workout_type || null,
+            sport_id: data.sport_id,
+            blocks: safeJsonStringify(data.blocks, {}),
+            estimated_duration: data.estimated_duration || null,
+            intensity: data.intensity || null,
+            difficulty: data.difficulty || null,
+            scaling_options: safeJsonStringify(data.scaling_options, null),
+            equipment_required: safeJsonStringify(data.equipment_required, null),
+            focus_areas: safeJsonStringify(data.focus_areas, null),
+            metrics_tracked: safeJsonStringify(data.metrics_tracked, null),
+            ai_generated: data.ai_generated || false,
+            ai_parameters: safeJsonStringify(data.ai_parameters, null),
+            created_by_user_id: data.created_by_user_id || null,
+            target_metrics: safeJsonStringify(data.target_metrics, null),
+            isActive: data.isActive !== undefined ? data.isActive : true,
+            isFeatured: data.isFeatured || false,
+            isPublic: data.isPublic !== undefined ? data.isPublic : true,
+            status: data.status || 'draft',
+            scheduled_date: data.scheduled_date || null,
+            is_benchmark: data.is_benchmark || false,
+            coach_notes: data.coach_notes || null,
+            tags: safeJsonStringify(data.tags, []),
+        }
+
+        // Insert the workout
+        const [row] = await this.knex('workouts')
+            .insert(record)
             .returning('*')
 
         return row
@@ -228,10 +288,19 @@ export class AdminWorkoutService {
         const trx = await this.knex.transaction()
 
         try {
+            // Properly handle JSON fields - ensure they are never empty strings
+            const blocksValue = workout.blocks && Object.keys(workout.blocks).length > 0
+                ? (typeof workout.blocks === 'string' ? workout.blocks : JSON.stringify(workout.blocks))
+                : JSON.stringify({})
+
+            const tagsValue = workout.tags && workout.tags.length > 0
+                ? (typeof workout.tags === 'string' ? workout.tags : JSON.stringify(workout.tags))
+                : JSON.stringify([])
+
             const record: any = {
                 status: 'draft',
-                blocks: typeof workout.blocks === 'string' ? workout.blocks : JSON.stringify(workout.blocks),
-                tags: typeof workout.tags === 'string' ? workout.tags : JSON.stringify(workout.tags ?? []),
+                blocks: blocksValue,
+                tags: tagsValue,
                 sport_id: workout.sportId,
                 created_by_user_id: null, // Génération automatique, pas d'utilisateur spécifique
                 ai_generated: true,

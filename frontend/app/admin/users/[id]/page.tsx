@@ -4,48 +4,51 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getUser, updateUser } from '@/lib/api/admin'
+import { User } from '@/lib/types/auth'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-export default function UserEditPage({ params }: { params: { id: string } }) {
+export default function UserEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [formData, setFormData] = useState({
     email: '',
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     role: 'user',
     is_active: true,
   })
 
   useEffect(() => {
-    getUser(params.id)
+    getUser(id)
       .then((data) => {
         setUser(data)
         setFormData({
           email: data.email || '',
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
           role: data.role || 'user',
           is_active: data.is_active !== undefined ? data.is_active : true,
         })
       })
       .finally(() => setLoading(false))
-  }, [params.id])
+  }, [id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
 
     try {
-      await updateUser(params.id, formData)
+      await updateUser(id, formData)
       toast.success('User updated')
       router.push('/admin/users')
     } catch (error) {
+      console.error('Failed to update user', error)
       toast.error('Failed to update user')
     } finally {
       setSaving(false)
@@ -77,16 +80,16 @@ export default function UserEditPage({ params }: { params: { id: string } }) {
                 <div>
                   <label className="text-sm font-medium">First Name</label>
                   <Input
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   />
                 </div>
 
                 <div>
                   <label className="text-sm font-medium">Last Name</label>
                   <Input
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   />
                 </div>
               </div>

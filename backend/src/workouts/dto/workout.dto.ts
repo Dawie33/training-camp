@@ -3,8 +3,8 @@ import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNotEmpty, IsNumber, IsOpt
 
 export class CreateWorkoutDto {
   @IsString()
-  @IsNotEmpty()
-  name!: string
+  @IsOptional()
+  name?: string
 
   @IsString()
   @IsOptional()

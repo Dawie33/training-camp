@@ -21,8 +21,8 @@ export class AdminUsersService {
         if (search) {
             query = query.where(function () {
                 this.where('users.email', 'ilike', `%${search}%`)
-                    .orWhere('users.first_name', 'ilike', `%${search}%`)
-                    .orWhere('users.last_name', 'ilike', `%${search}%`)
+                    .orWhere('users.firstName', 'ilike', `%${search}%`)
+                    .orWhere('users.lastName', 'ilike', `%${search}%`)
             })
         }
 
@@ -46,8 +46,8 @@ export class AdminUsersService {
         if (search) {
             countQuery.where(function () {
                 this.where('email', 'ilike', `%${search}%`)
-                    .orWhere('first_name', 'ilike', `%${search}%`)
-                    .orWhere('last_name', 'ilike', `%${search}%`)
+                    .orWhere('firstName', 'ilike', `%${search}%`)
+                    .orWhere('lastName', 'ilike', `%${search}%`)
             })
         }
         if (role) {
@@ -95,11 +95,11 @@ export class AdminUsersService {
 
 
     async update(id: string, data: any) {
-        const updateData: Partial<{ email: string; first_name: string; last_name: string; role: string; is_active: boolean }> = {}
+        const updateData: Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }> = {}
 
         if (data.email !== undefined) updateData.email = data.email
-        if (data.first_name !== undefined) updateData.first_name = data.first_name
-        if (data.last_name !== undefined) updateData.last_name = data.last_name
+        if (data.firstName !== undefined) updateData.firstName = data.firstName
+        if (data.lastName !== undefined) updateData.lastName = data.lastName
         if (data.role !== undefined) updateData.role = data.role
         if (data.is_active !== undefined) updateData.is_active = data.is_active
 

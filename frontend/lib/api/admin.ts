@@ -1,7 +1,7 @@
 import { AdminStats, CreateUserDTO, UpdateUserDTO, User, UserQueryParams } from '../types/auth'
 import { CreateEquipmentDTO, Equipment, UpdateEquipmentDTO } from '../types/equipment'
 import { CreateExerciseDTO, Exercise, UpdateExerciseDTO } from '../types/exercice'
-import { AdminWorkout, CreateWorkoutDTO, UpdateWorkoutDTO, WorkoutQueryParams } from '../types/workout'
+import { AdminWorkout, CreateWorkoutDTO, GenerateWorkoutDto, UpdateWorkoutDTO, WorkoutQueryParams } from '../types/workout'
 import { apiClient } from './apiClient'
 import { ResourceApi } from './resourceApi'
 
@@ -88,6 +88,10 @@ export async function getWorkout(id: string): Promise<AdminWorkout> {
 
 export async function createWorkout(data: CreateWorkoutDTO): Promise<AdminWorkout> {
   return workoutsApi.create(data)
+}
+
+export async function generateWorkout(data: GenerateWorkoutDto): Promise<AdminWorkout> {
+  return apiClient.post<AdminWorkout>('/admin/workouts/generate', data)
 }
 
 export async function updateWorkout(id: string, data: UpdateWorkoutDTO): Promise<AdminWorkout> {

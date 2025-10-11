@@ -23,7 +23,7 @@ export class WorkoutsServie {
    * @returns Le workout du jour
    */
   async getDailyWorkout(sportId: string, date?: string): Promise<Workouts> {
-    return apiClient.get<Workouts>(`/workouts/daily/sports/${sportId}`, {
+    return apiClient.get<Workouts>(`/workouts/daily/${sportId}`, {
       params: date ? { date } : undefined
     })
   }

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Dumbbell, LayoutDashboard, Package, Users, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 
 const sidebarItems = [
   {
@@ -37,12 +38,22 @@ const sidebarItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
+  // Force light mode for admin panel
+  useEffect(() => {
+    document.documentElement.classList.remove('dark')
+    document.documentElement.classList.add('light')
+
+    return () => {
+      document.documentElement.classList.remove('light')
+      document.documentElement.classList.add('dark')
+    }
+  }, [])
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className="w-64 border-r bg-card">
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
           <nav className="space-y-2">
             {sidebarItems.map((item) => {
               const Icon = item.icon

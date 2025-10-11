@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { deleteUser, getUsers } from '@/lib/api/admin'
 import { Edit, Search, Trash2, Users } from 'lucide-react'
@@ -23,6 +23,7 @@ export default function UsersPage() {
       setUsers(data.rows)
       setTotal(data.count)
     } catch (error) {
+      console.error('Failed to load users', error)
       toast.error('Failed to load users')
     } finally {
       setLoading(false)
@@ -41,6 +42,7 @@ export default function UsersPage() {
       toast.success('User deleted')
       loadUsers()
     } catch (error) {
+      console.error('Failed to delete user', error)
       toast.error('Failed to delete user')
     }
   }
@@ -89,7 +91,7 @@ export default function UsersPage() {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle>
-                      {user.first_name} {user.last_name}
+                      {user.firstName} {user.lastName}
                     </CardTitle>
                     <div className="text-sm text-muted-foreground mt-2 space-y-1">
                       <div>Email: {user.email}</div>
@@ -114,7 +116,7 @@ export default function UsersPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(user.id, `${user.first_name} ${user.last_name}`)}
+                      onClick={() => handleDelete(user.id, `${user.firstName} ${user.lastName}`)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>

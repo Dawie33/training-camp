@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
-import { WorkoutQueryDto } from 'src/workouts/dto'
+import { CreateWorkoutDto, WorkoutQueryDto } from 'src/workouts/dto'
 import { WorkoutBlocks } from 'src/workouts/types/workout.types'
 import { AdminWorkoutService } from '../services/admin-workouts.service'
 
@@ -21,6 +21,11 @@ export class AdminWorkoutsController {
   @Get(':id/exercises')
   async getWorkoutExercises(@Param('id') id: string) {
     return this.service.getWorkoutExercises(id)
+  }
+
+  @Post()
+  async create(@Body() data: CreateWorkoutDto) {
+    return this.service.create(data)
   }
 
   @Post('generate')
