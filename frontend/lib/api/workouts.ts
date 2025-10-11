@@ -13,7 +13,7 @@ export class WorkoutsServie {
    * @returns Le workout correspondant
    */
   async getDailyWorkoutById(workoutId: string): Promise<Workouts> {
-    return apiClient.get<Workouts>(`/workouts/daily/${workoutId}`)
+    return apiClient.get<Workouts>(`/workouts/${workoutId}`)
   }
 
   /**

@@ -2,13 +2,13 @@
 
 import { Timer } from '@/components/workout/Timer'
 import { WorkoutSummary } from '@/components/workout/WorkoutSummary'
-import { type DailyWorkout } from '@/lib/api'
 import { blockTypeColors, blockTypeLabels } from '@/lib/constants/workout-blocks'
+import { Workouts } from '@/lib/types/workout'
 import { Check, Clock, Pause, Play, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface ActiveWorkoutSessionProps {
-  workout: DailyWorkout
+  workout: Workouts
   sessionId: string
   onClose: () => void
 }

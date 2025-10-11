@@ -2,7 +2,7 @@ export const blockTypeLabels: Record<string, string> = {
   warmup: 'Échauffement',
   strength: 'Force',
   metcon: 'Metcon',
-  accessory: 'Accessoires',
+  accessory: 'Exercices complémentaires',
   cooldown: 'Retour au calme',
 }
 

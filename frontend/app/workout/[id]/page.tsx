@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { useSport } from '@/contexts/SportContext'
 import { workoutsService } from '@/lib/api'
-import { blockTypeColors } from '@/lib/constants/workout-blocks'
+import { blockTypeColors, blockTypeLabels } from '@/lib/constants/workout-blocks'
 import { Workouts } from '@/lib/types/workout'
 import { getSportImage } from '@/lib/utils/sport-images'
 import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react'
@@ -209,7 +209,7 @@ function WorkoutDetailContent() {
           {/* Warmup */}
           {workout.blocks.warmup && (
             <div className={`border-l-4 ${blockTypeColors.warmup} bg-card rounded-lg p-6`}>
-              <h2 className="text-2xl font-bold mb-4 capitalize">Warmup</h2>
+              <h2 className="text-2xl font-bold mb-4 capitalize">{blockTypeLabels.warmup}</h2>
               <ul className="space-y-3">
                 {workout.blocks.warmup.map((ex, idx) => (
                   <li key={idx} className="flex items-start gap-3">
@@ -233,7 +233,7 @@ function WorkoutDetailContent() {
           {/* Strength */}
           {workout.blocks.strength && (
             <div className={`border-l-4 ${blockTypeColors.strength} bg-card rounded-lg p-6`}>
-              <h2 className="text-2xl font-bold mb-4 capitalize">Strength</h2>
+              <h2 className="text-2xl font-bold mb-4 capitalize">{blockTypeLabels.strength}</h2>
               <div>
                 <p className="text-lg font-semibold mb-2">{workout.blocks.strength.name}</p>
                 <p className="text-muted-foreground mb-2">{workout.blocks.strength.scheme}</p>
@@ -283,7 +283,7 @@ function WorkoutDetailContent() {
           {/* Accessory */}
           {workout.blocks.accessory && (
             <div className={`border-l-4 ${blockTypeColors.accessory} bg-card rounded-lg p-6`}>
-              <h2 className="text-2xl font-bold mb-4 capitalize">Accessory</h2>
+              <h2 className="text-2xl font-bold mb-4 capitalize">{blockTypeLabels.accessory}</h2>
               <ul className="space-y-3">
                 {workout.blocks.accessory.map((ex, idx) => (
                   <li key={idx} className="flex items-start gap-3">
@@ -301,7 +301,7 @@ function WorkoutDetailContent() {
           {/* Cooldown */}
           {workout.blocks.cooldown && (
             <div className={`border-l-4 ${blockTypeColors.cooldown} bg-card rounded-lg p-6`}>
-              <h2 className="text-2xl font-bold mb-4 capitalize">Cooldown</h2>
+              <h2 className="text-2xl font-bold mb-4 capitalize">{blockTypeLabels.cooldown}</h2>
               <ul className="space-y-3">
                 {workout.blocks.cooldown.map((ex, idx) => (
                   <li key={idx} className="flex items-start gap-3">

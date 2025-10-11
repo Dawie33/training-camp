@@ -3,7 +3,7 @@ import { WorkoutQueryDto } from '../dto/workout.dto'
 import { WorkoutService } from '../services/workouts.service'
 
 @Controller('workouts')
-export class UserWorkoutController {
+export class WorkoutController {
   constructor(private readonly service: WorkoutService) { }
 
   /**
