@@ -47,6 +47,15 @@ export class AuthService {
     })
   }
 
+  async getFullProfile(): Promise<User> {
+    const token = this.getToken()
+    return apiClient.get<User>(`${this.endpoint}/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+  }
+
   /**
    * Déconnecter l'utilisateur en supprimant le token JWT et les données de l'utilisateur stockées localement.
    */

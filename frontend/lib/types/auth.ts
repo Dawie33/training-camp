@@ -22,6 +22,8 @@ export interface User {
   id: string
   email: string
   username: string
+  primary_sport?: string
+  sports_practiced?: string | string[]
   firstName?: string
   lastName?: string
   role: string
@@ -72,3 +74,7 @@ export interface AdminStats {
   publishedWorkouts?: number
 }
 
+export interface UserProfile {
+  primary_sport?: string
+  sports_practiced?: string | string[]
+}
