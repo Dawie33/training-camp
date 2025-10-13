@@ -1,42 +1,42 @@
 import { WorkoutCard } from "@/components/workout/WorkoutCard"
+import { useSport } from "@/contexts/SportContext"
+import { getSportImage } from "@/lib/utils/sport-images"
+import { useRecommendedWorkouts } from "../hooks/useRecommendedWorkouts"
 
 export function RecommendedWorkouts() {
+    const { activeSport } = useSport()
+    const { recommendedWorkouts, loading, error } = useRecommendedWorkouts(4)
 
-    // Données de workouts mockées (à remplacer par des vraies données)
-    const recommendedWorkouts = [
-        {
-            id: 1,
-            title: 'HIIT Training #24',
-            duration: '30 min',
-            image: 'https://images.unsplash.com/photo-1549576490-b0b4831ef60a?w=800&q=80',
-            category: 'WORKOUT',
-            isNew: false
-        },
-        {
-            id: 2,
-            title: 'Core Strength #45',
-            duration: '30 min',
-            image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80',
-            category: 'WORKOUT',
-            isNew: false
-        },
-        {
-            id: 3,
-            title: 'Cardio Blast #128',
-            duration: '45 min',
-            image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
-            category: 'NEW',
-            isNew: true
-        },
-        {
-            id: 4,
-            title: 'Strength & Power',
-            duration: '40 min',
-            image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80',
-            category: 'WORKOUT',
-            isNew: false
-        },
-    ]
+    if (loading) {
+        return (
+            <div>
+                <h2 className="text-3xl font-bold mb-6">Recommandé pour toi</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="aspect-[3/4] bg-card rounded-lg border animate-pulse" />
+                    ))}
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div>
+                <h2 className="text-3xl font-bold mb-6">Recommandé pour toi</h2>
+                <p className="text-red-500">Erreur: {error}</p>
+            </div>
+        )
+    }
+
+    if (recommendedWorkouts.length === 0) {
+        return (
+            <div>
+                <h2 className="text-3xl font-bold mb-6">Recommandé pour toi</h2>
+                <p className="text-muted-foreground">Aucun workout disponible pour le moment</p>
+            </div>
+        )
+    }
 
     return (
         <div>
@@ -46,11 +46,11 @@ export function RecommendedWorkouts() {
                 {recommendedWorkouts.map((workout) => (
                     <WorkoutCard
                         key={workout.id}
-                        title={workout.title}
-                        duration={workout.duration}
-                        image={workout.image}
-                        category={workout.category}
-                        isNew={workout.isNew}
+                        title={workout.name}
+                        duration={`${workout.estimated_duration || 30} min`}
+                        image={getSportImage(activeSport?.slug || 'default', workout.id)}
+                        category={workout.workout_type || 'WORKOUT'}
+                        isNew={false}
                     />
                 ))}
             </div>

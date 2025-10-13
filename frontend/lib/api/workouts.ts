@@ -29,6 +29,20 @@ export class WorkoutsServie {
   }
 
   /**
+   * Récupère les workouts recommandés pour l'utilisateur
+   * @param sportId Identifiant du sport actif
+   * @param limit Nombre de workouts à récupérer (par défaut 4)
+   * @returns Liste paginée de workouts recommandés
+   */
+  async getRecommendedWorkouts(sportId: string, limit: number = 4): Promise<{ rows: Workouts[], count: number }> {
+    const token = localStorage.getItem('access_token')
+    return apiClient.get<{ rows: Workouts[], count: number }>('/workouts/recommended', {
+      params: { sportId, limit },
+      headers: { Authorization: `Bearer ${token}` }
+    })
+  }
+
+  /**
    * Démarre une nouvelle session de workout
    * @param data Données de la session à créer
    * @returns La session créée

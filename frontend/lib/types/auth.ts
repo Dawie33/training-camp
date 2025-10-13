@@ -73,8 +73,3 @@ export interface AdminStats {
   workoutExercises?: number
   publishedWorkouts?: number
 }
-
-export interface UserProfile {
-  primary_sport?: string
-  sports_practiced?: string | string[]
-}

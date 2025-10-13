@@ -2,7 +2,7 @@ import { Knex } from 'knex'
 
 export async function seed(knex: Knex): Promise<void> {
   // Supprime les entrées existantes pour éviter les doublons
-  await knex('sports').del();
+  await knex('sports').del()
 
   await knex('sports').insert([
     {
@@ -34,7 +34,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       id: knex.raw('gen_random_uuid()'),
-      name: 'Musculation',
+      name: 'Weightlifting',
       slug: 'musculation',
       category: 'strength',
       common_metrics: JSON.stringify(['reps', 'sets', 'weight']),
