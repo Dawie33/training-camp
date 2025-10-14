@@ -1,16 +1,25 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table"
 import { deleteEquipment, getEquipments } from '@/lib/api/admin'
+import { Equipment } from '@/lib/types/equipment'
 import { Edit, Plus, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+
 export default function EquipmentsPage() {
-  const [equipments, setEquipments] = useState<any[]>([])
+  const [equipments, setEquipments] = useState<Equipment[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [total, setTotal] = useState(0)
@@ -23,7 +32,7 @@ export default function EquipmentsPage() {
       setTotal(data.count)
     } catch (error) {
       console.error('Failed to load equipments', error)
-      toast.error('Failed to load equipments')
+      toast.error('Erreur lors de la chargement des equipments')
     } finally {
       setLoading(false)
     }
@@ -42,7 +51,7 @@ export default function EquipmentsPage() {
       fetchEquipments()
     } catch (error) {
       console.error('Failed to delete equipment', error)
-      toast.error('Failed to delete equipment')
+      toast.error('Erreur lors de la suppression de l\'equipment')
     }
   }
 
@@ -76,18 +85,28 @@ export default function EquipmentsPage() {
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {equipments.map((equipment) => (
-            <Card key={equipment.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{equipment.label}</CardTitle>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      <span>Slug: {equipment.slug}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
+        <div >
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableCell colSpan={3}>Total</TableCell>
+                <TableCell className="text-right">{total}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableHead className="w-[200px] text-red-600">Nom</TableHead>
+                <TableHead className="w-[200px] text-red-600">Slug</TableHead>
+                <TableHead className="w-[200px] text-red-600">Image</TableHead>
+                <TableHead className="w-[200px] text-red-600">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {equipments.map((equipment) => (
+                <TableRow key={equipment.id}>
+                  <TableCell className="font-medium">{equipment.label}</TableCell>
+                  <TableCell className="font-medium">{equipment.slug}</TableCell>
+                  <TableCell className="font-medium">{equipment.image_url}</TableCell>
+                  <TableCell>    <div className="flex gap-2">
                     <Link href={`/admin/equipments/${equipment.id}`}>
                       <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4" />
@@ -100,11 +119,12 @@ export default function EquipmentsPage() {
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+                  </div></TableCell>
+
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

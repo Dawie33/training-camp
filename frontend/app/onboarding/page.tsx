@@ -19,6 +19,7 @@ const SPORTS = [
   { value: 'cycling', label: 'Cyclisme' },
   { value: 'swimming', label: 'Natation' },
   { value: 'weightlifting', label: 'Musculation' },
+  { value: 'cross-training', label: 'Cross Training' },
   { value: 'yoga', label: 'Yoga' },
   { value: 'martial_arts', label: 'Arts martiaux' },
   { value: 'other', label: 'Autre' },
@@ -88,7 +89,7 @@ export default function OnboardingPage() {
      */
     const fetchEquipments = async () => {
       try {
-        const response: { rows: Equipment[] } = await apiClient.get('/api/equipments')
+        const response: { rows: Equipment[] } = await apiClient.get('/equipments')
         setEquipments(response.rows || [])
       } catch (error) {
         console.error('Erreur lors de la chargement des équipements', error)
@@ -132,7 +133,7 @@ export default function OnboardingPage() {
         physical_limitations: formData.physical_limitations ? [formData.physical_limitations] : undefined,
       }
 
-      await apiClient.patch('/api/auth/profile', dataToSend, {
+      await apiClient.patch('/auth/profile', dataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

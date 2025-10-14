@@ -7,7 +7,7 @@ import { DailyWorkoutCard } from './components/DailyWorkoutCard'
 import { PlanSelection } from './components/PlanSelection'
 import { RecommendedWorkouts } from './components/RecommendedWorkouts'
 import { Stats } from './components/Stats'
-import { useUserSports } from './hooks/useUserSports'
+import { useUserSports } from './_hooks/useUserSports'
 
 function DashboardContent() {
   const { activeSport } = useSport()

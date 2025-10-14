@@ -3,7 +3,7 @@
 import { useSport } from '@/contexts/SportContext'
 import { getSportImage } from '@/lib/utils/sport-images'
 import Link from 'next/link'
-import { useDailyWorkout } from '../hooks/useDailyWorkout'
+import { useDailyWorkout } from '../_hooks/useDailyWorkout'
 
 /**
  * Composant affichant le workout du jour pour le sport actif.

@@ -1,19 +1,13 @@
-// src/workouts/workout-ai.service.ts
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { OpenAI } from 'openai'
 import { slugify } from 'src/common/utils/utils'
 import { WorkoutQueryDto } from 'src/workouts/dto/workout.dto'
 import { UpdateWorkoutDto } from '../../workouts/dto/workout.dto'
-import { DailyPlan, SportRef, SportSlug, WorkoutBlocks } from '../../workouts/types/workout.types'
-import { buildSystemPromptForSport, exampleSchemaForSport } from '../constants/prompts'
-import { DailyPlanSchema } from '../constants/schemas'
+import { WorkoutBlocks } from '../../workouts/types/workout.types'
 
 @Injectable()
 export class AdminWorkoutService {
-    private openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
     constructor(@InjectModel() private readonly knex: Knex) { }
 
     async findAll({ limit = '20', offset = '0', search = '', status = '', scheduled_date, sport_id }: WorkoutQueryDto
@@ -202,69 +196,6 @@ export class AdminWorkoutService {
         return { success: true }
     }
 
-
-    /**
-     * Génération journalière par sport.
-     * @param date ISO (yyyy-mm-dd)
-     * @param sport {id, slug}
-     */
-    async generate(
-        date: string,
-        sport: SportRef,
-        seed?: Partial<WorkoutBlocks>,
-        tags: string[] = [],
-    ): Promise<DailyPlan> {
-        const system = buildSystemPromptForSport(sport.slug as SportSlug, date, seed?.availableEquipment)
-        const schema = exampleSchemaForSport(sport.slug as SportSlug)
-
-        const user = `date: ${date}
-    sportId: ${sport.id}
-    sportSlug: ${sport.slug}
-    tags globaux: ${JSON.stringify(tags)}
-    seed: ${JSON.stringify(seed ?? {})}`
-
-        const res = await this.openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            response_format: { type: 'json_object' },
-            temperature: 0.7,
-            max_tokens: 800,
-            messages: [
-                { role: 'system', content: system },
-                { role: 'user', content: `Schéma à respecter: ${schema}` },
-                { role: 'user', content: user },
-            ],
-        })
-
-        const raw = res.choices[0]?.message?.content ?? '{}'
-        let day: DailyPlan
-
-        try {
-            day = DailyPlanSchema.parse(JSON.parse(raw))
-        } catch (err) {
-            throw new Error(`IA: JSON invalide (parse) - ${err} - RAW: ${raw}`)
-        }
-
-        if (!day || !day.date || !day.blocks) {
-            throw new Error('IA: JSON invalide (séance journalière)')
-        }
-
-        const insertedWorkout = await this.insertWorkout({
-            date: day.date,
-            sportId: sport.id,
-            tags,
-            blocks: day.blocks,
-            name: day.name,
-            workout_type: day.workout_type,
-            difficulty: day.difficulty,
-            estimated_duration: day.estimated_duration,
-            intensity: day.intensity,
-            description: day.description,
-            coach_notes: day.coach_notes,
-        })
-
-        return { success: true, ...insertedWorkout }
-    }
-
     /**
   * Ajoute un nouveau workout.
   * @param workout Données du workout incluant métadonnées
@@ -437,8 +368,6 @@ export class AdminWorkoutService {
                 .ignore()
         }
     }
-
-
 
 
     /**

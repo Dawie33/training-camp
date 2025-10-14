@@ -9,7 +9,7 @@ import { use, useEffect, useState } from 'react'
 import { WorkoutAIGenerationModal } from './components/WorkoutAIGenerationModal'
 import { WorkoutForm } from './components/WorkoutForm'
 import { WorkoutExercisesList } from './components/WorkoutExercisesList'
-import { useWorkoutForm } from './hooks/useWorkoutForm'
+import { useWorkoutForm } from './_hooks/useWorkoutForm'
 
 /**
  * Page de modification d'un entrainement

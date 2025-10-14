@@ -1,11 +1,15 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
 import { CreateWorkoutDto, WorkoutQueryDto } from 'src/workouts/dto'
-import { WorkoutBlocks } from 'src/workouts/types/workout.types'
+import { GenerateWorkoutDto } from 'src/workouts/dto/generate-workout.dto'
 import { AdminWorkoutService } from '../services/admin-workouts.service'
+import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
 
 @Controller('admin/workouts')
 export class AdminWorkoutsController {
-  constructor(private readonly service: AdminWorkoutService) { }
+  constructor(
+    private readonly service: AdminWorkoutService,
+    private readonly aiGenerator: AIWorkoutGeneratorService
+  ) { }
 
   @Get()
   async findAll(@Query() query: WorkoutQueryDto
@@ -28,20 +32,14 @@ export class AdminWorkoutsController {
     return this.service.create(data)
   }
 
-  @Post('generate')
-  async generate(
-    @Body()
-    body: {
-      date: string
-      sport: { id: string; slug: string }
-      seed?: Partial<WorkoutBlocks>
-      tags?: string[]
-    },
-  ) {
-    const { date, sport, seed, tags = [] } = body
-    return this.service.generate(date, sport, seed, tags)
+  /**
+   * Génère un workout avec l'IA en fonction des paramètres fournis
+   * Retourne uniquement le JSON du workout sans le sauvegarder en base
+   */
+  @Post('generate-ai')
+  async generateWithAI(@Body() dto: GenerateWorkoutDto) {
+    return this.aiGenerator.generateWorkout(dto)
   }
-
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() data: any) {

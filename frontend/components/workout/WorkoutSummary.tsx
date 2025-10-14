@@ -1,12 +1,13 @@
 'use client'
 
-import { workoutsService, type DailyWorkout } from '@/lib/api'
+import { workoutsService } from '@/lib/api'
+import { Workouts } from '@/lib/types/workout'
 import { Check, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 interface WorkoutSummaryProps {
-  workout: DailyWorkout
+  workout: Workouts
   sessionId: string
   elapsedTime: number
   blockProgress: Record<string, boolean>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { getWorkout, createWorkout, updateWorkout, generateWorkout } from '@/lib/api/admin'
-import type { AdminWorkout, CreateWorkoutDTO, GenerateWorkoutDto } from '@/lib/types/workout'
+import { getWorkout, createWorkout, updateWorkout, generateWorkoutWithAI } from '@/lib/api/admin'
+import type { AdminWorkout, CreateWorkoutDTO } from '@/lib/types/workout'
 
 interface FormData {
   name: string
@@ -195,22 +195,18 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
     setSaving(true)
 
     try {
-      const generationParams: GenerateWorkoutDto = {
-        date: aiParams.date,
-        sport: {
-          id: aiParams.sport_id,
-          slug: aiParams.sport_slug,
-        },
-        seed: {
-          duration_min: aiParams.duration_min,
-          intensity: aiParams.intensity,
-          difficulty: aiParams.difficulty,
-          workout_type: aiParams.workout_type || undefined,
-        },
-        tags: aiParams.tags ? aiParams.tags.split(',').map(t => t.trim()) : undefined,
+      const generationParams = {
+        sport: aiParams.sport_slug,
+        workoutType: aiParams.workout_type || 'mixed',
+        difficulty: aiParams.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'elite',
+        duration: aiParams.duration_min,
+        focus: undefined,
+        equipment: undefined,
+        constraints: undefined,
+        additionalInstructions: aiParams.tags || undefined,
       }
 
-      const generatedWorkout = await generateWorkout(generationParams)
+      const generatedWorkout = await generateWorkoutWithAI(generationParams)
 
       // Pre-fill form with generated data
       setFormData({

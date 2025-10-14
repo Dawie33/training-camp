@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-
+import { toast } from 'sonner'
 /**
  * Page de connexion à l'application.
  * @remarks
@@ -32,7 +32,9 @@ export default function LoginPage() {
       await login({ email, password })
       router.push('/dashboard')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+
+      toast.error(err instanceof Error ? err.message : 'Erreur inconnue')
+
     } finally {
       setLoading(false)
     }

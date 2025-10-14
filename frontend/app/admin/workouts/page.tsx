@@ -1,8 +1,17 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table"
 import { deleteWorkout, getWorkouts } from '@/lib/api/admin'
 import { sportsService } from '@/lib/api/sports'
 import type { AdminWorkout } from '@/lib/types/workout'
@@ -10,7 +19,6 @@ import { Edit, Plus, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-
 /**
  * Page des entraînements
  * Cette page affiche la liste des entraînements, ainsi que des boutons pour supprimer et modifier un entraînement
@@ -132,7 +140,7 @@ export default function WorkoutsPage() {
         <>
           <div >
             {sports.length > 0 && (
-              <div className="grid grid-cols-4 gap-4 mb-4 cursor-pointer">
+              <div className="grid grid-cols-5 gap-4 mb-4 cursor-pointer">
                 {sports.map((sport) => (
                   <Card
                     key={sport.id}
@@ -148,27 +156,37 @@ export default function WorkoutsPage() {
               </div>
             )}
           </div>
-          <div className="grid gap-4">
 
-            {workouts.map((workout) => (
-              <Card key={workout.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle>{workout.name || 'Unnamed Workout'}</CardTitle>
-                      <div className="text-sm text-muted-foreground mt-2 space-y-1">
-                        <div className="flex gap-4 flex-wrap">
-                          {workout.name && <span>Sport: {workout.name}</span>}
-                          {workout.workout_type && <span>Type: {workout.workout_type}</span>}
-                          {workout.difficulty && <span>Difficulty: {workout.difficulty}</span>}
-                          {workout.intensity && <span>Intensity: {workout.intensity}</span>}
-                          <span>Status: {workout.status}</span>
-                        </div>
-                        {workout.scheduled_date && (
-                          <div>Scheduled: {new Date(workout.scheduled_date).toLocaleDateString()}</div>
-                        )}
-                      </div>
-                    </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableCell colSpan={7}>Total</TableCell>
+                <TableCell className="text-right">{total}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableHead className="w-[150px]">Nom</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Difficulté</TableHead>
+                <TableHead>Intensité</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead >Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {workouts.map((workout) => (
+                <TableRow key={workout.id}>
+                  <TableCell className="font-medium">{workout.name}</TableCell>
+                  <TableCell className="font-medium">{workout.workout_type}</TableCell>
+                  <TableCell className="font-medium">{workout.difficulty}</TableCell>
+                  <TableCell className="font-medium">{workout.intensity}</TableCell>
+                  <TableCell className="font-medium">{workout.status}</TableCell>
+                  <TableCell className="font-medium"> {workout.scheduled_date && (
+                    <div>{new Date(workout.scheduled_date).toLocaleDateString()}</div>
+                  )}</TableCell>
+                  <TableCell className="font-medium">{workout.description}</TableCell>
+                  <TableCell>
                     <div className="flex gap-2">
                       <Link href={`/admin/workouts/${workout.id}`}>
                         <Button variant="outline" size="sm">
@@ -183,16 +201,16 @@ export default function WorkoutsPage() {
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
-                  </div>
-                </CardHeader>
-                {workout.description && (
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{workout.description}</p>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
-          </div>
+                  </TableCell>
+
+                </TableRow>
+              ))}
+            </TableBody>
+            <TableFooter>
+
+            </TableFooter>
+          </Table>
+
         </>
       )}
     </div>

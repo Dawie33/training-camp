@@ -3,7 +3,8 @@
 // ============================================================================
 export interface Equipment {
     id: string
-    name: string
+    label: string
+    slug: string
     description?: string
     image_url?: string
     created_at: string
@@ -11,7 +12,7 @@ export interface Equipment {
 }
 
 export interface CreateEquipmentDTO {
-    name: string
+    label: string
     description?: string
     image_url?: string
 }

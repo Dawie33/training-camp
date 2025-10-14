@@ -1,9 +1,25 @@
 import { AdminStats, CreateUserDTO, UpdateUserDTO, User, UserQueryParams } from '../types/auth'
 import { CreateEquipmentDTO, Equipment, UpdateEquipmentDTO } from '../types/equipment'
 import { CreateExerciseDTO, Exercise, UpdateExerciseDTO } from '../types/exercice'
-import { AdminWorkout, CreateWorkoutDTO, GenerateWorkoutDto, UpdateWorkoutDTO, WorkoutQueryParams } from '../types/workout'
+import { AdminWorkout, CreateWorkoutDTO, UpdateWorkoutDTO, WorkoutQueryParams } from '../types/workout'
+import { WorkoutBlocks } from '../types/workout-structure'
 import { apiClient } from './apiClient'
 import { ResourceApi } from './resourceApi'
+
+// Type pour les workouts générés par l'IA (nouvelle structure modulaire)
+export interface GeneratedWorkout {
+  name: string
+  description: string
+  workout_type: string
+  estimated_duration: number
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  intensity: 'low' | 'moderate' | 'high' | 'very_high'
+  blocks: WorkoutBlocks
+  equipment_required?: string[]
+  focus_areas?: string[]
+  tags?: string[]
+  coach_notes?: string
+}
 
 
 
@@ -90,8 +106,24 @@ export async function createWorkout(data: CreateWorkoutDTO): Promise<AdminWorkou
   return workoutsApi.create(data)
 }
 
-export async function generateWorkout(data: GenerateWorkoutDto): Promise<AdminWorkout> {
-  return apiClient.post<AdminWorkout>('/admin/workouts/generate', data)
+/**
+ * Génère un workout avec l'IA en fonction des paramètres
+ * Retourne uniquement le JSON du workout sans le sauvegarder
+ */
+export async function generateWorkoutWithAI(data: {
+  sport: string
+  workoutType: string
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+  duration: number
+  focus?: string[]
+  equipment?: string[]
+  constraints?: string[]
+  additionalInstructions?: string
+}): Promise<GeneratedWorkout> {
+  const token = localStorage.getItem('access_token')
+  return apiClient.post<GeneratedWorkout>('/admin/workouts/generate-ai', data, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
 }
 
 export async function updateWorkout(id: string, data: UpdateWorkoutDTO): Promise<AdminWorkout> {

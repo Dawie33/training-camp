@@ -1,7 +1,7 @@
 import { WorkoutCard } from "@/components/workout/WorkoutCard"
 import { useSport } from "@/contexts/SportContext"
 import { getSportImage } from "@/lib/utils/sport-images"
-import { useRecommendedWorkouts } from "../hooks/useRecommendedWorkouts"
+import { useRecommendedWorkouts } from "../_hooks/useRecommendedWorkouts"
 
 export function RecommendedWorkouts() {
     const { activeSport } = useSport()

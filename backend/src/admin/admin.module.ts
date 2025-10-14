@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { EquipmentsModule } from '../equipments/equipments.module'
 import { ExercisesModule } from '../exercises/exercises.module'
 import { WorkoutsModule } from '../workouts/workouts.module'
+import { AIWorkoutGeneratorService } from '../workouts/services/ai-workout-generator.service'
 import { AdminEquipmentsController } from './controllers/admin-equipments.controller'
 import { AdminExercisesController } from './controllers/admin-exercises.controller'
 import { AdminUsersController } from './controllers/admin-users.controller'
@@ -22,6 +23,13 @@ import { AdminService } from './services/admin.service'
     AdminUsersController,
     AdminWorkoutsController
   ],
-  providers: [AdminEquipmentsService, AdminExercicesService, AdminUsersService, AdminWorkoutService, AdminService],
+  providers: [
+    AdminEquipmentsService,
+    AdminExercicesService,
+    AdminUsersService,
+    AdminWorkoutService,
+    AdminService,
+    AIWorkoutGeneratorService
+  ],
 })
 export class AdminModule { }
