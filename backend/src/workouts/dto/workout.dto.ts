@@ -217,3 +217,114 @@ export class WorkoutQueryDto {
   @IsUUID()
   sport_id?: string
 }
+
+export class WorkoutDto {
+  @IsString()
+  @IsOptional()
+  name: string
+
+  @IsString()
+  @IsOptional()
+  slug: string
+
+  @IsString()
+  @IsOptional()
+  description: string
+
+  @IsString()
+  @IsOptional()
+  workout_type: string
+
+  @IsUUID()
+  @IsOptional()
+  sport_id: string
+
+  @IsOptional()
+  blocks: Record<string, unknown>
+
+  @IsInt()
+  @IsOptional()
+  estimated_duration: number
+
+  @IsString()
+  @IsOptional()
+  intensity: string
+
+  @IsString()
+  @IsOptional()
+  difficulty: string
+
+  @IsOptional()
+  scaling_options: Record<string, unknown>
+
+  @IsArray()
+  @IsOptional()
+  equipment_required: string[]
+
+  @IsArray()
+  @IsOptional()
+  focus_areas: string[]
+
+  @IsArray()
+  @IsOptional()
+  metrics_tracked: string[]
+
+  @IsBoolean()
+  @IsOptional()
+  ai_generated: boolean
+
+  @IsOptional()
+  ai_parameters: Record<string, unknown>
+
+  @IsUUID()
+  @IsOptional()
+  created_by_user_id: string
+
+  @IsOptional()
+  target_metrics: Record<string, unknown>
+
+  @IsInt()
+  @IsOptional()
+  usage_count: number
+
+  @IsNumber()
+  @IsOptional()
+  average_rating: number
+
+  @IsInt()
+  @IsOptional()
+  total_ratings: number
+
+  @IsBoolean()
+  @IsOptional()
+  isActive: boolean
+
+  @IsBoolean()
+  @IsOptional()
+  isFeatured: boolean
+
+  @IsBoolean()
+  @IsOptional()
+  isPublic: boolean
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['draft', 'published', 'archived'])
+  status: string
+
+  @IsString()
+  @IsOptional()
+  scheduled_date: string
+
+  @IsBoolean()
+  @IsOptional()
+  is_benchmark: boolean
+
+  @IsString()
+  @IsOptional()
+  coach_notes: string
+
+  @IsArray()
+  @IsOptional()
+  tags: string[]
+}

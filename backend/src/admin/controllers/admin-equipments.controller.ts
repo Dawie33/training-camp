@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
-import { EquipmentQueryDto } from 'src/equipments/dto'
+import { CreateEquipmentDto, EquipmentQueryDto, UpdateEquipmentDto } from 'src/equipments/dto'
 import { AdminEquipmentsService } from '../services/admin-equipments.service'
 
 @Controller('admin/equipments')
@@ -17,12 +17,12 @@ export class AdminEquipmentsController {
   }
 
   @Post()
-  async create(@Body() data: any) {
+  async create(@Body() data: CreateEquipmentDto) {
     return this.service.create(data)
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() data: any) {
+  async update(@Param('id') id: string, @Body() data: UpdateEquipmentDto) {
     return this.service.update(id, data)
   }
 

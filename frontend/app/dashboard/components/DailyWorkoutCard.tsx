@@ -46,13 +46,12 @@ export function DailyWorkoutCard() {
                                     <span className="text-sm text-white/90">{new Date(dailyWorkout.scheduled_date).toLocaleDateString('fr-FR')}</span>
                                 </div>
 
-                                {dailyWorkout.blocks?.duration_min && (
+                                {dailyWorkout.blocks?.duration_min != null && (
                                     <div>
                                         <span className="text-sm font-semibold px-2 py-1 bg-black/50 text-white rounded">
                                             {dailyWorkout.blocks?.duration_min} min
                                         </span>
                                     </div>
-
                                 )}
                             </div>
 

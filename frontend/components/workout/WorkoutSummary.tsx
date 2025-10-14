@@ -72,12 +72,9 @@ export function WorkoutSummary({
   const completedExercises = Object.values(blockProgress).filter(Boolean).length
 
   // Calculer le nombre total d'exercices dans le workout
-  const totalExercises =
-    (workout.blocks.warmup?.length || 0) +
-    (workout.blocks.strength ? 1 : 0) +
-    (workout.blocks.metcon?.parts?.length || 0) +
-    (workout.blocks.accessory?.length || 0) +
-    (workout.blocks.cooldown?.length || 0)
+  const totalExercises = workout.blocks.sections?.reduce((total, section) => {
+    return total + (section.exercises?.length || 0)
+  }, 0) || 0
 
   return (
     <div className="min-h-screen bg-background">

@@ -1,11 +1,11 @@
-import { WorkoutBlocks, WorkoutSection } from '@/lib/types/workout-structure'
+import { Exercise, WorkoutBlocks, WorkoutSection } from '@/lib/types/workout-structure'
 
 interface WorkoutDisplayProps {
   blocks: WorkoutBlocks
   showTitle?: boolean
 }
 
-export function WorkoutDisplay({ blocks, showTitle = true }: WorkoutDisplayProps) {
+export function WorkoutDisplay({ blocks }: WorkoutDisplayProps) {
   return (
     <div className="space-y-6">
       {blocks.stimulus && (
@@ -35,7 +35,7 @@ interface SectionDisplayProps {
   index: number
 }
 
-function SectionDisplay({ section, index }: SectionDisplayProps) {
+function SectionDisplay({ section }: SectionDisplayProps) {
   const sectionIcons: Record<string, string> = {
     warmup: '🏃',
     skill_work: '🎯',
@@ -153,7 +153,7 @@ function SectionDisplay({ section, index }: SectionDisplayProps) {
 }
 
 interface ExerciseDisplayProps {
-  exercise: any
+  exercise: Exercise
 }
 
 function ExerciseDisplay({ exercise }: ExerciseDisplayProps) {

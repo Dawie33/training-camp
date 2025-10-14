@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
-import { CreateWorkoutDto, WorkoutQueryDto } from 'src/workouts/dto'
+import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutQueryDto } from 'src/workouts/dto'
 import { GenerateWorkoutDto } from 'src/workouts/dto/generate-workout.dto'
-import { AdminWorkoutService } from '../services/admin-workouts.service'
 import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
+import { AdminWorkoutService } from '../services/admin-workouts.service'
 
 @Controller('admin/workouts')
 export class AdminWorkoutsController {
@@ -38,7 +38,7 @@ export class AdminWorkoutsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() data: any) {
+  async update(@Param('id') id: string, @Body() data: UpdateWorkoutDto) {
     return this.service.update(id, data)
   }
 

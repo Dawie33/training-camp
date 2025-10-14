@@ -68,10 +68,10 @@ export class UpdateProfileDto {
   training_location?: string
 
   @IsOptional()
-  training_preferences?: Record<string, any>
+  training_preferences?: Record<string, string>
 
   @IsOptional()
-  schedule_preferences?: Record<string, any>
+  schedule_preferences?: Record<string, string>
 
   @IsOptional()
   @IsBoolean()

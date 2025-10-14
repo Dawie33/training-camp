@@ -11,7 +11,7 @@ export class CreateEquipmentDto {
 
     @IsObject()
     @IsOptional()
-    meta?: Record<string, any>
+    meta?: Record<string, string>
 
     @IsString()
     @IsOptional()
@@ -29,7 +29,7 @@ export class UpdateEquipmentDto {
 
     @IsObject()
     @IsOptional()
-    meta?: Record<string, any>
+    meta?: Record<string, string>
 
     @IsString()
     @IsOptional()
@@ -48,7 +48,7 @@ export class UserEquipmentDto {
 
     @IsOptional()
     @IsObject()
-    meta?: Record<string, any>
+    meta?: Record<string, string>
 }
 
 export class EquipmentQueryDto {

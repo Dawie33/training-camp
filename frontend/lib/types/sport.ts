@@ -45,6 +45,7 @@ export interface SportQueryParams {
   limit?: number
   offset?: number
   orderBy?: string
+  slug?: string
   orderDir?: 'asc' | 'desc'
   category?: SportCategory
   isActive?: boolean

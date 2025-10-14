@@ -10,7 +10,7 @@ interface WorkoutCardProps {
   isNew?: boolean
 }
 
-export function WorkoutCard({ title, duration, image, category, isNew }: WorkoutCardProps) {
+export function WorkoutCard({ title, duration, category, isNew }: WorkoutCardProps) {
   return (
     <div className="group relative overflow-hidden rounded-lg cursor-pointer transition-transform hover:scale-[1.02]">
       {/* Image de fond */}

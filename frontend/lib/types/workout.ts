@@ -1,6 +1,8 @@
 // ============================================================================
 // TYPES POUR LES WORKOUTS
 // ============================================================================
+import { WorkoutBlocks } from './workout-structure'
+
 export interface AdminWorkoutExercise {
     id: string
     workout_id: string
@@ -26,7 +28,7 @@ export interface AdminWorkout {
     description?: string
     workout_type?: string
     sport_id?: string
-    blocks?: Record<string, unknown>
+    blocks?: WorkoutBlocks
     estimated_duration?: number
     intensity?: string
     difficulty?: string
@@ -47,7 +49,7 @@ export interface CreateWorkoutDTO {
     description?: string
     workout_type?: string
     sport_id?: string
-    blocks?: Record<string, unknown>
+    blocks?: WorkoutBlocks
     estimated_duration?: number
     intensity?: string
     difficulty?: string
@@ -71,8 +73,7 @@ export interface WorkoutQueryParams {
 }
 
 // Note: L'ancienne structure WorkoutBlocks a été remplacée par la nouvelle structure modulaire
-// dans workout-structure.ts. Cette interface Workouts utilise Record<string, unknown> pour
-// la compatibilité avec les workouts existants en base de données.
+// dans workout-structure.ts.
 export interface Workouts {
     id: string
     name: string
@@ -80,7 +81,7 @@ export interface Workouts {
     description: string
     workout_type: string
     sport_id: string
-    blocks: Record<string, unknown>
+    blocks: WorkoutBlocks
     estimated_duration?: number
     intensity: string
     difficulty: string

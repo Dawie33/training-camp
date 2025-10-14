@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { createExercise, getExercise, updateExercise } from '@/lib/api/admin'
+import { ExerciseCategory, ExerciseDifficulty, MeasurementType } from '@/lib/types/exercice'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -19,9 +20,9 @@ export default function ExerciseEditPage({ params }: { params: { id: string } })
     name: '',
     description: '',
     instructions: '',
-    category: 'strength',
-    difficulty: 'intermediate',
-    measurement_type: 'reps',
+    category: 'strength' as ExerciseCategory,
+    difficulty: 'intermediate' as ExerciseDifficulty,
+    measurement_type: 'reps' as MeasurementType,
     bodyweight_only: false,
     isActive: true,
   })
@@ -59,6 +60,7 @@ export default function ExerciseEditPage({ params }: { params: { id: string } })
       }
       router.push('/admin/exercises')
     } catch (error) {
+      console.error('Failed to save exercise', error)
       toast.error('Failed to save exercise')
     } finally {
       setSaving(false)
@@ -115,7 +117,7 @@ export default function ExerciseEditPage({ params }: { params: { id: string } })
                 <select
                   className="w-full px-3 py-2 border border-input bg-background rounded-md"
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as ExerciseCategory })}
                   required
                 >
                   <option value="strength">Strength</option>
@@ -133,7 +135,7 @@ export default function ExerciseEditPage({ params }: { params: { id: string } })
                 <select
                   className="w-full px-3 py-2 border border-input bg-background rounded-md"
                   value={formData.difficulty}
-                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as ExerciseDifficulty })}
                   required
                 >
                   <option value="beginner">Beginner</option>
@@ -149,7 +151,7 @@ export default function ExerciseEditPage({ params }: { params: { id: string } })
                 <select
                   className="w-full px-3 py-2 border border-input bg-background rounded-md"
                   value={formData.measurement_type}
-                  onChange={(e) => setFormData({ ...formData, measurement_type: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, measurement_type: e.target.value as MeasurementType })}
                   required
                 >
                   <option value="reps">Reps</option>

@@ -9,9 +9,17 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common'
+import { Request } from 'express'
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from '../dto/session.dto'
 import { WorkoutSessionsService } from '../services/workout-sessions.service'
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string
+    email: string
+  }
+}
 
 @Controller('workout-sessions')
 @UseGuards(JwtAuthGuard)
@@ -19,13 +27,13 @@ export class WorkoutSessionsController {
   constructor(private readonly sessionsService: WorkoutSessionsService) { }
 
   @Get()
-  async findAll(@Req() req: any) {
+  async findAll(@Req() req: AuthenticatedRequest) {
     const userId = req.user.id
     return this.sessionsService.findAll(userId)
   }
 
   @Get(':id')
-  async findOne(@Req() req: any, @Param('id') sessionId: string) {
+  async findOne(@Req() req: AuthenticatedRequest, @Param('id') sessionId: string) {
     const userId = req.user.id
     const session = await this.sessionsService.findOne(sessionId, userId)
 
@@ -37,20 +45,20 @@ export class WorkoutSessionsController {
   }
 
   @Get('workout/:workoutId')
-  async findByWorkout(@Req() req: any, @Param('workoutId') workoutId: string) {
+  async findByWorkout(@Req() req: AuthenticatedRequest, @Param('workoutId') workoutId: string) {
     const userId = req.user.id
     return this.sessionsService.findByWorkout(workoutId, userId)
   }
 
   @Post()
-  async create(@Req() req: any, @Body() data: CreateWorkoutSessionDto) {
+  async create(@Req() req: AuthenticatedRequest, @Body() data: CreateWorkoutSessionDto) {
     const userId = req.user.id
     return this.sessionsService.create(userId, data)
   }
 
   @Patch(':id')
   async update(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param('id') sessionId: string,
     @Body() data: UpdateWorkoutSessionDto
   ) {

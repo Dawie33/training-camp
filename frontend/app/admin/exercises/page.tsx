@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { deleteExercise, getExercises } from '@/lib/api/admin'
+import { Exercise } from '@/lib/types/exercice'
 import { Edit, Plus, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 export default function ExercisesPage() {
-  const [exercises, setExercises] = useState<any[]>([])
+  const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [total, setTotal] = useState(0)
@@ -21,7 +22,7 @@ export default function ExercisesPage() {
       const data = await getExercises({ limit: 100, search })
       setExercises(data.rows)
       setTotal(data.count)
-    } catch (error) {
+    } catch {
       toast.error('Failed to load exercises')
     } finally {
       setLoading(false)
@@ -30,6 +31,7 @@ export default function ExercisesPage() {
 
   useEffect(() => {
     loadExercises()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
   const handleDelete = async (id: string, name: string) => {
@@ -39,7 +41,7 @@ export default function ExercisesPage() {
       await deleteExercise(id)
       toast.success('Exercise deleted')
       loadExercises()
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete exercise')
     }
   }

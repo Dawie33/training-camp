@@ -3,6 +3,7 @@ import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { CreateWorkoutDto, WorkoutQueryDto } from 'src/workouts/dto/workout.dto'
 import { UpdateWorkoutDto } from '../../workouts/dto/workout.dto'
+import { safeJsonStringify } from 'src/common/utils/utils'
 
 @Injectable()
 export class AdminWorkoutService {
@@ -168,25 +169,34 @@ export class AdminWorkoutService {
             throw new Error('sport_id is required')
         }
 
-        // Helper function to safely stringify JSON fields
-        const safeJsonStringify = (value: any, defaultValue: any = null) => {
-            if (value === undefined || value === null || value === '') {
-                return defaultValue === null ? null : JSON.stringify(defaultValue)
-            }
-            if (typeof value === 'string') {
-                return value
-            }
-            if (typeof value === 'object') {
-                if (Array.isArray(value)) {
-                    return value.length > 0 ? JSON.stringify(value) : JSON.stringify([])
-                }
-                return Object.keys(value).length > 0 ? JSON.stringify(value) : JSON.stringify({})
-            }
-            return JSON.stringify(value)
-        }
-
         // Build the record with proper JSON handling
-        const record: any = {
+        const record: {
+            name: string | null
+            slug: string | null
+            description: string | null
+            workout_type: string | null
+            sport_id: string
+            blocks: string | null
+            estimated_duration: number | null
+            intensity: string | null
+            difficulty: string | null
+            scaling_options: string | null
+            equipment_required: string | null
+            focus_areas: string | null
+            metrics_tracked: string | null
+            ai_generated: boolean
+            ai_parameters: string | null
+            created_by_user_id: string | null
+            target_metrics: string | null
+            isActive: boolean
+            isFeatured: boolean
+            isPublic: boolean
+            status: string
+            scheduled_date: string | null
+            is_benchmark: boolean
+            coach_notes: string | null
+            tags: string | null
+        } = {
             name: data.name || null,
             slug: data.slug || null,
             description: data.description || null,

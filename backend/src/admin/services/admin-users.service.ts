@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
-import { UserQueryDto } from "src/users/dto"
+import { UpdateUserDto, UserQueryDto } from "src/users/dto"
 
 
 @Injectable()
@@ -119,14 +119,14 @@ export class AdminUsersService {
      * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur mis à jour ou null si l'utilisateur n'existe pas.
      * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
      */
-    async update(id: string, data: any) {
+    async update(id: string, data: UpdateUserDto) {
         const updateData: Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }> = {}
 
         if (data.email !== undefined) updateData.email = data.email
         if (data.firstName !== undefined) updateData.firstName = data.firstName
         if (data.lastName !== undefined) updateData.lastName = data.lastName
         if (data.role !== undefined) updateData.role = data.role
-        if (data.is_active !== undefined) updateData.is_active = data.is_active
+        if (data.isActive !== undefined) updateData.is_active = data.isActive
 
         const [row] = await this.knex('users')
             .where({ id })

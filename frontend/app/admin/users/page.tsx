@@ -4,19 +4,20 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { deleteUser, getUsers } from '@/lib/api/admin'
+import { User } from '@/lib/types/auth'
 import { Edit, Search, Trash2, Users } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [role, setRole] = useState('')
   const [total, setTotal] = useState(0)
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true)
     try {
       const data = await getUsers({ limit: 100, search, role: role || undefined })
@@ -28,11 +29,11 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [search, role])
 
   useEffect(() => {
     loadUsers()
-  }, [search, role])
+  }, [loadUsers])
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete user "${name}"?`)) return
@@ -98,7 +99,7 @@ export default function UsersPage() {
                       <div className="flex gap-4 flex-wrap">
                         <span>Role: {user.role || 'user'}</span>
                         <span>Status: {user.is_active ? 'Active' : 'Inactive'}</span>
-                        {user.workouts_count > 0 && (
+                        {user.workouts_count && user.workouts_count > 0 && (
                           <span>Workouts: {user.workouts_count}</span>
                         )}
                       </div>

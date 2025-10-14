@@ -147,17 +147,17 @@ export class AuthService {
       const { equipment_available, sports_practiced, primary_sport, overall_level, ...restData } = updateProfileDto
 
       // Filtrer les valeurs undefined et convertir les colonnes JSON
-      const dataToUpdate = Object.entries(restData).reduce((acc, [key, value]) => {
+      const dataToUpdate = Object.entries(restData).reduce<Record<string, string | number | boolean>>((acc, [key, value]) => {
         if (value !== undefined) {
           // Convertir les colonnes JSON (objets et arrays) en string pour PostgreSQL
           if (jsonColumns.includes(key)) {
             acc[key] = JSON.stringify(value)
           } else {
-            acc[key] = value
+            acc[key] = value as string | number | boolean
           }
         }
         return acc
-      }, {} as Record<string, any>)
+      }, {})
 
       // Ajouter primary_sport et overall_level s'ils sont définis
       if (primary_sport !== undefined) {

@@ -3,6 +3,7 @@
 import { WorkoutDisplay } from '@/components/workout/WorkoutDisplay'
 import { GeneratedWorkout, createWorkout, generateWorkoutWithAI } from '@/lib/api/admin'
 import { sportsService } from '@/lib/api/sports'
+import { ExerciseDifficulty } from '@/lib/types/exercice'
 import { Sport } from '@/lib/types/sport'
 import { WORKOUT_TYPES_BY_SPORT } from '@/lib/types/workout-structure'
 import { useRouter } from 'next/navigation'
@@ -77,7 +78,7 @@ export default function GenerateWorkoutAIPage() {
         description: generatedWorkout.description,
         workout_type: generatedWorkout.workout_type,
         sport_id: selectedSport.id,
-        blocks: generatedWorkout.blocks as unknown as Record<string, unknown>,
+        blocks: generatedWorkout.blocks,
         estimated_duration: generatedWorkout.estimated_duration,
         intensity: generatedWorkout.intensity,
         difficulty: generatedWorkout.difficulty,
@@ -154,7 +155,7 @@ export default function GenerateWorkoutAIPage() {
               <label className="block text-sm font-medium mb-2">Difficulté</label>
               <select
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as any)}
+                onChange={(e) => setDifficulty(e.target.value as ExerciseDifficulty)}
                 className="w-full px-3 py-2 border rounded-lg bg-background"
               >
                 <option value="beginner">Débutant</option>
