@@ -10,6 +10,17 @@ export class AdminUsersService {
 
 
 
+    /**
+     * Récupère la liste des utilisateurs avec filtres et recherche.
+     * @param {UserQueryDto} query - Paramètres de la requête.
+     * @param {string} query.limit - Nombre d'utilisateurs à récupérer. Par défaut : 20.
+     * @param {string} query.offset - Décalage de pagination. Par défaut : 0.
+     * @param {string} query.search - Paramètre de recherche. S'il est défini, la valeur donnée dans l'étiquette de l'utilisateur sera recherchée.
+     * @param {string} query.role - Rôle de l'utilisateur. Par défaut : tous les utilisateurs sont récupérés.
+     * @param {string} query.orderBy - Colonne de tri. Par défaut : « created_at ».
+     * @param {string} query.orderDir - Sens de l'ordre. Par défaut : « desc ».
+     * @returns {Promise<{rows: User[], count: number}>} - Promesse qui renvoie un objet contenant les lignes et le nombre.
+     */
     async findAll({ limit = '20', offset = '0', search = '', role, orderBy = 'created_at', orderDir = 'desc' }: UserQueryDto
     ) {
         let query = this.knex('users')
@@ -62,6 +73,13 @@ export class AdminUsersService {
         }
     }
 
+    /**
+     * Récupère un utilisateur par son ID.
+     * @param {string} id - Identifiant de l'utilisateur.
+     * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur correspondant à l'identifiant ou null si l'utilisateur n'existe pas.
+     * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
+     * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
+     */
     async findOne(id: string) {
         const user = await this.knex('users')
             .where({ id })
@@ -94,6 +112,13 @@ export class AdminUsersService {
     }
 
 
+    /**
+     * Mettre à jour un utilisateur.
+     * @param {string} id - Identifiant de l'utilisateur.
+     * @param {Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }>} data - Données à mettre à jour.
+     * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur mis à jour ou null si l'utilisateur n'existe pas.
+     * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
+     */
     async update(id: string, data: any) {
         const updateData: Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }> = {}
 
@@ -116,12 +141,25 @@ export class AdminUsersService {
         return sanitizedUser
     }
 
+    /**
+     * Supprime un utilisateur.
+     * @param {string} id - Identifiant de l'utilisateur à supprimer.
+     * @returns {Promise<{success: boolean}>} - Promesse qui renvoie un objet contenant le statut de la suppression.
+     */
     async delete(id: string) {
         await this.knex('users').where({ id }).delete()
         return { success: true }
     }
 
 
+    /**
+     * Récupère les workouts créés par un utilisateur.
+     * @param {string} id - Identifiant de l'utilisateur.
+     * @returns {Promise<Workout[]>} - Promesse qui renvoie la liste des workouts créés par l'utilisateur.
+     * Les résultats incluent le nom du sport correspondant à chaque workout.
+     * Les résultats sont paginés et limités à 20 éléments.
+     * Les résultats sont triés par date de création décroissante.
+     */
     async getUserWorkouts(id: string) {
         return this.knex('workouts')
             .select('workouts.*', 'sports.name as sport_name')
@@ -132,6 +170,14 @@ export class AdminUsersService {
     }
 
 
+    /**
+     * Récupère les sessions d'un utilisateur.
+     * @param {string} id - Identifiant de l'utilisateur.
+     * @returns {Promise<WorkoutSession[]>} - Promesse qui renvoie la liste des sessions de l'utilisateur.
+     * Les résultats incluent le nom du workout correspondant à chaque session.
+     * Les résultats sont paginés et limités à 20 éléments.
+     * Les résultats sont triés par date de création décroissante.
+     * */
     async getUserSessions(id: string) {
         return this.knex('workout_sessions')
             .select('workout_sessions.*', 'workouts.name as workout_name')

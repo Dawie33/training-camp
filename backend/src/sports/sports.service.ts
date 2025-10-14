@@ -63,6 +63,13 @@ export class SportsService {
         return { rows, count }
     }
 
+    /**
+     * Retrieve a sport by its ID.
+     * @param id The ID of the sport.
+     * @returns The sport with the given ID.
+     * @throws {BadRequestException} If the ID is empty or null.
+     * @throws {BadRequestException} If no sport with the given ID exists.
+     */
     async getById(id: string) {
 
         if (!id) {

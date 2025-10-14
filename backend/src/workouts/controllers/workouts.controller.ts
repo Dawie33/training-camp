@@ -7,21 +7,11 @@ import { WorkoutsService } from '../services/workouts.service'
 export class WorkoutsController {
   constructor(private readonly service: WorkoutsService) { }
 
-  /**
-   * Retrieves all workouts.
-   * @returns All workouts
-   */
   @Get()
   async findAll(@Query() query: WorkoutQueryDto) {
     return await this.service.findAll(query)
   }
 
-  /**
-   * Récupère le workout du jour pour un sport donné
-   * @param sportId ID du sport
-   * @param date Date du workout (optionnel, par défaut aujourd'hui)
-   * @returns Le workout du jour pour ce sport
-   */
   @Get('daily/:sportId')
   async getDailyWorkout(
     @Param('sportId') sportId: string,
@@ -34,14 +24,6 @@ export class WorkoutsController {
     return workout
   }
 
-  /**
-   * Récupère les workouts recommandés pour l'utilisateur actuel
-   * Basé sur son sport actif, son niveau et ses équipements
-   * @param req Objet de requête avec user authentifié
-   * @param sportId ID du sport actif
-   * @param limit Nombre de workouts à retourner (défaut: 4)
-   * @returns Liste paginée de workouts recommandés
-   */
   @Get('recommended')
   @UseGuards(JwtAuthGuard)
   async getRecommendedWorkouts(
@@ -52,11 +34,7 @@ export class WorkoutsController {
     return await this.service.getRecommendedWorkouts(req.user.id, sportId, limit)
   }
 
-  /**
-   * Récupère un workout par son ID
-   * @param id ID du workout
-   * @returns Le workout
-   */
+
   @Get(':id')
   async getWorkoutById(@Param('id') id: string) {
     const workout = await this.service.getWorkoutById(id)

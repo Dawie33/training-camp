@@ -13,4 +13,4 @@ import configuration from './configuration'
   ],
   exports: [ConfigModule],
 })
-export class AppConfigModule {}
+export class AppConfigModule { }

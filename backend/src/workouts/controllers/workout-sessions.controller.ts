@@ -18,25 +18,36 @@ import { WorkoutSessionsService } from '../services/workout-sessions.service'
 export class WorkoutSessionsController {
   constructor(private readonly sessionsService: WorkoutSessionsService) { }
 
-  /**
-   * Crée une nouvelle session de workout
-   * @param req Request avec user authentifié
-   * @param data Données de création
-   * @returns La session créée
-   */
+  @Get()
+  async findAll(@Req() req: any) {
+    const userId = req.user.id
+    return this.sessionsService.findAll(userId)
+  }
+
+  @Get(':id')
+  async findOne(@Req() req: any, @Param('id') sessionId: string) {
+    const userId = req.user.id
+    const session = await this.sessionsService.findOne(sessionId, userId)
+
+    if (!session) {
+      throw new NotFoundException('Session non trouvée')
+    }
+
+    return session
+  }
+
+  @Get('workout/:workoutId')
+  async findByWorkout(@Req() req: any, @Param('workoutId') workoutId: string) {
+    const userId = req.user.id
+    return this.sessionsService.findByWorkout(workoutId, userId)
+  }
+
   @Post()
   async create(@Req() req: any, @Body() data: CreateWorkoutSessionDto) {
     const userId = req.user.id
     return this.sessionsService.create(userId, data)
   }
 
-  /**
-   * Met à jour une session de workout
-   * @param req Request avec user authentifié
-   * @param sessionId ID de la session
-   * @param data Données de mise à jour
-   * @returns La session mise à jour
-   */
   @Patch(':id')
   async update(
     @Req() req: any,
@@ -53,44 +64,7 @@ export class WorkoutSessionsController {
     return session
   }
 
-  /**
-   * Récupère une session par son ID
-   * @param req Request avec user authentifié
-   * @param sessionId ID de la session
-   * @returns La session
-   */
-  @Get(':id')
-  async findOne(@Req() req: any, @Param('id') sessionId: string) {
-    const userId = req.user.id
-    const session = await this.sessionsService.findOne(sessionId, userId)
 
-    if (!session) {
-      throw new NotFoundException('Session non trouvée')
-    }
 
-    return session
-  }
 
-  /**
-   * Récupère toutes les sessions de l'utilisateur connecté
-   * @param req Request avec user authentifié
-   * @returns Liste des sessions
-   */
-  @Get()
-  async findByUser(@Req() req: any) {
-    const userId = req.user.id
-    return this.sessionsService.findByUser(userId)
-  }
-
-  /**
-   * Récupère les sessions d'un workout spécifique
-   * @param req Request avec user authentifié
-   * @param workoutId ID du workout
-   * @returns Liste des sessions
-   */
-  @Get('workout/:workoutId')
-  async findByWorkout(@Req() req: any, @Param('workoutId') workoutId: string) {
-    const userId = req.user.id
-    return this.sessionsService.findByWorkout(workoutId, userId)
-  }
 }

@@ -32,10 +32,6 @@ export class AdminWorkoutsController {
     return this.service.create(data)
   }
 
-  /**
-   * Génère un workout avec l'IA en fonction des paramètres fournis
-   * Retourne uniquement le JSON du workout sans le sauvegarder en base
-   */
   @Post('generate-ai')
   async generateWithAI(@Body() dto: GenerateWorkoutDto) {
     return this.aiGenerator.generateWorkout(dto)

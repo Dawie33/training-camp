@@ -1,5 +1,5 @@
 import { Type } from "class-transformer"
-import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from "class-validator"
+import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNumber, IsOptional, IsString, IsUUID } from "class-validator"
 
 export class CreateWorkoutDto {
   @IsString()
