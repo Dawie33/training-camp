@@ -17,15 +17,14 @@ export function DailyWorkoutCard() {
     const { dailyWorkout, workoutLoading } = useDailyWorkout()
 
     return (
-
-        <div className="lg:col-span-2">
+        <div>
             {workoutLoading ? (
-                <div className="aspect-[4/3] bg-card rounded-lg border border-border flex items-center justify-center">
+                <div className="aspect-[21/9] bg-card rounded-lg border border-border flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
             ) : dailyWorkout ? (
                 <Link href={`/workout/${dailyWorkout.id}`} className="block group">
-                    <div className="relative aspect-[4/3] bg-card rounded-lg border border-border overflow-hidden cursor-pointer">
+                    <div className="relative aspect-[21/9] bg-card rounded-lg border border-border overflow-hidden cursor-pointer hover:border-primary/50 transition-all">
                         {/* Image de fond */}
                         <div
                             className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
@@ -98,7 +97,7 @@ export function DailyWorkoutCard() {
                     </div>
                 </Link>
             ) : (
-                <div className="aspect-[4/3] bg-card rounded-lg border border-border flex items-center justify-center text-center p-6">
+                <div className="aspect-[21/9] bg-card rounded-lg border border-border flex items-center justify-center text-center p-6">
                     <div>
                         <p className="text-lg font-semibold mb-2">Aucun workout disponible</p>
                         <p className="text-sm text-muted-foreground">Le workout du jour n'a pas encore été publié</p>

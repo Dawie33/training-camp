@@ -70,66 +70,22 @@ export class WorkoutsService {
    * @returns Le workout du jour
    */
   async getDailyWorkoutBySport(sportId: string, date?: string): Promise<any> {
-    // Obtenir la date locale au format YYYY-MM-DD
     const targetDate = date && date.trim() !== '' ? date : format(new Date(), 'yyyy-MM-dd')
 
-    // Vérifier si un workout est déjà planifié pour cette date
-    let workout = await this.knex('workouts')
-      .where({ sport_id: sportId, scheduled_date: targetDate, status: 'published' })
-      .first()
+    // Récupérer tous les workouts publiés pour ce sport
+    const workouts = await this.knex('workouts')
+      .where({ sport_id: sportId, status: 'published' })
+      .orderBy('id', 'asc') // Ordre stable
 
-    // Si aucun workout planifié, en sélectionner un aléatoirement
-    if (!workout) {
-      // Récupérer un workout aléatoire de la bibliothèque (workouts publiés sans date planifiée)
-      const randomWorkout = await this.knex('workouts')
-        .where({ sport_id: sportId, status: 'published' })
-        .whereNull('scheduled_date')
-        .orderByRaw('RANDOM()')
-        .first()
-
-
-      if (randomWorkout) {
-        // Dupliquer le workout et le planifier pour aujourd'hui
-        const [newWorkout] = await this.knex('workouts')
-          .insert({
-            name: randomWorkout.name,
-            slug: randomWorkout.slug ? `${randomWorkout.slug}-${targetDate}` : null,
-            description: randomWorkout.description || null,
-            workout_type: randomWorkout.workout_type,
-            sport_id: randomWorkout.sport_id,
-            blocks: randomWorkout.blocks ? (typeof randomWorkout.blocks === 'string' ? randomWorkout.blocks : JSON.stringify(randomWorkout.blocks)) : null,
-            estimated_duration: randomWorkout.estimated_duration || null,
-            intensity: randomWorkout.intensity || null,
-            difficulty: randomWorkout.difficulty || null,
-            scaling_options: randomWorkout.scaling_options ? (typeof randomWorkout.scaling_options === 'string' ? randomWorkout.scaling_options : JSON.stringify(randomWorkout.scaling_options)) : null,
-            equipment_required: randomWorkout.equipment_required ? (typeof randomWorkout.equipment_required === 'string' ? randomWorkout.equipment_required : JSON.stringify(randomWorkout.equipment_required)) : null,
-            focus_areas: randomWorkout.focus_areas ? (typeof randomWorkout.focus_areas === 'string' ? randomWorkout.focus_areas : JSON.stringify(randomWorkout.focus_areas)) : null,
-            metrics_tracked: randomWorkout.metrics_tracked ? (typeof randomWorkout.metrics_tracked === 'string' ? randomWorkout.metrics_tracked : JSON.stringify(randomWorkout.metrics_tracked)) : null,
-            ai_generated: randomWorkout.ai_generated || false,
-            target_metrics: randomWorkout.target_metrics ? (typeof randomWorkout.target_metrics === 'string' ? randomWorkout.target_metrics : JSON.stringify(randomWorkout.target_metrics)) : null,
-            tags: randomWorkout.tags ? (typeof randomWorkout.tags === 'string' ? randomWorkout.tags : JSON.stringify(randomWorkout.tags)) : null,
-            scheduled_date: targetDate,
-            status: 'published',
-            isActive: true,
-            isFeatured: false,
-            isPublic: true,
-            is_benchmark: randomWorkout.is_benchmark || false,
-          })
-          .returning('*')
-
-        workout = newWorkout
-      } else {
-        workout = await this.knex('workouts')
-          .where({ sport_id: sportId, status: 'published' })
-          .whereNotNull('scheduled_date')
-          .orderBy('scheduled_date', 'asc')
-          .first()
-      }
-    }
-
-    if (!workout) {
+    if (!workouts || workouts.length === 0) {
       return null
     }
+
+    // Utiliser la date comme seed pour sélectionner toujours le même workout pour une date donnée
+    // Convertir la date en nombre pour créer un index
+    const dateHash = targetDate.split('-').join('') // "2025-10-15" -> "20251015"
+    const index = parseInt(dateHash) % workouts.length
+    const workout = workouts[index]
 
     // Retourner le workout avec blocks
     const { blocks, tags, ...rest } = workout

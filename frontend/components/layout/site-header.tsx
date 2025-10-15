@@ -1,6 +1,5 @@
 'use client'
 
-import { SportSwitcher } from '@/components/layout/SportSwitcher'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -26,7 +25,6 @@ export default function SiteHeader() {
                     <Link href="/" className="font-bold text-xl tracking-tight">
                         TRAINING CAMP
                     </Link>
-                    {isAuthenticated && <SportSwitcher />}
                 </div>
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
                     <Link href="/dashboard" className="hover:text-foreground transition-colors">HOME</Link>
