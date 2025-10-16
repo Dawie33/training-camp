@@ -69,6 +69,8 @@ export async function getEquipments(params?: {
   limit?: number
   offset?: number
   search?: string
+  orderBy?: string
+  orderDir?: string
 }) {
   return equipmentsApi.getAll(params)
 }

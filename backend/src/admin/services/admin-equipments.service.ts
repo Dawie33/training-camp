@@ -19,7 +19,7 @@ export class AdminEquipmentsService {
     * @param {string} query.orderDir - Sens de l'ordre. Par défaut : « desc ».
     * @returns {Promise<{rows: Equipment[], count: number}>} - Promesse qui renvoie un objet contenant les lignes et le nombre.
      **/
-    async findAll({ limit = '50', offset = '0', search = '', orderBy = 'created_at', orderDir = 'desc' }: EquipmentQueryDto) {
+    async findAll({ limit = '50', offset = '0', search, orderBy = 'created_at', orderDir = 'desc' }: EquipmentQueryDto) {
         let query = this.knex('equipments').select('*')
 
         if (search) {

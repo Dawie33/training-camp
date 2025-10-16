@@ -52,9 +52,23 @@ export class UserEquipmentDto {
 }
 
 export class EquipmentQueryDto {
+    @IsOptional()
+    @IsString()
     limit?: string
+
+    @IsOptional()
+    @IsString()
     offset?: string
+
+    @IsOptional()
+    @IsString()
     search?: string
+
+    @IsOptional()
+    @IsString()
     orderBy?: string
-    orderDir?: string
+
+    @IsOptional()
+    @IsString()
+    orderDir?: 'asc' | 'desc'
 }
