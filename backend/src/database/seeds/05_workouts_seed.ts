@@ -20,23 +20,37 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'amrap',
       sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 20,
         stimulus: 'Endurance musculaire et cardio',
-        warmup: [
-          { movement: 'Jump Rope', duration_sec: 180 },
-          { movement: 'Shoulder Circles', reps: 10 }
-        ],
-        metcon: {
-          format: 'AMRAP',
-          duration_min: 20,
-          parts: [
-            { movement: 'Pull-Up', reps: 5 },
-            { movement: 'Push-Up', reps: 10 },
-            { movement: 'Air Squat', reps: 15 }
-          ]
-        },
-        cooldown: [
-          { movement: 'Walk', duration_sec: 300 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 5,
+            exercises: [
+              { name: 'Jump Rope', duration: '3 min' },
+              { name: 'Shoulder Circles', reps: '10' }
+            ]
+          },
+          {
+            type: 'amrap',
+            title: 'AMRAP',
+            format: 'AMRAP 20 min',
+            duration_min: 20,
+            goal: 'Maximum de rounds et reps',
+            exercises: [
+              { name: 'Pull-Up', reps: '5' },
+              { name: 'Push-Up', reps: '10' },
+              { name: 'Air Squat', reps: '15' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 5,
+            exercises: [
+              { name: 'Walk', duration: '5 min' }
+            ]
+          }
         ]
       }),
       estimated_duration: 30,
@@ -67,26 +81,37 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'for_time',
       sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 15,
         stimulus: 'Sprint métabolique intense',
-        warmup: [
-          { movement: 'Rowing', duration_sec: 300 },
-          { movement: 'Thruster Practice', reps: 10, equipment: ['barbell'] }
-        ],
-        metcon: {
-          format: 'For Time',
-          time_cap_min: 15,
-          parts: [
-            { movement: 'Thruster', reps: 21, equipment: ['barbell'], load_pct_1rm_bs: 40 },
-            { movement: 'Pull-Up', reps: 21 },
-            { movement: 'Thruster', reps: 15, equipment: ['barbell'], load_pct_1rm_bs: 40 },
-            { movement: 'Pull-Up', reps: 15 },
-            { movement: 'Thruster', reps: 9, equipment: ['barbell'], load_pct_1rm_bs: 40 },
-            { movement: 'Pull-Up', reps: 9 }
-          ]
-        },
-        cooldown: [
-          { movement: 'Stretch', duration_sec: 300 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 8,
+            exercises: [
+              { name: 'Rowing', duration: '5 min' },
+              { name: 'Thruster Practice', reps: '10', details: 'Avec barre vide ou légère' }
+            ]
+          },
+          {
+            type: 'for_time',
+            title: 'For Time (21-15-9)',
+            format: 'For Time - Cap 15 min',
+            duration_min: 15,
+            goal: 'Terminer le plus rapidement possible',
+            description: '21-15-9 reps de chaque exercice',
+            exercises: [
+              { name: 'Thruster', reps: '21-15-9', weight: '43kg/30kg', details: 'RX: 95lbs/65lbs' },
+              { name: 'Pull-Up', reps: '21-15-9' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 5,
+            exercises: [
+              { name: 'Stretch', duration: '5 min', details: 'Focus épaules et dos' }
+            ]
+          }
         ]
       }),
       estimated_duration: 25,
@@ -117,29 +142,38 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'for_time',
       sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 15,
         stimulus: 'Endurance et puissance',
-        warmup: [
-          { movement: 'Light Jog', duration_sec: 300 },
-          { movement: 'KB Swing Practice', reps: 10, equipment: ['kettlebell'] }
-        ],
-        metcon: {
-          format: 'For Time',
-          time_cap_min: 20,
-          parts: [
-            { movement: 'Run', distance_m: 400 },
-            { movement: 'Kettlebell Swing', reps: 21, equipment: ['kettlebell'] },
-            { movement: 'Pull-Up', reps: 12 },
-            { movement: 'Run', distance_m: 400 },
-            { movement: 'Kettlebell Swing', reps: 21, equipment: ['kettlebell'] },
-            { movement: 'Pull-Up', reps: 12 },
-            { movement: 'Run', distance_m: 400 },
-            { movement: 'Kettlebell Swing', reps: 21, equipment: ['kettlebell'] },
-            { movement: 'Pull-Up', reps: 12 }
-          ]
-        },
-        cooldown: [
-          { movement: 'Walk', duration_sec: 300 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 8,
+            exercises: [
+              { name: 'Light Jog', duration: '5 min' },
+              { name: 'KB Swing Practice', reps: '10', details: 'Technique focus' }
+            ]
+          },
+          {
+            type: 'for_time',
+            title: 'For Time (3 rounds)',
+            format: 'For Time - Cap 20 min',
+            duration_min: 20,
+            rounds: 3,
+            goal: 'Terminer les 3 rounds le plus rapidement possible',
+            exercises: [
+              { name: 'Run', distance: '400m' },
+              { name: 'Kettlebell Swing', reps: '21', weight: '24kg/16kg', details: 'RX: 53lbs/35lbs' },
+              { name: 'Pull-Up', reps: '12' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 5,
+            exercises: [
+              { name: 'Walk', duration: '5 min' }
+            ]
+          }
         ]
       }),
       estimated_duration: 25,
@@ -170,23 +204,38 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'for_time',
       sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 20,
         stimulus: 'Force et endurance avec barbell',
-        warmup: [
-          { movement: 'Rowing', duration_sec: 300 },
-          { movement: 'Barbell Complex', reps: 5, equipment: ['barbell'] }
-        ],
-        metcon: {
-          format: 'For Time',
-          time_cap_min: 20,
-          parts: [
-            { movement: 'Deadlift', reps: 12, equipment: ['barbell'] },
-            { movement: 'Hang Power Clean', reps: 9, equipment: ['barbell'] },
-            { movement: 'Push Jerk', reps: 6, equipment: ['barbell'] }
-          ]
-        },
-        cooldown: [
-          { movement: 'Stretch', duration_sec: 300 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 8,
+            exercises: [
+              { name: 'Rowing', duration: '5 min' },
+              { name: 'Barbell Complex', reps: '5', details: 'Barre vide: deadlift + hang clean + jerk' }
+            ]
+          },
+          {
+            type: 'for_time',
+            title: 'For Time (5 rounds)',
+            format: 'For Time - Cap 20 min',
+            duration_min: 20,
+            rounds: 5,
+            goal: 'Terminer les 5 rounds le plus rapidement possible',
+            exercises: [
+              { name: 'Deadlift', reps: '12', weight: '70kg/48kg', details: 'RX: 155lbs/105lbs' },
+              { name: 'Hang Power Clean', reps: '9', weight: '70kg/48kg' },
+              { name: 'Push Jerk', reps: '6', weight: '70kg/48kg' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 5,
+            exercises: [
+              { name: 'Stretch', duration: '5 min', details: 'Focus épaules, dos et hanches' }
+            ]
+          }
         ]
       }),
       estimated_duration: 30,
@@ -217,29 +266,48 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'strength',
       sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 45,
         stimulus: 'Force maximale puis conditioning court',
-        warmup: [
-          { movement: 'Bike Easy', duration_sec: 300 },
-          { movement: 'Squat Mobility', duration_sec: 180 }
-        ],
-        strength: {
-          name: 'Back Squat',
-          scheme: '5x5 @80%1RM',
-          rest_sec: 180,
-          equipment: ['barbell', 'rack']
-        },
-        metcon: {
-          format: 'AMRAP',
-          duration_min: 10,
-          parts: [
-            { movement: 'Burpee', reps: 10 },
-            { movement: 'Box Jump', reps: 10, equipment: ['box'] },
-            { movement: 'Kettlebell Swing', reps: 10, equipment: ['kettlebell'] }
-          ]
-        },
-        cooldown: [
-          { movement: 'Stretch', duration_sec: 300 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 8,
+            exercises: [
+              { name: 'Bike Easy', duration: '5 min' },
+              { name: 'Squat Mobility', duration: '3 min', details: 'Hip openers, ankle mobility' }
+            ]
+          },
+          {
+            type: 'strength',
+            title: 'Strength - Back Squat',
+            format: '5 sets x 5 reps @ 80% 1RM',
+            duration_min: 25,
+            goal: 'Développer la force maximale',
+            rest_between_rounds: 180,
+            exercises: [
+              { name: 'Back Squat', sets: '5', reps: '5', intensity: '80% 1RM', details: 'Repos 3 min entre les séries' }
+            ]
+          },
+          {
+            type: 'amrap',
+            title: 'MetCon - AMRAP 10',
+            format: 'AMRAP 10 min',
+            duration_min: 10,
+            goal: 'Maximum de rounds',
+            exercises: [
+              { name: 'Burpee', reps: '10' },
+              { name: 'Box Jump', reps: '10', details: '24"/20"' },
+              { name: 'Kettlebell Swing', reps: '10', weight: '24kg/16kg' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 5,
+            exercises: [
+              { name: 'Stretch', duration: '5 min', details: 'Full body stretch' }
+            ]
+          }
         ]
       }),
       estimated_duration: 50,
@@ -274,27 +342,46 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'intervals',
       sport_id: runningSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 40,
         stimulus: 'VO2max development',
-        warmup: [
-          { movement: 'Easy Jog', duration_sec: 600 },
-          { movement: 'Dynamic Stretches', duration_sec: 300 }
-        ],
-        metcon: {
-          format: 'Intervals',
-          parts: [
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 },
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 },
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 },
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 },
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 },
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 },
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 },
-            { movement: 'Run', distance_m: 400, target_zone: 'I', r_rest_sec: 90 }
-          ]
-        },
-        cooldown: [
-          { movement: 'Easy Jog', duration_sec: 600 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 15,
+            exercises: [
+              { name: 'Easy Jog', duration: '10 min' },
+              { name: 'Dynamic Stretches', duration: '5 min' }
+            ]
+          },
+          {
+            type: 'intervals',
+            title: 'Intervalles 8x400m',
+            format: '8 x 400m',
+            duration_min: 25,
+            rounds: 8,
+            goal: 'Développer la VO2max',
+            intervals: {
+              work: {
+                distance: '400m',
+                effort: 'Zone I (95-100%)'
+              },
+              rest: {
+                duration: '90s',
+                type: 'active'
+              }
+            },
+            exercises: [
+              { name: 'Run', distance: '400m', effort: 'Zone I', rest_duration: '90s', details: 'Maintenir un rythme constant sur chaque intervalle' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 10,
+            exercises: [
+              { name: 'Easy Jog', duration: '10 min' }
+            ]
+          }
         ]
       }),
       estimated_duration: 45,
@@ -325,19 +412,34 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'tempo',
       sport_id: runningSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 40,
         stimulus: 'Lactate threshold improvement',
-        warmup: [
-          { movement: 'Easy Jog', duration_sec: 900 }
-        ],
-        metcon: {
-          format: 'Intervals',
-          parts: [
-            { movement: 'Run', distance_m: 5000, target_zone: 'T' }
-          ]
-        },
-        cooldown: [
-          { movement: 'Easy Jog', duration_sec: 600 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 15,
+            exercises: [
+              { name: 'Easy Jog', duration: '15 min', effort: 'Zone E' }
+            ]
+          },
+          {
+            type: 'tempo',
+            title: 'Tempo Run 5km',
+            format: 'Tempo Run',
+            duration_min: 25,
+            goal: 'Améliorer le seuil lactique',
+            exercises: [
+              { name: 'Run', distance: '5km', effort: 'Zone T (85-90%)', pace: 'Tempo', details: 'Rythme soutenu mais contrôlable' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 10,
+            exercises: [
+              { name: 'Easy Jog', duration: '10 min', effort: 'Zone E' }
+            ]
+          }
         ]
       }),
       estimated_duration: 45,
@@ -368,19 +470,34 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'long_run',
       sport_id: runningSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 90,
         stimulus: 'Aerobic base building',
-        warmup: [
-          { movement: 'Dynamic Stretches', duration_sec: 300 }
-        ],
-        metcon: {
-          format: 'Intervals',
-          parts: [
-            { movement: 'Run', duration_min: 90, target_zone: 'E' }
-          ]
-        },
-        cooldown: [
-          { movement: 'Walk', duration_sec: 300 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 5,
+            exercises: [
+              { name: 'Dynamic Stretches', duration: '5 min' }
+            ]
+          },
+          {
+            type: 'cardio',
+            title: 'Long Run Easy',
+            format: 'Continuous Run',
+            duration_min: 90,
+            goal: 'Développer l\'endurance aérobie',
+            exercises: [
+              { name: 'Run', duration: '90 min', effort: 'Zone E (60-70%)', details: 'Vous devez pouvoir parler confortablement' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Retour au calme',
+            duration_min: 5,
+            exercises: [
+              { name: 'Walk', duration: '5 min' }
+            ]
+          }
         ]
       }),
       estimated_duration: 100,
@@ -415,28 +532,49 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'strength',
       sport_id: musculationSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 60,
         stimulus: 'Upper body push development',
-        warmup: [
-          { movement: 'Arm Circles', reps: 20 },
-          { movement: 'Band Pull-Aparts', reps: 20, equipment: ['band'] }
-        ],
-        strength: {
-          name: 'Bench Press',
-          scheme: '5x5 @80%1RM',
-          rest_sec: 180,
-          notes: 'Tempo 21X1',
-          equipment: ['barbell', 'bench']
-        },
-        accessory: [
-          { movement: 'Incline Dumbbell Press', scheme: '3x10', equipment: ['dumbbell', 'bench'] },
-          { movement: 'Cable Fly', scheme: '3x12', equipment: ['cable-machine'] },
-          { movement: 'Overhead Press', scheme: '3x8', equipment: ['barbell'] },
-          { movement: 'Triceps Pushdown', scheme: '3x15', equipment: ['cable-machine'] }
-        ],
-        cooldown: [
-          { movement: 'Chest Stretch', duration_sec: 90 },
-          { movement: 'Shoulder Stretch', duration_sec: 90 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 8,
+            exercises: [
+              { name: 'Arm Circles', reps: '20', details: 'Forward and backward' },
+              { name: 'Band Pull-Aparts', reps: '20' }
+            ]
+          },
+          {
+            type: 'strength',
+            title: 'Strength - Bench Press',
+            format: '5 sets x 5 reps @ 80% 1RM',
+            duration_min: 25,
+            goal: 'Développer la force de poussée',
+            rest_between_rounds: 180,
+            exercises: [
+              { name: 'Bench Press', sets: '5', reps: '5', intensity: '80% 1RM', tempo: '21X1', details: 'Repos 3 min entre séries' }
+            ]
+          },
+          {
+            type: 'accessory',
+            title: 'Accessoires',
+            duration_min: 25,
+            goal: 'Volume et hypertrophie',
+            exercises: [
+              { name: 'Incline Dumbbell Press', sets: '3', reps: '10' },
+              { name: 'Cable Fly', sets: '3', reps: '12' },
+              { name: 'Overhead Press', sets: '3', reps: '8' },
+              { name: 'Triceps Pushdown', sets: '3', reps: '15' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Étirements',
+            duration_min: 5,
+            exercises: [
+              { name: 'Chest Stretch', duration: '90s' },
+              { name: 'Shoulder Stretch', duration: '90s' }
+            ]
+          }
         ]
       }),
       estimated_duration: 65,
@@ -467,28 +605,50 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'hypertrophy',
       sport_id: musculationSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 60,
         stimulus: 'Leg muscle growth',
-        warmup: [
-          { movement: 'Bike Easy', duration_sec: 300 },
-          { movement: 'Leg Swings', reps: 20 }
-        ],
-        strength: {
-          name: 'Back Squat',
-          scheme: '4x8 @70%1RM',
-          rest_sec: 150,
-          equipment: ['barbell', 'rack']
-        },
-        accessory: [
-          { movement: 'Romanian Deadlift', scheme: '3x10', equipment: ['barbell'] },
-          { movement: 'Leg Press', scheme: '3x12', equipment: ['leg-press'] },
-          { movement: 'Leg Curl', scheme: '3x12', equipment: ['leg-curl'] },
-          { movement: 'Leg Extension', scheme: '3x15', equipment: ['leg-extension'] },
-          { movement: 'Calf Raise', scheme: '4x20', equipment: ['calf-raise-machine'] }
-        ],
-        cooldown: [
-          { movement: 'Quad Stretch', duration_sec: 90 },
-          { movement: 'Hamstring Stretch', duration_sec: 90 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 8,
+            exercises: [
+              { name: 'Bike Easy', duration: '5 min' },
+              { name: 'Leg Swings', reps: '20', details: 'Forward/back and side to side' }
+            ]
+          },
+          {
+            type: 'strength',
+            title: 'Strength - Back Squat',
+            format: '4 sets x 8 reps @ 70% 1RM',
+            duration_min: 20,
+            goal: 'Hypertrophie des jambes',
+            rest_between_rounds: 150,
+            exercises: [
+              { name: 'Back Squat', sets: '4', reps: '8', intensity: '70% 1RM', details: 'Repos 2:30 entre séries' }
+            ]
+          },
+          {
+            type: 'accessory',
+            title: 'Accessoires',
+            duration_min: 35,
+            goal: 'Volume et hypertrophie',
+            exercises: [
+              { name: 'Romanian Deadlift', sets: '3', reps: '10' },
+              { name: 'Leg Press', sets: '3', reps: '12' },
+              { name: 'Leg Curl', sets: '3', reps: '12' },
+              { name: 'Leg Extension', sets: '3', reps: '15' },
+              { name: 'Calf Raise', sets: '4', reps: '20' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Étirements',
+            duration_min: 5,
+            exercises: [
+              { name: 'Quad Stretch', duration: '90s' },
+              { name: 'Hamstring Stretch', duration: '90s' }
+            ]
+          }
         ]
       }),
       estimated_duration: 65,
@@ -519,28 +679,50 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'strength',
       sport_id: musculationSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 60,
         stimulus: 'Back and posterior chain development',
-        warmup: [
-          { movement: 'Rowing Easy', duration_sec: 300 },
-          { movement: 'Band Pull-Aparts', reps: 20, equipment: ['band'] }
-        ],
-        strength: {
-          name: 'Deadlift',
-          scheme: '5x3 @85%1RM',
-          rest_sec: 180,
-          equipment: ['barbell', 'plates']
-        },
-        accessory: [
-          { movement: 'Pull-Up', scheme: '4xMax', equipment: ['pull-up-bar'] },
-          { movement: 'Barbell Row', scheme: '3x10', equipment: ['barbell'] },
-          { movement: 'Lat Pulldown', scheme: '3x12', equipment: ['lat-pulldown'] },
-          { movement: 'Face Pulls', scheme: '3x15', equipment: ['cable-machine'] },
-          { movement: 'Biceps Curl', scheme: '3x12', equipment: ['dumbbell'] }
-        ],
-        cooldown: [
-          { movement: 'Lat Stretch', duration_sec: 90 },
-          { movement: 'Lower Back Stretch', duration_sec: 90 }
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 8,
+            exercises: [
+              { name: 'Rowing Easy', duration: '5 min' },
+              { name: 'Band Pull-Aparts', reps: '20' }
+            ]
+          },
+          {
+            type: 'strength',
+            title: 'Strength - Deadlift',
+            format: '5 sets x 3 reps @ 85% 1RM',
+            duration_min: 25,
+            goal: 'Développer la force du dos et de la chaîne postérieure',
+            rest_between_rounds: 180,
+            exercises: [
+              { name: 'Deadlift', sets: '5', reps: '3', intensity: '85% 1RM', details: 'Repos 3 min entre séries' }
+            ]
+          },
+          {
+            type: 'accessory',
+            title: 'Accessoires',
+            duration_min: 30,
+            goal: 'Volume dos et bras',
+            exercises: [
+              { name: 'Pull-Up', sets: '4', reps: 'Max' },
+              { name: 'Barbell Row', sets: '3', reps: '10' },
+              { name: 'Lat Pulldown', sets: '3', reps: '12' },
+              { name: 'Face Pulls', sets: '3', reps: '15' },
+              { name: 'Biceps Curl', sets: '3', reps: '12' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Étirements',
+            duration_min: 5,
+            exercises: [
+              { name: 'Lat Stretch', duration: '90s' },
+              { name: 'Lower Back Stretch', duration: '90s' }
+            ]
+          }
         ]
       }),
       estimated_duration: 65,
@@ -571,28 +753,42 @@ export async function seed(knex: Knex): Promise<void> {
       workout_type: 'circuit',
       sport_id: musculationSport?.id || null,
       blocks: JSON.stringify({
-        duration_min: 45,
         stimulus: 'Full body conditioning and muscle endurance',
-        warmup: [
-          { movement: 'Jump Rope', duration_sec: 180 },
-          { movement: 'Dynamic Stretches', duration_sec: 180 }
-        ],
-        metcon: {
-          format: 'Intervals',
-          parts: [
-            { movement: 'Goblet Squat', reps: 12, equipment: ['kettlebell'] },
-            { movement: 'Push-Up', reps: 15 },
-            { movement: 'Kettlebell Row', reps: 12, equipment: ['kettlebell'] },
-            { movement: 'Dumbbell Press', reps: 12, equipment: ['dumbbell'] },
-            { movement: 'Plank', duration_min: 1 },
-            { movement: 'Burpee', reps: 10 }
-          ],
-          substitutions: {
-            'goblet_squat': ['dumbbell squat', 'bodyweight squat']
+        sections: [
+          {
+            type: 'warmup',
+            title: 'Échauffement',
+            duration_min: 6,
+            exercises: [
+              { name: 'Jump Rope', duration: '3 min' },
+              { name: 'Dynamic Stretches', duration: '3 min' }
+            ]
+          },
+          {
+            type: 'circuit',
+            title: 'Circuit Full Body',
+            format: '3-4 rounds - 2 min rest between rounds',
+            duration_min: 35,
+            rounds: 4,
+            rest_between_rounds: 120,
+            goal: 'Conditioning et endurance musculaire',
+            exercises: [
+              { name: 'Goblet Squat', reps: '12', details: 'Ou bodyweight squat si débutant' },
+              { name: 'Push-Up', reps: '15' },
+              { name: 'Kettlebell Row', reps: '12', per_side: true },
+              { name: 'Dumbbell Press', reps: '12' },
+              { name: 'Plank', duration: '1 min' },
+              { name: 'Burpee', reps: '10' }
+            ]
+          },
+          {
+            type: 'cooldown',
+            title: 'Étirements',
+            duration_min: 5,
+            exercises: [
+              { name: 'Full Body Stretch', duration: '5 min' }
+            ]
           }
-        },
-        cooldown: [
-          { movement: 'Full Body Stretch', duration_sec: 300 }
         ]
       }),
       estimated_duration: 50,
