@@ -2,14 +2,12 @@
 
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
-  useReactTable,
+  useReactTable
 } from "@tanstack/react-table"
 import { ArrowUpDown, Edit, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
 import * as React from "react"
@@ -48,25 +46,12 @@ export default function ExercisesPage() {
   const [pageIndex, setPageIndex] = useState(0)
   const pageSize = 10
   const [searchQuery, setSearchQuery] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [orderBy, setOrderBy] = useState<string>("name")
   const [orderDir, setOrderDir] = useState<"asc" | "desc">("asc")
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-      setPageIndex(0) // Reset to first page on search
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [searchQuery])
 
   // Load exercises from API with server-side params
   const loadExercises = React.useCallback(async () => {
@@ -75,7 +60,7 @@ export default function ExercisesPage() {
       const data = await getExercises({
         limit: 10,
         offset: pageIndex * pageSize,
-        search: debouncedSearch || undefined,
+        search: searchQuery || undefined,
         orderBy: orderBy,
         orderDir: orderDir,
       })
@@ -86,7 +71,7 @@ export default function ExercisesPage() {
     } finally {
       setLoading(false)
     }
-  }, [pageIndex, pageSize, debouncedSearch, orderBy, orderDir])
+  }, [pageIndex, pageSize, searchQuery, orderBy, orderDir])
 
   useEffect(() => {
     loadExercises()
@@ -280,18 +265,13 @@ export default function ExercisesPage() {
     pageCount: pageCount,
     state: {
       sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
       pagination: {
         pageIndex,
         pageSize,
       },
     },
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true, // Server-side pagination
     manualSorting: true, // Server-side sorting
