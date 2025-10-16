@@ -2,18 +2,19 @@
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
-import { WorkoutDisplay } from '@/components/workout/WorkoutDisplay'
+import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { useSport } from '@/contexts/SportContext'
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
 import { getSportImage } from '@/lib/utils/sport-images'
 import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 function WorkoutDetailContent() {
   const params = useParams()
+  const router = useRouter()
   const { activeSport } = useSport()
   const [workout, setWorkout] = useState<Workouts | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,7 +31,7 @@ function WorkoutDetailContent() {
 
       try {
         setLoading(true)
-        const data = await workoutsService.getDailyWorkoutById(params.id as string)
+        const data = await workoutsService.getById(params.id as string)
         setWorkout(data)
       } catch (err) {
         console.error('Error fetching workout:', err)
@@ -64,6 +65,13 @@ function WorkoutDetailContent() {
     )
   }
 
+  /**
+   * Démarre un workout et crée une nouvelle session
+   * En cas d'erreur, affiche un message d'erreur
+   * Met à jour l'état de la session en cours
+   * Met à jour l'indicateur de démarrage en cours
+   * @returns {Promise<void>} - promesse qui résout sans valeur
+   */
   const handleStartWorkout = async () => {
     if (!workout) return
 
@@ -75,7 +83,6 @@ function WorkoutDetailContent() {
       })
       setActiveSession(session.id)
     } catch (err) {
-      console.error('Error starting workout session:', err)
       const errorMessage = err instanceof Error ? err.message : 'Impossible de démarrer le workout'
       alert(errorMessage)
     } finally {
@@ -111,13 +118,13 @@ function WorkoutDetailContent() {
         {/* Contenu */}
         <div className="relative h-full max-w-5xl mx-auto px-6 py-8">
           {/* Back button */}
-          <Link
-            href="/dashboard"
+          <button
+            onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors mb-8"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Retour</span>
-          </Link>
+          </button>
 
           {/* Title & Info */}
           <div className="absolute bottom-8 left-6 right-6">
@@ -127,7 +134,7 @@ function WorkoutDetailContent() {
               </span>
               <div className="flex items-center gap-2 text-white/90 text-sm">
                 <Calendar className="w-4 h-4" />
-                <span>{new Date(workout.scheduled_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                <span>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
               </div>
             </div>
 
@@ -167,12 +174,6 @@ function WorkoutDetailContent() {
                 </div>
               )}
 
-              {/* Stimulus */}
-              {workout.blocks.stimulus && (
-                <div className="text-sm">
-                  {workout.blocks.stimulus}
-                </div>
-              )}
             </div>
 
             {workout.tags && workout.tags.length > 0 && (
@@ -205,7 +206,7 @@ function WorkoutDetailContent() {
         </div>
 
         {/* Workout Blocks */}
-        <WorkoutDisplay blocks={workout.blocks} showTitle={true} />
+        <WorkoutDisplay blocks={workout.blocks} showTitle={true} isStarting={isStarting} />
 
       </div>
     </div>

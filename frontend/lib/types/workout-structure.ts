@@ -19,6 +19,7 @@ export type SectionType =
   | 'core'
   | 'mobility'
   | 'cooldown'
+  | 'tabata'
 
 export interface Exercise {
   name: string

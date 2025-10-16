@@ -9,7 +9,6 @@ import Link from 'next/link'
 
 export default function SiteHeader() {
     const { isAuthenticated, user, logout } = useAuth()
-    console.log(user)
     const getInitials = (name: string) => {
         return name
             .split(' ')

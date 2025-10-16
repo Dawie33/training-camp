@@ -7,6 +7,7 @@ import {
 import { getWorkouts, sportsService } from "@/lib/api"
 import { AdminWorkout } from "@/lib/types/workout"
 import { getSportImage } from "@/lib/utils/sport-images"
+import Link from "next/link"
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from "sonner"
 
@@ -16,7 +17,6 @@ function ExploreContent() {
     const [selectedSport, setSelectedSport] = useState<string | null>(null)
     const activeSport = localStorage.getItem('active_sport') ?? undefined
 
-    console.log(activeSport)
     const fetchSports = useCallback(async () => {
         try {
             const params: Record<string, string | number | undefined> = {
@@ -41,8 +41,8 @@ function ExploreContent() {
 
             const data = await getWorkouts(params)
             setWorkouts(data.rows)
-        } catch (error) {
-            console.log(error)
+        } catch {
+
             toast.error('Erreur dans la récupération des workouts')
         } finally {
             setLoading(false)
@@ -85,39 +85,40 @@ function ExploreContent() {
                             {workouts.map((workout) => (
                                 <Card
                                     key={workout.id}
-                                    onClick={() => setSelectedSport(workout.id === selectedSport ? null : workout.id)}
                                     className={`group relative overflow-hidden rounded-2xl border border-border transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer ${workout.id === selectedSport ? 'border-primary shadow-primary/40' : ''
                                         }`}
                                 >
-                                    {/* Image de fond */}
-                                    <div
-                                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                                        style={{
-                                            backgroundImage: `url(${getSportImage(activeSport || 'default', workout.id)})`,
-                                        }}
-                                    />
+                                    <Link href={`/workout/${workout.id}`} className="block group">
+                                        {/* Image de fond */}
+                                        <div
+                                            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                                            style={{
+                                                backgroundImage: `url(${getSportImage(activeSport || 'default', workout.id)})`,
+                                            }}
+                                        />
 
-                                    {/* Overlay */}
-                                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
+                                        {/* Overlay */}
+                                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
 
-                                    {/* Contenu */}
-                                    <div className="relative z-10 p-5 flex flex-col justify-between h-full">
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
-                                                {workout.name}
-                                            </h3>
-                                            <p className="text-sm text-gray-200 line-clamp-2">
-                                                {workout.description || 'Aucun descriptif disponible'}
-                                            </p>
+                                        {/* Contenu */}
+                                        <div className="relative z-10 p-5 flex flex-col justify-between h-full">
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                                                    {workout.name}
+                                                </h3>
+                                                <p className="text-sm text-gray-200 line-clamp-2">
+                                                    {workout.description || 'Aucun descriptif disponible'}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex justify-between items-center mt-4 text-sm text-gray-300">
+                                                <span className="px-3 py-1 rounded-full bg-primary/20 text-primary font-medium">
+                                                    {workout.difficulty || 'Tous niveaux'}
+                                                </span>
+                                                <span>{workout.estimated_duration ? `${workout.estimated_duration} min` : '—'}</span>
+                                            </div>
                                         </div>
-
-                                        <div className="flex justify-between items-center mt-4 text-sm text-gray-300">
-                                            <span className="px-3 py-1 rounded-full bg-primary/20 text-primary font-medium">
-                                                {workout.difficulty || 'Tous niveaux'}
-                                            </span>
-                                            <span>{workout.estimated_duration ? `${workout.estimated_duration} min` : '—'}</span>
-                                        </div>
-                                    </div>
+                                    </Link>
                                 </Card>
                             ))}
                         </div>

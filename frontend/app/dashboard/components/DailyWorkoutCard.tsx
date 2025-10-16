@@ -19,6 +19,7 @@ export function DailyWorkoutCard() {
     return (
         <div>
             {workoutLoading ? (
+                // loading du workout
                 <div className="aspect-[21/9] bg-card rounded-lg border border-border flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
@@ -42,7 +43,7 @@ export function DailyWorkoutCard() {
                                     <span className="text-xs font-semibold px-2 py-1 bg-primary/90 text-primary-foreground rounded">
                                         WORKOUT DU JOUR
                                     </span>
-                                    <span className="text-sm text-white/90">{new Date(dailyWorkout.scheduled_date).toLocaleDateString('fr-FR')}</span>
+                                    <span className="text-sm text-white/90">{new Date().toLocaleDateString('fr-FR')}</span>
                                 </div>
 
                                 {dailyWorkout.blocks?.duration_min != null && (

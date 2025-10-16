@@ -1,6 +1,6 @@
 'use client'
 
-import { WorkoutDisplay } from '@/components/workout/WorkoutDisplay'
+import { InteractiveWorkoutDisplay } from '@/components/workout/display/InteractiveWorkoutDisplay'
 import { WorkoutSummary } from '@/components/workout/WorkoutSummary'
 import { Workouts } from '@/lib/types/workout'
 import { Clock, Pause, Play, X } from 'lucide-react'
@@ -16,10 +16,18 @@ interface BlockProgress {
   [key: string]: boolean
 }
 
+/**
+ * Composant qui affiche un entraînement de manière interactive.
+ * Il permet de cocher une section, de la compléter, de la marquer comme complète.
+ * Il permet également de passer automatiquement à la section suivante lorsque tous les exercices sont complétés.
+ *
+ * @param {WorkoutBlocks} blocks - Les blocs de l'entraînement.
+ * @param {(sectionIdx: number, exerciseIdx: number, completed: boolean) => void} [onExerciseComplete] - Fonction à appeler lorsque l'utilisateur coche un exercice.
+ */
 export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWorkoutSessionProps) {
   const [isRunning, setIsRunning] = useState(true)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [blockProgress] = useState<BlockProgress>({})
+  const [blockProgress, setBlockProgress] = useState<BlockProgress>({})
   const [showCloseModal, setShowCloseModal] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
 
@@ -65,7 +73,6 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
         sessionId={sessionId}
         elapsedTime={elapsedTime}
         blockProgress={blockProgress}
-        notes=""
       />
     )
   }
@@ -119,17 +126,18 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
 
       {/* Contenu */}
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        {/* TODO: Refactor this component to use the new WorkoutBlocks.sections structure with interactive checkboxes */}
-        <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">⚠ Fonctionnalité en cours de migration</h3>
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            Cette session active nécessite une mise à jour pour fonctionner avec la nouvelle structure de workout.
-            Les fonctionnalités de suivi interactif (cocher les exercices complétés) seront restaurées prochainement.
-          </p>
-        </div>
-
-        {/* Afficher le workout avec WorkoutDisplay */}
-        <WorkoutDisplay blocks={workout.blocks} showTitle={true} />
+        {/* Afficher le workout avec InteractiveWorkoutDisplay */}
+        <InteractiveWorkoutDisplay
+          blocks={workout.blocks}
+          onExerciseComplete={(sectionIdx, exerciseIdx, completed) => {
+            // Mettre à jour le progress avec une clé unique pour chaque exercice
+            const exerciseKey = `section-${sectionIdx}-exercise-${exerciseIdx}`
+            setBlockProgress(prev => ({
+              ...prev,
+              [exerciseKey]: completed
+            }))
+          }}
+        />
 
         {/* Bouton de complétion */}
         <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border pt-6 pb-8">

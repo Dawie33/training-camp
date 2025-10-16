@@ -11,7 +11,6 @@ interface WorkoutSummaryProps {
   sessionId: string
   elapsedTime: number
   blockProgress: Record<string, boolean>
-  notes: string
 }
 
 interface TrainingMetrics {
@@ -27,12 +26,11 @@ export function WorkoutSummary({
   sessionId,
   elapsedTime,
   blockProgress,
-  notes: initialNotes,
 }: WorkoutSummaryProps) {
   const router = useRouter()
   const [rating, setRating] = useState<number>(0)
   const [hoveredRating, setHoveredRating] = useState<number>(0)
-  const [notes, setNotes] = useState(initialNotes)
+  const [notes, setNotes] = useState('')
   const [metrics, setMetrics] = useState<TrainingMetrics>({})
   const [isSaving, setIsSaving] = useState(false)
 
@@ -47,6 +45,13 @@ export function WorkoutSummary({
     return `${minutes}min ${secs}s`
   }
 
+  /**
+   * Sauvegarde la session de workout en cours avec les informations 
+   * de durée, de notes, de progression des blocs, de notation, de 
+   * métriques de l'entraînement.
+   *  
+   * @throws {Error} - Erreur si la sauvegarde échoue.
+   */
   const handleSave = async () => {
     try {
       setIsSaving(true)

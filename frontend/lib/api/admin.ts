@@ -34,6 +34,8 @@ export async function getExercises(params?: {
   limit?: number
   offset?: number
   search?: string
+  orderBy?: string
+  orderDir?: 'asc' | 'desc'
 }) {
   return exercisesApi.getAll(params)
 }
