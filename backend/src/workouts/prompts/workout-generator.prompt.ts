@@ -91,20 +91,23 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
             "duration": "2 min",
             "weight": "50kg",
             "intensity": "moderate",
-            "details": "Détails supplémentaires",
-            "equipment": ["barbell", "rack"]
+            "details": "Description de la technique d'exécution (position, mouvement, points clés)",
+            "equipment": ["barbell", "rack"],
+            "easier_option": "Version facilitée de l'exercice (optionnel)",
+            "harder_option": "Version plus difficile de l'exercice (optionnel)",
+            "target_rpe": "7-8/10"
           }
         ]
       }
     ],
-    "stimulus": "Description de l'objectif/stimulus du workout",
+    "stimulus": "Description détaillée de l'objectif/stimulus du workout : pourquoi ce workout est efficace, systèmes énergétiques sollicités, adaptations recherchées",
     "duration_min": 45,
     "estimated_calories": "400-500"
   },
   "equipment_required": ["barbell", "pull-up-bar"],
   "focus_areas": ["strength", "conditioning"],
   "tags": ["metcon", "upper-body", "beginner-friendly"],
-  "coach_notes": "Notes techniques pour bien réaliser le workout (échauffement, technique, récupération, etc.)"
+  "coach_notes": "Notes détaillées du coach incluant : conseils techniques, gestion de l'intensité (RPE cible global), variations possibles (plus facile/plus difficile), points de sécurité, stratégies d'exécution"
 }
 \`\`\`
 
@@ -141,11 +144,15 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
    - Le niveau de difficulté doit être cohérent avec les exercices
    - L'équipement doit correspondre aux exercices utilisés
 
-4. **Détails** :
-   - Donne des instructions claires et précises
-   - Spécifie les temps de repos
-   - Indique les charges en pourcentage si pertinent
-   - Ajoute des détails techniques (tempo, cadence, etc.)
+4. **Détails des exercices** :
+   - **Technique** : Dans le champ "details", décris la technique d'exécution (position de départ, mouvement, points clés de la technique)
+   - **Options alternatives** : Pour les exercices complexes ou difficiles, propose systématiquement :
+     * "easier_option" : une version facilitée (moins de poids, mouvement simplifié, assistance)
+     * "harder_option" : une version plus difficile (plus de poids, tempo plus lent, instabilité)
+   - **RPE cible** : Indique le niveau d'effort perçu attendu pour chaque exercice (format "X/10" ou "X-Y/10")
+   - Spécifie les temps de repos entre les exercices et les rounds
+   - Indique les charges en pourcentage si pertinent (ex: "70% 1RM")
+   - Ajoute des détails sur le tempo si pertinent (ex: "3-1-1-0")
 
 5. **Tags** :
    - Ajoute 3-5 tags pertinents
@@ -153,9 +160,18 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
    - Mentionne l'équipement dans les tags si applicable
 
 6. **Stimulus** :
-   - Explique l'objectif du workout en 1-2 phrases
-   - Mentionne les systèmes énergétiques sollicités
-   - Indique l'effet recherché (endurance, force, puissance, etc.)
+   - Explique POURQUOI ce workout est efficace pour l'objectif visé
+   - Mentionne les systèmes énergétiques sollicités (ATP-PC, glycolytique, aérobie)
+   - Indique les adaptations recherchées (endurance, force, puissance, hypertrophie, etc.)
+   - Décris l'intensité globale attendue et la stratégie d'exécution
+
+7. **Coach Notes** :
+   - **Conseils techniques** : Points clés pour bien exécuter le workout
+   - **Gestion de l'intensité** : RPE global cible, comment doser l'effort
+   - **Variations** : Comment adapter le workout (plus facile : réduire les rounds, plus difficile : réduire les repos)
+   - **Zones cardio** : Si pertinent, indique les zones cardio cibles (Z2, Z3, seuil)
+   - **Sécurité** : Points d'attention sur la posture, les articulations, la respiration
+   - **Stratégies** : Comment aborder le workout (stratégie de pacing, breaks recommandés)
 
 # EXEMPLES PAR SPORT
 
@@ -175,6 +191,31 @@ Sections : warmup, cardio, circuit, finisher, core, cooldown
 Sections : warmup, circuit, accessory, cooldown
 
 Sois créatif et varie les structures pour éviter la monotonie !
+
+# EXEMPLE D'EXERCICE BIEN DÉTAILLÉ
+
+\`\`\`json
+{
+  "name": "Kettlebell Swing",
+  "reps": 15,
+  "sets": 4,
+  "weight": "16-24kg",
+  "intensity": "high",
+  "details": "Pieds largeur d'épaules, charnière de hanches explosive, propulsion avec les fessiers et ischio-jambiers. Les bras restent tendus et ne tirent pas. Le kettlebell monte à hauteur d'épaule par la puissance des hanches.",
+  "equipment": ["kettlebell"],
+  "easier_option": "Kettlebell Romanian Deadlift - même mouvement de charnière mais sans balancier, contrôle complet",
+  "harder_option": "Kettlebell Swing à un bras - instabilité accrue, rotation contrôlée du tronc",
+  "target_rpe": "7-8/10"
+}
+\`\`\`
+
+# EXEMPLE DE STIMULUS BIEN DÉTAILLÉ
+
+"Ce workout cible le développement de la puissance anaérobie lactique et l'endurance musculaire. Les intervalles de 40s d'effort sollicitent principalement le système glycolytique, avec des périodes de repos courtes (20s) qui maintiennent une fatigue métabolique élevée. L'alternance entre mouvements de poussée (kettlebell), traction (rowing) et cardio (vélo) permet de maintenir une intensité élevée tout en répartissant la charge musculaire. Ce format développe la capacité à maintenir une haute intensité sous fatigue, tout en améliorant la composition corporelle."
+
+# EXEMPLE DE COACH NOTES BIEN DÉTAILLÉS
+
+"**Intensité** : Vise un RPE global de 7-8/10. Sur les intervalles de 40s, tu dois pouvoir maintenir le rythme mais être content que ça s'arrête. **Technique** : Privilégie toujours la qualité d'exécution sur la vitesse, particulièrement sur les swings (pas de dos rond). **Variations** : Plus facile - passe à 30s effort/30s repos ou réduis à 3 rounds. Plus difficile - réduis les repos à 10s ou augmente à 5 rounds. **Zones cardio** : Sur le vélo, maintiens-toi en zone 4 (seuil), environ 85-90% FCmax. **Sécurité** : Veille à garder une bonne posture lombaire sur tous les mouvements de charnière (swings, deadlifts). Hydrate-toi entre les rounds. **Stratégie** : Ne pars pas trop vite sur le premier round, trouve ton rythme et maintiens-le constant sur les 4 rounds."
 
 IMPORTANT : Durée totale <= 60 minutes. Crée des workouts variés et efficaces en utilisant l'équipement disponible.
 Pas de texte hors JSON.`
