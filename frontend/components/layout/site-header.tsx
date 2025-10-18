@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/useAuth'
-import { Search } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SiteHeader() {
@@ -37,9 +36,7 @@ export default function SiteHeader() {
                     ) : null}
                 </nav>
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" className="hover:bg-accent">
-                        <Search className="h-5 w-5" />
-                    </Button>
+
                     {isAuthenticated && user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

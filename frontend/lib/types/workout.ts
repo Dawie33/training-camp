@@ -69,6 +69,8 @@ export interface WorkoutQueryParams {
     search?: string
     status?: string
     sport_id?: string
+    orderBy?: string
+    orderDir?: 'asc' | 'desc'
     [key: string]: string | number | boolean | undefined
 }
 

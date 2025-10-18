@@ -1,5 +1,5 @@
+import type { CreateSportDTO, Sport, SportQueryParams, UpdateSportDTO } from '../types/sport'
 import { ResourceApi } from './resourceApi'
-import type { CreateSportDTO, Sport, SportCategory, SportQueryParams, UpdateSportDTO } from '../types/sport'
 
 
 /**
@@ -28,24 +28,6 @@ export class SportsService {
     return sportsApi.getOne(id)
   }
 
-  /**
-   * Récupère les sports par catégorie
-   * @param category Catégorie du sport
-   * @param query Paramètres de requête optionnels
-   * @returns { rows: Sport[], count: number }
-   */
-  async getByCategory(category: SportCategory, query?: SportQueryParams) {
-    return sportsApi.getAll({ ...query, category })
-  }
-
-  /**
-   * Récupère uniquement les sports actifs
-   * @param query Paramètres de requête optionnels
-   * @returns { rows: Sport[], count: number }
-   */
-  async getActive(query?: SportQueryParams) {
-    return sportsApi.getAll({ ...query, isActive: true })
-  }
 
   /**
    * Crée un nouveau sport

@@ -4,59 +4,30 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { SportCarousel } from '@/components/sport/SportCarousel'
 import { SportDetails } from '@/components/sport/SportDetails'
 import { useSport } from '@/contexts/SportContext'
-import { sportsService } from '@/lib/api'
+import { useAllSports } from '@/hooks/useAllSports'
 import { Sport } from '@/lib/types/sport'
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
-import { toast } from 'sonner'
-import { useUserSports } from './_hooks/useUserSports'
+import { useEffect, useState } from 'react'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
 import { PlanSelection } from './components/PlanSelection'
 import { RecommendedWorkouts } from './components/RecommendedWorkouts'
 import { Stats } from './components/Stats'
 
 function DashboardContent() {
-  const { activeSport, setActiveSport, userSports, setUserSports } = useSport()
-  const { loading, error } = useUserSports()
-  const [allSports, setAllSports] = useState<Sport[]>([])
-  const [loadingSports, setLoadingSports] = useState(true)
+  const { activeSport, setActiveSport } = useSport()
+  const { sports, loading, error } = useAllSports()
+
+
   const [selectedSportForDetails, setSelectedSportForDetails] = useState<Sport | null>(null)
-
-  // Charger tous les sports disponibles
-  const fetchSports = useCallback(async () => {
-    try {
-      setLoadingSports(true)
-      const { rows: sports } = await sportsService.getAll({
-        isActive: true,
-        orderBy: 'sort_order',
-        orderDir: 'asc'
-      })
-      setAllSports(sports)
-    } catch (error) {
-      console.error('Erreur lors du chargement des sports', error)
-      toast.error('Erreur lors du chargement des sports')
-    } finally {
-      setLoadingSports(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchSports()
-  }, [fetchSports])
 
   // Sélectionner automatiquement le premier sport au chargement
   useEffect(() => {
-    if (allSports.length > 0 && !selectedSportForDetails && !activeSport) {
-      const firstSport = allSports[0]
+    if (sports.length > 0 && !selectedSportForDetails && !activeSport) {
+      const firstSport = sports[0]
       setSelectedSportForDetails(firstSport)
       setActiveSport(firstSport)
-
-      // Ajouter le premier sport aux sports de l'utilisateur s'il n'y est pas déjà
-      if (!userSports.some(s => s.id === firstSport.id)) {
-        setUserSports([...userSports, firstSport])
-      }
     }
-  }, [allSports, selectedSportForDetails, activeSport, userSports, setActiveSport, setUserSports])
+  }, [sports, selectedSportForDetails, activeSport, setActiveSport])
 
   // Gérer la sélection d'un sport
   const handleSportSelect = (sport: Sport) => {
@@ -66,19 +37,12 @@ function DashboardContent() {
     } else {
       // Sinon, on sélectionne le nouveau sport
       setSelectedSportForDetails(sport)
-
-      // Si le sport n'est pas déjà dans les sports de l'utilisateur, on l'ajoute
-      if (!userSports.some(s => s.id === sport.id)) {
-        const updatedUserSports = [...userSports, sport]
-        setUserSports(updatedUserSports)
-      }
-
       // On le définit comme sport actif
       setActiveSport(sport)
     }
   }
 
-  if (loading || loadingSports) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
@@ -98,7 +62,7 @@ function DashboardContent() {
   }
 
   // Afficher un message si aucun sport n'est disponible
-  if (!activeSport && allSports.length === 0) {
+  if (!activeSport && sports.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
@@ -121,7 +85,7 @@ function DashboardContent() {
         {/* Hero Section - Carousel de sports */}
         <section>
           <SportCarousel
-            sports={allSports}
+            sports={sports}
             selectedSportId={selectedSportForDetails?.id || activeSport?.id}
             onSportSelect={handleSportSelect}
             title="Choisissez votre sport"

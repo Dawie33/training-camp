@@ -8,8 +8,6 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 interface SportContextType {
   activeSport: Sport | null
   setActiveSport: (sport: Sport | null) => void
-  userSports: Sport[]
-  setUserSports: (sports: Sport[]) => void
   loading: boolean
 }
 
@@ -23,29 +21,36 @@ const SportContext = createContext<SportContextType | undefined>(undefined)
 */
 export function SportProvider({ children }: { children: ReactNode }) {
   const [activeSport, setActiveSportState] = useState<Sport | null>(null)
-  const [userSports, setUserSports] = useState<Sport[]>([])
   const [loading, setLoading] = useState(true)
 
   // Charger le sport actif depuis localStorage au montage
   useEffect(() => {
-    const savedSportSlug = localStorage.getItem('active_sport')
-    if (savedSportSlug && userSports.length > 0) {
-      const savedSport = userSports.find(s => s.slug === savedSportSlug)
+    try {
+      const savedSport = localStorage.getItem('active_sport')
       if (savedSport) {
-        setActiveSportState(savedSport)
+        const parsed = JSON.parse(savedSport)
+        // Vérifier que c'est bien un objet Sport valide
+        if (parsed && typeof parsed === 'object' && 'id' in parsed) {
+          setActiveSportState(parsed)
+        } else {
+          // Format invalide, nettoyer le localStorage
+          localStorage.removeItem('active_sport')
+        }
       }
-    } else if (userSports.length > 0 && !activeSport) {
-      // Par défaut, utiliser le premier sport de l'utilisateur
-      setActiveSportState(userSports[0])
+    } catch (error) {
+      // Erreur de parsing, nettoyer le localStorage
+      console.error('Erreur lors du chargement du sport actif:', error)
+      localStorage.removeItem('active_sport')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }, [userSports, activeSport])
+  }, [])
 
   // Fonction pour changer de sport actif
   const setActiveSport = (sport: Sport | null) => {
     setActiveSportState(sport)
     if (sport) {
-      localStorage.setItem('active_sport', sport.slug)
+      localStorage.setItem('active_sport', JSON.stringify(sport))
     } else {
       localStorage.removeItem('active_sport')
     }
@@ -56,8 +61,6 @@ export function SportProvider({ children }: { children: ReactNode }) {
       value={{
         activeSport,
         setActiveSport,
-        userSports,
-        setUserSports,
         loading,
       }}
     >

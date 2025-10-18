@@ -1,134 +1,193 @@
 'use client'
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
-import {
-    Card
-} from "@/components/ui/card"
-import { getWorkouts, sportsService } from "@/lib/api"
-import { AdminWorkout } from "@/lib/types/workout"
-import { getSportImage } from "@/lib/utils/sport-images"
+import { SportCarousel } from "@/components/sport/SportCarousel"
+import { useSport } from "@/contexts/SportContext"
+import { useAllSports } from "@/hooks/useAllSports"
+import { workoutsService } from "@/lib/api"
+import { Sport } from "@/lib/types/sport"
+import { Workouts } from "@/lib/types/workout"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from "sonner"
+import { WorkoutFilters, WorkoutFiltersState } from "./_components/WorkoutFilters"
+import { WorkoutGrid } from "./_components/WorkoutGrid"
 
+const ITEMS_PER_PAGE = 12
+
+/**
+ * Page d'exploration des workouts
+ * Permet de parcourir et filtrer les workouts par sport, difficulté, intensité, etc.
+ */
 function ExploreContent() {
-    const [loading, setLoading] = useState(true)
-    const [workouts, setWorkouts] = useState<AdminWorkout[]>([])
-    const [selectedSport, setSelectedSport] = useState<string | null>(null)
-    const activeSport = localStorage.getItem('active_sport') ?? undefined
+    const { activeSport, setActiveSport } = useSport()
+    const { sports: allSports, loading, error } = useAllSports()
+    const [selectedSportForDetails, setSelectedSportForDetails] = useState<Sport | null>(null)
 
-    const fetchSports = useCallback(async () => {
-        try {
-            const params: Record<string, string | number | undefined> = {
-                slug: activeSport
-            }
-            const { rows: sports } = await sportsService.getAll(params)
-            setSelectedSport(sports[0]?.id)
-        } catch (error) {
-            console.error('Erreur lors du chargement des sports', error)
-            toast.error('Erreur lors du chargement des sports')
-        }
-    }, [activeSport])
+    // État des workouts
+    const [workouts, setWorkouts] = useState<Workouts[]>([])
+    const [loadingWorkouts, setLoadingWorkouts] = useState(false)
+    const [totalWorkouts, setTotalWorkouts] = useState(0)
 
-    const fetchWorkouts = useCallback(async () => {
-        try {
-            setLoading(true)
-            const params: Record<string, string | number | undefined> = {
-                limit: 20,
-                status: 'published',
-                sport_id: selectedSport || undefined,
-            }
+    // État des filtres et pagination
+    const [filters, setFilters] = useState<WorkoutFiltersState>({
+        search: '',
+        difficulty: [],
+        intensity: [],
+    })
+    const [currentPage, setCurrentPage] = useState(1)
 
-            const data = await getWorkouts(params)
-            setWorkouts(data.rows)
-        } catch {
-
-            toast.error('Erreur dans la récupération des workouts')
-        } finally {
-            setLoading(false)
-        }
-    }, [selectedSport])
-
-
+    // Sélectionner automatiquement le sport actif ou le premier sport au chargement
     useEffect(() => {
-        fetchSports()
-    }, [fetchSports])
+        if (allSports.length > 0 && !selectedSportForDetails) {
+            // Si on a un sport actif, l'utiliser, sinon prendre le premier
+            const sportToSelect = activeSport || allSports[0]
+            setSelectedSportForDetails(sportToSelect)
+
+            // Si on n'avait pas de sport actif, définir le premier comme actif
+            if (!activeSport) {
+                setActiveSport(sportToSelect)
+            }
+        }
+    }, [allSports, selectedSportForDetails, activeSport, setActiveSport])
+
+    // Gérer la sélection d'un sport
+    const handleSportSelect = (sport: Sport) => {
+        if (selectedSportForDetails?.id === sport.id) {
+            setSelectedSportForDetails(null)
+        } else {
+            setSelectedSportForDetails(sport)
+            setActiveSport(sport)
+        }
+        // Réinitialiser la pagination quand on change de sport
+        setCurrentPage(1)
+    }
+
+    // Récupérer les workouts
+    const fetchWorkouts = useCallback(async () => {
+        if (!selectedSportForDetails) return
+
+        try {
+            setLoadingWorkouts(true)
+
+            const { rows, count } = await workoutsService.getAll({
+                sport_id: selectedSportForDetails.id,
+                search: filters.search || undefined,
+                difficulty: filters.difficulty.length > 0 ? filters.difficulty.join(',') : undefined,
+                intensity: filters.intensity.length > 0 ? filters.intensity.join(',') : undefined,
+                min_duration: filters.minDuration,
+                max_duration: filters.maxDuration,
+                limit: ITEMS_PER_PAGE,
+                offset: (currentPage - 1) * ITEMS_PER_PAGE,
+            })
+
+            setWorkouts(rows)
+            setTotalWorkouts(count)
+        } catch {
+            toast.error('Erreur lors du chargement des workouts')
+        } finally {
+            setLoadingWorkouts(false)
+        }
+    }, [selectedSportForDetails, filters, currentPage])
 
     useEffect(() => {
         fetchWorkouts()
     }, [fetchWorkouts])
 
-    return (
-        <div >
-            {loading ? (
-                <div className="aspect-[4/3] bg-card rounded-lg border border-border flex items-center justify-center">
+    // Réinitialiser la page quand les filtres changent
+    const handleFiltersChange = (newFilters: WorkoutFiltersState) => {
+        setFilters(newFilters)
+        setCurrentPage(1)
+    }
+
+
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <p className="text-sm text-muted-foreground">Chargement...</p>
                 </div>
-            ) : (
-                <>
-                    <div className="lg:col-span-2" >
-                        <div className="relative h-120 bg-card rounded-lg border border-border overflow-hidden cursor-pointer">
-                            {/* Image de fond */}
-                            <div
-                                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
-                                style={{
-                                    backgroundImage: `url(${getSportImage(activeSport || 'default', 'crossfit')})`,
-                                }}
-                            />
+            </div>
+        )
+    }
 
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-red-500">Erreur: {error}</div>
+            </div>
+        )
+    }
 
+    // Afficher un message si aucun sport n'est disponible
+    if (!activeSport && allSports.length === 0) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center space-y-4">
+                    <h2 className="text-2xl font-bold">Aucun sport disponible</h2>
+                    <p className="text-muted-foreground">Complète ton profil pour commencer</p>
+                    <Link
+                        href="/onboarding"
+                        className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+                    >
+                        Compléter mon profil
+                    </Link>
+                </div>
+            </div>
+        )
+    }
+
+    const totalPages = Math.ceil(totalWorkouts / ITEMS_PER_PAGE)
+
+    return (
+        <div className="min-h-screen bg-background">
+            <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+                {/* Carousel de sports */}
+                <section>
+                    <SportCarousel
+                        sports={allSports}
+                        selectedSportId={selectedSportForDetails?.id || activeSport?.id}
+                        onSportSelect={handleSportSelect}
+                        title="Explorer les workouts"
+                        description="Sélectionnez un sport et découvrez tous les workouts disponibles"
+                        variant="default"
+                    />
+                </section>
+
+                {/* Section workouts */}
+                {selectedSportForDetails && (
+                    <section className="space-y-6 animate-in fade-in duration-500">
+                        {/* En-tête avec nombre de résultats */}
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold">{selectedSportForDetails.name}</h2>
+                                <p className="text-muted-foreground">
+                                    {totalWorkouts} workout{totalWorkouts > 1 ? 's' : ''} disponible{totalWorkouts > 1 ? 's' : ''}
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    {workouts.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
-                            {workouts.map((workout) => (
-                                <Card
-                                    key={workout.id}
-                                    className={`group relative overflow-hidden rounded-2xl border border-border transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer ${workout.id === selectedSport ? 'border-primary shadow-primary/40' : ''
-                                        }`}
-                                >
-                                    <Link href={`/workout/${workout.id}`} className="block group">
-                                        {/* Image de fond */}
-                                        <div
-                                            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                                            style={{
-                                                backgroundImage: `url(${getSportImage(activeSport || 'default', workout.id)})`,
-                                            }}
-                                        />
+                        {/* Filtres */}
+                        <WorkoutFilters
+                            filters={filters}
+                            onFiltersChange={handleFiltersChange}
+                        />
 
-                                        {/* Overlay */}
-                                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
-
-                                        {/* Contenu */}
-                                        <div className="relative z-10 p-5 flex flex-col justify-between h-full">
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
-                                                    {workout.name}
-                                                </h3>
-                                                <p className="text-sm text-gray-200 line-clamp-2">
-                                                    {workout.description || 'Aucun descriptif disponible'}
-                                                </p>
-                                            </div>
-
-                                            <div className="flex justify-between items-center mt-4 text-sm text-gray-300">
-                                                <span className="px-3 py-1 rounded-full bg-primary/20 text-primary font-medium">
-                                                    {workout.difficulty || 'Tous niveaux'}
-                                                </span>
-                                                <span>{workout.estimated_duration ? `${workout.estimated_duration} min` : '—'}</span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-
-
-                </>
-            )}
+                        {/* Grille de workouts */}
+                        <WorkoutGrid
+                            workouts={workouts}
+                            loading={loadingWorkouts}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalWorkouts={totalWorkouts}
+                            onPageChange={setCurrentPage}
+                        />
+                    </section>
+                )}
+            </div>
         </div>
-
     )
 }
 

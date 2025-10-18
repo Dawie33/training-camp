@@ -1,83 +1,95 @@
-import { Workouts, WorkoutSession, WorkoutSessionCreate, WorkoutSessionUpdate } from '../types/workout'
-import { apiClient } from './apiClient'
+import { CreateWorkoutDTO, UpdateWorkoutDTO, WorkoutQueryParams, Workouts } from '../types/workout'
+import { ResourceApi } from './resourceApi'
 
 
+export const workoutsApi = new ResourceApi<Workouts, CreateWorkoutDTO, UpdateWorkoutDTO>('/workouts')
 
-/**
- * Service Workouts - Gestion des workouts et sessions
- */
-export class WorkoutsServie {
+export class WorkoutsService {
+
+
+  /**
+   * Récupère toutes les séances d'entraînement avec des paramètres de requête optionnels.
+   * Retourne la réponse complète du backend avec rows et count.
+   *
+   * @param query Paramètres de requête (limit, offset, search, etc.)
+   * @returns Promesse contenant { rows: WorkoutSession[], count: number }
+   * */
+  async getAll(query?: WorkoutQueryParams) {
+    return workoutsApi.getAll(query)
+  }
+
   /**
    * Récupère un workout par son ID
-   * @param workoutId Identifiant du workout
+   * @param workoutId ID du workout
    * @returns Le workout correspondant
    */
   async getById(workoutId: string): Promise<Workouts> {
-    return apiClient.get<Workouts>(`/workouts/${workoutId}`)
+    return workoutsApi.getOne(workoutId)
+  }
+
+  /**
+   * Crée un nouveau workout.
+   * @param data Données du workout à créer.
+   * @returns Promesse contenant le workout créé.
+   */
+  async create(data: CreateWorkoutDTO): Promise<Workouts> {
+    return workoutsApi.create(data)
+  }
+
+  /**
+   * Met à jour un workout existant.
+   * @param id ID du workout à mettre à jour.
+   * @param data Données à mettre à jour.
+   * @returns Promesse contenant le workout mis à jour.
+   */
+  async update(id: string, data: UpdateWorkoutDTO): Promise<Workouts> {
+    return workoutsApi.update(id, data)
+  }
+
+  /**
+   * Supprime un workout par son ID.
+   * @param id ID du workout à supprimer.
+   * @returns Promesse qui renvoie void une fois le workout supprimé.
+   */
+  async delete(id: string): Promise<void> {
+    return workoutsApi.delete(id)
+  }
+
+  /**
+   * Récupère les workouts recommandés pour un sport
+   * @param sportId ID du sport
+   * @param limit Nombre maximum de workouts à récupérer
+   * @returns Promesse contenant { rows: Workouts[], count: number }
+   */
+  async getRecommendedWorkouts(sportId: string, limit: number = 10) {
+    return workoutsApi.getAll({
+      sport_id: sportId,
+      limit,
+      // On pourrait ajouter d'autres paramètres pour personnaliser les recommandations
+    })
   }
 
   /**
    * Récupère le workout du jour pour un sport donné
-   * @param sportId Identifiant du sport
-   * @param date Date optionnelle (YYYY-MM-DD), par défaut aujourd'hui
-   * @returns Le workout du jour
+   * @param sportId ID du sport
+   * @param date Date au format ISO (YYYY-MM-DD). Si non fourni, récupère le dernier workout
+   * @returns Promesse contenant le workout du jour
    */
   async getDailyWorkout(sportId: string, date?: string): Promise<Workouts> {
-    return apiClient.get<Workouts>(`/workouts/daily/${sportId}`, {
-      params: date ? { date } : undefined
+    const response = await workoutsApi.getAll({
+      sport_id: sportId,
+      limit: 1,
+      // Vous pouvez ajouter un paramètre de date si votre API le supporte
     })
-  }
 
-  /**
-   * Récupère les workouts recommandés pour l'utilisateur
-   * @param sportId Identifiant du sport actif
-   * @param limit Nombre de workouts à récupérer (par défaut 4)
-   * @returns Liste paginée de workouts recommandés
-   */
-  async getRecommendedWorkouts(sportId: string, limit: number = 4): Promise<{ rows: Workouts[], count: number }> {
-    const token = localStorage.getItem('access_token')
-    return apiClient.get<{ rows: Workouts[], count: number }>('/workouts/recommended', {
-      params: { sportId, limit },
-      headers: { Authorization: `Bearer ${token}` }
-    })
-  }
+    if (!response.rows || response.rows.length === 0) {
+      throw new Error('No workout found')
+    }
 
-  /**
-   * Démarre une nouvelle session de workout
-   * @param data Données de la session à créer
-   * @returns La session créée
-   */
-  async startSession(data: WorkoutSessionCreate): Promise<WorkoutSession> {
-    const token = localStorage.getItem('access_token')
-    return apiClient.post<WorkoutSession>('/workout-sessions', data, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-  }
-
-  /**
-   * Met à jour une session de workout existante
-   * @param sessionId Identifiant de la session
-   * @param data Données à mettre à jour
-   * @returns La session mise à jour
-   */
-  async updateSession(sessionId: string, data: WorkoutSessionUpdate): Promise<WorkoutSession> {
-    const token = localStorage.getItem('access_token')
-    return apiClient.patch<WorkoutSession>(`/workout-sessions/${sessionId}`, data, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-  }
-
-  /**
-   * Récupère une session de workout
-   * @param sessionId Identifiant de la session
-   * @returns La session correspondante
-   */
-  async getSession(sessionId: string): Promise<WorkoutSession> {
-    const token = localStorage.getItem('access_token')
-    return apiClient.get<WorkoutSession>(`/workout-sessions/${sessionId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    return response.rows[0]
   }
 }
 
-export const workoutsService = new WorkoutsServie()
+
+
+export const workoutsService = new WorkoutsService()
