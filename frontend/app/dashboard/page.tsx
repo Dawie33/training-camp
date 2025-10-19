@@ -20,12 +20,17 @@ function DashboardContent() {
 
   const [selectedSportForDetails, setSelectedSportForDetails] = useState<Sport | null>(null)
 
-  // Sélectionner automatiquement le premier sport au chargement
+  // Sélectionner automatiquement le sport actif ou le premier sport au chargement
   useEffect(() => {
-    if (sports.length > 0 && !selectedSportForDetails && !activeSport) {
-      const firstSport = sports[0]
-      setSelectedSportForDetails(firstSport)
-      setActiveSport(firstSport)
+    if (sports.length > 0 && !selectedSportForDetails) {
+      // Si un sport actif existe, l'utiliser, sinon prendre le premier
+      const sportToSelect = activeSport || sports[0]
+      setSelectedSportForDetails(sportToSelect)
+
+      // Si aucun sport n'était actif, définir le premier comme actif
+      if (!activeSport) {
+        setActiveSport(sports[0])
+      }
     }
   }, [sports, selectedSportForDetails, activeSport, setActiveSport])
 
