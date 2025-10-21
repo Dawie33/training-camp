@@ -125,6 +125,31 @@ class ApiClient {
   }
 
   /**
+   * Récupère le token d'authentification depuis le localStorage
+   * @returns Le token JWT ou null s'il n'existe pas
+   */
+  private getAuthToken(): string | null {
+    if (typeof window === 'undefined') {
+      return null
+    }
+    return localStorage.getItem('access_token')
+  }
+
+  /**
+   * Crée les en-têtes avec le token d'authentification si disponible
+   * @param customHeaders En-têtes personnalisés optionnels
+   * @returns En-têtes complets avec token
+   */
+  private getHeaders(customHeaders?: Record<string, string>): Record<string, string> {
+    const headers = { ...this.defaultHeaders, ...customHeaders }
+    const token = this.getAuthToken()
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    return headers
+  }
+
+  /**
    * Effectue une requête GET
    * Utilisée pour récupérer des données depuis l'API
    *
@@ -148,7 +173,7 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}${this.buildQueryString(options?.params)}`
     const response = await fetch(url, {
       method: 'GET',
-      headers: { ...this.defaultHeaders, ...options?.headers },
+      headers: this.getHeaders(options?.headers),
     })
     return this.handleResponse<T>(response)
   }
@@ -176,7 +201,7 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}${this.buildQueryString(options?.params)}`
     const response = await fetch(url, {
       method: 'POST',
-      headers: { ...this.defaultHeaders, ...options?.headers },
+      headers: this.getHeaders(options?.headers),
       body: data ? JSON.stringify(data) : undefined,
     })
     return this.handleResponse<T>(response)
@@ -204,7 +229,7 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}${this.buildQueryString(options?.params)}`
     const response = await fetch(url, {
       method: 'PATCH',
-      headers: { ...this.defaultHeaders, ...options?.headers },
+      headers: this.getHeaders(options?.headers),
       body: data ? JSON.stringify(data) : undefined,
     })
     return this.handleResponse<T>(response)
@@ -234,7 +259,7 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}${this.buildQueryString(options?.params)}`
     const response = await fetch(url, {
       method: 'PUT',
-      headers: { ...this.defaultHeaders, ...options?.headers },
+      headers: this.getHeaders(options?.headers),
       body: data ? JSON.stringify(data) : undefined,
     })
     return this.handleResponse<T>(response)
@@ -259,7 +284,7 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}${this.buildQueryString(options?.params)}`
     const response = await fetch(url, {
       method: 'DELETE',
-      headers: { ...this.defaultHeaders, ...options?.headers },
+      headers: this.getHeaders(options?.headers),
     })
     return this.handleResponse<T>(response)
   }

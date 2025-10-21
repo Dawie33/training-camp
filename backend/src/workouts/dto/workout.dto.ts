@@ -110,6 +110,10 @@ export class CreateWorkoutDto {
   @IsArray()
   @IsOptional()
   tags?: string[]
+
+  @IsString()
+  @IsOptional()
+  image_url?: string
 }
 
 export class UpdateWorkoutDto {
@@ -127,7 +131,7 @@ export class UpdateWorkoutDto {
 
   @IsInt()
   @IsOptional()
-  estimated_duration?: string
+  estimated_duration?: number
 
   @IsString()
   @IsOptional()
@@ -164,6 +168,10 @@ export class UpdateWorkoutDto {
   @IsString()
   @IsOptional()
   scheduled_date?: string
+
+  @IsString()
+  @IsOptional()
+  image_url?: string
 }
 
 export class GenerateWorkoutDto {
@@ -327,4 +335,8 @@ export class WorkoutDto {
   @IsArray()
   @IsOptional()
   tags: string[]
+
+  @IsString()
+  @IsOptional()
+  image_url?: string
 }

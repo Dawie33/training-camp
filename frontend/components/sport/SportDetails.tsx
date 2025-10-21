@@ -142,9 +142,11 @@ export function SportDetails({ sport, isExpanded = true }: SportDetailsProps) {
         {/* Image de fond avec overlay */}
         <div className="relative h-64 md:h-80">
           <div
-            className="absolute inset-0 bg-cover bg-center"
+            className="absolute inset-0 bg-center"
             style={{
-              backgroundImage: `url(${getSportImage(sport.slug, sport.slug)})`,
+              backgroundImage: `url(${getSportImage(sport.slug)})`,
+              backgroundSize: '100%',
+              backgroundPosition: 'center 30%',
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/20" />

@@ -29,6 +29,7 @@ interface FormData {
   coach_notes: string
   target_metrics: string
   ai_parameters: string
+  image_url: string
 }
 
 interface WorkoutFormProps {
@@ -65,6 +66,19 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={3}
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium">Image</label>
+        <Input
+          type='url'
+          value={formData.image_url}
+          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+          placeholder="https://example.com/image.jpg"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          URL de l'image du workout (Unsplash recommandé)
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

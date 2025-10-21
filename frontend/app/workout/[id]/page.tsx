@@ -6,7 +6,6 @@ import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { useSport } from '@/contexts/SportContext'
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
-import { getSportImage } from '@/lib/utils/sport-images'
 import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -106,12 +105,14 @@ function WorkoutDetailContent() {
       {/* Hero Section */}
       <div className="relative h-[40vh] min-h-[300px]">
         {/* Image de fond */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${getSportImage(activeSport?.slug || 'default', workout.id)})`,
-          }}
-        />
+        {workout.image_url && (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${workout.image_url})`,
+            }}
+          />
+        )}
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
 

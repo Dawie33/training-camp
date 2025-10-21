@@ -38,7 +38,7 @@ export function SportCard({ sport, isSelected = false, onClick, variant = 'defau
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
           style={{
-            backgroundImage: `url(${getSportImage(sport.slug, sport.slug)})`,
+            backgroundImage: `url(${getSportImage(sport.slug)})`,
           }}
         />
 

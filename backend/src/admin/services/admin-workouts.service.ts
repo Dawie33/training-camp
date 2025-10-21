@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { safeJsonStringify } from 'src/common/utils/utils'
 import { CreateWorkoutDto, WorkoutQueryDto } from 'src/workouts/dto/workout.dto'
 import { UpdateWorkoutDto } from '../../workouts/dto/workout.dto'
-import { safeJsonStringify } from 'src/common/utils/utils'
 
 @Injectable()
 export class AdminWorkoutService {
@@ -126,7 +126,7 @@ export class AdminWorkoutService {
             workout_type: string
             difficulty: string
             intensity: string
-            estimated_duration: string
+            estimated_duration: number
             status: string
             isActive: boolean
             isFeatured: boolean
@@ -134,6 +134,7 @@ export class AdminWorkoutService {
             blocks: string
             tags: string
             scheduled_date: string
+            image_url: string
         }> = {}
 
 
@@ -150,6 +151,7 @@ export class AdminWorkoutService {
         if (data.blocks !== undefined) updateData.blocks = JSON.stringify(data.blocks)
         if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags)
         if (data.scheduled_date !== undefined) updateData.scheduled_date = data.scheduled_date
+        if (data.image_url !== undefined) updateData.image_url = data.image_url
         const [row] = await this.knex('workouts')
             .where({ id })
             .update(updateData)
@@ -196,6 +198,7 @@ export class AdminWorkoutService {
             is_benchmark: boolean
             coach_notes: string | null
             tags: string | null
+            image_url: string
         } = {
             name: data.name || null,
             slug: data.slug || null,
@@ -222,6 +225,7 @@ export class AdminWorkoutService {
             is_benchmark: data.is_benchmark || false,
             coach_notes: data.coach_notes || null,
             tags: safeJsonStringify(data.tags, []),
+            image_url: data.image_url || '',
         }
 
         // Insert the workout

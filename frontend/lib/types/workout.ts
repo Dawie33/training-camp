@@ -39,6 +39,7 @@ export interface AdminWorkout {
     ai_generated: boolean
     scheduled_date?: string
     tags?: string[]
+    image_url?: string
     created_at: string
     updated_at: string
     exercises?: AdminWorkoutExercise[]
@@ -59,6 +60,7 @@ export interface CreateWorkoutDTO {
     isPublic?: boolean
     scheduled_date?: string
     tags?: string[]
+    image_url?: string
 }
 
 export type UpdateWorkoutDTO = Partial<CreateWorkoutDTO>
@@ -95,6 +97,7 @@ export interface Workouts {
     scheduled_date: string
     tags: string[]
     status: string
+    image_url?: string | null
 }
 
 export interface WorkoutSessionCreate {

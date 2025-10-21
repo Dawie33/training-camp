@@ -1,7 +1,6 @@
 'use client'
 
 import { useSport } from '@/contexts/SportContext'
-import { getSportImage } from '@/lib/utils/sport-images'
 import Link from 'next/link'
 import { useDailyWorkout } from '../_hooks/useDailyWorkout'
 
@@ -27,12 +26,14 @@ export function DailyWorkoutCard() {
                 <Link href={`/workout/${dailyWorkout.id}`} className="block group">
                     <div className="relative aspect-[21/9] bg-card rounded-lg border border-border overflow-hidden cursor-pointer hover:border-primary/50 transition-all">
                         {/* Image de fond */}
-                        <div
-                            className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
-                            style={{
-                                backgroundImage: `url(${getSportImage(activeSport?.slug || 'default', dailyWorkout.id)})`,
-                            }}
-                        />
+                        {dailyWorkout.image_url && (
+                            <div
+                                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
+                                style={{
+                                    backgroundImage: `url(${dailyWorkout.image_url})`,
+                                }}
+                            />
+                        )}
                         {/* Overlay gradient */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 

@@ -35,7 +35,13 @@ const intensityColors = {
 export function WorkoutCard({ workout }: WorkoutCardProps) {
   return (
     <div className="relative h-[400px] rounded-lg overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 transition-transform duration-300 group-hover:scale-[1.02]">
-      {/* Image de fond - placeholder pour l'instant */}
+      {/* Image de fond du workout */}
+      {workout.image_url && (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${workout.image_url})` }}
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
       {/* Contenu */}

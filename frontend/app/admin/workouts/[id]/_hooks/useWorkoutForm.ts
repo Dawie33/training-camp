@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import { getWorkout, createWorkout, updateWorkout, generateWorkoutWithAI } from '@/lib/api/admin'
+import { createWorkout, generateWorkoutWithAI, getWorkout, updateWorkout } from '@/lib/api/admin'
 import type { AdminWorkout, CreateWorkoutDTO } from '@/lib/types/workout'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface FormData {
   name: string
@@ -28,6 +28,7 @@ interface FormData {
   coach_notes: string
   target_metrics: string
   ai_parameters: string
+  image_url: string
 }
 
 interface AIParams {
@@ -79,6 +80,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
     coach_notes: '',
     target_metrics: '',
     ai_parameters: '',
+    image_url: '',
   })
 
   const [aiParams, setAiParams] = useState<AIParams>({
@@ -127,9 +129,9 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
           coach_notes: '',
           target_metrics: '',
           ai_parameters: '',
+          image_url: data.image_url || '',
         })
-      } catch (error) {
-        console.error('Erreur lors du chargement du workout:', error)
+      } catch {
         toast.error('Erreur lors du chargement du workout')
       } finally {
         setLoading(false)
@@ -170,6 +172,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
         scheduled_date: formData.scheduled_date || undefined,
         tags: parseJsonOrArray(formData.tags),
         blocks: formData.blocks ? JSON.parse(formData.blocks) : undefined,
+        image_url: formData.image_url || undefined,
       }
 
       if (isNewMode) {
@@ -226,8 +229,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
 
       setShowAIModal(false)
       toast.success('Workout genere avec succes!')
-    } catch (error) {
-      console.error(error)
+    } catch {
       toast.error('Erreur lors de la generation du workout')
     } finally {
       setSaving(false)
