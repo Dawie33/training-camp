@@ -176,6 +176,7 @@ function ExploreContent() {
                         />
 
                         {/* Grille de workouts */}
+
                         <WorkoutGrid
                             workouts={workouts}
                             loading={loadingWorkouts}

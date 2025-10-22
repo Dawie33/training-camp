@@ -58,16 +58,19 @@ export class WorkoutsService {
 
   /**
    * Récupère les workouts recommandés pour un sport
+   * Le userId est automatiquement récupéré depuis le token JWT
    * @param sportId ID du sport
    * @param limit Nombre maximum de workouts à récupérer
    * @returns Promesse contenant { rows: Workouts[], count: number }
    */
   async getRecommendedWorkouts(sportId: string, limit: number = 10) {
-    return workoutsApi.getAll({
-      sport_id: sportId,
-      limit,
-      // On pourrait ajouter d'autres paramètres pour personnaliser les recommandations
+    const response = await apiClient.get<{ rows: Workouts[], count: number }>('/workouts/recommended', {
+      params: {
+        sportId: sportId,
+        limit: limit
+      }
     })
+    return response
   }
 
   /**
@@ -77,16 +80,8 @@ export class WorkoutsService {
    * @returns Promesse contenant le workout du jour
    */
   async getDailyWorkout(sportId: string): Promise<Workouts> {
-    const response = await workoutsApi.getAll({
-      sport_id: sportId,
-      limit: 1,
-    })
-
-    if (!response.rows || response.rows.length === 0) {
-      throw new Error('No workout found')
-    }
-
-    return response.rows[0]
+    const response = await apiClient.get<Workouts>(`/workouts/daily/${sportId}`)
+    return response
   }
 
   /**

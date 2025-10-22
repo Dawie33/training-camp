@@ -14,18 +14,38 @@ export class WorkoutsService {
    * Recherche tous les workouts.
    * @returns Tous les workouts.
    */
-  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc' }: WorkoutQueryDto) {
+  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', sport_id, search }: WorkoutQueryDto) {
     try {
-      const rows = await this.knex('workouts')
+
+      let query = this.knex('workouts').select('*')
+
+      if (sport_id) {
+        query = query.where('sport_id', sport_id)
+      }
+
+      if (search) {
+        query = query.where('name', 'ilike', `%${search}%`)
+      }
+
+      const rows = await query
         .select('*')
         .where({ status: 'published' })
         .limit(Number(limit))
         .offset(Number(offset))
         .orderBy(orderBy, orderDir)
 
+      const countQuery = this.knex('workouts').count({ count: '*' })
 
-      const countResult = await this.knex("workouts").where({ status: 'published' }).count({ count: "*" }).first()
+      if (sport_id) {
+        countQuery.where('sport_id', sport_id)
+      }
+      if (search) {
+        countQuery.where('name', 'ilike', `%${search}%`)
+      }
+
+      const countResult = await countQuery.first()
       const count = Number(countResult?.count)
+
       return { rows, count }
 
     } catch (error) {

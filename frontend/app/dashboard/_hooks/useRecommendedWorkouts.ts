@@ -9,6 +9,7 @@ export function useRecommendedWorkouts(limit: number = 4) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
+
     const fetchRecommendedWorkouts = useCallback(async () => {
         if (!activeSport) return
 

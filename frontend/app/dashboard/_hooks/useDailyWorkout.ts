@@ -19,8 +19,7 @@ export function useDailyWorkout() {
 
         try {
             setWorkoutLoading(true)
-            const date = new Date().toISOString().split('T')[0]
-            const workout = await workoutsService.getDailyWorkout(activeSport.id, date)
+            const workout = await workoutsService.getDailyWorkout(activeSport.id)
             setDailyWorkout(workout)
         } catch (err) {
             console.error('Error fetching daily workout:', err)

@@ -1,9 +1,10 @@
 'use client'
 
-import { WorkoutCard } from '@/components/workout/WorkoutCard'
 import { Button } from '@/components/ui/button'
+import { WorkoutCard } from '@/components/workout/WorkoutCard'
 import { Workouts } from '@/lib/types/workout'
 import { ChevronLeft, ChevronRight, Dumbbell } from 'lucide-react'
+import Link from 'next/link'
 
 interface WorkoutGridProps {
   workouts: Workouts[]
@@ -68,7 +69,10 @@ export function WorkoutGrid({
               animationFillMode: 'backwards',
             }}
           >
-            <WorkoutCard workout={workout} />
+            <Link href={`/workouts/${workout.id}`}>
+
+              <WorkoutCard workout={workout} />
+            </Link>
           </div>
         ))}
       </div>
