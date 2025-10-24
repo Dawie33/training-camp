@@ -79,8 +79,27 @@ export class WorkoutsService {
    * @param date Date au format ISO (YYYY-MM-DD). Si non fourni, récupère le dernier workout
    * @returns Promesse contenant le workout du jour
    */
-  async getDailyWorkout(sportId: string): Promise<Workouts> {
-    const response = await apiClient.get<Workouts>(`/workouts/daily/${sportId}`)
+  async getDailyWorkout(sportId: string) {
+    const response = await apiClient.get<{ rows: Workouts[], count: number }>(`/workouts/daily`, {
+      params: {
+        sportId: sportId
+      }
+    })
+    return response
+  }
+
+  /**
+   * Récupère les workouts de référence (benchmark) pour un sport donné.
+   * Les benchmarks sont des workouts de référence pour évaluer le niveau.
+   * @param sportId ID du sport
+   * @returns Promesse contenant { rows: Workouts[], count: number }
+   */
+  async getBenchmarkWorkouts(sportId: string): Promise<{ rows: Workouts[], count: number }> {
+    const response = await apiClient.get<{ rows: Workouts[], count: number }>(`/workouts/benchmark`, {
+      params: {
+        sportId: sportId
+      }
+    })
     return response
   }
 

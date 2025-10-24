@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { format } from 'date-fns'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { WorkoutQueryDto } from '../dto/workout.dto'
+import { WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 
 @Injectable()
 export class WorkoutsService {
@@ -89,7 +89,7 @@ export class WorkoutsService {
    * @param date Date (format YYYY-MM-DD), par défaut aujourd'hui
    * @returns Le workout du jour
    */
-  async getDailyWorkoutBySport(sportId: string, date?: string): Promise<any> {
+  async getDailyWorkoutBySport(sportId: string, date?: string): Promise<WorkoutDto> {
     const targetDate = date && date.trim() !== '' ? date : format(new Date(), 'yyyy-MM-dd')
 
     // Récupérer tous les workouts publiés pour ce sport
@@ -98,7 +98,7 @@ export class WorkoutsService {
       .orderBy('id', 'asc') // Ordre stable
 
     if (!workouts || workouts.length === 0) {
-      return null
+      throw new Error('Aucun workout publié pour ce sport')
     }
 
     // Utiliser la date comme seed pour sélectionner toujours le même workout pour une date donnée
@@ -164,5 +164,26 @@ export class WorkoutsService {
     }
   }
 
+  /**
+   * Récupère les workouts benchmark pour un sport donné
+   * Les benchmarks sont des workouts de référence pour évaluer le niveau
+   * @param sportId ID du sport
+   * @returns Liste des workouts benchmark triés par difficulté
+   */
+  async getBenchmarkWorkouts(sportId: string) {
+    try {
+      const rows = await this.knex('workouts')
+        .select('*')
+        .where({ sport_id: sportId, status: 'published', is_benchmark: true })
+        .orderBy('difficulty', 'asc')
+        .orderBy('name', 'asc')
+
+      const count = rows.length
+
+      return { rows, count }
+    } catch (error) {
+      throw new Error('Erreur dans la récupération des benchmarks: ' + error.message)
+    }
+  }
 
 }

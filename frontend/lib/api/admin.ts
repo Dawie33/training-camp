@@ -95,19 +95,19 @@ export async function deleteEquipment(id: string): Promise<void> {
 // ============================================================================
 // Workout API
 // ============================================================================
-export const workoutsApi = new ResourceApi<AdminWorkout, CreateWorkoutDTO, UpdateWorkoutDTO>(
+export const workoutsAdminApi = new ResourceApi<AdminWorkout, CreateWorkoutDTO, UpdateWorkoutDTO>(
   '/admin/workouts'
 )
 export async function getWorkouts(params?: WorkoutQueryParams) {
-  return workoutsApi.getAll(params)
+  return workoutsAdminApi.getAll(params)
 }
 
 export async function getWorkout(id: string): Promise<AdminWorkout> {
-  return workoutsApi.getOne(id)
+  return workoutsAdminApi.getOne(id)
 }
 
 export async function createWorkout(data: CreateWorkoutDTO): Promise<AdminWorkout> {
-  return workoutsApi.create(data)
+  return workoutsAdminApi.create(data)
 }
 
 /**
@@ -131,11 +131,11 @@ export async function generateWorkoutWithAI(data: {
 }
 
 export async function updateWorkout(id: string, data: UpdateWorkoutDTO): Promise<AdminWorkout> {
-  return workoutsApi.update(id, data)
+  return workoutsAdminApi.update(id, data)
 }
 
 export async function deleteWorkout(id: string): Promise<void> {
-  return workoutsApi.delete(id)
+  return workoutsAdminApi.delete(id)
 }
 
 

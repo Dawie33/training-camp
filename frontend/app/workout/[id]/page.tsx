@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+
 function WorkoutDetailContent() {
   const params = useParams()
   const router = useRouter()

@@ -2,6 +2,7 @@
 
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
+import { BenchmarkResultForm } from '@/components/workout/BenchmarkResultForm'
 import { Check, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -146,6 +147,11 @@ export function WorkoutSummary({
             </p>
           )}
         </div>
+
+        {/* Benchmark Result Form - Only for benchmark workouts */}
+        {workout.is_benchmark && (
+          <BenchmarkResultForm workout={workout} />
+        )}
 
         {/* Training Metrics */}
         <div className="bg-card border border-border rounded-lg p-6 space-y-4">

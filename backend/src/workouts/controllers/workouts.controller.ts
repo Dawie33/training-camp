@@ -12,9 +12,9 @@ export class WorkoutsController {
     return await this.service.findAll(query)
   }
 
-  @Get('daily/:sportId')
+  @Get('daily')
   async getDailyWorkout(
-    @Param('sportId') sportId: string,
+    @Query('sportId') sportId: string,
     @Query('date') date?: string
   ) {
     const workout = await this.service.getDailyWorkoutBySport(sportId, date)
@@ -32,6 +32,14 @@ export class WorkoutsController {
     @Query('limit') limit: number = 10
   ) {
     return await this.service.getRecommendedWorkouts(req.user.id, sportId, limit)
+  }
+
+  @Get('benchmark')
+  @UseGuards(JwtAuthGuard)
+  async getBenchmarkWorkouts(
+    @Query('sportId') sportId: string,
+  ) {
+    return await this.service.getBenchmarkWorkouts(sportId)
   }
 
 

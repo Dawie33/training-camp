@@ -9,6 +9,7 @@ import { EquipmentsModule } from './equipments/equipments.module'
 import { ExercisesModule } from './exercises/exercises.module'
 import { HealthcheckModule } from './healthcheck/healthcheck.module'
 import { SportsModule } from './sports/sports.module'
+import { UsersModule } from './users/users.module'
 import { WorkoutsModule } from './workouts/workouts.module'
 
 @Module({
@@ -24,7 +25,8 @@ import { WorkoutsModule } from './workouts/workouts.module'
     SportsModule,
     EquipmentsModule,
     ExercisesModule,
-    AdminModule
+    AdminModule,
+    UsersModule
   ],
 })
 export class AppModule { }

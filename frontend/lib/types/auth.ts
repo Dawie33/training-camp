@@ -31,9 +31,11 @@ export interface User {
   created_at: string
   updated_at: string
   workouts_count?: number
+  sport_level?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
   stats?: {
     workouts: number
     sessions: number
+    total_time_minutes: number
   }
 }
 

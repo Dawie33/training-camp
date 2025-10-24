@@ -98,6 +98,7 @@ export interface Workouts {
     tags: string[]
     status: string
     image_url?: string | null
+    is_benchmark?: boolean
 }
 
 export interface WorkoutSessionCreate {
