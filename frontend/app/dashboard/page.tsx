@@ -5,7 +5,9 @@ import { SportCarousel } from '@/components/sport/SportCarousel'
 import { SportDetails } from '@/components/sport/SportDetails'
 import { useSport } from '@/contexts/SportContext'
 import { useAllSports } from '@/hooks/useAllSports'
+import { fadeInUp, staggerContainer, scaleIn } from '@/lib/animations'
 import { Sport } from '@/lib/types/sport'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
@@ -69,26 +71,47 @@ function DashboardContent() {
   // Afficher un message si aucun sport n'est disponible
   if (!activeSport && sports.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <motion.div
+        className="flex items-center justify-center min-h-screen"
+        initial="hidden"
+        animate="visible"
+        variants={staggerContainer}
+      >
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold">Aucun sport disponible</h2>
-          <p className="text-muted-foreground">Complète ton profil pour commencer</p>
-          <Link
-            href="/onboarding"
-            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-          >
-            Compléter mon profil
-          </Link>
+          <motion.h2 className="text-2xl font-bold" variants={fadeInUp}>
+            Aucun sport disponible
+          </motion.h2>
+          <motion.p className="text-muted-foreground" variants={fadeInUp}>
+            Complète ton profil pour commencer
+          </motion.p>
+          <motion.div variants={fadeInUp}>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Link
+                href="/onboarding"
+                className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Compléter mon profil
+              </Link>
+            </motion.div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div
+      className="min-h-screen bg-background"
+      initial="hidden"
+      animate="visible"
+      variants={staggerContainer}
+    >
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-14">
         {/* Hero Section - Carousel de sports */}
-        <section>
+        <motion.section variants={fadeInUp}>
           <SportCarousel
             sports={sports}
             selectedSportId={selectedSportForDetails?.id || activeSport?.id}
@@ -97,44 +120,57 @@ function DashboardContent() {
             description="Sélectionnez un sport pour voir plus de détails et accéder aux workouts"
             variant="default"
           />
-        </section>
+        </motion.section>
 
         {/* Sport Details - Section dépliable */}
-        {selectedSportForDetails && (
-          <section>
-            <SportDetails sport={selectedSportForDetails} isExpanded={true} />
-          </section>
-        )}
+        <AnimatePresence mode="wait">
+          {selectedSportForDetails && (
+            <motion.section
+              key={selectedSportForDetails.id}
+              variants={scaleIn}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <SportDetails sport={selectedSportForDetails} isExpanded={true} />
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         {/* Stats - Vue d'ensemble */}
         {activeSport && (
-          <section>
+          <motion.section variants={fadeInUp}>
             <Stats />
-          </section>
+          </motion.section>
         )}
 
         {/* Workout du jour */}
         {activeSport && (
-          <section>
+          <motion.section variants={fadeInUp}>
             <DailyWorkoutCard />
-          </section>
+          </motion.section>
         )}
 
         {/* Workouts recommandés */}
         {activeSport && (
-          <section>
+          <motion.section variants={fadeInUp}>
             <RecommendedWorkouts />
-          </section>
+          </motion.section>
         )}
 
         {/* Plan de l'utilisateur */}
         {activeSport && (
-          <section className="bg-card rounded-lg border overflow-hidden">
+          <motion.section
+            className="bg-card rounded-lg border overflow-hidden"
+            variants={fadeInUp}
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.3 }}
+          >
             <PlanSelection />
-          </section>
+          </motion.section>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 

@@ -2,6 +2,8 @@
 
 import { getExercises } from "@/lib/api/admin"
 import { Exercise } from "@/lib/types/exercice"
+import { slideInRight, backdropVariants, staggerContainer, fadeInUp } from "@/lib/animations"
+import { AnimatePresence, motion } from "framer-motion"
 import { Search, X } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -58,70 +60,82 @@ export function ExerciseDrawer({ isOpen, onClose, onSelectExercise }: ExerciseDr
 
     const categories = Array.from(new Set(exercises.map(ex => ex.category).filter(Boolean)))
 
-    if (!isOpen) return null
-
     return (
-        <>
-            {/* Overlay */}
-            <div
-                className="fixed inset-0 bg-black/20 z-[55]"
-                onClick={onClose}
-            />
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    {/* Overlay */}
+                    <motion.div
+                        className="fixed inset-0 bg-black/20 z-[55]"
+                        onClick={onClose}
+                        variants={backdropVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                    />
 
-            {/* Drawer */}
-            <div className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white dark:bg-background border-l border-gray-200 dark:border-border shadow-2xl z-[60] flex flex-col">
-                {/* Header */}
-                <div className="border-b border-gray-200 dark:border-border p-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-foreground">Ajouter un exercice</h3>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-accent rounded-lg transition-colors"
-                        >
-                            <X className="w-5 h-5 text-gray-900 dark:text-foreground" />
-                        </button>
-                    </div>
+                    {/* Drawer */}
+                    <motion.div
+                        className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white dark:bg-background border-l border-gray-200 dark:border-border shadow-2xl z-[60] flex flex-col"
+                        variants={slideInRight}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                    >
+                        {/* Header */}
+                        <div className="border-b border-gray-200 dark:border-border p-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-foreground">Ajouter un exercice</h3>
+                                <motion.button
+                                    onClick={onClose}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-accent rounded-lg transition-colors"
+                                    whileHover={{ scale: 1.1, rotate: 90 }}
+                                    whileTap={{ scale: 0.9 }}
+                                >
+                                    <X className="w-5 h-5 text-gray-900 dark:text-foreground" />
+                                </motion.button>
+                            </div>
 
-                    {/* Search */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="search"
-                            placeholder="Rechercher un exercice..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-card border border-gray-300 dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-primary text-gray-900 dark:text-foreground placeholder:text-gray-400"
-                        />
-                    </div>
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="search"
+                                    placeholder="Rechercher un exercice..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-card border border-gray-300 dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-primary text-gray-900 dark:text-foreground placeholder:text-gray-400"
+                                />
+                            </div>
 
-                    {/* Category Filter */}
-                    <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
-                        <button
-                            onClick={() => setCategoryFilter('all')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${categoryFilter === 'all'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 dark:bg-accent text-gray-700 dark:text-foreground hover:bg-gray-200 dark:hover:bg-accent/80'
-                                }`}
-                        >
-                            Tous
-                        </button>
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setCategoryFilter(cat)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${categoryFilter === cat
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 dark:bg-accent text-gray-700 dark:text-foreground hover:bg-gray-200 dark:hover:bg-accent/80'
-                                    }`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                            {/* Category Filter */}
+                            <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+                                <button
+                                    onClick={() => setCategoryFilter('all')}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${categoryFilter === 'all'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 dark:bg-accent text-gray-700 dark:text-foreground hover:bg-gray-200 dark:hover:bg-accent/80'
+                                        }`}
+                                >
+                                    Tous
+                                </button>
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setCategoryFilter(cat)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${categoryFilter === cat
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-gray-100 dark:bg-accent text-gray-700 dark:text-foreground hover:bg-gray-200 dark:hover:bg-accent/80'
+                                            }`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-4">
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-4">
                     {loading ? (
                         <div className="flex items-center justify-center h-32">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-primary"></div>
@@ -131,15 +145,24 @@ export function ExerciseDrawer({ isOpen, onClose, onSelectExercise }: ExerciseDr
                             <p className="text-gray-500 dark:text-muted-foreground">Aucun exercice trouvé</p>
                         </div>
                     ) : (
-                        <div className="space-y-2">
-                            {filteredExercises.map(exercise => (
-                                <button
+                        <motion.div
+                            className="space-y-2"
+                            variants={staggerContainer}
+                            initial="hidden"
+                            animate="visible"
+                        >
+                            {filteredExercises.map((exercise, index) => (
+                                <motion.button
                                     key={exercise.id}
                                     onClick={() => {
                                         onSelectExercise(exercise)
                                         onClose()
                                     }}
                                     className="w-full p-4 bg-white dark:bg-card border border-gray-200 dark:border-border rounded-lg hover:border-blue-400 dark:hover:border-primary hover:shadow-sm transition-all text-left group"
+                                    variants={fadeInUp}
+                                    whileHover={{ scale: 1.02, y: -2 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    custom={index}
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="flex-1">
@@ -172,19 +195,21 @@ export function ExerciseDrawer({ isOpen, onClose, onSelectExercise }: ExerciseDr
                                             />
                                         )}
                                     </div>
-                                </button>
+                                </motion.button>
                             ))}
-                        </div>
+                        </motion.div>
                     )}
-                </div>
+                        </div>
 
-                {/* Footer */}
-                <div className="border-t border-gray-200 dark:border-border p-4 bg-gray-50 dark:bg-accent/20">
-                    <p className="text-xs text-gray-500 dark:text-muted-foreground text-center">
-                        {filteredExercises.length} exercice{filteredExercises.length > 1 ? 's' : ''} disponible{filteredExercises.length > 1 ? 's' : ''}
-                    </p>
-                </div>
-            </div>
-        </>
+                        {/* Footer */}
+                        <div className="border-t border-gray-200 dark:border-border p-4 bg-gray-50 dark:bg-accent/20">
+                            <p className="text-xs text-gray-500 dark:text-muted-foreground text-center">
+                                {filteredExercises.length} exercice{filteredExercises.length > 1 ? 's' : ''} disponible{filteredExercises.length > 1 ? 's' : ''}
+                            </p>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
     )
 }

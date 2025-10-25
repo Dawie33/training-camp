@@ -3,6 +3,8 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
+import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -91,28 +93,40 @@ function PersonalizedWorkoutsContent() {
     const totalPages = Math.ceil(totalWorkouts / ITEMS_PER_PAGE)
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <motion.div
+            className="container mx-auto px-4 py-8 max-w-7xl"
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+        >
             {/* Back Button */}
-            <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                Retour au dashboard
-            </Link>
+            <motion.div variants={fadeInUp}>
+                <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors group"
+                >
+                    <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    Retour au dashboard
+                </Link>
+            </motion.div>
 
             {/* Header */}
-            <div className="mb-8">
+            <motion.div className="mb-8" variants={fadeInUp}>
                 <h1 className="text-3xl font-bold mb-2">Mes Workouts Personnalisés</h1>
                 <p className="text-muted-foreground">
                     Retrouvez tous vos workouts personnalisés et modifiés
                 </p>
-            </div>
+            </motion.div>
 
             {/* Workouts Grid */}
             {workouts.length === 0 ? (
-                <div className="text-center py-12">
-                    <div className="mb-4">
+                <motion.div className="text-center py-12" variants={fadeInUp}>
+                    <motion.div
+                        className="mb-4"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                    >
                         <svg
                             className="mx-auto h-12 w-12 text-muted-foreground"
                             fill="none"
@@ -127,23 +141,24 @@ function PersonalizedWorkoutsContent() {
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                             />
                         </svg>
-                    </div>
+                    </motion.div>
                     <h3 className="text-lg font-medium text-foreground mb-2">Aucun workout personnalisé</h3>
                     <p className="text-muted-foreground mb-6">
                         Vous n'avez pas encore créé de workout personnalisé.
                     </p>
-                    <Link
-                        href="/explore"
-                        className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                        Explorer les workouts
-                    </Link>
-                </div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                        <Link
+                            href="/explore"
+                            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                            Explorer les workouts
+                        </Link>
+                    </motion.div>
+                </motion.div>
             ) : (
-                <div>
+                <motion.div variants={fadeInUp}>
                     {/* Filtres */}
                     <div className='mb-6'>
-
                         <WorkoutFilters
                             filters={filters}
                             onFiltersChange={handleFiltersChange}
@@ -159,9 +174,9 @@ function PersonalizedWorkoutsContent() {
                         onPageChange={setCurrentPage}
                         basePath="/personalized-workout"
                     />
-                </div>
+                </motion.div>
             )}
-        </div>
+        </motion.div>
     )
 }
 

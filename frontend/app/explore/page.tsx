@@ -5,8 +5,10 @@ import { SportCarousel } from "@/components/sport/SportCarousel"
 import { useSport } from "@/contexts/SportContext"
 import { useAllSports } from "@/hooks/useAllSports"
 import { workoutsService } from "@/lib/api"
+import { fadeInUp, staggerContainer, scaleIn } from "@/lib/animations"
 import { Sport } from "@/lib/types/sport"
 import { Workouts } from "@/lib/types/workout"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from "sonner"
@@ -124,28 +126,49 @@ function ExploreContent() {
     // Afficher un message si aucun sport n'est disponible
     if (!activeSport && allSports.length === 0) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <motion.div
+                className="flex items-center justify-center min-h-screen"
+                initial="hidden"
+                animate="visible"
+                variants={staggerContainer}
+            >
                 <div className="text-center space-y-4">
-                    <h2 className="text-2xl font-bold">Aucun sport disponible</h2>
-                    <p className="text-muted-foreground">Complète ton profil pour commencer</p>
-                    <Link
-                        href="/onboarding"
-                        className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                    >
-                        Compléter mon profil
-                    </Link>
+                    <motion.h2 className="text-2xl font-bold" variants={fadeInUp}>
+                        Aucun sport disponible
+                    </motion.h2>
+                    <motion.p className="text-muted-foreground" variants={fadeInUp}>
+                        Complète ton profil pour commencer
+                    </motion.p>
+                    <motion.div variants={fadeInUp}>
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <Link
+                                href="/onboarding"
+                                className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                Compléter mon profil
+                            </Link>
+                        </motion.div>
+                    </motion.div>
                 </div>
-            </div>
+            </motion.div>
         )
     }
 
     const totalPages = Math.ceil(totalWorkouts / ITEMS_PER_PAGE)
 
     return (
-        <div className="min-h-screen bg-background">
+        <motion.div
+            className="min-h-screen bg-background"
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+        >
             <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
                 {/* Carousel de sports */}
-                <section>
+                <motion.section variants={fadeInUp}>
                     <SportCarousel
                         sports={allSports}
                         selectedSportId={selectedSportForDetails?.id || activeSport?.id}
@@ -154,41 +177,56 @@ function ExploreContent() {
                         description="Sélectionnez un sport et découvrez tous les workouts disponibles"
                         variant="default"
                     />
-                </section>
+                </motion.section>
 
                 {/* Section workouts */}
-                {selectedSportForDetails && (
-                    <section className="space-y-6 animate-in fade-in duration-500">
-                        {/* En-tête avec nombre de résultats */}
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-2xl font-bold">{selectedSportForDetails.name}</h2>
-                                <p className="text-muted-foreground">
-                                    {totalWorkouts} workout{totalWorkouts > 1 ? 's' : ''} disponible{totalWorkouts > 1 ? 's' : ''}
-                                </p>
-                            </div>
-                        </div>
+                <AnimatePresence mode="wait">
+                    {selectedSportForDetails && (
+                        <motion.section
+                            key={selectedSportForDetails.id}
+                            className="space-y-6"
+                            variants={scaleIn}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                        >
+                            {/* En-tête avec nombre de résultats */}
+                            <motion.div
+                                className="flex items-center justify-between"
+                                variants={fadeInUp}
+                            >
+                                <div>
+                                    <h2 className="text-2xl font-bold">{selectedSportForDetails.name}</h2>
+                                    <p className="text-muted-foreground">
+                                        {totalWorkouts} workout{totalWorkouts > 1 ? 's' : ''} disponible{totalWorkouts > 1 ? 's' : ''}
+                                    </p>
+                                </div>
+                            </motion.div>
 
-                        {/* Filtres */}
-                        <WorkoutFilters
-                            filters={filters}
-                            onFiltersChange={handleFiltersChange}
-                        />
+                            {/* Filtres */}
+                            <motion.div variants={fadeInUp}>
+                                <WorkoutFilters
+                                    filters={filters}
+                                    onFiltersChange={handleFiltersChange}
+                                />
+                            </motion.div>
 
-                        {/* Grille de workouts */}
-
-                        <WorkoutGrid
-                            workouts={workouts}
-                            loading={loadingWorkouts}
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            totalWorkouts={totalWorkouts}
-                            onPageChange={setCurrentPage}
-                        />
-                    </section>
-                )}
+                            {/* Grille de workouts */}
+                            <motion.div variants={fadeInUp}>
+                                <WorkoutGrid
+                                    workouts={workouts}
+                                    loading={loadingWorkouts}
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalWorkouts={totalWorkouts}
+                                    onPageChange={setCurrentPage}
+                                />
+                            </motion.div>
+                        </motion.section>
+                    )}
+                </AnimatePresence>
             </div>
-        </div>
+        </motion.div>
     )
 }
 
