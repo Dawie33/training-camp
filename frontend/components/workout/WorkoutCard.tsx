@@ -67,7 +67,14 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
             </div>
           </div>
         </div>
-
+        {/* Badge BENCHMARK */}
+        {
+          workout.is_benchmark && (
+            <div className="absolute top-15 left-6 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+              BENCHMARK
+            </div>
+          )
+        }
         {/* Titre et description en bas */}
         <div className="space-y-3">
           <div>

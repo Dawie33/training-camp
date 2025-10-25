@@ -57,21 +57,7 @@ export default function SiteHeader() {
                                     PLANS
                                 </Link>
                                 <Link
-                                    href="/learn"
-                                    className="text-lg font-medium hover:text-foreground transition-colors"
-                                    onClick={() => setOpen(false)}
-                                >
-                                    LEARN
-                                </Link>
-                                <Link
-                                    href="/shop"
-                                    className="text-lg font-medium hover:text-foreground transition-colors"
-                                    onClick={() => setOpen(false)}
-                                >
-                                    SHOP
-                                </Link>
-                                <Link
-                                    href="/workouts"
+                                    href="/personalized-workout"
                                     className="text-lg font-medium hover:text-foreground transition-colors"
                                     onClick={() => setOpen(false)}
                                 >
@@ -100,9 +86,7 @@ export default function SiteHeader() {
                     <Link href="/dashboard" className="hover:text-foreground transition-colors">HOME</Link>
                     <Link href="/explore" className="hover:text-foreground transition-colors">EXPLORE</Link>
                     <Link href="/plans" className="hover:text-foreground transition-colors">PLANS</Link>
-                    <Link href="/learn" className="hover:text-foreground transition-colors">LEARN</Link>
-                    <Link href="/shop" className="hover:text-foreground transition-colors">SHOP</Link>
-                    <Link href="/workouts" className="hover:text-foreground transition-colors">MY WORKOUTS</Link>
+                    <Link href="/personalized-workout" className="hover:text-foreground transition-colors">MY WORKOUTS</Link>
                     {user && user.role === 'admin' ? (
                         <Link href="/admin" className="hover:text-foreground transition-colors text-orange-500">ADMIN</Link>
                     ) : null}

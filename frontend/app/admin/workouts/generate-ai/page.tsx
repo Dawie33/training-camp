@@ -1,6 +1,6 @@
 'use client'
 
-import { WorkoutDisplay } from '@/components/workout/WorkoutDisplay'
+import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { GeneratedWorkout, createWorkout, generateWorkoutWithAI } from '@/lib/api/admin'
 import { sportsService } from '@/lib/api/sports'
 import { ExerciseDifficulty } from '@/lib/types/exercice'

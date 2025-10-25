@@ -3,6 +3,7 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
+import WorkoutEditModal from '@/components/workout/WorkoutEditModal'
 import { useSport } from '@/contexts/SportContext'
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
@@ -21,6 +22,7 @@ function WorkoutDetailContent() {
   const [error, setError] = useState<string | null>(null)
   const [activeSession, setActiveSession] = useState<string | null>(null)
   const [isStarting, setIsStarting] = useState(false)
+  const [showEditWorkoutModal, setShowEditWorkoutModal] = useState(false)
 
   useEffect(() => {
     /**
@@ -202,6 +204,13 @@ function WorkoutDetailContent() {
           >
             {isStarting ? 'Démarrage...' : 'Commencer le workout'}
           </button>
+          {!workout.is_benchmark &&
+            <button
+              onClick={() => setShowEditWorkoutModal(true)}
+              className="px-6 py-4 bg-red-500 text-white border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer">
+              Personnaliser ce workout
+            </button>
+          }
           <button className="px-6 py-4 border border-border rounded-lg hover:bg-accent transition-colors">
             <Share2 className="w-5 h-5 cursor-pointer" />
           </button>
@@ -209,6 +218,13 @@ function WorkoutDetailContent() {
 
         {/* Workout Blocks */}
         <WorkoutDisplay blocks={workout.blocks} showTitle={true} isStarting={isStarting} />
+        {showEditWorkoutModal && (
+          <WorkoutEditModal
+            workout={workout}
+            isOpen={showEditWorkoutModal}
+            onClose={() => setShowEditWorkoutModal(false)}
+          />
+        )}
 
       </div>
     </div>

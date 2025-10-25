@@ -25,6 +25,7 @@ export interface Exercise {
     measurement_type?: MeasurementType
     bodyweight_only?: boolean
     isActive?: boolean
+    muscle_groups?: string[]
     image_url?: string
     video_url?: string
     created_at: string

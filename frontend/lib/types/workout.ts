@@ -99,6 +99,7 @@ export interface Workouts {
     status: string
     image_url?: string | null
     is_benchmark?: boolean
+    created_at: string
 }
 
 export interface WorkoutSessionCreate {
@@ -122,4 +123,12 @@ export interface WorkoutSession {
     results?: Record<string, unknown>
     created_at: string
     updated_at: string
+}
+
+export interface PersonalizedWorkout {
+    id: string
+    base_id: string
+    user_id: string
+    plan_json: Workouts
+    wod_date: string
 }

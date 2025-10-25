@@ -13,6 +13,7 @@ interface WorkoutGridProps {
   totalPages: number
   totalWorkouts?: number
   onPageChange: (page: number) => void
+  basePath?: string
 }
 
 /**
@@ -26,6 +27,7 @@ export function WorkoutGrid({
   totalPages,
   totalWorkouts = 0,
   onPageChange,
+  basePath = '/workout',
 }: WorkoutGridProps) {
   if (loading) {
     return (
@@ -69,7 +71,7 @@ export function WorkoutGrid({
               animationFillMode: 'backwards',
             }}
           >
-            <Link href={`/workouts/${workout.id}`}>
+            <Link href={`${basePath}/${workout.id}`}>
 
               <WorkoutCard workout={workout} />
             </Link>

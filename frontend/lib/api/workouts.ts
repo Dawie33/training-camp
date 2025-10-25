@@ -1,4 +1,4 @@
-import { CreateWorkoutDTO, UpdateWorkoutDTO, WorkoutQueryParams, Workouts, WorkoutSession, WorkoutSessionCreate, WorkoutSessionUpdate } from '../types/workout'
+import { CreateWorkoutDTO, PersonalizedWorkout, UpdateWorkoutDTO, WorkoutQueryParams, Workouts, WorkoutSession, WorkoutSessionCreate, WorkoutSessionUpdate } from '../types/workout'
 import { apiClient } from './apiClient'
 import { ResourceApi } from './resourceApi'
 
@@ -6,7 +6,6 @@ import { ResourceApi } from './resourceApi'
 export const workoutsApi = new ResourceApi<Workouts, CreateWorkoutDTO, UpdateWorkoutDTO>('/workouts')
 
 export class WorkoutsService {
-
 
   /**
    * Récupère toutes les séances d'entraînement avec des paramètres de requête optionnels.
@@ -85,6 +84,57 @@ export class WorkoutsService {
         sportId: sportId
       }
     })
+    return response
+  }
+
+  /**
+   * Crée un nouveau workout personnalisé.
+   * Les données sont transmises via le body de la requête.
+   * @param data Données du workout à créer.
+   * @returns Promesse contenant le workout créé.
+   */
+  async createPersonalizedWorkout(data: Workouts) {
+    const response = await apiClient.post<Workouts>('/workouts/personalized', data)
+    return response
+  }
+
+  /**
+   * Récupère les workouts personnalisés associés à l'utilisateur courant.
+   * @returns Promesse contenant { rows: Workouts[], count: number }
+   * */
+  async getPersonalizedWorkouts(
+    limit = 20,
+    offset = 0,
+    search?: string,
+    difficulty?: string,
+    intensity?: string,
+    minDuration?: number,
+    maxDuration?: number
+  ) {
+    const params: Record<string, string | number> = {
+      limit,
+      offset
+    }
+
+    if (search) params.search = search
+    if (difficulty) params.difficulty = difficulty
+    if (intensity) params.intensity = intensity
+    if (minDuration) params.minDuration = minDuration
+    if (maxDuration) params.maxDuration = maxDuration
+
+    const response = await apiClient.get<{ rows: PersonalizedWorkout[], count: number }>('/workouts/personalized', {
+      params
+    })
+    return response
+  }
+
+  /**
+   * Récupère un workout personnalisé par son ID.
+   * @param {string} id - ID du workout personnalisé.
+   * @returns {Promise<PersonalizedWorkout>} - Promesse contenant le workout personnalisé.
+   */
+  async getPersonalizedWorkout(id: string) {
+    const response = await apiClient.get<PersonalizedWorkout>(`/workouts/personalized/${id}`)
     return response
   }
 
