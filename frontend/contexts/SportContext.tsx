@@ -1,6 +1,7 @@
 'use client'
 
 /* eslint-disable react-refresh/only-export-components */
+import ConditionalFooter from '@/components/layout/ConditionalFooter'
 import ConditionalHeader from '@/components/layout/ConditionalHeader'
 import type { Sport } from '@/lib/types/sport'
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
@@ -66,6 +67,7 @@ export function SportProvider({ children }: { children: ReactNode }) {
     >
       <ConditionalHeader />
       {children}
+      <ConditionalFooter />
     </SportContext.Provider>
   )
 }
