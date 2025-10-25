@@ -15,42 +15,38 @@ export class WorkoutsService {
    * @returns Tous les workouts.
    */
   async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', sport_id, search }: WorkoutQueryDto) {
-    try {
 
-      let query = this.knex('workouts').select('*')
 
-      if (sport_id) {
-        query = query.where('sport_id', sport_id)
-      }
+    let query = this.knex('workouts').select('*')
 
-      if (search) {
-        query = query.where('name', 'ilike', `%${search}%`)
-      }
-
-      const rows = await query
-        .select('*')
-        .where({ status: 'published' })
-        .limit(Number(limit))
-        .offset(Number(offset))
-        .orderBy(orderBy, orderDir)
-
-      const countQuery = this.knex('workouts').count({ count: '*' })
-
-      if (sport_id) {
-        countQuery.where('sport_id', sport_id)
-      }
-      if (search) {
-        countQuery.where('name', 'ilike', `%${search}%`)
-      }
-
-      const countResult = await countQuery.first()
-      const count = Number(countResult?.count)
-
-      return { rows, count }
-
-    } catch (error) {
-      throw new Error('Failed to retrieve workouts: ' + error.message)
+    if (sport_id) {
+      query = query.where('sport_id', sport_id)
     }
+
+    if (search) {
+      query = query.where('name', 'ilike', `%${search}%`)
+    }
+
+    const rows = await query
+      .select('*')
+      .where({ status: 'published' })
+      .limit(Number(limit))
+      .offset(Number(offset))
+      .orderBy(orderBy, orderDir)
+
+    const countQuery = this.knex('workouts').count({ count: '*' })
+
+    if (sport_id) {
+      countQuery.where('sport_id', sport_id)
+    }
+    if (search) {
+      countQuery.where('name', 'ilike', `%${search}%`)
+    }
+
+    const countResult = await countQuery.first()
+    const count = Number(countResult?.count)
+
+    return { rows, count }
   }
 
   /**
@@ -183,6 +179,145 @@ export class WorkoutsService {
       return { rows, count }
     } catch (error) {
       throw new Error('Erreur dans la récupération des benchmarks: ' + error.message)
+    }
+  }
+
+  async getPersonalizedWorkouts(
+    userId: string,
+    limit = '20',
+    offset = '0',
+    search?: string,
+    difficulty?: string,
+    intensity?: string,
+    minDuration?: string,
+    maxDuration?: string
+  ) {
+    let query = this.knex('personalized_workouts')
+      .select('*')
+      .where({ user_id: userId })
+
+    // Filtre de recherche dans le plan_json (name ou description)
+    if (search) {
+      query = query.where(function () {
+        this.whereRaw(`plan_json->>'name' ILIKE ?`, [`%${search}%`])
+          .orWhereRaw(`plan_json->>'description' ILIKE ?`, [`%${search}%`])
+      })
+    }
+
+    // Filtre de difficulté
+    if (difficulty) {
+      query = query.whereRaw(`LOWER(plan_json->>'difficulty') = ?`, [difficulty.toLowerCase()])
+    }
+
+    // Filtre d'intensité
+    if (intensity) {
+      query = query.whereRaw(`LOWER(plan_json->>'intensity') = ?`, [intensity.toLowerCase()])
+    }
+
+    // Filtre de durée minimale
+    if (minDuration) {
+      query = query.whereRaw(`plan_json->>'duration' >= ?`, [minDuration])
+    }
+
+    // Filtre de durée maximale
+    if (maxDuration) {
+      query = query.whereRaw(`plan_json->>'duration' <= ?`, [maxDuration])
+    }
+
+    const rows = await query
+      .limit(Number(limit))
+      .offset(Number(offset))
+      .orderBy('created_at', 'desc')
+
+    // Count avec les mêmes filtres
+    let countQuery = this.knex('personalized_workouts')
+      .count({ count: '*' })
+      .where({ user_id: userId })
+
+    if (search) {
+      countQuery = countQuery.where(function () {
+        this.whereRaw(`plan_json->>'name' ILIKE ?`, [`%${search}%`])
+          .orWhereRaw(`plan_json->>'description' ILIKE ?`, [`%${search}%`])
+      })
+    }
+
+    if (difficulty) {
+      countQuery = countQuery.whereRaw(`LOWER(plan_json->>'difficulty') = ?`, [difficulty.toLowerCase()])
+    }
+
+    if (intensity) {
+      countQuery = countQuery.whereRaw(`LOWER(plan_json->>'intensity') = ?`, [intensity.toLowerCase()])
+    }
+
+    if (minDuration) {
+      countQuery = countQuery.whereRaw(`plan_json->>'duration' >= ?`, [minDuration])
+    }
+
+    if (maxDuration) {
+      countQuery = countQuery.whereRaw(`plan_json->>'duration' <= ?`, [maxDuration])
+    }
+
+    const countResult = await countQuery.first()
+    const count = Number(countResult?.count)
+
+    return { rows, count }
+  }
+
+
+  /**
+   * Crée un nouveau workout personnalisé.
+   * Vérifie si le workout existe avant de le créer.
+   * Les données sont transmises via le body de la requête.
+   * @param workout Données du workout à créer.
+   * @param userId ID de l'utilisateur.
+   * @returns Promesse contenant le workout créé.
+   * @throws {Error} Si le workout n'existe pas ou si une erreur se produit lors de la création.
+   */
+  async createPersonalizedWorkout(workout: WorkoutDto, userId: string) {
+
+    // Vérifier si le workout existe
+    const baseWorkout = await this.knex('workouts').where({ id: workout.id }).first()
+
+    if (!baseWorkout) {
+      throw new Error(`Base workout with id ${workout.id} does not exist`)
+    }
+
+    const record = {
+      user_id: userId,
+      base_id: workout.id,
+      plan_json: JSON.stringify(workout),
+      wod_date: new Date().toISOString().split('T')[0], // Format YYYY-MM-DD
+      params_json: JSON.stringify({}), // Objet vide par défaut
+    }
+
+    try {
+      const newWorkout = await this.knex('personalized_workouts').insert(record).returning('*')
+      return newWorkout[0]
+    } catch (error) {
+      throw new Error('Failed to create personalized workout: ' + error.message)
+    }
+  }
+
+  /**
+   * Récupère un workout personnalisé par son ID et l'ID de l'utilisateur
+   * @param id ID du workout personnalisé
+   * @param userId ID de l'utilisateur
+   * @returns Le workout personnalisé associé
+   * @throws {Error} Si le workout n'est pas trouvé ou que l'utilisateur n'a pas les permissions nécessaires
+   */
+  async getPersonalizedWorkout(id: string, userId: string) {
+    try {
+      const workout = await this.knex('personalized_workouts')
+        .where({ id, user_id: userId })
+        .first()
+
+      if (!workout) {
+        throw new Error('Personalized workout not found or you do not have permission to access it')
+      }
+
+      return workout
+    } catch (error) {
+      throw new Error('Failed to fetch personalized workout: ' + error.message)
     }
   }
 
