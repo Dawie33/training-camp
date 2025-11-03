@@ -1,17 +1,18 @@
 'use client'
 
-import { Play, Pause, RotateCcw } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Pause, Play, RotateCcw } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface AMRAPTimerProps {
-  durationMin: number
+  duration: number
   onComplete?: () => void
+  onTimeUpdate?: (time: string) => void
 }
 
-export function AMRAPTimer({ durationMin, onComplete }: AMRAPTimerProps) {
+export function AMRAPTimer({ duration, onComplete, onTimeUpdate }: AMRAPTimerProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
-  const totalSeconds = durationMin * 60
+  const totalSeconds = duration * 60
 
   useEffect(() => {
     if (!isRunning) return
@@ -39,6 +40,13 @@ export function AMRAPTimer({ durationMin, onComplete }: AMRAPTimerProps) {
 
   const remainingSeconds = totalSeconds - elapsedSeconds
   const progressPercent = (elapsedSeconds / totalSeconds) * 100
+
+  useEffect(() => {
+    if (onTimeUpdate) {
+      const timeString = formatTime(remainingSeconds)
+      onTimeUpdate(timeString)
+    }
+  }, [remainingSeconds, onTimeUpdate])
 
   const reset = () => {
     setElapsedSeconds(0)

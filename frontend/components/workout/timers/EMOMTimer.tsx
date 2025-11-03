@@ -1,15 +1,16 @@
 'use client'
 
-import { Play, Pause, RotateCcw, ChevronRight } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { ChevronRight, Pause, Play, RotateCcw } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface EMOMTimerProps {
   durationMin: number
   intervalMin?: number
   onComplete?: () => void
+  onTimeUpdate?: (time: string) => void
 }
 
-export function EMOMTimer({ durationMin, intervalMin = 1, onComplete }: EMOMTimerProps) {
+export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpdate }: EMOMTimerProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
 
@@ -42,6 +43,13 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete }: EMOMTime
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
+
+  useEffect(() => {
+    if (onTimeUpdate) {
+      const timeString = formatTime(roundElapsed)
+      onTimeUpdate(timeString)
+    }
+  }, [roundElapsed, onTimeUpdate])
 
   const reset = () => {
     setElapsedSeconds(0)

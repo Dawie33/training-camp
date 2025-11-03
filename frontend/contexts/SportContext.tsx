@@ -3,6 +3,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import ConditionalFooter from '@/components/layout/ConditionalFooter'
 import ConditionalHeader from '@/components/layout/ConditionalHeader'
+import { FloatingTimer } from '@/components/workout/timers/floatingTimer'
+import { WorkoutTimerProvider } from '@/contexts/WorkoutTimerContext'
 import type { Sport } from '@/lib/types/sport'
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 
@@ -65,9 +67,12 @@ export function SportProvider({ children }: { children: ReactNode }) {
         loading,
       }}
     >
-      <ConditionalHeader />
-      {children}
-      <ConditionalFooter />
+      <WorkoutTimerProvider>
+        <ConditionalHeader />
+        {children}
+        <ConditionalFooter />
+        <FloatingTimer />
+      </WorkoutTimerProvider>
     </SportContext.Provider>
   )
 }

@@ -8,13 +8,15 @@ interface TabataTimerProps {
   workSeconds?: number
   restSeconds?: number
   onComplete?: () => void
+  onTimeUpdate?: (time: string) => void
 }
 
 export function TabataTimer({
   rounds = 8,
   workSeconds = 20,
   restSeconds = 10,
-  onComplete
+  onComplete,
+  onTimeUpdate
 }: TabataTimerProps) {
   const [currentRound, setCurrentRound] = useState(1)
   const [secondsInPhase, setSecondsInPhase] = useState(0)
@@ -74,6 +76,15 @@ export function TabataTimer({
   const currentPhaseLength = isWorking ? workSeconds : restSeconds
   const remainingInPhase = currentPhaseLength - secondsInPhase
   const phaseProgressPercent = (secondsInPhase / currentPhaseLength) * 100
+
+  // Mettre à jour le temps pour la vue minimisée
+  useEffect(() => {
+    if (onTimeUpdate && isRunning) {
+      const minutes = Math.floor(remainingInPhase / 60)
+      const seconds = remainingInPhase % 60
+      onTimeUpdate(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`)
+    }
+  }, [remainingInPhase, isRunning, onTimeUpdate])
 
   const isComplete = currentRound > rounds
 

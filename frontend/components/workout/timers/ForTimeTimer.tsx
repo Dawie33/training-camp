@@ -6,9 +6,10 @@ import { useState, useEffect } from 'react'
 interface ForTimeTimerProps {
   capMin?: number
   onComplete?: () => void
+  onTimeUpdate?: (time: string) => void
 }
 
-export function ForTimeTimer({ capMin, onComplete }: ForTimeTimerProps) {
+export function ForTimeTimer({ capMin, onComplete, onTimeUpdate }: ForTimeTimerProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
   const [isFinished, setIsFinished] = useState(false)
@@ -35,6 +36,13 @@ export function ForTimeTimer({ capMin, onComplete }: ForTimeTimerProps) {
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
+
+  useEffect(() => {
+    if (onTimeUpdate) {
+      const timeString = formatTime(elapsedSeconds)
+      onTimeUpdate(timeString)
+    }
+  }, [elapsedSeconds, onTimeUpdate])
 
   const reset = () => {
     setElapsedSeconds(0)
