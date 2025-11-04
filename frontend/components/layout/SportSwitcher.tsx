@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useSport } from '@/contexts/SportContext'
+import { useAllSports } from '@/hooks/useAllSports'
 import { ChevronDown, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -23,7 +24,8 @@ import { useRouter } from 'next/navigation'
  * @returns {JSX.Element} une liste de choix de sport.
  */
 export function SportSwitcher() {
-  const { activeSport, userSports, setActiveSport } = useSport()
+  const { activeSport, setActiveSport } = useSport()
+  const { sports: userSports } = useAllSports()
   const router = useRouter()
 
   if (!activeSport && userSports.length === 0) {

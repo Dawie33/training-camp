@@ -3,12 +3,12 @@
 import { useWorkoutTimer } from "@/hooks/useWorkoutTimer"
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
-import { Timer } from "../../Timer"
 import { AMRAPTimer } from "../AMRAPTimer"
 import { EMOMTimer } from "../EMOMTimer"
 import { ForTimeTimer } from "../ForTimeTimer"
 import { TabataTimer } from "../TabataTimer"
 import { MultiRoundTimer } from "../MultiRoundTimer"
+import { WorkoutResultModal } from "../../WorkoutResultModal"
 import { BadgeView } from "./BadgeView"
 import { ConfigView } from "./ConfigView"
 import { MenuView } from "./MenuView"
@@ -21,6 +21,9 @@ export function FloatingTimer() {
     const [windowSize, setWindowSize] = useState({ width: 0, height: 0 })
     const [key, setKey] = useState(0)
     const [currentTime, setCurrentTime] = useState('00:00')
+    const [showResultModal, setShowResultModal] = useState(false)
+    const [workoutDuration, setWorkoutDuration] = useState(0)
+    const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null)
     const isInitialized = useRef(false)
     const previousState = useRef<string>('badge')
 
@@ -53,6 +56,32 @@ export function FloatingTimer() {
             previousState.current = state
         }
     }, [state])
+
+    // Track workout start time
+    useEffect(() => {
+        if (state === 'running' && !workoutStartTime) {
+            setWorkoutStartTime(Date.now())
+        } else if (state !== 'running' && state !== 'minimized') {
+            setWorkoutStartTime(null)
+            setWorkoutDuration(0)
+        }
+    }, [state, workoutStartTime])
+
+    // Handle workout completion
+    const handleWorkoutComplete = () => {
+        if (workoutStartTime) {
+            const duration = Math.floor((Date.now() - workoutStartTime) / 1000)
+            setWorkoutDuration(duration)
+            setShowResultModal(true)
+        }
+        stopTimer()
+    }
+
+    const handleResultModalClose = () => {
+        setShowResultModal(false)
+        setWorkoutDuration(0)
+        setWorkoutStartTime(null)
+    }
 
     if (windowSize.width === 0) return null
 
@@ -114,6 +143,7 @@ export function FloatingTimer() {
                 timerConfig={timerConfig}
                 renderTimer={renderSingleTimer}
                 onTimeUpdate={setCurrentTime}
+                onAllComplete={handleWorkoutComplete}
             />
         )
     }
@@ -178,6 +208,19 @@ export function FloatingTimer() {
                     </>
                 )}
             </AnimatePresence>
+
+            {/* Workout Result Modal */}
+            {showResultModal && timerType && (
+                <WorkoutResultModal
+                    isOpen={showResultModal}
+                    onClose={handleResultModalClose}
+                    timerType={timerType}
+                    timerConfig={timerConfig}
+                    duration={workoutDuration}
+                    completedRounds={timerConfig.rounds}
+                    totalRounds={timerConfig.rounds}
+                />
+            )}
         </motion.div>
     )
 }

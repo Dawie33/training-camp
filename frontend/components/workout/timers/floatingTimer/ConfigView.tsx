@@ -1,7 +1,7 @@
 'use client'
 
 import { Card } from '@/components/ui/card'
-import { AMRAPRound, EmomRound, ForTimeRound, TabataRound, TimerConfig, TimerType } from '@/hooks/useWorkoutTimer'
+import { AMRAPRound, EmomRound, TabataRound, TimerConfig, TimerType } from '@/hooks/useWorkoutTimer'
 import { motion } from 'framer-motion'
 import { ArrowLeft, CirclePlus, InfinityIcon, Play, X } from 'lucide-react'
 import { useState } from 'react'
@@ -27,7 +27,7 @@ export function ConfigView({ timerType, onStart, onBack, onClose }: ConfigViewPr
     const [tabataRound, setTabataRound] = useState<TabataRound>()
     const [emomRound, setEmomRound] = useState<EmomRound>()
     const [isDeathBy, setIsDeathBy] = useState(false)
-    const [fortimeRound, setFortimeRound] = useState<ForTimeRound>()
+    // const [fortimeRound, setFortimeRound] = useState<ForTimeRound>() // TODO: Implement FOR_TIME rounds
     const [noTimeCap, setNoTimeCap] = useState(false)
 
     const handleStart = () => {

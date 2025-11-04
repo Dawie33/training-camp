@@ -8,6 +8,7 @@ interface MultiRoundTimerProps {
     timerConfig: TimerConfig
     renderTimer: (config: TimerConfig, onComplete: () => void, onTimeUpdate?: (time: string) => void) => React.ReactNode
     onTimeUpdate?: (time: string) => void
+    onAllComplete?: () => void
 }
 
 /**
@@ -20,7 +21,7 @@ interface MultiRoundTimerProps {
  * - Récupération: 1 minute
  * - Session 3: 4 rounds de 20s/10s
  */
-export function MultiRoundTimer({ timerType, timerConfig, renderTimer, onTimeUpdate }: MultiRoundTimerProps) {
+export function MultiRoundTimer({ timerType, timerConfig, renderTimer, onTimeUpdate, onAllComplete }: MultiRoundTimerProps) {
     const [currentSessionIndex, setCurrentSessionIndex] = useState(0)
     const [isResting, setIsResting] = useState(false)
     const [restTimeRemaining, setRestTimeRemaining] = useState(0)
@@ -155,6 +156,7 @@ export function MultiRoundTimer({ timerType, timerConfig, renderTimer, onTimeUpd
 
         if (nextSessionIndex >= totalSessions) {
             // Toutes les sessions sont terminées
+            onAllComplete?.()
             return
         }
 

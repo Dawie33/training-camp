@@ -29,6 +29,7 @@ export default function SiteHeader() {
         { href: '/explore', label: 'Explore' },
         { href: '/plans', label: 'Plans' },
         { href: '/personalized-workout', label: 'My Workouts' },
+        { href: '/tracking', label: 'Tracking' },
     ]
 
     return (

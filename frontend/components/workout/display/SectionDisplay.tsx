@@ -44,16 +44,16 @@ export function SectionDisplay({
     // Déterminer quel timer afficher selon le type
     const renderTimer = () => {
         if (section.type === 'amrap' && section.duration_min) {
-            return <AMRAPTimer durationMin={section.duration_min} />
+            return <AMRAPTimer duration={section.duration_min} />
         }
         if (section.type === 'for_time') {
             return <ForTimeTimer capMin={section.duration_min} />
         }
         if (section.type === 'emom' && section.duration_min) {
-            return <EMOMTimer durationMin={section.duration_min} />
+            return <EMOMTimer durationMin={section.duration_min} intervalMin={1} />
         }
         if (section.type === 'tabata') {
-            return <TabataTimer rounds={section.rounds} />
+            return <TabataTimer rounds={section.rounds} workSeconds={20} restSeconds={10} />
         }
         return null
     }

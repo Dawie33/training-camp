@@ -19,8 +19,10 @@ export function useDailyWorkout() {
 
         try {
             setWorkoutLoading(true)
-            const workout = await workoutsService.getDailyWorkout(activeSport.id)
-            setDailyWorkout(workout)
+            const response = await workoutsService.getDailyWorkout(activeSport.id)
+            // getDailyWorkout retourne { rows: Workouts[], count: number }
+            // On prend le premier workout du tableau
+            setDailyWorkout(response?.rows?.length > 0 ? response.rows[0] : null)
         } catch (err) {
             console.error('Error fetching daily workout:', err)
 
@@ -29,8 +31,8 @@ export function useDailyWorkout() {
                 const errorWithStatus = err as Error & { statusCode: number }
                 if (errorWithStatus.statusCode === 404) {
                     try {
-                        const latestWorkout = await workoutsService.getDailyWorkout(activeSport.id)
-                        setDailyWorkout(latestWorkout)
+                        const latestResponse = await workoutsService.getDailyWorkout(activeSport.id)
+                        setDailyWorkout(latestResponse?.rows?.length > 0 ? latestResponse.rows[0] : null)
                         return
                     } catch (latestErr) {
                         console.error('Error fetching latest workout:', latestErr)
