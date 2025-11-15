@@ -6,6 +6,7 @@ import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import WorkoutEditModal from '@/components/workout/WorkoutEditModal'
 import { useSport } from '@/contexts/SportContext'
 import { workoutsService } from '@/lib/api'
+import { sessionService } from '@/lib/api/sessions'
 import { Workouts } from '@/lib/types/workout'
 import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react'
 import Link from 'next/link'
@@ -79,7 +80,7 @@ function WorkoutDetailContent() {
 
     try {
       setIsStarting(true)
-      const session = await workoutsService.startSession({
+      const session = await sessionService.startSession({
         workout_id: workout.id,
         started_at: new Date().toISOString()
       })

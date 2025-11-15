@@ -1,9 +1,9 @@
 'use client'
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
-import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -11,6 +11,8 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { WorkoutFilters, WorkoutFiltersState } from '../explore/_components/WorkoutFilters'
 import { WorkoutGrid } from '../explore/_components/WorkoutGrid'
+// import { WorkoutFilters, WorkoutFiltersState } from '../explore/_components/WorkoutFilters'
+// import { WorkoutGrid } from '../explore/_components/WorkoutGrid'
 
 const ITEMS_PER_PAGE = 12
 function PersonalizedWorkoutsContent() {

@@ -107,10 +107,26 @@ export interface WorkoutSessionCreate {
     started_at?: string
 }
 
+export interface WorkoutSessionMetrics {
+    calories?: number
+    avg_heart_rate?: number
+    max_heart_rate?: number
+    perceived_effort?: number
+    [key: string]: unknown
+}
+
+export interface WorkoutSessionResults {
+    rating?: number
+    metrics?: WorkoutSessionMetrics
+    block_progress?: Record<string, boolean>
+    elapsed_time_seconds?: number
+    [key: string]: unknown
+}
+
 export interface WorkoutSessionUpdate {
     completed_at?: string
     notes?: string
-    results?: Record<string, unknown>
+    results?: WorkoutSessionResults
 }
 
 export interface WorkoutSession {
@@ -118,9 +134,9 @@ export interface WorkoutSession {
     workout_id: string
     user_id: string
     started_at: string
-    completed_at?: string
-    notes?: string
-    results?: Record<string, unknown>
+    completed_at?: string | null
+    notes?: string | null
+    results?: WorkoutSessionResults | null
     created_at: string
     updated_at: string
 }

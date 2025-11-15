@@ -236,7 +236,7 @@ export default function ExercisesPage() {
                 Copy ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <Link href={`/admin/exercises/${exercise.id}`}>
+              <Link href={`/exercises/${exercise.id}`}>
                 <DropdownMenuItem>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
@@ -286,7 +286,7 @@ export default function ExercisesPage() {
         <div>
           <h1 className="text-3xl font-bold">Exercises</h1>
         </div>
-        <Link href="/admin/exercises/new">
+        <Link href="/exercises/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             New Exercise

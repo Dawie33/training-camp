@@ -1,3 +1,4 @@
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { SportProvider } from "@/contexts/SportContext"
@@ -30,13 +31,15 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          forcedTheme="dark"
+          defaultTheme="light"
+          forcedTheme="light"
           disableTransitionOnChange
         >
           <AuthProvider>
             <SportProvider>
-              {children}
+              <DashboardLayout>
+                {children}
+              </DashboardLayout>
               <Toaster />
             </SportProvider>
           </AuthProvider>

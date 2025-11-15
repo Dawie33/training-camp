@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common'
@@ -27,9 +28,13 @@ export class WorkoutSessionsController {
   constructor(private readonly sessionsService: WorkoutSessionsService) { }
 
   @Get()
-  async findAll(@Req() req: AuthenticatedRequest) {
+  async findAll(
+    @Req() req: AuthenticatedRequest,
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number
+  ) {
     const userId = req.user.id
-    return this.sessionsService.findAll(userId)
+    return this.sessionsService.findAll(userId, limit, offset)
   }
 
   @Get(':id')

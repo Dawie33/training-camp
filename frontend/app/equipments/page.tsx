@@ -127,7 +127,7 @@ export default function EquipmentsPage() {
 
         return (
           <div className="flex items-center justify-end gap-2">
-            <Link href={`/admin/equipments/${equipment.id}`}>
+            <Link href={`/equipments/${equipment.id}`}>
               <Button variant="outline" size="sm">
                 <Edit className="mr-2 h-4 w-4" />
 
@@ -177,7 +177,7 @@ export default function EquipmentsPage() {
         <div className="w-140 flex-initial">
           <h1 className="text-3xl font-bold">Équipements</h1>
         </div>
-        <Link href="/admin/equipments/new">
+        <Link href="/equipments/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Ajouter un équipement

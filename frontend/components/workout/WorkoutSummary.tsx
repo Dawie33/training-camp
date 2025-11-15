@@ -1,8 +1,8 @@
 'use client'
 
-import { workoutsService } from '@/lib/api'
-import { Workouts } from '@/lib/types/workout'
 import { BenchmarkResultForm } from '@/components/workout/BenchmarkResultForm'
+import { sessionService } from '@/lib/api/sessions'
+import { Workouts } from '@/lib/types/workout'
 import { Check, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -56,7 +56,7 @@ export function WorkoutSummary({
   const handleSave = async () => {
     try {
       setIsSaving(true)
-      await workoutsService.updateSession(sessionId, {
+      await sessionService.updateSession(sessionId, {
         completed_at: new Date().toISOString(),
         notes,
         results: {

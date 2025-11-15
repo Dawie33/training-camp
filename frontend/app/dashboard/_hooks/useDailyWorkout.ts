@@ -1,10 +1,9 @@
-import { useSport } from '@/contexts/SportContext'
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
 import { useCallback, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 export function useDailyWorkout() {
-    const { activeSport } = useSport()
     const [dailyWorkout, setDailyWorkout] = useState<Workouts | null>(null)
     const [workoutLoading, setWorkoutLoading] = useState(false)
 
@@ -15,36 +14,18 @@ export function useDailyWorkout() {
      * Met à jour le statut de chargement du workout du jour.
      */
     const fetchDailyWorkout = useCallback(async () => {
-        if (!activeSport) return
 
         try {
             setWorkoutLoading(true)
-            const response = await workoutsService.getDailyWorkout(activeSport.id)
-            // getDailyWorkout retourne { rows: Workouts[], count: number }
+            const response = await workoutsService.getDailyWorkout()
             // On prend le premier workout du tableau
-            setDailyWorkout(response?.rows?.length > 0 ? response.rows[0] : null)
+            setDailyWorkout(response)
         } catch (err) {
-            console.error('Error fetching daily workout:', err)
-
-            // Si 404, essayer de récupérer le dernier workout créé
-            if (err instanceof Error && 'statusCode' in err) {
-                const errorWithStatus = err as Error & { statusCode: number }
-                if (errorWithStatus.statusCode === 404) {
-                    try {
-                        const latestResponse = await workoutsService.getDailyWorkout(activeSport.id)
-                        setDailyWorkout(latestResponse?.rows?.length > 0 ? latestResponse.rows[0] : null)
-                        return
-                    } catch (latestErr) {
-                        console.error('Error fetching latest workout:', latestErr)
-                    }
-                }
-            }
-
-            setDailyWorkout(null)
+            toast.error(`Une erreur est survenue lors de la récupération du workout du jour: ${err}`)
         } finally {
             setWorkoutLoading(false)
         }
-    }, [activeSport])
+    }, [])
 
     useEffect(() => {
         fetchDailyWorkout()

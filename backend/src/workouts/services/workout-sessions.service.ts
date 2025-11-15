@@ -14,11 +14,22 @@ export class WorkoutSessionsService {
   * @param limit Nombre de sessions à récupérer
   * @returns Liste des sessions
   */
-  async findAll(userId: string, limit = 50): Promise<WorkoutSession[]> {
-    return this.knex('workout_sessions')
+  async findAll(userId: string, limit = 50, offset = 0): Promise<{ rows: WorkoutSession[], count: number }> {
+
+    const rows = await this.knex('workout_sessions')
+      .select('*')
       .where({ user_id: userId })
       .orderBy('started_at', 'desc')
-      .limit(limit)
+      .limit(Number(limit))
+      .offset(Number(offset))
+
+    const countResult = await this.knex('workout_sessions')
+      .count('* as count')
+      .where({ user_id: userId })
+      .first()
+
+    return { rows, count: Number(countResult?.count) }
+
   }
 
   /**

@@ -13,11 +13,12 @@ export class WorkoutsController {
   }
 
   @Get('daily')
+  @UseGuards(JwtAuthGuard)
   async getDailyWorkout(
-    @Query('sportId') sportId: string,
-    @Query('date') date?: string
+    @Request() req: { user: { id: string } },
+    @Query('date') date?: string,
   ) {
-    const workout = await this.service.getDailyWorkoutBySport(sportId, date)
+    const workout = await this.service.getDailyWorkoutBySportProfile(req.user.id, date)
     if (!workout) {
       throw new NotFoundException('Aucun workout trouvé pour ce sport et cette date')
     }

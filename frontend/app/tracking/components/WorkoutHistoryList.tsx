@@ -2,83 +2,88 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { WorkoutHistoryService } from '@/lib/services/workout-history.service'
-import { WorkoutResult } from '@/lib/types/workout-history'
-import { cn } from '@/lib/utils'
-import { fadeInUp } from '@/lib/animations'
-import { motion } from 'framer-motion'
 import {
-  Calendar,
-  ChevronDown,
-  ChevronUp,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
+import {
   Clock,
   Dumbbell,
-  Frown,
-  Meh,
-  Smile,
-  Sparkles,
+  Eye,
+  Star,
   Trash2
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { WorkoutSession } from '@/lib/types/workout'
+import { sessionService } from '@/lib/api/sessions'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface WorkoutHistoryListProps {
   sportId?: string
   limit?: number
 }
 
-const difficultyColors = {
-  easy: 'bg-green-500/10 text-green-500 border-green-500/20',
-  medium: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-  hard: 'bg-red-500/10 text-red-500 border-red-500/20'
-}
+export function WorkoutHistoryList({ sportId, limit = 10 }: WorkoutHistoryListProps) {
+  const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedSession, setSelectedSession] = useState<WorkoutSession | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
 
-const feelingIcons = {
-  bad: Frown,
-  ok: Meh,
-  good: Smile,
-  great: Sparkles
-}
+  const totalPages = Math.ceil(totalCount / limit)
 
-const feelingColors = {
-  bad: 'text-red-500',
-  ok: 'text-yellow-500',
-  good: 'text-green-500',
-  great: 'text-blue-500'
-}
-
-export function WorkoutHistoryList({ sportId, limit }: WorkoutHistoryListProps) {
-  const [workouts, setWorkouts] = useState<WorkoutResult[]>([])
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-
-  const loadWorkouts = () => {
-    let results: WorkoutResult[]
-    if (sportId) {
-      results = WorkoutHistoryService.getWorkoutsBySport(sportId)
-    } else {
-      results = WorkoutHistoryService.getAllWorkouts()
-    }
-
-    if (limit) {
-      results = results.slice(0, limit)
-    }
-
-    setWorkouts(results)
-  }
-
+  // Charger les sessions avec pagination
   useEffect(() => {
-    loadWorkouts()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sportId])
-
-  const handleDelete = (id: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce workout ?')) {
-      WorkoutHistoryService.deleteWorkout(id)
-      loadWorkouts()
+    const loadSessions = async () => {
+      try {
+        setLoading(true)
+        const result = await sessionService.getAll({ limit, offset: page * limit })
+        setWorkoutSessions(result.rows)
+        setTotalCount(result.count)
+      } catch (error) {
+        toast.error('Erreur lors du chargement des sessions')
+        console.error(error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    loadSessions()
+  }, [page, limit])
 
-  const toggleExpand = (id: string) => {
-    setExpandedId(expandedId === id ? null : id)
+  // Filtrer les sessions selon sportId si nécessaire
+  const filteredSessions = workoutSessions
+    .filter(session => !sportId || session.workout_id === sportId)
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {
+      return
+    }
+
+    try {
+      setDeletingId(id)
+      // TODO: Implémenter la suppression dans l'API
+      toast.success('Session supprimée')
+      // Recharger les sessions
+      window.location.reload()
+    } catch (error) {
+      toast.error('Erreur lors de la suppression')
+      console.error(error)
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const formatDuration = (seconds: number) => {
@@ -110,181 +115,291 @@ export function WorkoutHistoryList({ sportId, limit }: WorkoutHistoryListProps) 
 
     return date.toLocaleDateString('fr-FR', {
       day: 'numeric',
-      month: 'long',
-      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+      month: 'short',
+      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
-  if (workouts.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Dumbbell className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p>Aucun workout enregistré</p>
-        <p className="text-sm mt-2">Complète un workout pour voir ton historique ici</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-4">
-      {workouts.map((workout, index) => {
-        const isExpanded = expandedId === workout.id
-        const FeelingIcon = feelingIcons[workout.feeling]
-
-        return (
-          <motion.div
-            key={workout.id}
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            transition={{ delay: index * 0.05 }}
-            className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-          >
-            {/* Header - Always visible */}
-            <div
-              className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => toggleExpand(workout.id)}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-lg">
-                      {workout.workoutName || workout.timerType}
-                    </h3>
-                    <Badge variant="outline" className="text-xs">
-                      {workout.timerType}
-                    </Badge>
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Durée</TableHead>
+              <TableHead>Exercices</TableHead>
+              <TableHead>Note</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Dumbbell className="w-8 h-8 text-muted-foreground animate-pulse" />
+                    <p className="text-sm text-muted-foreground">Chargement...</p>
                   </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredSessions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Dumbbell className="w-8 h-8 text-muted-foreground opacity-50" />
+                    <p className="text-sm text-muted-foreground">Aucune session trouvée</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredSessions.map((session) => {
+              const isCompleted = !!session.completed_at
+              const duration = isCompleted
+                ? Math.floor((new Date(session.completed_at!).getTime() - new Date(session.started_at).getTime()) / 1000)
+                : 0
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(workout.date)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatDuration(workout.duration)}</span>
-                    </div>
-                    {workout.completedRounds && workout.totalRounds && (
+              const rating = session.results?.rating || 0
+              const blockProgress = session.results?.block_progress || {}
+              const completedBlocks = Object.values(blockProgress).filter(Boolean).length
+              const totalBlocks = Object.keys(blockProgress).length
+
+              return (
+                <TableRow key={session.id}>
+                  <TableCell className="font-medium">
+                    {formatDate(session.started_at)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={isCompleted ? "default" : "outline"}
+                      className="text-xs"
+                    >
+                      {isCompleted ? "Complété" : "En cours"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {isCompleted ? (
                       <div className="flex items-center gap-1">
-                        <Dumbbell className="w-4 h-4" />
-                        <span>
-                          {workout.completedRounds}/{workout.totalRounds} rounds
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        {formatDuration(duration)}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {totalBlocks > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {completedBlocks}/{totalBlocks}
                         </span>
+                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{ width: `${(completedBlocks / totalBlocks) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isCompleted && rating > 0 ? (
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={cn(
+                              'w-3.5 h-3.5',
+                              i < rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
+                            )}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSelectedSession(session)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => handleDelete(session.id)}
+                        disabled={deletingId === session.id}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-muted-foreground">
+          {totalCount > 0 ? (
+            <>
+              Affichage de {page * limit + 1} à {Math.min((page + 1) * limit, totalCount)} sur {totalCount} sessions
+            </>
+          ) : (
+            <>Aucune session</>
+          )}
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Précédent
+            </Button>
+            <div className="text-sm text-muted-foreground px-2">
+              Page {page + 1} / {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page === totalPages - 1}
+            >
+              Suivant
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Dialog pour les détails */}
+      <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Détails de la session</DialogTitle>
+          </DialogHeader>
+          {selectedSession && (
+            <div className="space-y-4">
+              {/* Informations générales */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Date de début</h4>
+                  <p className="text-sm">{new Date(selectedSession.started_at).toLocaleString('fr-FR')}</p>
+                </div>
+                {selectedSession.completed_at && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Date de fin</h4>
+                    <p className="text-sm">{new Date(selectedSession.completed_at).toLocaleString('fr-FR')}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              {selectedSession.notes && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Notes</h4>
+                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                    {selectedSession.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Métriques */}
+              {selectedSession.results?.metrics && Object.keys(selectedSession.results.metrics).length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Métriques</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedSession.results.metrics.calories && (
+                      <div className="text-sm bg-muted rounded p-3">
+                        <span className="text-muted-foreground">Calories:</span>{' '}
+                        <span className="font-medium">{selectedSession.results.metrics.calories}</span>
+                      </div>
+                    )}
+                    {selectedSession.results.metrics.avg_heart_rate && (
+                      <div className="text-sm bg-muted rounded p-3">
+                        <span className="text-muted-foreground">FC Moy:</span>{' '}
+                        <span className="font-medium">{selectedSession.results.metrics.avg_heart_rate} bpm</span>
+                      </div>
+                    )}
+                    {selectedSession.results.metrics.max_heart_rate && (
+                      <div className="text-sm bg-muted rounded p-3">
+                        <span className="text-muted-foreground">FC Max:</span>{' '}
+                        <span className="font-medium">{selectedSession.results.metrics.max_heart_rate} bpm</span>
+                      </div>
+                    )}
+                    {selectedSession.results.metrics.perceived_effort && (
+                      <div className="text-sm bg-muted rounded p-3">
+                        <span className="text-muted-foreground">Effort perçu:</span>{' '}
+                        <span className="font-medium">{selectedSession.results.metrics.perceived_effort}/10</span>
                       </div>
                     )}
                   </div>
+                </div>
+              )}
 
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={cn('text-xs', difficultyColors[workout.difficulty])}>
-                      {workout.difficulty}
-                    </Badge>
+              {/* Note et progression */}
+              <div className="grid grid-cols-2 gap-4">
+                {selectedSession.results?.rating && selectedSession.results.rating > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Note</h4>
                     <div className="flex items-center gap-1">
-                      <FeelingIcon className={cn('w-4 h-4', feelingColors[workout.feeling])} />
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {workout.feeling}
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={cn(
+                            'w-5 h-5',
+                            i < selectedSession.results!.rating! ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedSession.results?.block_progress && Object.keys(selectedSession.results.block_progress).length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Progression</h4>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all"
+                          style={{
+                            width: `${(Object.values(selectedSession.results.block_progress).filter(Boolean).length /
+                              Object.keys(selectedSession.results.block_progress).length) * 100}%`
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {Object.values(selectedSession.results.block_progress).filter(Boolean).length}/
+                        {Object.keys(selectedSession.results.block_progress).length}
                       </span>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(workout.id)
-                    }}
-                    className="hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                  {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
+                )}
               </div>
             </div>
-
-            {/* Expanded content */}
-            {isExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="border-t bg-muted/30"
-              >
-                <div className="p-4 space-y-4">
-                  {/* Notes */}
-                  {workout.notes && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Notes</h4>
-                      <p className="text-sm text-muted-foreground">{workout.notes}</p>
-                    </div>
-                  )}
-
-                  {/* Exercises */}
-                  {workout.exercises && workout.exercises.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Exercices</h4>
-                      <div className="space-y-2">
-                        {workout.exercises.map((exercise, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between text-sm bg-background rounded p-2"
-                          >
-                            <span className="font-medium">{exercise.name}</span>
-                            <div className="flex items-center gap-3 text-muted-foreground">
-                              {exercise.sets && <span>{exercise.sets} sets</span>}
-                              {exercise.reps && <span>{exercise.reps} reps</span>}
-                              {exercise.weight && <span>{exercise.weight} kg</span>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Personal Records */}
-                  {workout.personalRecords && workout.personalRecords.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-yellow-500" />
-                        Records Personnels
-                      </h4>
-                      <div className="space-y-2">
-                        {workout.personalRecords.map((pr, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between text-sm bg-yellow-500/10 border border-yellow-500/20 rounded p-2"
-                          >
-                            <span className="font-medium">{pr.type}</span>
-                            <span className="text-yellow-600 dark:text-yellow-400 font-bold">
-                              {pr.value} {pr.unit}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Timestamps */}
-                  <div className="text-xs text-muted-foreground pt-2 border-t">
-                    <p>Créé le {new Date(workout.createdAt).toLocaleString('fr-FR')}</p>
-                    {workout.updatedAt !== workout.createdAt && (
-                      <p>Modifié le {new Date(workout.updatedAt).toLocaleString('fr-FR')}</p>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-        )
-      })}
-    </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

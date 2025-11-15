@@ -1,53 +1,42 @@
 'use client'
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { SportCarousel } from '@/components/sport/SportCarousel'
-import { SportDetails } from '@/components/sport/SportDetails'
 import { useSport } from '@/contexts/SportContext'
 import { useAllSports } from '@/hooks/useAllSports'
-import { fadeInUp, scaleIn, staggerContainer } from '@/lib/animations'
-import { Sport } from '@/lib/types/sport'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useAuth } from '@/hooks/useAuth'
+import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { WorkoutHistoryService } from '@/lib/services/workout-history.service'
+import { WorkoutStats } from '@/lib/types/workout-history'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { DailyWorkoutCard } from './components/DailyWorkoutCard'
-import { PlanSelection } from './components/PlanSelection'
+import { PerformanceChart } from './components/PerformanceChart'
+import { QuickActions } from './components/QuickActions'
 import { RecommendedWorkouts } from './components/RecommendedWorkouts'
-import { Stats } from './components/Stats'
+import { StatsCards } from './components/StatsCards'
 
 function DashboardContent() {
   const { activeSport, setActiveSport } = useSport()
   const { sports, loading, error } = useAllSports()
+  const [workoutStats, setWorkoutStats] = useState<WorkoutStats | null>(null)
+  const user = useAuth()
+  console.log('user', user)
 
-
-  const [selectedSportForDetails, setSelectedSportForDetails] = useState<Sport | null>(null)
-
-  // Sélectionner automatiquement le sport actif ou le premier sport au chargement
+  // Sélectionner automatiquement le premier sport au chargement si aucun sport n'est actif
   useEffect(() => {
-    if (sports.length > 0 && !selectedSportForDetails) {
-      // Si un sport actif existe, l'utiliser, sinon prendre le premier
-      const sportToSelect = activeSport || sports[0]
-      setSelectedSportForDetails(sportToSelect)
-
-      // Si aucun sport n'était actif, définir le premier comme actif
-      if (!activeSport) {
-        setActiveSport(sports[0])
-      }
+    if (sports.length > 0 && !activeSport) {
+      setActiveSport(sports[0])
     }
-  }, [sports, selectedSportForDetails, activeSport, setActiveSport])
+  }, [sports, activeSport, setActiveSport])
 
-  // Gérer la sélection d'un sport
-  const handleSportSelect = (sport: Sport) => {
-    if (selectedSportForDetails?.id === sport.id) {
-      // Si on clique sur le sport déjà sélectionné, on le désélectionne
-      setSelectedSportForDetails(null)
-    } else {
-      // Sinon, on sélectionne le nouveau sport
-      setSelectedSportForDetails(sport)
-      // On le définit comme sport actif
-      setActiveSport(sport)
+  // Charger les stats de workout
+  useEffect(() => {
+    if (activeSport) {
+      const stats = WorkoutHistoryService.getWorkoutStats(activeSport.id)
+      setWorkoutStats(stats)
     }
-  }
+  }, [activeSport])
+
 
   if (loading) {
     return (
@@ -69,7 +58,7 @@ function DashboardContent() {
   }
 
   // Afficher un message si aucun sport n'est disponible
-  if (!activeSport && sports.length === 0) {
+  if (sports.length === 0) {
     return (
       <motion.div
         className="flex items-center justify-center min-h-screen"
@@ -102,6 +91,18 @@ function DashboardContent() {
     )
   }
 
+  // Stats calculées depuis workoutStats
+  const stats = {
+    totalWorkouts: workoutStats?.totalWorkouts || 0,
+    workoutsThisMonth: workoutStats?.workoutsByDay?.filter(w => {
+      const date = new Date(w.date)
+      const now = new Date()
+      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
+    }).length || 0,
+    personalRecords: Array.isArray(workoutStats?.personalRecords) ? workoutStats.personalRecords.length : 0,
+    totalHours: Math.round((workoutStats?.totalDuration || 0) / 60),
+  }
+
   return (
     <motion.div
       className="min-h-screen bg-background"
@@ -109,64 +110,32 @@ function DashboardContent() {
       animate="visible"
       variants={staggerContainer}
     >
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-14">
-        {/* Hero Section - Carousel de sports */}
-        <motion.section variants={fadeInUp}>
-          <SportCarousel
-            sports={sports}
-            selectedSportId={selectedSportForDetails?.id || activeSport?.id}
-            onSportSelect={handleSportSelect}
-            title="Choisissez votre sport"
-            description="Sélectionnez un sport pour voir plus de détails et accéder aux workouts"
-            variant="default"
-          />
-        </motion.section>
+      <div className="p-8 space-y-8">
+        {/* Header */}
+        <motion.div variants={fadeInUp}>
+          <h1 className="text-2xl font-bold">Salut, {user?.user?.firstName || 'Champion'}</h1>
+          <p className="text-muted-foreground">Bienvenue sur ton tableau de bord</p>
+        </motion.div>
 
-        {/* Sport Details - Section dépliable */}
-        <AnimatePresence mode="wait">
-          {selectedSportForDetails && (
-            <motion.section
-              key={selectedSportForDetails.id}
-              variants={scaleIn}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-            >
-              <SportDetails sport={selectedSportForDetails} isExpanded={true} />
-            </motion.section>
-          )}
-        </AnimatePresence>
+        {/* Stats Cards */}
+        <motion.div variants={fadeInUp}>
+          <StatsCards stats={stats} />
+        </motion.div>
 
-        {/* Stats - Vue d'ensemble */}
-        {activeSport && (
-          <motion.section variants={fadeInUp}>
-            <Stats />
-          </motion.section>
-        )}
-
-        {/* Workout du jour */}
-        {activeSport && (
-          <motion.section variants={fadeInUp}>
-            <DailyWorkoutCard />
-          </motion.section>
-        )}
+        {/* Performance Chart & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div className="lg:col-span-2" variants={fadeInUp}>
+            <PerformanceChart />
+          </motion.div>
+          <motion.div variants={fadeInUp}>
+            <QuickActions />
+          </motion.div>
+        </div>
 
         {/* Workouts recommandés */}
         {activeSport && (
           <motion.section variants={fadeInUp}>
             <RecommendedWorkouts />
-          </motion.section>
-        )}
-
-        {/* Plan de l'utilisateur */}
-        {activeSport && (
-          <motion.section
-            className="bg-card rounded-lg border overflow-hidden"
-            variants={fadeInUp}
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.3 }}
-          >
-            <PlanSelection />
           </motion.section>
         )}
       </div>

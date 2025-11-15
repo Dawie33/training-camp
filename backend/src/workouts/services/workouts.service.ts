@@ -4,6 +4,7 @@ import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 
+
 @Injectable()
 export class WorkoutsService {
   constructor(
@@ -14,13 +15,20 @@ export class WorkoutsService {
    * Recherche tous les workouts.
    * @returns Tous les workouts.
    */
-  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', sport_id, search }: WorkoutQueryDto) {
+  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search }: WorkoutQueryDto) {
 
+    const userSports = await this.knex('user_sport_profiles')
+
+    if (!userSports || userSports.length === 0) {
+      throw new Error('Aucun profil sportif trouvé pour cet utilisateur')
+    }
+
+    const sportIds = userSports.map((s) => s.sport_id)
 
     let query = this.knex('workouts').select('*')
 
-    if (sport_id) {
-      query = query.where('sport_id', sport_id)
+    if (sportIds.length > 0) {
+      query = query.where('sport_id', 'in', sportIds)
     }
 
     if (search) {
@@ -36,8 +44,8 @@ export class WorkoutsService {
 
     const countQuery = this.knex('workouts').count({ count: '*' })
 
-    if (sport_id) {
-      countQuery.where('sport_id', sport_id)
+    if (sportIds.length > 0) {
+      countQuery.where('sport_id', 'in', sportIds)
     }
     if (search) {
       countQuery.where('name', 'ilike', `%${search}%`)
@@ -85,25 +93,40 @@ export class WorkoutsService {
    * @param date Date (format YYYY-MM-DD), par défaut aujourd'hui
    * @returns Le workout du jour
    */
-  async getDailyWorkoutBySport(sportId: string, date?: string): Promise<WorkoutDto> {
+
+  async getDailyWorkoutBySportProfile(userId: string, date?: string): Promise<WorkoutDto> {
     const targetDate = date && date.trim() !== '' ? date : format(new Date(), 'yyyy-MM-dd')
 
-    // Récupérer tous les workouts publiés pour ce sport
-    const workouts = await this.knex('workouts')
-      .where({ sport_id: sportId, status: 'published' })
-      .orderBy('id', 'asc') // Ordre stable
+    // Étape 1 : Récupérer les sports du profil utilisateur
+    const userSports = await this.knex('user_sport_profiles')
+      .where({ user_id: userId })
+      .select('sport_id')
 
-    if (!workouts || workouts.length === 0) {
-      throw new Error('Aucun workout publié pour ce sport')
+    if (!userSports || userSports.length === 0) {
+      throw new Error('Aucun profil sportif trouvé pour cet utilisateur')
     }
 
-    // Utiliser la date comme seed pour sélectionner toujours le même workout pour une date donnée
-    // Convertir la date en nombre pour créer un index
-    const dateHash = targetDate.split('-').join('') // "2025-10-15" -> "20251015"
-    const index = parseInt(dateHash) % workouts.length
-    const workout = workouts[index]
+    const sportIds = userSports.map((s) => s.sport_id)
 
-    // Retourner le workout avec blocks
+    // Étape 2 : Déterminer le sport du jour
+    const dateHash = parseInt(targetDate.split('-').join(''), 10)
+    const sportIndex = dateHash % sportIds.length
+    const chosenSportId = sportIds[sportIndex]
+
+    // Étape 3 : Récupérer uniquement les workouts publiés pour ce sport
+    const workouts = await this.knex('workouts')
+      .where({ sport_id: chosenSportId, status: 'published' })
+      .orderBy('id', 'asc')
+
+    if (!workouts || workouts.length === 0) {
+      throw new Error(`Aucun workout publié pour le sport ${chosenSportId}`)
+    }
+
+    // Étape 4 : Sélectionner le workout du jour
+    const workoutIndex = dateHash % workouts.length
+    const workout = workouts[workoutIndex]
+
+    // Retourner le résultat
     const { blocks, tags, ...rest } = workout
     return {
       ...rest,
