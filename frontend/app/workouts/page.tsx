@@ -9,11 +9,12 @@ import {
   getSortedRowModel,
   useReactTable
 } from "@tanstack/react-table"
-import { ArrowUpDown, Edit, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
+import { ArrowUpDown, Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
 import Link from 'next/link'
 import * as React from "react"
 import { useCallback, useEffect, useState } from 'react'
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -306,7 +307,7 @@ export default function WorkoutsPage() {
   })
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -411,8 +412,8 @@ export default function WorkoutsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
+      {/* Vue Desktop - Table */}
+      <div className="hidden md:block rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -449,9 +450,21 @@ export default function WorkoutsPage() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => {
+                    window.location.href = `/workout/${row.original.id}`
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      onClick={(e) => {
+                        // Empêcher la navigation si on clique sur les actions
+                        if (cell.column.id === 'actions') {
+                          e.stopPropagation()
+                        }
+                      }}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -472,6 +485,104 @@ export default function WorkoutsPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Vue Mobile - Cards */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-card border rounded-lg p-6 text-center">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        ) : workouts.length === 0 ? (
+          <div className="bg-card border rounded-lg p-6 text-center text-muted-foreground">
+            Aucun workout trouvé
+          </div>
+        ) : (
+          workouts.map((workout) => {
+            const sport = sports.find(s => s.id === workout.sport_id)
+            const difficultyColors = {
+              beginner: "bg-green-50 text-green-700 border-green-200",
+              intermediate: "bg-yellow-50 text-yellow-700 border-yellow-200",
+              advanced: "bg-red-50 text-red-700 border-red-200",
+            }
+            const statusColors = {
+              draft: "bg-gray-50 text-gray-700 border-gray-200",
+              published: "bg-green-50 text-green-700 border-green-200",
+              archived: "bg-orange-50 text-orange-700 border-orange-200",
+            }
+
+            return (
+              <div
+                key={workout.id}
+                className="bg-card border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => {
+                  window.location.href = `/workout/${workout.id}`
+                }}
+              >
+                {/* Header avec nom et actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm line-clamp-1">{workout.name}</h3>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <Badge variant="outline" className="text-xs">
+                        {sport?.name || 'N/A'}
+                      </Badge>
+                      <Badge variant={workout.workout_type === 'predefined' ? 'default' : 'secondary'} className="text-xs">
+                        {workout.workout_type?.replace(/_/g, ' ') || 'N/A'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div
+                    className="flex gap-1 flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Link href={`/workout/${workout.id}`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleDelete(workout.id, workout.name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Info grid */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Difficulté</p>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${difficultyColors[workout.difficulty as keyof typeof difficultyColors] || ''}`}
+                    >
+                      {workout.difficulty}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Intensité</p>
+                    <p className="text-sm font-medium capitalize">{workout.intensity || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Statut</p>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${statusColors[workout.status as keyof typeof statusColors] || ''}`}
+                    >
+                      {workout.status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
       </div>
     </div>
   )

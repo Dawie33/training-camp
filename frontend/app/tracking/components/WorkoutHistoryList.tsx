@@ -124,7 +124,8 @@ export function WorkoutHistoryList({ sportId, limit = 10 }: WorkoutHistoryListPr
 
   return (
     <>
-      <div className="rounded-md border">
+      {/* Vue Desktop - Table */}
+      <div className="hidden md:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -252,6 +253,120 @@ export function WorkoutHistoryList({ sportId, limit = 10 }: WorkoutHistoryListPr
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Vue Mobile - Cards */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-12">
+            <Dumbbell className="w-8 h-8 text-muted-foreground animate-pulse" />
+            <p className="text-sm text-muted-foreground">Chargement...</p>
+          </div>
+        ) : filteredSessions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-12">
+            <Dumbbell className="w-8 h-8 text-muted-foreground opacity-50" />
+            <p className="text-sm text-muted-foreground">Aucune session trouvée</p>
+          </div>
+        ) : (
+          filteredSessions.map((session) => {
+            const isCompleted = !!session.completed_at
+            const duration = isCompleted
+              ? Math.floor((new Date(session.completed_at!).getTime() - new Date(session.started_at).getTime()) / 1000)
+              : 0
+
+            const rating = session.results?.rating || 0
+            const blockProgress = session.results?.block_progress || {}
+            const completedBlocks = Object.values(blockProgress).filter(Boolean).length
+            const totalBlocks = Object.keys(blockProgress).length
+
+            return (
+              <div
+                key={session.id}
+                className="bg-card border rounded-lg p-4 space-y-3"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={isCompleted ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {isCompleted ? "Complété" : "En cours"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm font-medium mt-1">
+                      {formatDate(session.started_at)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setSelectedSession(session)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleDelete(session.id)}
+                      disabled={deletingId === session.id}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Duration */}
+                  {isCompleted && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>{formatDuration(duration)}</span>
+                    </div>
+                  )}
+
+                  {/* Exercises Progress */}
+                  {totalBlocks > 0 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                      <span>{completedBlocks}/{totalBlocks}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress Bar */}
+                {totalBlocks > 0 && (
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${(completedBlocks / totalBlocks) * 100}%` }}
+                    />
+                  </div>
+                )}
+
+                {/* Rating */}
+                {isCompleted && rating > 0 && (
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          'w-4 h-4',
+                          i < rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
+                        )}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })
+        )}
       </div>
 
       {/* Pagination */}

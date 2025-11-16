@@ -10,10 +10,13 @@ import { WorkoutStats } from '@/lib/types/workout-history'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { DailyWorkoutCard } from './components/DailyWorkoutCard'
+import { GoalsWidget } from './components/GoalsWidget'
 import { PerformanceChart } from './components/PerformanceChart'
 import { QuickActions } from './components/QuickActions'
-import { RecommendedWorkouts } from './components/RecommendedWorkouts'
+import { QuickTips } from './components/QuickTips'
 import { StatsCards } from './components/StatsCards'
+import { WeeklyCalendar } from './components/WeeklyCalendar'
 
 function DashboardContent() {
   const { activeSport, setActiveSport } = useSport()
@@ -110,11 +113,16 @@ function DashboardContent() {
       animate="visible"
       variants={staggerContainer}
     >
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 pt-16 lg:pt-4">
         {/* Header */}
         <motion.div variants={fadeInUp}>
-          <h1 className="text-2xl font-bold">Salut, {user?.user?.firstName || 'Champion'}</h1>
-          <p className="text-muted-foreground">Bienvenue sur ton tableau de bord</p>
+          <h1 className="text-xl sm:text-2xl font-bold">Salut, {user?.user?.firstName || 'Champion'}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Bienvenue sur ton tableau de bord</p>
+        </motion.div>
+
+        {/* Workout du jour */}
+        <motion.div variants={fadeInUp}>
+          <DailyWorkoutCard />
         </motion.div>
 
         {/* Stats Cards */}
@@ -123,8 +131,8 @@ function DashboardContent() {
         </motion.div>
 
         {/* Performance Chart & Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div className="lg:col-span-2" variants={fadeInUp}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <motion.div variants={fadeInUp}>
             <PerformanceChart />
           </motion.div>
           <motion.div variants={fadeInUp}>
@@ -132,12 +140,20 @@ function DashboardContent() {
           </motion.div>
         </div>
 
-        {/* Workouts recommandés */}
-        {activeSport && (
-          <motion.section variants={fadeInUp}>
-            <RecommendedWorkouts />
-          </motion.section>
-        )}
+        {/* Weekly Calendar */}
+        <motion.div variants={fadeInUp}>
+          <WeeklyCalendar />
+        </motion.div>
+
+        {/* Goals & Tips */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <motion.div variants={fadeInUp}>
+            <GoalsWidget />
+          </motion.div>
+          <motion.div variants={fadeInUp}>
+            <QuickTips />
+          </motion.div>
+        </div>
       </div>
     </motion.div>
   )

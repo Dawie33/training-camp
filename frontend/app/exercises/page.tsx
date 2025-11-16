@@ -12,6 +12,7 @@ import {
 import { ArrowUpDown, Edit, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
 import * as React from "react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -280,7 +281,7 @@ export default function ExercisesPage() {
     getSortedRowModel: getSortedRowModel(),
   })
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -331,8 +332,8 @@ export default function ExercisesPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
+      {/* Vue Desktop - Table */}
+      <div className="hidden md:block rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -394,6 +395,95 @@ export default function ExercisesPage() {
         </Table>
       </div>
 
+      {/* Vue Mobile - Cards */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-card border rounded-lg p-6 text-center">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        ) : exercises.length === 0 ? (
+          <div className="bg-card border rounded-lg p-6 text-center text-muted-foreground">
+            No exercises found.
+          </div>
+        ) : (
+          exercises.map((exercise) => {
+            const difficultyColors = {
+              beginner: "bg-green-50 text-green-700 border-green-200",
+              intermediate: "bg-yellow-50 text-yellow-700 border-yellow-200",
+              advanced: "bg-red-50 text-red-700 border-red-200",
+            }
+
+            return (
+              <div
+                key={exercise.id}
+                className="bg-card border rounded-lg p-4 space-y-3"
+              >
+                {/* Header avec nom et actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm line-clamp-1">{exercise.name}</h3>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {exercise.category?.replace(/_/g, ' ')}
+                      </Badge>
+                      {exercise.difficulty && (
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${difficultyColors[exercise.difficulty as keyof typeof difficultyColors] || ''}`}
+                        >
+                          {exercise.difficulty}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Link href={`/exercises/${exercise.id}`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(exercise.id, exercise.name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Info grid */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Type</p>
+                    <p className="text-sm font-medium capitalize">
+                      {exercise.measurement_type || '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Bodyweight</p>
+                    <p className="text-sm font-medium">
+                      {exercise.bodyweight_only ? '✓' : '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <Badge
+                      variant={exercise.isActive ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {exercise.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
 
     </div>
   )

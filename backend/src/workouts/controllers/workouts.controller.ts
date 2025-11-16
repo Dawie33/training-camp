@@ -25,16 +25,6 @@ export class WorkoutsController {
     return workout
   }
 
-  @Get('recommended')
-  @UseGuards(JwtAuthGuard)
-  async getRecommendedWorkouts(
-    @Request() req: { user: { id: string } },
-    @Query('sportId') sportId: string,
-    @Query('limit') limit: number = 10
-  ) {
-    return await this.service.getRecommendedWorkouts(req.user.id, sportId, limit)
-  }
-
   @Get('benchmark')
   @UseGuards(JwtAuthGuard)
   async getBenchmarkWorkouts(

@@ -31,7 +31,12 @@ interface NavItem {
   adminOnly?: boolean
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export function AppSidebar({ isOpen = false, onClose }: AppSidebarProps) {
   const { user, logout } = useAuth()
   const pathname = usePathname()
 
@@ -54,7 +59,11 @@ export function AppSidebar() {
   ]
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background">
+    <aside
+      className={`fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background transition-transform duration-300 lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}
+    >
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center border-b px-6">
@@ -76,7 +85,7 @@ export function AppSidebar() {
           {/* Main Navigation */}
           <div className="space-y-1">
             {mainNavItems.map((item) => (
-              <Link key={item.href} href={item.href}>
+              <Link key={item.href} href={item.href} onClick={onClose}>
                 <motion.div
                   className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === item.href
                     ? 'bg-primary/10 text-primary'

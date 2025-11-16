@@ -171,7 +171,7 @@ export default function EquipmentsPage() {
   })
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
       {/* Header */}
       <div className="flex items-center mb-6">
         <div className="w-140 flex-initial">
@@ -222,8 +222,8 @@ export default function EquipmentsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border max-w-3xl">
+      {/* Vue Desktop - Table */}
+      <div className="hidden md:block rounded-md border max-w-3xl">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -283,6 +283,50 @@ export default function EquipmentsPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Vue Mobile - Cards */}
+      <div className="md:hidden space-y-3 max-w-3xl">
+        {loading ? (
+          <div className="bg-card border rounded-lg p-6 text-center">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        ) : equipments.length === 0 ? (
+          <div className="bg-card border rounded-lg p-6 text-center text-muted-foreground">
+            Aucun équipement trouvé
+          </div>
+        ) : (
+          equipments.map((equipment) => (
+            <div
+              key={equipment.id}
+              className="bg-card border rounded-lg p-4 space-y-3"
+            >
+              {/* Header avec nom et actions */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">{equipment.label}</h3>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  <Link href={`/equipments/${equipment.id}`}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(equipment.id, equipment.label)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

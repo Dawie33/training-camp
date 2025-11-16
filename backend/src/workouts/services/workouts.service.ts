@@ -136,54 +136,6 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère les workouts recommandés pour un utilisateur
-   * Basé sur le sport actif, le niveau et les équipements disponibles
-   * @param userId ID de l'utilisateur
-   * @param sportId ID du sport actif
-   * @param limit Nombre de workouts à retourner
-   * @returns Liste paginée de workouts recommandés
-   */
-  async getRecommendedWorkouts(userId: string, sportId: string, limit: number = 4) {
-    try {
-      // 1. Récupérer le profil sportif spécifique de l'utilisateur
-      const userSportProfile = await this.knex('user_sport_profiles')
-        .where({ user_id: userId, sport_id: sportId })
-        .first()
-
-      // 2. Construire la requête de base
-      const query = this.knex('workouts')
-        .select('*')
-        .where({ sport_id: sportId, status: 'published' })
-        .limit(Number(limit))
-        .orderBy('created_at', 'desc')
-
-      // 3. Filtrer par niveau spécifique au sport si disponible
-      if (userSportProfile?.sport_level) {
-        query.where('difficulty', userSportProfile.sport_level)
-      }
-
-      // 4. Exécuter la requête
-      const rows = await query
-
-      // 5. Compter le total
-      const countQuery = this.knex('workouts')
-        .where({ sport_id: sportId, status: 'published' })
-        .count({ count: '*' })
-
-      if (userSportProfile?.sport_level) {
-        countQuery.where('difficulty', userSportProfile.sport_level)
-      }
-
-      const countResult = await countQuery.first()
-      const count = Number(countResult?.count || 0)
-
-      return { rows, count }
-    } catch (error) {
-      throw new Error('Failed to retrieve recommended workouts: ' + error.message)
-    }
-  }
-
-  /**
    * Récupère les workouts benchmark pour un sport donné
    * Les benchmarks sont des workouts de référence pour évaluer le niveau
    * @param sportId ID du sport

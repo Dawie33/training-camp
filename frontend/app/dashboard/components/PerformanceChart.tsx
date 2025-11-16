@@ -11,35 +11,35 @@ export function PerformanceChart() {
   const maxValue = Math.max(...data)
 
   return (
-    <div className="bg-card rounded-lg border p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-card rounded-lg border p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6">
         <div>
-          <h3 className="text-lg font-semibold">Performance au fil du temps</h3>
+          <h3 className="text-base sm:text-lg font-semibold">Performance au fil du temps</h3>
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-sm text-muted-foreground">Workouts complétés</span>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-500"></div>
+              <span className="text-xs sm:text-sm text-muted-foreground">Workouts complétés</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="text-xs sm:text-sm">
             Mois
           </Button>
-          <Button variant="ghost" size="icon">
-            <Download className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
         </div>
       </div>
 
       {/* Graphique simplifié */}
-      <div className="h-64 flex items-end justify-between gap-2">
+      <div className="h-48 sm:h-64 flex items-end justify-between gap-1 sm:gap-2">
         {data.map((value, index) => {
           const height = (value / maxValue) * 100
           return (
             <motion.div
               key={months[index]}
-              className="flex-1 flex flex-col items-center gap-2"
+              className="flex-1 flex flex-col items-center gap-1 sm:gap-2"
               initial={{ height: 0 }}
               animate={{ height: 'auto' }}
               transition={{ delay: index * 0.05 }}
@@ -50,12 +50,12 @@ export function PerformanceChart() {
                   style={{ height: `${height}%`, minHeight: '20px' }}
                   whileHover={{ opacity: 0.8 }}
                 >
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                     {value}
                   </span>
                 </motion.div>
               </div>
-              <span className="text-xs text-muted-foreground">{months[index]}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">{months[index]}</span>
             </motion.div>
           )
         })}

@@ -1,191 +1,311 @@
 'use client'
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { workoutsService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
-import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Eye, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { WorkoutFilters, WorkoutFiltersState } from '../explore/_components/WorkoutFilters'
-import { WorkoutGrid } from '../explore/_components/WorkoutGrid'
-// import { WorkoutFilters, WorkoutFiltersState } from '../explore/_components/WorkoutFilters'
-// import { WorkoutGrid } from '../explore/_components/WorkoutGrid'
 
-const ITEMS_PER_PAGE = 12
+const ITEMS_PER_PAGE = 10
+
 function PersonalizedWorkoutsContent() {
-    const [workouts, setWorkouts] = useState<Workouts[]>([])
-    const [loading, setLoading] = useState(true)
-    const [currentPage, setCurrentPage] = useState(1)
-    const [totalWorkouts, setTotalWorkouts] = useState(0)
-    // État des filtres et pagination
-    const [filters, setFilters] = useState<WorkoutFiltersState>({
-        search: '',
-        difficulty: [],
-        intensity: [],
-        minDuration: undefined,
-        maxDuration: undefined
-    })
+  const [workouts, setWorkouts] = useState<Workouts[]>([])
+  const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [totalWorkouts, setTotalWorkouts] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
-    useEffect(() => {
-        const fetchPersonalizedWorkouts = async () => {
-            try {
-                setLoading(true)
-                const offset = (currentPage - 1) * ITEMS_PER_PAGE
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+      setCurrentPage(0)
+    }, 300)
 
-                // Convertir les tableaux de filtres en strings pour l'API
-                const difficulty = filters.difficulty.length > 0 ? filters.difficulty[0] : undefined
-                const intensity = filters.intensity.length > 0 ? filters.intensity[0] : undefined
-                const minDuration = filters.minDuration || undefined
-                const maxDuration = filters.maxDuration || undefined
-                const search = filters.search || undefined
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
-                const response = await workoutsService.getPersonalizedWorkouts(
-                    ITEMS_PER_PAGE,
-                    offset,
-                    search || undefined,
-                    difficulty,
-                    intensity,
-                    minDuration,
-                    maxDuration
-                )
+  useEffect(() => {
+    const fetchPersonalizedWorkouts = async () => {
+      try {
+        setLoading(true)
+        const offset = currentPage * ITEMS_PER_PAGE
 
-                // Parser les workouts depuis plan_json
-                const parsedWorkouts = response.rows.map((workout) => {
-                    const parsedWorkout = typeof workout.plan_json === 'string'
-                        ? JSON.parse(workout.plan_json)
-                        : workout.plan_json
-                    return {
-                        ...parsedWorkout,
-                        id: workout.id,
-                    }
-                })
-
-                setWorkouts(parsedWorkouts)
-                setTotalWorkouts(response.count)
-            } catch (error) {
-                toast.error(`Erreur lors du chargement des workouts personnalisés:${error}`)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchPersonalizedWorkouts()
-    }, [currentPage, filters])
-
-    // Réinitialiser la page quand les filtres changent
-    const handleFiltersChange = (newFilters: WorkoutFiltersState) => {
-        setFilters(newFilters)
-        setCurrentPage(1)
-    }
-
-    if (loading) {
-        return (
-            <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">Chargement de vos workouts personnalisés...</p>
-                </div>
-            </div>
+        const response = await workoutsService.getPersonalizedWorkouts(
+          ITEMS_PER_PAGE,
+          offset,
+          debouncedSearch || undefined
         )
+
+        // Parser les workouts depuis plan_json
+        const parsedWorkouts = response.rows.map((workout) => {
+          const parsedWorkout = typeof workout.plan_json === 'string'
+            ? JSON.parse(workout.plan_json)
+            : workout.plan_json
+          return {
+            ...parsedWorkout,
+            id: workout.id,
+          }
+        })
+
+        setWorkouts(parsedWorkouts)
+        setTotalWorkouts(response.count)
+      } catch (error) {
+        toast.error(`Erreur lors du chargement des workouts personnalisés: ${error}`)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const totalPages = Math.ceil(totalWorkouts / ITEMS_PER_PAGE)
+    fetchPersonalizedWorkouts()
+  }, [currentPage, debouncedSearch])
 
-    return (
-        <motion.div
-            className="container mx-auto px-4 py-8 max-w-7xl"
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-        >
-            {/* Back Button */}
-            <motion.div variants={fadeInUp}>
-                <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors group"
-                >
-                    <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    Retour au dashboard
-                </Link>
-            </motion.div>
+  const handleDelete = async (id: string, name?: string) => {
+    // TODO: Implémenter la suppression de workout personnalisé
+    toast.info('Fonctionnalité de suppression à venir')
+    console.log('Delete workout:', id, name)
+  }
 
-            {/* Header */}
-            <motion.div className="mb-8" variants={fadeInUp}>
-                <h1 className="text-3xl font-bold mb-2">Mes Workouts Personnalisés</h1>
-                <p className="text-muted-foreground">
-                    Retrouvez tous vos workouts personnalisés et modifiés
-                </p>
-            </motion.div>
+  const getDifficultyVariant = (difficulty: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (difficulty) {
+      case 'beginner':
+        return 'default'
+      case 'intermediate':
+        return 'secondary'
+      case 'advanced':
+        return 'destructive'
+      default:
+        return 'outline'
+    }
+  }
 
-            {/* Workouts Grid */}
-            {workouts.length === 0 ? (
-                <motion.div className="text-center py-12" variants={fadeInUp}>
-                    <motion.div
-                        className="mb-4"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                        <svg
-                            className="mx-auto h-12 w-12 text-muted-foreground"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                        </svg>
-                    </motion.div>
-                    <h3 className="text-lg font-medium text-foreground mb-2">Aucun workout personnalisé</h3>
-                    <p className="text-muted-foreground mb-6">
-                        Vous n'avez pas encore créé de workout personnalisé.
-                    </p>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-                        <Link
-                            href="/explore"
-                            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                            Explorer les workouts
-                        </Link>
-                    </motion.div>
-                </motion.div>
+  const pageCount = Math.ceil(totalWorkouts / ITEMS_PER_PAGE)
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      {/* Back Button */}
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors group"
+      >
+        <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        Retour au dashboard
+      </Link>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Mes Workouts Personnalisés</h1>
+          <p className="text-muted-foreground">Total: {totalWorkouts}</p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="flex flex-col gap-4 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un workout..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-end space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+            disabled={currentPage === 0}
+          >
+            Précédent
+          </Button>
+          <div className="text-sm font-medium">
+            Page {currentPage + 1} sur {pageCount || 1}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.min(pageCount - 1, prev + 1))}
+            disabled={currentPage >= pageCount - 1}
+          >
+            Suivant
+          </Button>
+        </div>
+      </div>
+
+      {/* Vue Desktop - Table */}
+      <div className="hidden md:block rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom</TableHead>
+              <TableHead>Difficulté</TableHead>
+              <TableHead>Intensité</TableHead>
+              <TableHead>Durée</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : workouts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  Aucun workout trouvé
+                </TableCell>
+              </TableRow>
             ) : (
-                <motion.div variants={fadeInUp}>
-                    {/* Filtres */}
-                    <div className='mb-6'>
-                        <WorkoutFilters
-                            filters={filters}
-                            onFiltersChange={handleFiltersChange}
-                        />
+              workouts.map((workout) => (
+                <TableRow
+                  key={workout.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => {
+                    window.location.href = `/workout/${workout.id}`
+                  }}
+                >
+                  <TableCell className="font-medium">{workout.name}</TableCell>
+                  <TableCell>
+                    <Badge variant={getDifficultyVariant(workout.difficulty)}>
+                      {workout.difficulty}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="capitalize">{workout.intensity}</TableCell>
+                  <TableCell>{workout.estimated_duration || 'N/A'} min</TableCell>
+                  <TableCell
+                    className="text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/workout/${workout.id}`}>
+                        <Button variant="ghost" size="icon">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(workout.id, workout.name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    {/* Grid de workouts */}
-                    <WorkoutGrid
-                        workouts={workouts}
-                        loading={loading}
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalWorkouts={totalWorkouts}
-                        onPageChange={setCurrentPage}
-                        basePath="/personalized-workout"
-                    />
-                </motion.div>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
-        </motion.div>
-    )
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Vue Mobile - Cards */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="bg-card border rounded-lg p-6 text-center">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </div>
+        ) : workouts.length === 0 ? (
+          <div className="bg-card border rounded-lg p-6 text-center text-muted-foreground">
+            Aucun workout trouvé
+          </div>
+        ) : (
+          workouts.map((workout) => {
+            const difficultyColors = {
+              beginner: "bg-green-50 text-green-700 border-green-200",
+              intermediate: "bg-yellow-50 text-yellow-700 border-yellow-200",
+              advanced: "bg-red-50 text-red-700 border-red-200",
+            }
+
+            return (
+              <div
+                key={workout.id}
+                className="bg-card border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => {
+                  window.location.href = `/workout/${workout.id}`
+                }}
+              >
+                {/* Header avec nom et actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm line-clamp-1">{workout.name}</h3>
+                  </div>
+                  <div
+                    className="flex gap-1 flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Link href={`/workout/${workout.id}`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleDelete(workout.id, workout.name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Info grid */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Difficulté</p>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${difficultyColors[workout.difficulty as keyof typeof difficultyColors] || ''}`}
+                    >
+                      {workout.difficulty}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Intensité</p>
+                    <p className="text-sm font-medium capitalize">{workout.intensity || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Durée</p>
+                    <p className="text-sm font-medium">{workout.estimated_duration || 'N/A'} min</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function PersonalizedWorkoutsPage() {
-    return (
-        <ProtectedRoute>
-            <PersonalizedWorkoutsContent />
-        </ProtectedRoute>
-    )
+  return (
+    <ProtectedRoute>
+      <PersonalizedWorkoutsContent />
+    </ProtectedRoute>
+  )
 }

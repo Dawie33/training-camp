@@ -56,23 +56,6 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère les workouts recommandés pour un sport
-   * Le userId est automatiquement récupéré depuis le token JWT
-   * @param sportId ID du sport
-   * @param limit Nombre maximum de workouts à récupérer
-   * @returns Promesse contenant { rows: Workouts[], count: number }
-   */
-  async getRecommendedWorkouts(sportId: string, limit: number = 10) {
-    const response = await apiClient.get<{ rows: Workouts[], count: number }>('/workouts/recommended', {
-      params: {
-        sportId: sportId,
-        limit: limit
-      }
-    })
-    return response
-  }
-
-  /**
    * Récupère le workout du jour pour un sport donné
    * @param sportId ID du sport
    * @param date Date au format ISO (YYYY-MM-DD). Si non fourni, récupère le dernier workout
