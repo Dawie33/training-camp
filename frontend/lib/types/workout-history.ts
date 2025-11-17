@@ -34,6 +34,7 @@ export interface WorkoutStats {
   totalDuration: number // en secondes
   totalDurationThisWeek: number
   totalDurationThisMonth: number
+  workoutsThisMonth?: number // Nombre de workouts ce mois
   currentStreak: number
   longestStreak: number
   averageDifficulty: number

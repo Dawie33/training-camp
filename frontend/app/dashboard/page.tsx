@@ -5,11 +5,9 @@ import { useSport } from '@/contexts/SportContext'
 import { useAllSports } from '@/hooks/useAllSports'
 import { useAuth } from '@/hooks/useAuth'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { WorkoutHistoryService } from '@/lib/services/workout-history.service'
-import { WorkoutStats } from '@/lib/types/workout-history'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
 import { GoalsWidget } from './components/GoalsWidget'
 import { PerformanceChart } from './components/PerformanceChart'
@@ -21,7 +19,6 @@ import { WeeklyCalendar } from './components/WeeklyCalendar'
 function DashboardContent() {
   const { activeSport, setActiveSport } = useSport()
   const { sports, loading, error } = useAllSports()
-  const [workoutStats, setWorkoutStats] = useState<WorkoutStats | null>(null)
   const user = useAuth()
   console.log('user', user)
 
@@ -31,14 +28,6 @@ function DashboardContent() {
       setActiveSport(sports[0])
     }
   }, [sports, activeSport, setActiveSport])
-
-  // Charger les stats de workout
-  useEffect(() => {
-    if (activeSport) {
-      const stats = WorkoutHistoryService.getWorkoutStats(activeSport.id)
-      setWorkoutStats(stats)
-    }
-  }, [activeSport])
 
 
   if (loading) {
@@ -94,18 +83,6 @@ function DashboardContent() {
     )
   }
 
-  // Stats calculées depuis workoutStats
-  const stats = {
-    totalWorkouts: workoutStats?.totalWorkouts || 0,
-    workoutsThisMonth: workoutStats?.workoutsByDay?.filter(w => {
-      const date = new Date(w.date)
-      const now = new Date()
-      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
-    }).length || 0,
-    personalRecords: Array.isArray(workoutStats?.personalRecords) ? workoutStats.personalRecords.length : 0,
-    totalHours: Math.round((workoutStats?.totalDuration || 0) / 60),
-  }
-
   return (
     <motion.div
       className="min-h-screen bg-background"
@@ -127,7 +104,7 @@ function DashboardContent() {
 
         {/* Stats Cards */}
         <motion.div variants={fadeInUp}>
-          <StatsCards stats={stats} />
+          <StatsCards />
         </motion.div>
 
         {/* Performance Chart & Quick Actions */}
