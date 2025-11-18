@@ -1,15 +1,20 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { useWorkoutSession } from '@/app/tracking/hooks/useWorkoutSession'
+import { workoutsService } from '@/lib/api/workouts'
+import { Workouts } from '@/lib/types/workout'
 import { motion } from 'framer-motion'
-import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
 
 interface DayWorkout {
   id: string
   name: string
   type: 'scheduled' | 'completed' | 'rest'
   intensity?: 'low' | 'medium' | 'high'
+  duration?: number
 }
 
 interface WeekDay {
@@ -17,18 +22,45 @@ interface WeekDay {
   dayName: string
   dayNumber: number
   isToday: boolean
-  workout?: DayWorkout
+  workouts: DayWorkout[]
 }
 
 export function WeeklyCalendar() {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0)
+  const { workoutSessions } = useWorkoutSession()
+  const [workoutsDetails, setWorkoutsDetails] = useState<Map<string, Workouts>>(new Map())
 
-  // Génère les jours de la semaine
-  const getWeekDays = (offset: number): WeekDay[] => {
+  // Récupérer les détails des workouts
+  useEffect(() => {
+    const fetchWorkoutDetails = async () => {
+      if (!workoutSessions || workoutSessions.length === 0) return
+
+      const uniqueWorkoutIds = [...new Set(workoutSessions.map(s => s.workout_id))]
+      const details = new Map<string, Workouts>()
+
+      await Promise.all(
+        uniqueWorkoutIds.map(async (workoutId) => {
+          try {
+            const workout = await workoutsService.getById(workoutId)
+            details.set(workoutId, workout)
+          } catch (error) {
+            console.error(`Failed to fetch workout ${workoutId}:`, error)
+          }
+        })
+      )
+
+      setWorkoutsDetails(details)
+    }
+
+    fetchWorkoutDetails()
+  }, [workoutSessions])
+
+  // Génère les jours de la semaine avec les vraies données
+  const weekDays = useMemo(() => {
     const today = new Date()
     const currentDay = today.getDay()
     const monday = new Date(today)
-    monday.setDate(today.getDate() - currentDay + 1 + offset * 7)
+    monday.setDate(today.getDate() - currentDay + 1 + currentWeekOffset * 7)
 
     const days: WeekDay[] = []
     const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
@@ -42,14 +74,47 @@ export function WeeklyCalendar() {
         date.getMonth() === today.getMonth() &&
         date.getFullYear() === today.getFullYear()
 
-      // Données simulées - À remplacer par des vraies données
-      let workout: DayWorkout | undefined
-      if (i === 1) {
-        workout = { id: '1', name: 'HIIT Cardio', type: 'scheduled', intensity: 'high' }
-      } else if (i === 3) {
-        workout = { id: '2', name: 'Force', type: 'completed', intensity: 'medium' }
-      } else if (i === 6) {
-        workout = { id: '3', name: 'Repos actif', type: 'rest' }
+      // Récupérer les workouts pour ce jour
+      const dateStr = date.toISOString().split('T')[0]
+      const dayWorkouts: DayWorkout[] = []
+
+      if (workoutSessions && workoutSessions.length > 0) {
+        workoutSessions.forEach(session => {
+          const sessionDate = new Date(session.started_at).toISOString().split('T')[0]
+
+          if (sessionDate === dateStr) {
+            const isCompleted = !!session.completed_at
+            const duration = isCompleted && session.completed_at
+              ? Math.floor((new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 1000)
+              : undefined
+
+            // Récupérer le nom du workout depuis les détails
+            const workoutDetail = workoutsDetails.get(session.workout_id)
+            const workoutName = workoutDetail?.name || `Workout ${session.workout_id.substring(0, 8)}`
+
+            // Récupérer l'intensité du workout
+            let intensity: 'low' | 'medium' | 'high' | undefined
+            if (workoutDetail?.intensity) {
+              const intensityMap: { [key: string]: 'low' | 'medium' | 'high' } = {
+                'low': 'low',
+                'medium': 'medium',
+                'high': 'high',
+                'faible': 'low',
+                'moyen': 'medium',
+                'intense': 'high'
+              }
+              intensity = intensityMap[workoutDetail.intensity.toLowerCase()]
+            }
+
+            dayWorkouts.push({
+              id: session.id,
+              name: workoutName,
+              type: isCompleted ? 'completed' : 'scheduled',
+              duration,
+              intensity
+            })
+          }
+        })
       }
 
       days.push({
@@ -57,28 +122,14 @@ export function WeeklyCalendar() {
         dayName: dayNames[i],
         dayNumber: date.getDate(),
         isToday,
-        workout
+        workouts: dayWorkouts
       })
     }
 
     return days
-  }
+  }, [currentWeekOffset, workoutSessions, workoutsDetails])
 
-  const weekDays = getWeekDays(currentWeekOffset)
   const currentMonth = weekDays[3].date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-
-  const getIntensityColor = (intensity?: string) => {
-    switch (intensity) {
-      case 'low':
-        return 'bg-green-500/20 text-green-700 border-green-500/30'
-      case 'medium':
-        return 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30'
-      case 'high':
-        return 'bg-red-500/20 text-red-700 border-red-500/30'
-      default:
-        return 'bg-muted/50 text-muted-foreground border-border'
-    }
-  }
 
   const getWorkoutTypeStyle = (type: string) => {
     switch (type) {
@@ -134,82 +185,111 @@ export function WeeklyCalendar() {
 
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-1 sm:gap-2">
-        {weekDays.map((day, index) => (
-          <motion.div
-            key={`${day.date.toISOString()}-${index}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className={`
-              relative rounded-lg border p-2 sm:p-3 min-h-[80px] sm:min-h-[100px]
-              transition-all cursor-pointer
-              ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}
-              ${day.workout ? getWorkoutTypeStyle(day.workout.type) : 'hover:bg-accent'}
-            `}
-          >
-            {/* Day Header */}
-            <div className="flex flex-col items-center mb-2">
-              <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-                {day.dayName}
-              </span>
-              <span className={`
-                text-sm sm:text-base font-bold mt-0.5
-                ${day.isToday ? 'text-primary' : 'text-foreground'}
-              `}>
-                {day.dayNumber}
-              </span>
-            </div>
+        {weekDays.map((day, index) => {
+          const hasWorkouts = day.workouts.length > 0
+          const firstWorkout = hasWorkouts ? day.workouts[0] : null
 
-            {/* Workout Info */}
-            {day.workout ? (
-              <div className="space-y-1">
-                <div className={`
-                  text-[9px] sm:text-xs font-medium line-clamp-2 text-center
-                  ${day.workout.type === 'completed' ? 'text-green-700' : ''}
-                  ${day.workout.type === 'scheduled' ? 'text-blue-700' : ''}
-                  ${day.workout.type === 'rest' ? 'text-purple-700' : ''}
+          return (
+            <motion.div
+              key={`${day.date.toISOString()}-${index}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className={`
+                relative rounded-lg border p-2 sm:p-3 min-h-[80px] sm:min-h-[100px]
+                transition-all cursor-pointer
+                ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}
+                ${hasWorkouts && firstWorkout ? getWorkoutTypeStyle(firstWorkout.type) : 'hover:bg-accent'}
+              `}
+            >
+              {/* Day Header */}
+              <div className="flex flex-col items-center mb-2">
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
+                  {day.dayName}
+                </span>
+                <span className={`
+                  text-sm sm:text-base font-bold mt-0.5
+                  ${day.isToday ? 'text-primary' : 'text-foreground'}
                 `}>
-                  {day.workout.name}
-                </div>
-                {day.workout.intensity && (
-                  <div className={`
-                    text-[8px] sm:text-[10px] px-1 py-0.5 rounded text-center font-medium
-                    ${getIntensityColor(day.workout.intensity)}
-                  `}>
-                    {day.workout.intensity === 'low' && 'Faible'}
-                    {day.workout.intensity === 'medium' && 'Moyen'}
-                    {day.workout.intensity === 'high' && 'Intense'}
-                  </div>
-                )}
+                  {day.dayNumber}
+                </span>
               </div>
-            ) : (
-              <button className="w-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
-              </button>
-            )}
 
-            {/* Today Indicator */}
-            {day.isToday && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
-            )}
-          </motion.div>
-        ))}
+              {/* Workout Info */}
+              {hasWorkouts ? (
+                <div className="space-y-1">
+                  {day.workouts.slice(0, 2).map((workout, idx) => (
+                    <div key={workout.id} className="space-y-0.5">
+                      <div className={`
+                        text-[9px] sm:text-xs font-medium line-clamp-1 text-center
+                        ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
+                        ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
+                        ${workout.type === 'rest' ? 'text-purple-700 dark:text-purple-400' : ''}
+                      `}>
+                        {workout.name}
+                      </div>
+                      <div className="flex items-center justify-center gap-1">
+                        {workout.duration && (
+                          <div className="text-[8px] sm:text-[10px] text-center text-muted-foreground">
+                            {Math.floor(workout.duration / 60)}min
+                          </div>
+                        )}
+                        {workout.intensity && (
+                          <div className={`
+                            text-[7px] sm:text-[9px] px-1 py-0.5 rounded font-medium
+                            ${workout.intensity === 'low' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ''}
+                            ${workout.intensity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
+                            ${workout.intensity === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : ''}
+                          `}>
+                            {workout.intensity === 'low' && '●'}
+                            {workout.intensity === 'medium' && '●●'}
+                            {workout.intensity === 'high' && '●●●'}
+                          </div>
+                        )}
+                      </div>
+                      {idx < Math.min(day.workouts.length - 1, 1) && (
+                        <div className="h-px bg-border my-0.5" />
+                      )}
+                    </div>
+                  ))}
+                  {day.workouts.length > 2 && (
+                    <div className="text-[8px] text-center text-muted-foreground mt-1">
+                      +{day.workouts.length - 2} autre{day.workouts.length > 3 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
+              {/* Today Indicator */}
+              {day.isToday && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+              )}
+            </motion.div>
+          )
+        })}
       </div>
 
       {/* Legend */}
-      <div className="mt-4 pt-4 border-t flex flex-wrap gap-3 sm:gap-4">
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/50" />
-          <span className="text-muted-foreground">Programmé</span>
+      <div className="mt-4 pt-4 border-t flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+        <div className="flex flex-wrap gap-3 sm:gap-4">
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/50" />
+            <span className="text-muted-foreground">Programmé</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-3 h-3 rounded bg-green-500/10 border border-green-500/50" />
+            <span className="text-muted-foreground">Complété</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-3 h-3 rounded bg-purple-500/10 border border-purple-500/50" />
+            <span className="text-muted-foreground">Repos</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="w-3 h-3 rounded bg-green-500/10 border border-green-500/50" />
-          <span className="text-muted-foreground">Complété</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <div className="w-3 h-3 rounded bg-purple-500/10 border border-purple-500/50" />
-          <span className="text-muted-foreground">Repos</span>
-        </div>
+        <Link href="/calendar">
+          <Button variant="ghost" size="sm" className="text-xs">
+            Voir le calendrier complet
+          </Button>
+        </Link>
       </div>
     </div>
   )
