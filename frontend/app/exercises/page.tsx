@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { deleteExercise, getExercises } from "@/lib/api/admin"
+import { deleteExercise, getExercises } from "@/lib/api/exercices"
 import { Exercise } from "@/lib/types/exercice"
 import Link from "next/link"
 import { useEffect, useState } from "react"

@@ -1,7 +1,9 @@
-import { User } from "../types/auth"
-import { SaveBenchmarkResultDto } from "../types/benchmark"
+import { CreateUserDTO, UpdateUserDTO, User, UserQueryParams } from "../types/auth"
 import apiClient from "./apiClient"
+import ResourceApi from "./resourceApi"
 
+
+export const usersApi = new ResourceApi<User, CreateUserDTO, UpdateUserDTO>('/users')
 export class UsersService {
 
     /**
@@ -18,24 +20,18 @@ export class UsersService {
         return response
     }
 
-    /**
-     * Enregistre le résultat d'un benchmark
-     * Le niveau de l'utilisateur sera automatiquement calculé et mis à jour
-     * @param data Données du résultat du benchmark
-     * @returns Promesse contenant le nouveau niveau et les résultats mis à jour
-     */
-    async saveBenchmarkResult(data: SaveBenchmarkResultDto): Promise<{
-        success: boolean
-        level: 'beginner' | 'intermediate' | 'advanced' | 'elite'
-        benchmark_results: Record<string, unknown>
-    }> {
-        const response = await apiClient.post<{
-            success: boolean
-            level: 'beginner' | 'intermediate' | 'advanced' | 'elite'
-            benchmark_results: Record<string, unknown>
-        }>('/users/benchmark-result', data)
-        return response
+    async getUsers(params?: UserQueryParams) {
+        return usersApi.getAll(params)
     }
+
+    async updateUser(id: string, data: UpdateUserDTO): Promise<User> {
+        return usersApi.update(id, data)
+    }
+
+    async deleteUser(id: string): Promise<void> {
+        return usersApi.delete(id)
+    }
+
 }
 
 export const usersService = new UsersService()

@@ -1,9 +1,31 @@
-// Core API exports
-export { apiClient, ApiError } from './apiClient'
-export { ResourceApi } from './resourceApi'
+// ============================================================================
+// API Index - Point d'entrée centralisé pour tous les services API
+// ============================================================================
 
-// Feature exports (services and functions only, not types)
-export * from './sports'
+// Core API exports
+export { default as apiClient, ApiError } from './apiClient'
+export { default as ResourceApi } from './resourceApi'
+
+// Auth
 export * from './auth'
+
+// Sports
+export * from './sports'
+
+// Workouts
 export * from './workouts'
-export * from './admin'
+
+// Sessions
+export * from './sessions'
+
+// Exercises
+export * from './exercices'
+
+// Equipments
+export * from './equipments'
+
+// Users
+export * from './users'
+
+// Types
+export * from './types'

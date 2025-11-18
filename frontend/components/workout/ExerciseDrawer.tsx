@@ -1,6 +1,6 @@
 'use client'
 
-import { getExercises } from "@/lib/api/admin"
+import { getExercises } from "@/lib/api"
 import { Exercise } from "@/lib/types/exercice"
 import { slideInRight, backdropVariants, staggerContainer, fadeInUp } from "@/lib/animations"
 import { AnimatePresence, motion } from "framer-motion"

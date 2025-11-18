@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { deleteEquipment, getEquipments } from '@/lib/api/admin'
+import { deleteEquipment, getEquipments } from '@/lib/api/equipments'
 import { Equipment } from '@/lib/types/equipment'
 import {
   ColumnDef,

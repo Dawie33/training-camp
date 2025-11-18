@@ -1,13 +1,11 @@
 import type { CreateSportDTO, Sport, SportQueryParams, UpdateSportDTO } from '../types/sport'
-import { ResourceApi } from './resourceApi'
-
+import ResourceApi from './resourceApi'
 
 /**
  * API Sports - Gestion des sports
  * Utilise ResourceApi pour les opérations CRUD standard
  */
 export const sportsApi = new ResourceApi<Sport, CreateSportDTO, UpdateSportDTO>('/sports')
-
 
 export class SportsService {
   /**
@@ -27,7 +25,6 @@ export class SportsService {
   async getById(id: string): Promise<Sport> {
     return sportsApi.getOne(id)
   }
-
 
   /**
    * Crée un nouveau sport
@@ -56,6 +53,5 @@ export class SportsService {
     return sportsApi.delete(id)
   }
 }
-
 
 export const sportsService = new SportsService()

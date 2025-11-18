@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common'
-import { WorkoutSessionsController } from './controllers/workout-sessions.controller'
-import { WorkoutsController } from './controllers/workouts.controller'
-import { WorkoutSessionsService } from './services/workout-sessions.service'
+import { UsersModule } from 'src/users/users.module'
 import { WorkoutsService } from './services/workouts.service'
+import { WorkoutsController } from './workouts.controller'
+import { AIWorkoutGeneratorService } from './services/ai-workout-generator.service'
 
 @Module({
-  controllers: [WorkoutsController, WorkoutSessionsController],
-  providers: [WorkoutsService, WorkoutSessionsService],
-  exports: [WorkoutsService, WorkoutSessionsService],
+  imports: [UsersModule], // Importer UsersModule pour accéder à UsersService
+  controllers: [WorkoutsController],
+  providers: [WorkoutsService, AIWorkoutGeneratorService],
+  exports: [WorkoutsService],
 })
 export class WorkoutsModule { }

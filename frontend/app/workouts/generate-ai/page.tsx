@@ -1,8 +1,7 @@
 'use client'
 
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
-import { GeneratedWorkout, createWorkout, generateWorkoutWithAI } from '@/lib/api/admin'
-import { sportsService } from '@/lib/api/sports'
+import { GeneratedWorkout, generateWorkoutWithAI, sportsService, workoutsService } from '@/lib/api'
 import { ExerciseDifficulty } from '@/lib/types/exercice'
 import { Sport } from '@/lib/types/sport'
 import { WORKOUT_TYPES_BY_SPORT } from '@/lib/types/workout-structure'
@@ -72,8 +71,8 @@ export default function GenerateWorkoutAIPage() {
         return
       }
 
-      // Créer le workout en base de données
-      const savedWorkout = await createWorkout({
+      // Créer le workout personnalisé en base de données
+      const workoutData: any = {
         name: generatedWorkout.name,
         description: generatedWorkout.description,
         workout_type: generatedWorkout.workout_type,
@@ -83,14 +82,19 @@ export default function GenerateWorkoutAIPage() {
         intensity: generatedWorkout.intensity,
         difficulty: generatedWorkout.difficulty,
         tags: generatedWorkout.tags,
-        status: 'draft',
-        isActive: false,
+        status: 'published',
+        isActive: true,
         isFeatured: false,
-        isPublic: false
-      })
+        isPublic: false,
+        ai_generated: true,
+        is_benchmark: false
+      }
 
-      // Rediriger vers la page d'édition du workout créé
-      router.push(`/admin/workouts/${savedWorkout.id}`)
+      const savedWorkout = await workoutsService.createPersonalizedWorkout(workoutData as any)
+
+      // Rediriger vers la page du workout personnalisé créé
+      toast.success('Workout généré et sauvegardé avec succès !')
+      router.push(`/personalized-workout/${savedWorkout.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
     } finally {

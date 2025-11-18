@@ -100,6 +100,10 @@ export interface Workouts {
     image_url?: string | null
     is_benchmark?: boolean
     created_at: string
+    isActive: boolean
+    isFeatured: boolean
+    isPublic: boolean
+    ai_generated: boolean
 }
 
 export interface WorkoutSessionCreate {
@@ -147,4 +151,18 @@ export interface PersonalizedWorkout {
     user_id: string
     plan_json: Workouts
     wod_date: string
+}
+
+export interface GeneratedWorkout {
+    name: string
+    description: string
+    workout_type: string
+    estimated_duration: number
+    difficulty: 'beginner' | 'intermediate' | 'advanced'
+    intensity: 'low' | 'moderate' | 'high' | 'very_high'
+    blocks: WorkoutBlocks
+    equipment_required?: string[]
+    focus_areas?: string[]
+    tags?: string[]
+    coach_notes?: string
 }

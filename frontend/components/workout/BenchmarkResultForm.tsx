@@ -1,7 +1,7 @@
 'use client'
 
 import { useSport } from "@/contexts/SportContext"
-import { usersService } from "@/lib/api/users"
+import { workoutsService } from "@/lib/api"
 import { SaveBenchmarkResultDto } from "@/lib/types/benchmark"
 import { Workouts } from "@/lib/types/workout"
 import { useState } from "react"
@@ -79,7 +79,7 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
                 result
             }
 
-            const response = await usersService.saveBenchmarkResult(data)
+            const response = await workoutsService.saveBenchmarkResult(data)
 
             toast.success(`Résultat enregistré ! Votre nouveau niveau : ${getLevelLabel(response.level)}`)
 

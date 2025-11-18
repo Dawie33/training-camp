@@ -1,5 +1,4 @@
-import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MinLength, ValidateNested } from 'class-validator'
-import { Type } from 'class-transformer'
+import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator'
 
 export class CreateUserDto {
   @IsEmail()
@@ -74,51 +73,4 @@ export class UserQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   orderDir?: 'asc' | 'desc'
-}
-
-/**
- * DTO pour les résultats de benchmark
- * Supporte différents types de métriques selon le type de workout
- */
-export class BenchmarkResultDto {
-  @IsOptional()
-  @IsNumber()
-  time_seconds?: number // Pour les workouts "For Time" (ex: Fran, Helen)
-
-  @IsOptional()
-  @IsNumber()
-  rounds?: number // Pour les workouts AMRAP (ex: Cindy)
-
-  @IsOptional()
-  @IsNumber()
-  reps?: number // Reps complémentaires pour AMRAP
-
-  @IsOptional()
-  @IsNumber()
-  weight?: number // Poids utilisé si applicable
-
-  @IsOptional()
-  @IsString()
-  notes?: string // Notes optionnelles
-}
-
-/**
- * DTO pour sauvegarder un résultat de benchmark
- */
-export class SaveBenchmarkResultDto {
-  @IsNotEmpty()
-  @IsUUID()
-  sportId!: string
-
-  @IsNotEmpty()
-  @IsUUID()
-  workoutId!: string
-
-  @IsNotEmpty()
-  @IsString()
-  workoutName!: string
-
-  @ValidateNested()
-  @Type(() => BenchmarkResultDto)
-  result!: BenchmarkResultDto
 }

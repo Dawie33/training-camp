@@ -40,15 +40,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { deleteWorkout, getWorkouts } from '@/lib/api/admin'
 import { sportsService } from '@/lib/api/sports'
-import type { AdminWorkout } from '@/lib/types/workout'
+import { workoutsApi } from '@/lib/api/workouts'
+import type { Workouts } from '@/lib/types/workout'
 import { toast } from 'sonner'
 
 const ITEMS_PER_PAGE = 10
 
 export default function WorkoutsPage() {
-  const [workouts, setWorkouts] = useState<AdminWorkout[]>([])
+  const [workouts, setWorkouts] = useState<Workouts[]>([])
   const [sports, setSports] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -108,7 +108,7 @@ export default function WorkoutsPage() {
         orderDir: orderDir
       }
 
-      const data = await getWorkouts(params)
+      const data = await workoutsApi.getAll(params)
       setWorkouts(data.rows)
       setTotal(data.count)
     } catch (error) {
@@ -137,7 +137,7 @@ export default function WorkoutsPage() {
     if (!confirm(`Supprimer l'entraînement "${name}" ?`)) return
 
     try {
-      await deleteWorkout(id)
+      await workoutsApi.delete(id)
       toast.success('Workout supprimé')
       fetchWorkouts()
     } catch (error) {
@@ -147,7 +147,7 @@ export default function WorkoutsPage() {
   }
 
   // Define columns
-  const columns: ColumnDef<AdminWorkout>[] = [
+  const columns: ColumnDef<Workouts>[] = [
     {
       accessorKey: "name",
       header: ({ column }) => {

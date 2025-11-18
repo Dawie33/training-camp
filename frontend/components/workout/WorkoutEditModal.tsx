@@ -139,17 +139,19 @@ export default function WorkoutEditModal({
         if (!editedWorkout) return
         try {
             setLoading(true)
+
+            // Créer un nouveau workout personnalisé basé sur le workout de base
             const payload = {
                 ...editedWorkout,
-                id: workout.id
+                id: workout.id // ID du workout de base pour référence
             }
-            const response = await workoutsService.createPersonalizedWorkout(payload)
+            const response = await workoutsService.createPersonalizedWorkout(payload as any)
 
             if (response && response.id) {
-                toast.success('Workout personnalisé sauvegardé ! Redirection...')
+                toast.success('Workout personnalisé créé avec succès ! Redirection...')
                 onClose()
 
-                // Redirection vers le workout personnalisé
+                // Redirection vers le workout personnalisé nouvellement créé
                 setTimeout(() => {
                     router.push(`/personalized-workout/${response.id}`)
                 }, 500)
@@ -157,7 +159,8 @@ export default function WorkoutEditModal({
                 toast.error('Le workout a été sauvegardé mais aucun ID retourné')
             }
         } catch (error) {
-            toast.error(`Erreur lors de la sauvegarde : ${error}`)
+            console.error('Erreur lors de la sauvegarde:', error)
+            toast.error(`Erreur lors de la sauvegarde : ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
         } finally {
             setLoading(false)
         }

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
-import { BenchmarkResultDto, SaveBenchmarkResultDto } from "./dto"
+import { UpdateUserDto, UserQueryDto } from "./dto"
 
 @Injectable()
 
@@ -83,172 +83,149 @@ export class UsersService {
         }
     }
 
+
     /**
-     * Enregistre le résultat d'un benchmark et calcule/met à jour le niveau de l'utilisateur
-     * @param user_id ID de l'utilisateur
-     * @param data Données du benchmark (sportId, workoutId, workoutName, result)
+     * Récupère la liste des utilisateurs avec filtres et recherche.
+     * @param {UserQueryDto} query - Paramètres de la requête.
+     * @param {string} query.limit - Nombre d'utilisateurs à récupérer. Par défaut : 20.
+     * @param {string} query.offset - Décalage de pagination. Par défaut : 0.
+     * @param {string} query.search - Paramètre de recherche. S'il est défini, la valeur donnée dans l'étiquette de l'utilisateur sera recherchée.
+     * @param {string} query.role - Rôle de l'utilisateur. Par défaut : tous les utilisateurs sont récupérés.
+     * @param {string} query.orderBy - Colonne de tri. Par défaut : « created_at ».
+     * @param {string} query.orderDir - Sens de l'ordre. Par défaut : « desc ».
+     * @returns {Promise<{rows: User[], count: number}>} - Promesse qui renvoie un objet contenant les lignes et le nombre.
      */
-    async saveBenchmarkResult(user_id: string, data: SaveBenchmarkResultDto) {
-        const { sportId, workoutId, workoutName, result } = data
+    async findAll({ limit = '20', offset = '0', search = '', role, orderBy = 'created_at', orderDir = 'desc' }: UserQueryDto
+    ) {
+        let query = this.knex('users')
+            .select('users.*')
+            .select(this.knex.raw('COUNT(DISTINCT workouts.id) as workouts_count'))
+            .leftJoin('workouts', 'users.id', 'workouts.created_by_user_id')
+            .groupBy('users.id')
 
-        // Vérifier si un profil sportif existe pour l'utilisateur et le sport actif
-        const userSportProfile = await this.knex('user_sport_profiles')
-            .where({ user_id, sport_id: sportId })
-            .first()
-
-        const existingResults = userSportProfile?.benchmark_results || {}
-
-        const updatedResults = {
-            ...existingResults,
-            [workoutName]: {
-                workout_id: workoutId,
-                result,
-                date: new Date().toISOString()
-            }
-        }
-
-        // Calculer le niveau basé sur les résultats
-        const calculatedLevel = this.calculateLevelFromBenchmarks(
-            workoutName,
-            result,
-            userSportProfile?.sport_level || 'beginner'
-        )
-
-        if (userSportProfile) {
-            // Mettre à jour le profil existant
-            await this.knex('user_sport_profiles')
-                .where({ user_id, sport_id: sportId })
-                .update({
-                    benchmark_results: JSON.stringify(updatedResults),
-                    sport_level: calculatedLevel,
-                    last_activity_at: new Date(),
-                    updated_at: new Date()
-                })
-        } else {
-            // Créer un nouveau profil sport
-            await this.knex('user_sport_profiles').insert({
-                user_id,
-                sport_id: sportId,
-                sport_level: calculatedLevel,
-                benchmark_results: JSON.stringify(updatedResults),
-                is_primary_sport: false,
-                is_active: true,
-                last_activity_at: new Date(),
-                created_at: new Date(),
-                updated_at: new Date()
+        if (search) {
+            query = query.where(function () {
+                this.where('users.email', 'ilike', `%${search}%`)
+                    .orWhere('users.firstName', 'ilike', `%${search}%`)
+                    .orWhere('users.lastName', 'ilike', `%${search}%`)
             })
         }
 
+        if (role) {
+            query = query.where('users.role', role)
+        }
+
+        const rows = await query
+            .limit(Number(limit))
+            .offset(Number(offset))
+            .orderBy(orderBy, orderDir)
+
+        // Masquer les mots de passe
+        const sanitizedRows = rows.map(user => {
+            const { password, ...rest } = user
+            return rest
+        })
+
+        const countQuery = this.knex('users').count('* as count')
+
+        if (search) {
+            countQuery.where(function () {
+                this.where('email', 'ilike', `%${search}%`)
+                    .orWhere('firstName', 'ilike', `%${search}%`)
+                    .orWhere('lastName', 'ilike', `%${search}%`)
+            })
+        }
+        if (role) {
+            countQuery.where('role', role)
+        }
+
+        const countResult = await countQuery.first()
+
         return {
-            success: true,
-            level: calculatedLevel,
-            benchmark_results: updatedResults
+            rows: sanitizedRows,
+            count: Number(countResult?.count || 0),
         }
     }
 
     /**
-     * Valide et retourne un niveau utilisateur valide
-     * @param level Niveau à valider
-     * @returns Niveau valide ou 'beginner' par défaut
+     * Récupère un utilisateur par son ID.
+     * @param {string} id - Identifiant de l'utilisateur.
+     * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur correspondant à l'identifiant ou null si l'utilisateur n'existe pas.
+     * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
+     * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
      */
-    private validateLevel(level: string): 'beginner' | 'intermediate' | 'advanced' | 'elite' {
-        const validLevels = ['beginner', 'intermediate', 'advanced', 'elite'] as const
-        type ValidLevel = typeof validLevels[number]
+    async findOne(id: string) {
+        const user = await this.knex('users')
+            .where({ id })
+            .first()
 
-        if (validLevels.includes(level as ValidLevel)) {
-            return level as ValidLevel
+        if (!user) return null
+
+        // Masquer le mot de passe
+        const { password, ...sanitizedUser } = user
+
+        // Récupérer les stats de l'utilisateur
+        const [workoutsCount, sessionsCount] = await Promise.all([
+            this.knex('workouts')
+                .where({ created_by_user_id: id })
+                .count('* as count')
+                .first(),
+            this.knex('workout_sessions')
+                .where({ user_id: id })
+                .count('* as count')
+                .first(),
+        ])
+
+        return {
+            ...sanitizedUser,
+            stats: {
+                workouts: Number(workoutsCount?.count || 0),
+                sessions: Number(sessionsCount?.count || 0),
+            },
         }
-        return 'beginner'
+    }
+
+
+    /**
+     * Mettre à jour un utilisateur.
+     * @param {string} id - Identifiant de l'utilisateur.
+     * @param {Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }>} data - Données à mettre à jour.
+     * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur mis à jour ou null si l'utilisateur n'existe pas.
+     * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
+     */
+    async update(id: string, data: UpdateUserDto) {
+        const updateData: Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }> = {}
+
+        if (data.email !== undefined) updateData.email = data.email
+        if (data.firstName !== undefined) updateData.firstName = data.firstName
+        if (data.lastName !== undefined) updateData.lastName = data.lastName
+        if (data.role !== undefined) updateData.role = data.role
+        if (data.isActive !== undefined) updateData.is_active = data.isActive
+
+        const [row] = await this.knex('users')
+            .where({ id })
+            .update(updateData)
+            .returning('*')
+
+        if (!row) return null
+
+        // Masquer le mot de passe
+        const { password, ...sanitizedUser } = row
+
+        return sanitizedUser
     }
 
     /**
-     * Calcule le niveau de l'utilisateur basé sur les résultats du benchmark
-     * Cette fonction utilise des standards de référence pour déterminer le niveau
-     * @param workoutName Nom du workout benchmark
-     * @param result Résultat du benchmark
-     * @param currentLevel Niveau actuel de l'utilisateur
-     * @returns Niveau calculé
+     * Supprime un utilisateur.
+     * @param {string} id - Identifiant de l'utilisateur à supprimer.
+     * @returns {Promise<{success: boolean}>} - Promesse qui renvoie un objet contenant le statut de la suppression.
      */
-    private calculateLevelFromBenchmarks(
-        workoutName: string,
-        result: BenchmarkResultDto,
-        currentLevel: string
-    ): 'beginner' | 'intermediate' | 'advanced' | 'elite' {
-        // Standards de référence pour les benchmarks
-        const benchmarkStandards: Record<string, {
-            elite: number,
-            advanced: number,
-            intermediate: number,
-            beginner: number,
-            metric: 'rounds' | 'time' | 'distance' | 'weight' | 'power'
-        }> = {
-            // ===== CROSSFIT =====
-            'Cindy': { elite: 30, advanced: 20, intermediate: 15, beginner: 0, metric: 'rounds' },
-            'Fran': { elite: 180, advanced: 360, intermediate: 600, beginner: 999999, metric: 'time' },
-            'Helen': { elite: 480, advanced: 720, intermediate: 900, beginner: 999999, metric: 'time' },
-            'Grace': { elite: 180, advanced: 420, intermediate: 720, beginner: 999999, metric: 'time' },
-
-            // ===== RUNNING =====
-            '5K Time Trial': { elite: 900, advanced: 1200, intermediate: 1800, beginner: 999999, metric: 'time' },
-            'Cooper Test': { elite: 3000, advanced: 2400, intermediate: 1800, beginner: 0, metric: 'distance' },
-            '1 Mile Time Trial': { elite: 300, advanced: 420, intermediate: 600, beginner: 999999, metric: 'time' },
-
-            // ===== CYCLING =====
-            'FTP Test (20 min)': { elite: 300, advanced: 250, intermediate: 200, beginner: 0, metric: 'power' },
-            '5K Cycling Time Trial': { elite: 420, advanced: 540, intermediate: 720, beginner: 999999, metric: 'time' },
-
-            // ===== MUSCULATION =====
-            '1RM Bench Press': { elite: 140, advanced: 100, intermediate: 70, beginner: 0, metric: 'weight' },
-            '1RM Back Squat': { elite: 180, advanced: 140, intermediate: 100, beginner: 0, metric: 'weight' },
-            '1RM Deadlift': { elite: 220, advanced: 170, intermediate: 120, beginner: 0, metric: 'weight' }
-        }
-
-        const standard = benchmarkStandards[workoutName]
-        if (!standard) {
-            // Si pas de standard défini, garder le niveau actuel
-            return this.validateLevel(currentLevel)
-        }
-
-        // Déterminer la valeur selon le type de métrique
-        let value: number | undefined
-        switch (standard.metric) {
-            case 'rounds':
-                value = result.rounds !== undefined ? result.rounds + (result.reps || 0) / 100 : undefined
-                break
-            case 'time':
-                value = result.time_seconds
-                break
-            case 'distance':
-                value = result.rounds // Pour Cooper Test, on stocke la distance en mètres dans rounds
-                break
-            case 'weight':
-                value = result.weight
-                break
-            case 'power':
-                value = result.weight // Pour FTP, on stocke la puissance en watts dans weight
-                break
-        }
-
-        if (value === undefined) {
-            // Si pas de valeur disponible, garder le niveau actuel
-            return this.validateLevel(currentLevel)
-        }
-
-        // Calculer le niveau selon le type de métrique
-        if (standard.metric === 'rounds' || standard.metric === 'distance' || standard.metric === 'weight' || standard.metric === 'power') {
-            // Plus c'est élevé, mieux c'est
-            if (value >= standard.elite) return 'elite'
-            if (value >= standard.advanced) return 'advanced'
-            if (value >= standard.intermediate) return 'intermediate'
-            return 'beginner'
-        } else {
-            // Pour "time", moins c'est élevé, mieux c'est
-            if (value <= standard.elite) return 'elite'
-            if (value <= standard.advanced) return 'advanced'
-            if (value <= standard.intermediate) return 'intermediate'
-            return 'beginner'
-        }
+    async delete(id: string) {
+        await this.knex('users').where({ id }).delete()
+        return { success: true }
     }
+
+
 }
 
 

@@ -2,6 +2,7 @@
 // TYPES TECHNIQUES DE L'API
 // ============================================================================
 
+
 // Re-export common types for API convenience
 export type { PaginatedResponse, QueryParams } from '../types/common'
 
@@ -26,6 +27,10 @@ export interface RequestOptions {
   /** Signal d'annulation pour interrompre la requête */
   signal?: AbortSignal
 }
+
+
+
+
 
 
 

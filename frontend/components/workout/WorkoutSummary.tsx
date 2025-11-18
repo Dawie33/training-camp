@@ -1,7 +1,7 @@
 'use client'
 
 import { BenchmarkResultForm } from '@/components/workout/BenchmarkResultForm'
-import { sessionService } from '@/lib/api/sessions'
+import { sessionService } from '@/lib/api'
 import { Workouts } from '@/lib/types/workout'
 import { Check, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'

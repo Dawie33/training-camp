@@ -1,5 +1,5 @@
 import { Type } from "class-transformer"
-import { IsArray, IsBoolean, IsIn, IsInt, IsISO8601, IsNumber, IsOptional, IsString, IsUUID } from "class-validator"
+import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, ValidateNested } from "class-validator"
 
 export class CreateWorkoutDto {
   @IsString()
@@ -175,18 +175,37 @@ export class UpdateWorkoutDto {
 }
 
 export class GenerateWorkoutDto {
-  @IsISO8601()
-  date!: string
+  @IsString()
+  sport!: string
 
-  @IsUUID()
-  sportId!: string
+  @IsString()
+  workoutType!: string
+
+  @IsEnum(['beginner', 'intermediate', 'advanced', 'elite'])
+  difficulty!: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+
+  @IsNumber()
+  @Type(() => Number)
+  duration!: number // en minutes
 
   @IsOptional()
   @IsArray()
-  tags?: string[]
+  @IsString({ each: true })
+  focus?: string[] // Ex: ["upper-body", "cardio"]
 
   @IsOptional()
-  seed?: Record<string, unknown>
+  @IsArray()
+  @IsString({ each: true })
+  equipment?: string[] // Équipement disponible
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  constraints?: string[] // Ex: ["no-jump", "low-impact"]
+
+  @IsOptional()
+  @IsString()
+  additionalInstructions?: string
 }
 
 export class WorkoutQueryDto {
@@ -224,6 +243,15 @@ export class WorkoutQueryDto {
   @IsOptional()
   @IsUUID()
   sport_id?: string
+
+  @IsOptional()
+  @Type(() => String)
+  @IsIn(['beginner', 'intermediate', 'advanced'])
+  difficulty?: string
+
+  @IsOptional()
+  @Type(() => String)
+  workout_type?: string
 }
 
 export class WorkoutDto {
@@ -344,4 +372,52 @@ export class WorkoutDto {
   @IsString()
   @IsOptional()
   image_url?: string
+}
+
+
+/**
+ * DTO pour les résultats de benchmark
+ * Supporte différents types de métriques selon le type de workout
+ */
+export class BenchmarkResultDto {
+  @IsOptional()
+  @IsNumber()
+  time_seconds?: number // Pour les workouts "For Time" (ex: Fran, Helen)
+
+  @IsOptional()
+  @IsNumber()
+  rounds?: number // Pour les workouts AMRAP (ex: Cindy)
+
+  @IsOptional()
+  @IsNumber()
+  reps?: number // Reps complémentaires pour AMRAP
+
+  @IsOptional()
+  @IsNumber()
+  weight?: number // Poids utilisé si applicable
+
+  @IsOptional()
+  @IsString()
+  notes?: string // Notes optionnelles
+}
+
+/**
+ * DTO pour sauvegarder un résultat de benchmark
+ */
+export class SaveBenchmarkResultDto {
+  @IsNotEmpty()
+  @IsUUID()
+  sportId!: string
+
+  @IsNotEmpty()
+  @IsUUID()
+  workoutId!: string
+
+  @IsNotEmpty()
+  @IsString()
+  workoutName!: string
+
+  @ValidateNested()
+  @Type(() => BenchmarkResultDto)
+  result!: BenchmarkResultDto
 }
