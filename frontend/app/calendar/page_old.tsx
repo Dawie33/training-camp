@@ -2,26 +2,22 @@
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { Button } from '@/components/ui/button'
-import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
+import { useWorkoutSession } from '@/app/tracking/hooks/useWorkoutSession'
+import { workoutsService } from '@/lib/api/workouts'
+import { Workouts } from '@/lib/types/workout'
 import { motion } from 'framer-motion'
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { useWorkoutSchedule } from './hooks/useWorkoutSchedule'
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, addDays, addWeeks, subWeeks, subDays } from 'date-fns'
-import { fr } from 'date-fns/locale'
 
 type ViewMode = 'day' | 'week' | 'month'
 
 interface DayWorkout {
   id: string
-  scheduleId: string
   name: string
-  type: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
-  intensity?: string
+  type: 'scheduled' | 'completed' | 'rest'
+  intensity?: 'low' | 'medium' | 'high'
   duration?: number
-  difficulty?: string
-  workout_type?: string
 }
 
 interface CalendarDay {
@@ -34,39 +30,80 @@ interface CalendarDay {
 }
 
 function CalendarContent() {
-  const [viewMode, setViewMode] = useState<ViewMode>('week')
+  const [viewMode, setViewMode] = useState<ViewMode>('day')
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const { workoutSessions } = useWorkoutSession()
+  const [workoutsDetails, setWorkoutsDetails] = useState<Map<string, Workouts>>(new Map())
 
-  // Calculate date range for fetching schedules
-  const dateRange = useMemo(() => {
-    const start = startOfMonth(addMonths(currentDate, -1))
-    const end = endOfMonth(addMonths(currentDate, 1))
-    return {
-      start_date: format(start, 'yyyy-MM-dd'),
-      end_date: format(end, 'yyyy-MM-dd'),
+  // Récupérer les détails des workouts
+  useEffect(() => {
+    const fetchWorkoutDetails = async () => {
+      if (!workoutSessions || workoutSessions.length === 0) return
+
+      const uniqueWorkoutIds = [...new Set(workoutSessions.map(s => s.workout_id))]
+      const details = new Map<string, Workouts>()
+
+      await Promise.all(
+        uniqueWorkoutIds.map(async (workoutId) => {
+          try {
+            const workout = await workoutsService.getById(workoutId)
+            details.set(workoutId, workout)
+          } catch (error) {
+            console.error(`Failed to fetch workout ${workoutId}:`, error)
+          }
+        })
+      )
+
+      setWorkoutsDetails(details)
     }
-  }, [currentDate])
 
-  const { schedules, loading, createSchedule, deleteSchedule, markAsCompleted, markAsSkipped } = useWorkoutSchedule(dateRange)
+    fetchWorkoutDetails()
+  }, [workoutSessions])
 
   // Helper pour récupérer les workouts d'un jour
-  const getWorkoutsForDate = useCallback((date: Date): DayWorkout[] => {
-    const dateStr = format(date, 'yyyy-MM-dd')
-    return schedules
-      .filter((s) => s.scheduled_date === dateStr)
-      .map((schedule) => ({
-        id: schedule.id,
-        scheduleId: schedule.id,
-        name: schedule.workout_name || 'Workout',
-        type: schedule.status,
-        intensity: schedule.intensity,
-        duration: schedule.estimated_duration,
-        difficulty: schedule.difficulty,
-        workout_type: schedule.workout_type,
-      }))
-  }, [schedules])
+  const getWorkoutsForDate = (date: Date): DayWorkout[] => {
+    const dateStr = date.toISOString().split('T')[0]
+    const dayWorkouts: DayWorkout[] = []
+
+    if (workoutSessions && workoutSessions.length > 0) {
+      workoutSessions.forEach(session => {
+        const sessionDate = new Date(session.started_at).toISOString().split('T')[0]
+
+        if (sessionDate === dateStr) {
+          const isCompleted = !!session.completed_at
+          const duration = isCompleted && session.completed_at
+            ? Math.floor((new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 1000)
+            : undefined
+
+          const workoutDetail = workoutsDetails.get(session.workout_id)
+          const workoutName = workoutDetail?.name || `Workout ${session.workout_id.substring(0, 8)}`
+
+          let intensity: 'low' | 'medium' | 'high' | undefined
+          if (workoutDetail?.intensity) {
+            const intensityMap: { [key: string]: 'low' | 'medium' | 'high' } = {
+              'low': 'low',
+              'medium': 'medium',
+              'high': 'high',
+              'faible': 'low',
+              'moyen': 'medium',
+              'intense': 'high'
+            }
+            intensity = intensityMap[workoutDetail.intensity.toLowerCase()]
+          }
+
+          dayWorkouts.push({
+            id: session.id,
+            name: workoutName,
+            type: isCompleted ? 'completed' : 'scheduled',
+            duration,
+            intensity
+          })
+        }
+      })
+    }
+
+    return dayWorkouts
+  }
 
   // Génère les jours pour la vue jour
   const dayView = useMemo(() => {
@@ -76,16 +113,16 @@ function CalendarContent() {
       currentDate.getMonth() === today.getMonth() &&
       currentDate.getFullYear() === today.getFullYear()
 
-    const dayName = format(currentDate, 'EEEE', { locale: fr })
+    const dayName = currentDate.toLocaleDateString('fr-FR', { weekday: 'long' })
 
     return {
       date: currentDate,
       dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1),
       dayNumber: currentDate.getDate(),
       isToday,
-      workouts: getWorkoutsForDate(currentDate),
+      workouts: getWorkoutsForDate(currentDate)
     }
-  }, [currentDate, getWorkoutsForDate])
+  }, [currentDate, workoutSessions, workoutsDetails])
 
   // Génère les jours de la semaine
   const weekView = useMemo(() => {
@@ -111,12 +148,12 @@ function CalendarContent() {
         dayName: dayNames[i],
         dayNumber: date.getDate(),
         isToday,
-        workouts: getWorkoutsForDate(date),
+        workouts: getWorkoutsForDate(date)
       })
     }
 
     return days
-  }, [currentDate, getWorkoutsForDate])
+  }, [currentDate, workoutSessions, workoutsDetails])
 
   // Génère les jours du mois
   const monthView = useMemo(() => {
@@ -150,54 +187,57 @@ function CalendarContent() {
         dayNumber: date.getDate(),
         isToday,
         isCurrentMonth,
-        workouts: getWorkoutsForDate(date),
+        workouts: getWorkoutsForDate(date)
       })
     }
 
     return days
-  }, [currentDate, getWorkoutsForDate])
+  }, [currentDate, workoutSessions, workoutsDetails])
 
   const getHeaderTitle = () => {
     switch (viewMode) {
       case 'day':
-        return format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })
-      case 'week': {
+        return currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      case 'week':
         if (weekView.length === 0) return ''
         const monday = weekView[0].date
         const sunday = weekView[6].date
-        return `${monday.getDate()} - ${sunday.getDate()} ${format(monday, 'MMMM yyyy', { locale: fr })}`
-      }
+        return `${monday.getDate()} - ${sunday.getDate()} ${monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`
       case 'month':
-        return format(currentDate, 'MMMM yyyy', { locale: fr })
+        return currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
     }
   }
 
   const handlePrevious = () => {
+    const newDate = new Date(currentDate)
     switch (viewMode) {
       case 'day':
-        setCurrentDate(subDays(currentDate, 1))
+        newDate.setDate(newDate.getDate() - 1)
         break
       case 'week':
-        setCurrentDate(subWeeks(currentDate, 1))
+        newDate.setDate(newDate.getDate() - 7)
         break
       case 'month':
-        setCurrentDate(subMonths(currentDate, 1))
+        newDate.setMonth(newDate.getMonth() - 1)
         break
     }
+    setCurrentDate(newDate)
   }
 
   const handleNext = () => {
+    const newDate = new Date(currentDate)
     switch (viewMode) {
       case 'day':
-        setCurrentDate(addDays(currentDate, 1))
+        newDate.setDate(newDate.getDate() + 1)
         break
       case 'week':
-        setCurrentDate(addWeeks(currentDate, 1))
+        newDate.setDate(newDate.getDate() + 7)
         break
       case 'month':
-        setCurrentDate(addMonths(currentDate, 1))
+        newDate.setMonth(newDate.getMonth() + 1)
         break
     }
+    setCurrentDate(newDate)
   }
 
   const handleToday = () => {
@@ -210,32 +250,19 @@ function CalendarContent() {
         return 'bg-green-500/10 border-green-500/50'
       case 'scheduled':
         return 'bg-blue-500/10 border-blue-500/50'
-      case 'skipped':
-        return 'bg-gray-500/10 border-gray-500/50'
-      case 'rescheduled':
-        return 'bg-orange-500/10 border-orange-500/50'
+      case 'rest':
+        return 'bg-purple-500/10 border-purple-500/50'
       default:
         return 'bg-muted border-border'
     }
   }
 
   const handleAddWorkout = (date: Date) => {
-    setSelectedDate(date)
-    setModalOpen(true)
+    console.log('Ajouter un workout pour le', date.toLocaleDateString('fr-FR'))
   }
 
-  const handleScheduleWorkout = async (workoutId: string, notes?: string) => {
-    await createSchedule({
-      workout_id: workoutId,
-      scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
-      notes,
-    })
-  }
-
-  const handleDeleteSchedule = async (scheduleId: string) => {
-    if (confirm('Voulez-vous vraiment supprimer cette planification ?')) {
-      await deleteSchedule(scheduleId)
-    }
+  const handleWorkoutClick = (workout: DayWorkout, date: Date) => {
+    console.log('Éditer le workout', workout.name, 'du', date.toLocaleDateString('fr-FR'))
   }
 
   const renderDayView = () => (
@@ -245,77 +272,51 @@ function CalendarContent() {
           <h2 className="text-3xl font-bold capitalize">{dayView.dayName}</h2>
           <p className="text-4xl font-bold text-primary mt-2">{dayView.dayNumber}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {format(currentDate, 'MMMM yyyy', { locale: fr })}
+            {currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
           </p>
         </div>
 
         <div className="space-y-3">
           {dayView.workouts.map((workout) => (
-            <motion.div
+            <motion.button
               key={workout.id}
+              onClick={() => handleWorkoutClick(workout, dayView.date)}
               className={`
-                w-full p-4 rounded-lg border
+                w-full p-4 rounded-lg border text-left
+                transition-all hover:scale-[1.02]
                 ${getWorkoutTypeStyle(workout.type)}
               `}
               whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className={`
-                    text-base font-semibold mb-2
-                    ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
-                    ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
-                    ${workout.type === 'skipped' ? 'text-gray-700 dark:text-gray-400' : ''}
-                    ${workout.type === 'rescheduled' ? 'text-orange-700 dark:text-orange-400' : ''}
-                  `}>
-                    {workout.name}
-                  </div>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {workout.workout_type && (
-                      <div className="text-xs text-muted-foreground capitalize">
-                        {workout.workout_type.replace(/_/g, ' ')}
-                      </div>
-                    )}
-                    {workout.difficulty && (
-                      <div className="text-xs px-2 py-1 rounded bg-muted font-medium capitalize">
-                        {workout.difficulty}
-                      </div>
-                    )}
-                    {workout.duration && (
-                      <div className="text-xs text-muted-foreground">
-                        {workout.duration} min
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteSchedule(workout.scheduleId)}
-                  className="ml-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              <div className={`
+                text-base font-semibold mb-2
+                ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
+                ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
+                ${workout.type === 'rest' ? 'text-purple-700 dark:text-purple-400' : ''}
+              `}>
+                {workout.name}
               </div>
-              {workout.type === 'scheduled' && (
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => markAsCompleted(workout.scheduleId)}
-                  >
-                    Marquer complété
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => markAsSkipped(workout.scheduleId)}
-                  >
-                    Marquer sauté
-                  </Button>
-                </div>
-              )}
-            </motion.div>
+              <div className="flex items-center gap-3">
+                {workout.duration && (
+                  <div className="text-sm text-muted-foreground">
+                    {Math.floor(workout.duration / 60)} minutes
+                  </div>
+                )}
+                {workout.intensity && (
+                  <div className={`
+                    text-xs px-2 py-1 rounded font-medium
+                    ${workout.intensity === 'low' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ''}
+                    ${workout.intensity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
+                    ${workout.intensity === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : ''}
+                  `}>
+                    {workout.intensity === 'low' && 'Faible'}
+                    {workout.intensity === 'medium' && 'Moyen'}
+                    {workout.intensity === 'high' && 'Intense'}
+                  </div>
+                )}
+              </div>
+            </motion.button>
           ))}
 
           {dayView.workouts.length === 0 && (
@@ -366,23 +367,45 @@ function CalendarContent() {
 
           <div className="space-y-2">
             {day.workouts.map((workout) => (
-              <div
+              <motion.button
                 key={workout.id}
+                onClick={() => handleWorkoutClick(workout, day.date)}
                 className={`
-                  w-full p-2 rounded border
+                  w-full p-2 rounded border text-left
+                  transition-all
                   ${getWorkoutTypeStyle(workout.type)}
                 `}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <div className={`
                   text-xs font-medium line-clamp-2
                   ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
                   ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
-                  ${workout.type === 'skipped' ? 'text-gray-700 dark:text-gray-400' : ''}
-                  ${workout.type === 'rescheduled' ? 'text-orange-700 dark:text-orange-400' : ''}
+                  ${workout.type === 'rest' ? 'text-purple-700 dark:text-purple-400' : ''}
                 `}>
                   {workout.name}
                 </div>
-              </div>
+                <div className="flex items-center gap-2 mt-1">
+                  {workout.duration && (
+                    <div className="text-[10px] text-muted-foreground">
+                      {Math.floor(workout.duration / 60)}min
+                    </div>
+                  )}
+                  {workout.intensity && (
+                    <div className={`
+                      text-[8px] px-1 py-0.5 rounded font-medium
+                      ${workout.intensity === 'low' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ''}
+                      ${workout.intensity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
+                      ${workout.intensity === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : ''}
+                    `}>
+                      {workout.intensity === 'low' && '●'}
+                      {workout.intensity === 'medium' && '●●'}
+                      {workout.intensity === 'high' && '●●●'}
+                    </div>
+                  )}
+                </div>
+              </motion.button>
             ))}
           </div>
 
@@ -445,19 +468,23 @@ function CalendarContent() {
 
             <div className="space-y-1 mb-1">
               {day.workouts.slice(0, 2).map((workout) => (
-                <div
+                <button
                   key={workout.id}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleWorkoutClick(workout, day.date)
+                  }}
                   className={`
-                    w-full text-[9px] px-1 py-0.5 rounded truncate
+                    w-full text-[9px] px-1 py-0.5 rounded truncate text-left
+                    transition-all hover:scale-[1.02]
                     ${getWorkoutTypeStyle(workout.type)}
                     ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
                     ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
-                    ${workout.type === 'skipped' ? 'text-gray-700 dark:text-gray-400' : ''}
-                    ${workout.type === 'rescheduled' ? 'text-orange-700 dark:text-orange-400' : ''}
+                    ${workout.type === 'rest' ? 'text-purple-700 dark:text-purple-400' : ''}
                   `}
                 >
                   {workout.name}
-                </div>
+                </button>
               ))}
               {day.workouts.length > 2 && (
                 <div className="text-[8px] text-center text-muted-foreground">
@@ -561,17 +588,9 @@ function CalendarContent() {
           </div>
 
           {/* Calendar Views */}
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <>
-              {viewMode === 'day' && renderDayView()}
-              {viewMode === 'week' && renderWeekView()}
-              {viewMode === 'month' && renderMonthView()}
-            </>
-          )}
+          {viewMode === 'day' && renderDayView()}
+          {viewMode === 'week' && renderWeekView()}
+          {viewMode === 'month' && renderMonthView()}
 
           {/* Legend */}
           <div className="mt-6 pt-4 border-t flex flex-wrap gap-4">
@@ -584,23 +603,12 @@ function CalendarContent() {
               <span className="text-muted-foreground">Complété</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded bg-gray-500/10 border border-gray-500/50" />
-              <span className="text-muted-foreground">Sauté</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded bg-orange-500/10 border border-orange-500/50" />
-              <span className="text-muted-foreground">Replanifié</span>
+              <div className="w-3 h-3 rounded bg-purple-500/10 border border-purple-500/50" />
+              <span className="text-muted-foreground">Repos</span>
             </div>
           </div>
         </motion.div>
       </div>
-
-      <ScheduleWorkoutModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        selectedDate={selectedDate}
-        onSchedule={handleScheduleWorkout}
-      />
     </motion.div>
   )
 }

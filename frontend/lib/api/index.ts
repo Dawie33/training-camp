@@ -18,6 +18,9 @@ export * from './workouts'
 // Sessions
 export * from './sessions'
 
+// Schedule
+export * from './schedule'
+
 // Exercises
 export * from './exercices'
 
