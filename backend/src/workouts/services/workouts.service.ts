@@ -371,7 +371,11 @@ export class WorkoutsService {
     }
 
     try {
-      const newWorkout = await this.knex('personalized_workouts').insert(record).returning('*')
+      const newWorkout = await this.knex('personalized_workouts')
+        .insert(record)
+        .onConflict(['user_id', 'wod_date'])
+        .merge()
+        .returning('*')
       return newWorkout[0]
     } catch (error) {
       throw new Error('Failed to create personalized workout: ' + error.message)

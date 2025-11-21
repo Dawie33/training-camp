@@ -151,6 +151,7 @@ export interface PersonalizedWorkout {
     user_id: string
     plan_json: Workouts
     wod_date: string
+    created_at: string
 }
 
 export interface GeneratedWorkout {

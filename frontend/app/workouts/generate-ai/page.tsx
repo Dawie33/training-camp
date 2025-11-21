@@ -90,11 +90,11 @@ export default function GenerateWorkoutAIPage() {
         is_benchmark: false
       }
 
-      const savedWorkout = await workoutsService.createPersonalizedWorkout(workoutData as any)
+      const savedWorkout = await workoutsService.create(workoutData as any)
 
       // Rediriger vers la page du workout personnalisé créé
       toast.success('Workout généré et sauvegardé avec succès !')
-      router.push(`/personalized-workout/${savedWorkout.id}`)
+      router.push(`/workouts/${savedWorkout.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
     } finally {

@@ -243,6 +243,24 @@ export default function WorkoutsPage() {
       },
     },
     {
+      accessorKey: "created_at",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Date
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const date = new Date(row.getValue("created_at"))
+        return <div className="text-sm text-muted-foreground">{date.toLocaleDateString()}</div>
+      },
+    },
+    {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
@@ -577,6 +595,12 @@ export default function WorkoutsPage() {
                     >
                       {workout.status}
                     </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Date</p>
+                    <p className="text-sm font-medium">
+                      {new Date(workout.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               </div>

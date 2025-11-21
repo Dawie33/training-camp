@@ -1,6 +1,6 @@
 import { Body, Controller, Get, NotFoundException, Param, Post, Query, Request, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { GenerateWorkoutDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
+import { CreateWorkoutDto, GenerateWorkoutDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { AIWorkoutGeneratorService } from '../services/ai-workout-generator.service'
 import { WorkoutsService } from '../services/workouts.service'
 
@@ -92,6 +92,12 @@ export class WorkoutsController {
     return response
   }
 
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() createWorkoutDto: CreateWorkoutDto) {
+    return await this.service.create(createWorkoutDto)
+  }
 
   @Post('generate-ai')
   async generateWithAI(@Body() dto: GenerateWorkoutDto) {

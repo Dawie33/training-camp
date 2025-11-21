@@ -9,19 +9,11 @@ import {
   getSortedRowModel,
   useReactTable
 } from "@tanstack/react-table"
-import { ArrowUpDown, Edit, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
+import { ArrowUpDown, Edit, Plus, Search, Trash2 } from "lucide-react"
 import * as React from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -34,11 +26,13 @@ import {
 import { deleteExercise, getExercises } from "@/lib/api/exercices"
 import { Exercise } from "@/lib/types/exercice"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 
 export default function ExercisesPage() {
+  const router = useRouter()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -215,46 +209,7 @@ export default function ExercisesPage() {
         )
       },
     },
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => {
-        const exercise = row.original
 
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(exercise.id)}
-              >
-                Copy ID
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <Link href={`/exercises/${exercise.id}`}>
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => handleDelete(exercise.id, exercise.name)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
-    },
   ]
 
   // Calculate page count
@@ -290,7 +245,7 @@ export default function ExercisesPage() {
         <Link href="/exercises/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            New Exercise
+            Ajouter un exercice
           </Button>
         </Link>
       </div>
@@ -370,6 +325,8 @@ export default function ExercisesPage() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => router.push(`/exercises/${row.original.id}`)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -456,7 +413,7 @@ export default function ExercisesPage() {
                 </div>
 
                 {/* Info grid */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Type</p>
                     <p className="text-sm font-medium capitalize">
@@ -485,6 +442,6 @@ export default function ExercisesPage() {
         )}
       </div>
 
-    </div>
+    </div >
   )
 }

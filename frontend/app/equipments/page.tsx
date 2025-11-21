@@ -1,7 +1,9 @@
 'use client'
 
-import { ArrowUpDown, Edit, Plus, Search, Trash2 } from "lucide-react"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { ArrowUpDown, Edit, Plus, Search, Trash2, ZoomIn } from "lucide-react"
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { Button } from "@/components/ui/button"
@@ -30,6 +32,7 @@ import { toast } from 'sonner'
 const ITEMS_PER_PAGE = 10
 
 export default function EquipmentsPage() {
+  const router = useRouter()
   const [equipments, setEquipments] = useState<Equipment[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -104,6 +107,43 @@ export default function EquipmentsPage() {
   // Define columns
   const columns: ColumnDef<Equipment>[] = [
     {
+      accessorKey: "image_url",
+      header: "Image",
+      cell: ({ row }) => {
+        const imageUrl = row.getValue("image_url") as string
+        if (!imageUrl) return <div className="w-20 h-14 bg-muted rounded-md flex items-center justify-center text-muted-foreground text-xs">No img</div>
+
+        return (
+          <Dialog>
+            <DialogTrigger asChild>
+              <div
+                className="relative w-20 h-14 group cursor-pointer overflow-hidden rounded-md border border-border"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={imageUrl}
+                  alt={row.getValue("label")}
+                  className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <ZoomIn className="w-5 h-5 text-white drop-shadow-md" />
+                </div>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl p-0 overflow-hidden bg-transparent border-none shadow-none">
+              <div className="relative w-full h-full flex items-center justify-center">
+                <img
+                  src={imageUrl}
+                  alt={row.getValue("label")}
+                  className="max-w-full max-h-[85vh] object-contain rounded-md shadow-2xl"
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )
+      },
+    },
+    {
       accessorKey: "label",
       header: ({ column }) => {
         return (
@@ -116,35 +156,12 @@ export default function EquipmentsPage() {
           </Button>
         )
       },
-      cell: ({ row }) => <div className="font-medium">{row.getValue("label")}</div>,
+      cell: ({ row }) => <div className="font-medium text-base">{row.getValue("label")}</div>,
     },
     {
-      id: "actions",
-      header: () => <div className="text-right">Actions</div>,
-      enableHiding: false,
-      cell: ({ row }) => {
-        const equipment = row.original
-
-        return (
-          <div className="flex items-center justify-end gap-2">
-            <Link href={`/equipments/${equipment.id}`}>
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-4 w-4" />
-
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDelete(equipment.id, equipment.label)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-
-            </Button>
-          </div>
-        )
-      },
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => <div className="text-sm text-muted-foreground truncate max-w-[800px]">{row.getValue("description") || "-"}</div>,
     },
   ]
 
@@ -173,7 +190,7 @@ export default function EquipmentsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Header */}
-      <div className="flex items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div className="w-140 flex-initial">
           <h1 className="text-3xl font-bold">Équipements</h1>
         </div>
@@ -186,7 +203,7 @@ export default function EquipmentsPage() {
       </div>
 
       {/* Filters & Controls */}
-      <div className="flex items-center gap-30 mb-4">
+      <div className="flex justify-between items-center gap-30 mb-4">
         <div className="relative w-96">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -223,7 +240,7 @@ export default function EquipmentsPage() {
       </div>
 
       {/* Vue Desktop - Table */}
-      <div className="hidden md:block rounded-md border max-w-3xl">
+      <div className="hidden md:block rounded-md border w-full">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -260,6 +277,8 @@ export default function EquipmentsPage() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => router.push(`/equipments/${row.original.id}`)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -286,7 +305,7 @@ export default function EquipmentsPage() {
       </div>
 
       {/* Vue Mobile - Cards */}
-      <div className="md:hidden space-y-3 max-w-3xl">
+      <div className="md:hidden space-y-3 w-full">
         {loading ? (
           <div className="bg-card border rounded-lg p-6 text-center">
             <div className="flex items-center justify-center">
@@ -302,23 +321,61 @@ export default function EquipmentsPage() {
             <div
               key={equipment.id}
               className="bg-card border rounded-lg p-4 space-y-3"
+              onClick={() => router.push(`/equipments/${equipment.id}`)}
             >
               {/* Header avec nom et actions */}
               <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm">{equipment.label}</h3>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {equipment.image_url && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div
+                          className="relative w-16 h-16 flex-shrink-0 cursor-pointer border border-border rounded-md overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <img
+                            src={equipment.image_url}
+                            alt={equipment.label}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md p-0 overflow-hidden bg-transparent border-none shadow-none">
+                        <img
+                          src={equipment.image_url}
+                          alt={equipment.label}
+                          className="w-full h-auto rounded-md"
+                        />
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                  <div>
+                    <h3 className="font-semibold text-sm">{equipment.label}</h3>
+                    {equipment.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{equipment.description}</p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <Link href={`/equipments/${equipment.id}`}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      router.push(`/equipments/${equipment.id}`)
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(equipment.id, equipment.label)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(equipment.id, equipment.label)
+                    }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

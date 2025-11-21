@@ -9,13 +9,17 @@ export class CreateEquipmentDto {
     @IsOptional()
     slug?: string
 
+    @IsString()
+    @IsOptional()
+    description?: string
+
     @IsObject()
     @IsOptional()
     meta?: Record<string, string>
 
     @IsString()
     @IsOptional()
-    image?: string
+    image_url?: string
 }
 
 export class UpdateEquipmentDto {
@@ -27,13 +31,17 @@ export class UpdateEquipmentDto {
     @IsOptional()
     slug?: string
 
+    @IsString()
+    @IsOptional()
+    description?: string
+
     @IsObject()
     @IsOptional()
     meta?: Record<string, string>
 
     @IsString()
     @IsOptional()
-    image?: string
+    image_url?: string
 }
 
 

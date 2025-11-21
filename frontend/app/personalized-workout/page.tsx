@@ -183,7 +183,7 @@ function PersonalizedWorkoutsContent() {
                   key={workout.id}
                   className="cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => {
-                    window.location.href = `/workout/${workout.id}`
+                    window.location.href = `/personalized-workout/${workout.id}`
                   }}
                 >
                   <TableCell className="font-medium">{workout.name}</TableCell>
@@ -199,7 +199,7 @@ function PersonalizedWorkoutsContent() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex justify-end gap-2">
-                      <Link href={`/workout/${workout.id}`}>
+                      <Link href={`/personalized-workout/${workout.id}`}>
                         <Button variant="ghost" size="icon">
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -245,7 +245,7 @@ function PersonalizedWorkoutsContent() {
                 key={workout.id}
                 className="bg-card border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => {
-                  window.location.href = `/workout/${workout.id}`
+                  window.location.href = `/personalized-workout/${workout.id}`
                 }}
               >
                 {/* Header avec nom et actions */}
@@ -257,7 +257,7 @@ function PersonalizedWorkoutsContent() {
                     className="flex gap-1 flex-shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Link href={`/workout/${workout.id}`}>
+                    <Link href={`/personalized-workout/${workout.id}`}>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         <Eye className="h-4 w-4" />
                       </Button>

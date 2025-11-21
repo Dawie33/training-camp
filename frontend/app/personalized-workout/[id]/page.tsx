@@ -3,7 +3,7 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
-import { workoutsService, sessionService } from '@/lib/api'
+import { sessionService, workoutsService } from '@/lib/api'
 import { PersonalizedWorkout } from '@/lib/types/workout'
 import { ArrowLeft, Calendar, Clock } from 'lucide-react'
 import Link from 'next/link'
@@ -131,7 +131,7 @@ function PersonalizedWorkoutDetailContent() {
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
-            <span>Créé le {new Date(workout.plan_json.created_at).toLocaleDateString('fr-FR')}</span>
+            <span>Créé le {new Date(workout.plan_json.created_at || workout.created_at).toLocaleDateString('fr-FR')}</span>
           </div>
         </div>
 

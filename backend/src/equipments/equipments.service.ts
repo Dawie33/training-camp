@@ -8,8 +8,6 @@ import { CreateEquipmentDto, EquipmentQueryDto, UpdateEquipmentDto } from "./dto
 export class EquipmentsService {
     constructor(@InjectModel() private readonly knex: Knex) { }
 
-
-
     /**
     * Récupérer tous les équipements.
     * @param {QueryDto} query - Paramètres de la requête.
@@ -76,6 +74,8 @@ export class EquipmentsService {
             .insert({
                 slug: slugify(data.label),
                 label: data.label,
+                description: data.description,
+                image_url: data.image_url,
                 meta: data.meta ? JSON.stringify(data.meta) : JSON.stringify({}),
             })
             .returning('*')
@@ -94,21 +94,25 @@ export class EquipmentsService {
         const updateData: Partial<{
             label: string
             slug: string
+            description: string
             meta: string
-            image: string
+            image_url: string
         }> = {}
 
         if (data.label !== undefined) {
             updateData.label = data.label
             updateData.slug = slugify(data.label)
         }
+        if (data.description !== undefined) {
+            updateData.description = data.description
+        }
         if (data.meta !== undefined) {
             updateData.meta = typeof data.meta === 'string'
                 ? data.meta
                 : JSON.stringify(data.meta)
         }
-        if (data.image !== undefined) {
-            updateData.image = data.image
+        if (data.image_url !== undefined) {
+            updateData.image_url = data.image_url
         }
 
         const [row] = await this.knex('equipments')
