@@ -1,7 +1,6 @@
 'use client'
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
-import { SportCarousel } from "@/components/sport/SportCarousel"
 import { useSport } from "@/contexts/SportContext"
 import { useAllSports } from "@/hooks/useAllSports"
 import { workoutsService } from "@/lib/api"
@@ -167,16 +166,10 @@ function ExploreContent() {
             variants={staggerContainer}
         >
             <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-                {/* Carousel de sports */}
+                {/* En-tête */}
                 <motion.section variants={fadeInUp}>
-                    <SportCarousel
-                        sports={allSports}
-                        selectedSportId={selectedSportForDetails?.id || activeSport?.id}
-                        onSportSelect={handleSportSelect}
-                        title="Explorer les workouts"
-                        description="Sélectionnez un sport et découvrez tous les workouts disponibles"
-                        variant="default"
-                    />
+                    <h1 className="text-3xl font-bold">Explorer les workouts</h1>
+                    <p className="text-muted-foreground mt-2">Découvrez tous les workouts disponibles</p>
                 </motion.section>
 
                 {/* Section workouts */}
