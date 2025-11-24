@@ -11,7 +11,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/src/main",
     "lint": "npm --workspace backend run lint && npm --workspace frontend run lint",
     "lint:fix": "npm --workspace backend run lint:fix && npm --workspace frontend run lint:fix",
     "test": "jest",
