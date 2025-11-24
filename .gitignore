@@ -3,3 +3,6 @@
 /build
 /docker-compose.override.yml
 /.env
+.env.production
+.env.local
+.env*.local

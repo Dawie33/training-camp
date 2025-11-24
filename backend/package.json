@@ -21,6 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:migrate:make": "knex migrate:make",
     "db:migrate": "knex migrate:latest",
+    "db:migrate:prod": "cross-env NODE_ENV=production knex migrate:latest --env production",
+    "db:seed:prod": "cross-env NODE_ENV=production knex seed:run --env production",
     "db:rollback": "knex migrate:rollback",
     "db:seed": "knex seed:run",
     "db:reset": "knex migrate:rollback --all && knex migrate:latest && knex seed:run"
@@ -61,6 +63,7 @@
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
+    "cross-env": "^10.1.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
