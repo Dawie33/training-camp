@@ -209,7 +209,6 @@ export default function ExercisesPage() {
         )
       },
     },
-
   ]
 
   // Calculate page count

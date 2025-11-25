@@ -163,10 +163,10 @@ export default function ExerciseCreatePage() {
 
                         <div className="flex gap-4 pt-4">
                             <Button type="submit" disabled={saving}>
-                                {saving ? 'Creating...' : 'Create'}
+                                {saving ? 'Création...' : 'Créer'}
                             </Button>
                             <Button type="button" variant="outline" onClick={() => router.back()}>
-                                Cancel
+                                Annuler
                             </Button>
                         </div>
                     </form>

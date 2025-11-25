@@ -3,9 +3,9 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getExercise } from '@/lib/api/exercices'
+import { deleteExercise, getExercise } from '@/lib/api/exercices'
 import { Exercise } from '@/lib/types/exercice'
-import { ArrowLeft, Edit, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Edit, ExternalLink, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -32,22 +32,46 @@ export default function ExerciseDetailsPage() {
       .finally(() => setLoading(false))
   }, [id, router])
 
-  if (loading) return <div className="container mx-auto py-8">Loading...</div>
+  const handleDelete = async () => {
+    if (!exercise) return
+    if (!confirm(`Supprimer l'exercice "${exercise.name}" ?`)) return
+
+    try {
+      await deleteExercise(exercise.id)
+      toast.success('Exercice supprimé')
+      router.push('/exercises')
+    } catch {
+      toast.error('Erreur lors de la suppression')
+    }
+  }
+
+  if (loading) return <div className="container mx-auto py-8">Chargement...</div>
   if (!exercise) return null
 
   return (
     <div className="container mx-auto py-8 max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <Button variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        <Link href={`/exercises/${exercise.id}/edit`}>
-          <Button>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
+        <Link
+          href={'/exercises'}
+          className="block group"
+        >
+          <Button variant="ghost" >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            retour
           </Button>
         </Link>
+        <div className="flex gap-2">
+          <Link href={`/exercises/${exercise.id}/edit`}>
+            <Button>
+              <Edit className="mr-2 h-4 w-4" />
+              Modifier
+            </Button>
+          </Link>
+          <Button variant="destructive" onClick={handleDelete}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Supprimer
+          </Button>
+        </div>
       </div>
 
       <Card>
