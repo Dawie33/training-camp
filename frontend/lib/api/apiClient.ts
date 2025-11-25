@@ -6,6 +6,7 @@
 import type { ApiClientConfig, RequestOptions } from './types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+console.log('🔧 API_URL configured:', API_URL)
 
 /**
  * Erreur personnalisée pour les erreurs API
