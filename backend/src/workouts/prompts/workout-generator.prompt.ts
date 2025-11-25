@@ -138,34 +138,42 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
    - CrossFit Force : warmup + strength + accessory + cooldown
    - Running : warmup + intervals + cooldown
    - Cardio : warmup + cardio + circuit + finisher + core + cooldown
+   - Musculation Force : warmup + strength (plusieurs groupes musculaires) + accessory (isolation) + core (si demandé) + cooldown
 
 3. **Cohérence** :
    - La durée totale doit correspondre à la somme des sections
    - Le niveau de difficulté doit être cohérent avec les exercices
    - L'équipement doit correspondre aux exercices utilisés
 
-4. **Détails des exercices** :
+4. **Exhaustivité** :
+   - TOUJOURS créer un workout COMPLET qui couvre TOUS les éléments demandés dans les instructions additionnelles
+   - Si l'utilisateur demande plusieurs groupes musculaires ou objectifs, crée des sections séparées pour CHACUN
+   - Ne saute JAMAIS un élément demandé explicitement (ex: si "abdos" est demandé, crée une section core dédiée)
+   - Pour les workouts de force, inclus PLUSIEURS exercices par groupe musculaire pour un travail complet
+   - N'hésite pas à créer 6-10 sections si nécessaire pour couvrir tous les aspects demandés
+
+5. **Détails des exercices** :
    - **Technique** : Dans le champ "details", décris la technique d'exécution (position de départ, mouvement, points clés de la technique)
-   - **Options alternatives** : Pour les exercices complexes ou difficiles, propose systématiquement :
+   - **Options alternatives** : Pour les exercices complexes ou difficiles, propose TOUJOURS :
      * "easier_option" : une version facilitée (moins de poids, mouvement simplifié, assistance)
      * "harder_option" : une version plus difficile (plus de poids, tempo plus lent, instabilité)
    - **RPE cible** : Indique le niveau d'effort perçu attendu pour chaque exercice (format "X/10" ou "X-Y/10")
    - Spécifie les temps de repos entre les exercices et les rounds
-   - Indique les charges en pourcentage si pertinent (ex: "70% 1RM")
+   - Indique les charges en pourcentage si pertinent (ex: "70% 1RM") ou des plages de poids (ex: "20-24kg")
    - Ajoute des détails sur le tempo si pertinent (ex: "3-1-1-0")
 
-5. **Tags** :
+6. **Tags** :
    - Ajoute 3-5 tags pertinents
    - Utilise les tags standards : cardio, strength, no-impact, bodyweight, etc.
    - Mentionne l'équipement dans les tags si applicable
 
-6. **Stimulus** :
+7. **Stimulus** :
    - Explique POURQUOI ce workout est efficace pour l'objectif visé
    - Mentionne les systèmes énergétiques sollicités (ATP-PC, glycolytique, aérobie)
    - Indique les adaptations recherchées (endurance, force, puissance, hypertrophie, etc.)
    - Décris l'intensité globale attendue et la stratégie d'exécution
 
-7. **Coach Notes** :
+8. **Coach Notes** :
    - **Conseils techniques** : Points clés pour bien exécuter le workout
    - **Gestion de l'intensité** : RPE global cible, comment doser l'effort
    - **Variations** : Comment adapter le workout (plus facile : réduire les rounds, plus difficile : réduire les repos)
@@ -190,7 +198,20 @@ Sections : warmup, cardio, circuit, finisher, core, cooldown
 ## Musculation - Full Body
 Sections : warmup, circuit, accessory, cooldown
 
+## Musculation - Force Haut du Corps avec Abdos
+Sections : warmup, strength (poussée), strength (tirage), strength (épaules), accessory (triceps), core (abdos), finisher (optionnel), cooldown
+Exemple : Si l'utilisateur demande "kettlebell 20kg et 12kg, barre 40kg, travail abdos, pas de saut, haut du corps" :
+- Warmup : échauffement dynamique haut du corps
+- Strength 1 : développé couché/floor press (poussée pectoraux)
+- Strength 2 : rowing barre + rowing KB (tirage dos)
+- Strength 3 : military press KB (épaules)
+- Accessory : skull crushers + floor press serré (triceps)
+- Core : Turkish get-up, planche KB drag, hollow hold (abdos sans sauts)
+- Finisher : farmer carry asymétrique (optionnel)
+- Cooldown : étirements haut du corps
+
 Sois créatif et varie les structures pour éviter la monotonie !
+IMPORTANT : Crée autant de sections que nécessaire pour couvrir TOUS les aspects demandés par l'utilisateur.
 
 # EXEMPLE D'EXERCICE BIEN DÉTAILLÉ
 

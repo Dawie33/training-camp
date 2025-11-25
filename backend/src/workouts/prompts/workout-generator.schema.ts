@@ -22,6 +22,9 @@ export const ExerciseSchema = z.object({
   intensity: z.string().nullable().optional(),
   details: z.string().nullable().optional(),
   equipment: z.array(EquipmentSchema).nullable().optional(),
+  easier_option: z.string().nullable().optional(),
+  harder_option: z.string().nullable().optional(),
+  target_rpe: z.string().nullable().optional(),
 })
 
 /**
