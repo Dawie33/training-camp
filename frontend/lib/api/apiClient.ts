@@ -5,8 +5,16 @@
 
 import type { ApiClientConfig, RequestOptions } from './types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+// En production, utiliser l'URL de l'API déployée sur Render
+// En développement, utiliser localhost
+const API_URL = process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://training-camp-backend.onrender.com/api'
+    : 'http://localhost:3001/api')
+
 console.log('🔧 API_URL configured:', API_URL)
+console.log('🔧 NODE_ENV:', process.env.NODE_ENV)
+console.log('🔧 NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
 
 /**
  * Erreur personnalisée pour les erreurs API
