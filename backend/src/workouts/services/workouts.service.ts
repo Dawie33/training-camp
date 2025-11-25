@@ -137,15 +137,35 @@ export class WorkoutsService {
     // Étape 2 : Déterminer le sport du jour
     const dateHash = parseInt(targetDate.split('-').join(''), 10)
     const sportIndex = dateHash % sportIds.length
-    const chosenSportId = sportIds[sportIndex]
 
-    // Étape 3 : Récupérer uniquement les workouts publiés pour ce sport
-    const workouts = await this.knex('workouts')
+    // Étape 3 : Récupérer les workouts en essayant tous les sports si nécessaire
+    let workouts: WorkoutDto[] = []
+    let chosenSportId = sportIds[sportIndex]
+
+    // Essayer le sport du jour d'abord
+    workouts = await this.knex('workouts')
       .where({ sport_id: chosenSportId, status: 'published' })
       .orderBy('id', 'asc')
 
+    // Si aucun workout trouvé, essayer les autres sports
     if (!workouts || workouts.length === 0) {
-      throw new Error(`Aucun workout publié pour le sport ${chosenSportId}`)
+      for (const sportId of sportIds) {
+        if (sportId === chosenSportId) continue // Déjà essayé
+
+        workouts = await this.knex('workouts')
+          .where({ sport_id: sportId, status: 'published' })
+          .orderBy('id', 'asc')
+
+        if (workouts && workouts.length > 0) {
+          chosenSportId = sportId
+          break
+        }
+      }
+    }
+
+    // Si toujours aucun workout trouvé
+    if (!workouts || workouts.length === 0) {
+      throw new Error('Aucun workout publié trouvé pour vos sports')
     }
 
     // Étape 4 : Sélectionner le workout du jour
