@@ -113,7 +113,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Connexion en cours...' : 'Connexion'}
           </button>
 
           <p className="text-center text-sm text-muted-foreground">
