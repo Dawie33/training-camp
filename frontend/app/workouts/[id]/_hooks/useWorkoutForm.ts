@@ -1,5 +1,5 @@
-import { workoutsApi } from '@/lib/api/workouts'
-import type { AdminWorkout, CreateWorkoutDTO, Workouts } from '@/lib/types/workout'
+import { workoutsApi, generateWorkoutWithAI } from '@/lib/api/workouts'
+import type { CreateWorkoutDTO, Workouts } from '@/lib/types/workout'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -183,7 +183,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
         toast.success('Workout mis a jour')
       }
 
-      router.push('/admin/workouts')
+      router.push('/workouts')
     } catch (error) {
       console.error(error)
       toast.error(isNewMode ? 'Erreur lors de la creation du workout' : 'Erreur lors de la mise a jour du workout')
@@ -209,7 +209,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
         additionalInstructions: aiParams.tags || undefined,
       }
 
-      const generatedWorkout = await workoutsApi.generateWorkoutWithAI(generationParams)
+      const generatedWorkout = await generateWorkoutWithAI(generationParams)
 
       // Pre-fill form with generated data
       setFormData({

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useRouter } from 'next/navigation'
+import { TagInput } from './TagInput'
+import { BlocksEditor } from './BlocksEditor'
 
 interface FormData {
   name: string
@@ -227,65 +229,46 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
           />
         </div>
 
-        <div>
-          <label className="text-sm font-medium">Tags (separes par des virgules)</label>
-          <Input
-            value={formData.tags}
-            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-            placeholder="cardio, strength, endurance"
-          />
-        </div>
+        <TagInput
+          label="Tags"
+          value={formData.tags}
+          onChange={(value) => setFormData({ ...formData, tags: value })}
+          placeholder="cardio, strength, endurance..."
+        />
 
-        <div>
-          <label className="text-sm font-medium">Scaling Options (JSON ou comma-separated)</label>
-          <Textarea
-            value={formData.scaling_options}
-            onChange={(e) => setFormData({ ...formData, scaling_options: e.target.value })}
-            rows={2}
-            placeholder='["rx", "scaled", "beginner"]'
-          />
-        </div>
+        <TagInput
+          label="Scaling Options"
+          value={formData.scaling_options}
+          onChange={(value) => setFormData({ ...formData, scaling_options: value })}
+          placeholder="rx, scaled, beginner..."
+        />
 
-        <div>
-          <label className="text-sm font-medium">Equipment Required (JSON ou comma-separated)</label>
-          <Textarea
-            value={formData.equipment_required}
-            onChange={(e) => setFormData({ ...formData, equipment_required: e.target.value })}
-            rows={2}
-            placeholder='["barbell", "pull-up bar", "rower"]'
-          />
-        </div>
+        <TagInput
+          label="Equipment Required"
+          value={formData.equipment_required}
+          onChange={(value) => setFormData({ ...formData, equipment_required: value })}
+          placeholder="barbell, pull-up bar, rower..."
+        />
 
-        <div>
-          <label className="text-sm font-medium">Focus Areas (JSON ou comma-separated)</label>
-          <Textarea
-            value={formData.focus_areas}
-            onChange={(e) => setFormData({ ...formData, focus_areas: e.target.value })}
-            rows={2}
-            placeholder='["endurance", "strength", "technique"]'
-          />
-        </div>
+        <TagInput
+          label="Focus Areas"
+          value={formData.focus_areas}
+          onChange={(value) => setFormData({ ...formData, focus_areas: value })}
+          placeholder="endurance, strength, technique..."
+        />
 
-        <div>
-          <label className="text-sm font-medium">Metrics Tracked (JSON ou comma-separated)</label>
-          <Textarea
-            value={formData.metrics_tracked}
-            onChange={(e) => setFormData({ ...formData, metrics_tracked: e.target.value })}
-            rows={2}
-            placeholder='["time", "rounds", "reps"]'
-          />
-        </div>
+        <TagInput
+          label="Metrics Tracked"
+          value={formData.metrics_tracked}
+          onChange={(value) => setFormData({ ...formData, metrics_tracked: value })}
+          placeholder="time, rounds, reps..."
+        />
 
-        <div>
-          <label className="text-sm font-medium">Blocks (JSON)</label>
-          <Textarea
-            value={formData.blocks}
-            onChange={(e) => setFormData({ ...formData, blocks: e.target.value })}
-            rows={8}
-            placeholder='{"warmup": [], "strength": {}, "metcon": {}}'
-            className="font-mono text-xs"
-          />
-        </div>
+        <BlocksEditor
+          label="Structure du Workout (Blocks)"
+          value={formData.blocks}
+          onChange={(value) => setFormData({ ...formData, blocks: value })}
+        />
       </div>
 
       {/* Submit Buttons */}

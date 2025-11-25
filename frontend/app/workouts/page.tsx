@@ -62,8 +62,8 @@ export default function WorkoutsPage() {
   const [difficulty, setDifficulty] = useState<string>('')
   const [workoutType, setWorkoutType] = useState<string>('')
   const [selectedSportFilter, setSelectedSportFilter] = useState<string>('')
-  const [orderBy, setOrderBy] = useState<string>("name")
-  const [orderDir, setOrderDir] = useState<"asc" | "desc">("asc")
+  const [orderBy, setOrderBy] = useState<string>("created_at")
+  const [orderDir, setOrderDir] = useState<"asc" | "desc">("desc")
 
   // Table state (client-side only for UI)
   const [sorting, setSorting] = React.useState<SortingState>([])

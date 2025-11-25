@@ -24,7 +24,7 @@ export class ResourceApi<T, CreateDTO = Partial<T>, UpdateDTO = Partial<T>> {
 
   /**
    * Crée une nouvelle instance de ResourceApi
-   * @param endpoint Point de terminaison de l'API (ex: '/admin/exercises')
+   * @param endpoint Point de terminaison de l'API (ex: '/exercises')
    */
   constructor(endpoint: string) {
     this.endpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`

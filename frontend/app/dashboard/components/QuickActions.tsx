@@ -10,7 +10,7 @@ export function QuickActions() {
       label: 'Créer un workout',
       description: 'Générer un nouveau workout',
       icon: Plus,
-      href: '/admin/workouts/generate-ai',
+      href: '/workouts/generate-ai',
       color: 'bg-primary',
       iconColor: 'text-primary-foreground',
     },
