@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { useWorkoutSession } from '@/app/tracking/hooks/useWorkoutSession'
+import { useWorkoutSchedule } from '@/app/calendar/hooks/useWorkoutSchedule'
 import { workoutsService } from '@/lib/api/workouts'
 import { Workouts } from '@/lib/types/workout'
 import { motion } from 'framer-motion'
@@ -28,18 +29,30 @@ interface WeekDay {
 export function WeeklyCalendar() {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0)
   const { workoutSessions } = useWorkoutSession()
+  const { schedules } = useWorkoutSchedule()
   const [workoutsDetails, setWorkoutsDetails] = useState<Map<string, Workouts>>(new Map())
 
   // Récupérer les détails des workouts
   useEffect(() => {
     const fetchWorkoutDetails = async () => {
-      if (!workoutSessions || workoutSessions.length === 0) return
+      const allWorkoutIds = new Set<string>()
 
-      const uniqueWorkoutIds = [...new Set(workoutSessions.map(s => s.workout_id))]
+      // Ajouter les IDs des sessions
+      if (workoutSessions && workoutSessions.length > 0) {
+        workoutSessions.forEach(s => allWorkoutIds.add(s.workout_id))
+      }
+
+      // Ajouter les IDs des workouts planifiés
+      if (schedules && schedules.length > 0) {
+        schedules.forEach(s => allWorkoutIds.add(s.workout_id))
+      }
+
+      if (allWorkoutIds.size === 0) return
+
       const details = new Map<string, Workouts>()
 
       await Promise.all(
-        uniqueWorkoutIds.map(async (workoutId) => {
+        Array.from(allWorkoutIds).map(async (workoutId) => {
           try {
             const workout = await workoutsService.getById(workoutId)
             details.set(workoutId, workout)
@@ -53,7 +66,7 @@ export function WeeklyCalendar() {
     }
 
     fetchWorkoutDetails()
-  }, [workoutSessions])
+  }, [workoutSessions, schedules])
 
   // Génère les jours de la semaine avec les vraies données
   const weekDays = useMemo(() => {
@@ -78,6 +91,7 @@ export function WeeklyCalendar() {
       const dateStr = date.toISOString().split('T')[0]
       const dayWorkouts: DayWorkout[] = []
 
+      // 1. Ajouter les workouts depuis les sessions (complétés ou en cours)
       if (workoutSessions && workoutSessions.length > 0) {
         workoutSessions.forEach(session => {
           const sessionDate = new Date(session.started_at).toISOString().split('T')[0]
@@ -117,6 +131,54 @@ export function WeeklyCalendar() {
         })
       }
 
+      // 2. Ajouter les workouts planifiés (qui n'ont pas encore de session)
+      if (schedules && schedules.length > 0) {
+        schedules.forEach(schedule => {
+          // Convertir la date du schedule en heure locale puis extraire la partie date
+          const scheduleDateObj = new Date(schedule.scheduled_date)
+          const scheduleDate = new Date(scheduleDateObj.getTime() - scheduleDateObj.getTimezoneOffset() * 60000)
+            .toISOString()
+            .split('T')[0]
+
+          if (scheduleDate === dateStr) {
+            // Vérifier si ce workout planifié a déjà une session (pour éviter les doublons)
+            const hasSession = workoutSessions?.some(
+              session =>
+                session.workout_id === schedule.workout_id &&
+                new Date(session.started_at).toISOString().split('T')[0] === dateStr
+            )
+
+            // Si le schedule est marqué comme "completed" ou s'il a déjà une session, ne pas l'afficher
+            if (!hasSession && schedule.status === 'scheduled') {
+              // Utiliser les données du schedule qui incluent déjà workout_name
+              const workoutName = schedule.workout_name || `Workout ${schedule.workout_id.substring(0, 8)}`
+
+              // Récupérer l'intensité du workout
+              let intensity: 'low' | 'medium' | 'high' | undefined
+              if (schedule.intensity) {
+                const intensityMap: { [key: string]: 'low' | 'medium' | 'high' } = {
+                  'low': 'low',
+                  'medium': 'medium',
+                  'high': 'high',
+                  'faible': 'low',
+                  'moyen': 'medium',
+                  'intense': 'high'
+                }
+                intensity = intensityMap[schedule.intensity.toLowerCase()]
+              }
+
+              dayWorkouts.push({
+                id: schedule.id,
+                name: workoutName,
+                type: 'scheduled',
+                duration: schedule.estimated_duration,
+                intensity
+              })
+            }
+          }
+        })
+      }
+
       days.push({
         date,
         dayName: dayNames[i],
@@ -127,7 +189,7 @@ export function WeeklyCalendar() {
     }
 
     return days
-  }, [currentWeekOffset, workoutSessions, workoutsDetails])
+  }, [currentWeekOffset, workoutSessions, schedules, workoutsDetails])
 
   const currentMonth = weekDays[3].date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
