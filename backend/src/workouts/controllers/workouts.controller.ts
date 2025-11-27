@@ -32,7 +32,7 @@ export class WorkoutsController {
   @Get('benchmark')
   @UseGuards(JwtAuthGuard)
   async getBenchmarkWorkouts(
-    @Query('sportId') sportId: string,
+    @Query('sportId') sportId?: string,
   ) {
     return await this.service.getBenchmarkWorkouts(sportId)
   }

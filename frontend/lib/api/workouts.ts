@@ -143,14 +143,15 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère les workouts de référence (benchmark) pour un sport donné.
+   * Récupère les workouts de référence (benchmark) pour un sport donné ou tous les benchmarks.
    * Les benchmarks sont des workouts de référence pour évaluer le niveau.
-   * @param sportId ID du sport
+   * @param sportId ID du sport (optionnel - si non fourni, retourne tous les benchmarks)
    * @returns Promesse contenant { rows: Workouts[], count: number }
    */
-  async getBenchmarkWorkouts(sportId: string): Promise<{ rows: Workouts[], count: number }> {
+  async getBenchmarkWorkouts(sportId?: string): Promise<{ rows: Workouts[], count: number }> {
+    const params = sportId ? { sportId } : {}
     return apiClient.get<{ rows: Workouts[], count: number }>('/workouts/benchmark', {
-      params: { sportId }
+      params
     })
   }
 

@@ -182,18 +182,26 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère les workouts benchmark pour un sport donné
+   * Récupère les workouts benchmark pour un sport donné ou tous les benchmarks
    * Les benchmarks sont des workouts de référence pour évaluer le niveau
-   * @param sportId ID du sport
+   * @param sportId ID du sport (optionnel - si non fourni, retourne tous les benchmarks)
    * @returns Liste des workouts benchmark triés par difficulté
    */
-  async getBenchmarkWorkouts(sportId: string) {
+  async getBenchmarkWorkouts(sportId?: string) {
     try {
-      const rows = await this.knex('workouts')
-        .select('*')
-        .where({ sport_id: sportId, status: 'published', is_benchmark: true })
-        .orderBy('difficulty', 'asc')
-        .orderBy('name', 'asc')
+      let query = this.knex('workouts')
+        .select('workouts.*', 'sports.name as sport_name')
+        .leftJoin('sports', 'workouts.sport_id', 'sports.id')
+        .where({ 'workouts.status': 'published', 'workouts.is_benchmark': true })
+
+      // Filtrer par sport uniquement si sportId est fourni
+      if (sportId) {
+        query = query.where({ 'workouts.sport_id': sportId })
+      }
+
+      const rows = await query
+        .orderBy('workouts.difficulty', 'asc')
+        .orderBy('workouts.name', 'asc')
 
       const count = rows.length
 

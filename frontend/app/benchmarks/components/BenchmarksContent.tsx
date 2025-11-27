@@ -1,6 +1,8 @@
 'use client'
 
-import { useSport } from "@/contexts/SportContext"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { useAllSports } from "@/hooks/useAllSports"
 import { workoutsService } from "@/lib/api"
 import { Workouts } from "@/lib/types/workout"
 import Link from "next/link"
@@ -10,15 +12,14 @@ import { toast } from "sonner"
 export function BenchmarksContent() {
     const [benchmarkWorkouts, setBenchmarkWorkouts] = useState<Workouts[]>([])
     const [loading, setLoading] = useState(true)
-    const { activeSport } = useSport()
+    const [selectedSportId, setSelectedSportId] = useState<string | undefined>(undefined)
+    const { sports, loading: sportsLoading } = useAllSports()
 
     useEffect(() => {
-        if (!activeSport?.id) return
-
         const fetchBenchmarkWorkouts = async () => {
             try {
                 setLoading(true)
-                const { rows } = await workoutsService.getBenchmarkWorkouts(activeSport.id)
+                const { rows } = await workoutsService.getBenchmarkWorkouts(selectedSportId)
                 setBenchmarkWorkouts(rows)
             } catch {
                 toast.error('Erreur lors de la récupération des benchmarks')
@@ -28,7 +29,7 @@ export function BenchmarksContent() {
         }
 
         fetchBenchmarkWorkouts()
-    }, [activeSport?.id])
+    }, [selectedSportId])
 
     const getDifficultyColor = (difficulty?: string) => {
         switch (difficulty) {
@@ -60,21 +61,11 @@ export function BenchmarksContent() {
         }
     }
 
-    if (loading) {
+    if (loading || sportsLoading) {
         return (
             <div className="container mx-auto p-6">
                 <div className="flex items-center justify-center min-h-[400px]">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </div>
-        )
-    }
-
-    if (!activeSport) {
-        return (
-            <div className="container mx-auto p-6">
-                <div className="text-center py-12">
-                    <p className="text-muted-foreground">Veuillez sélectionner un sport</p>
                 </div>
             </div>
         )
@@ -91,7 +82,7 @@ export function BenchmarksContent() {
                             <div className="text-5xl">🏆</div>
                             <div>
                                 <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                    Benchmarks {activeSport.name}
+                                    Benchmarks
                                 </h1>
                                 <p className="text-muted-foreground mt-2">
                                     Évaluez votre niveau et suivez votre progression
@@ -116,6 +107,30 @@ export function BenchmarksContent() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Filtres par sport */}
+                <div className="mb-8">
+                    <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Filtrer par sport</h3>
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            variant={selectedSportId === undefined ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedSportId(undefined)}
+                        >
+                            Tous les sports
+                        </Button>
+                        {sports.map((sport) => (
+                            <Button
+                                key={sport.id}
+                                variant={selectedSportId === sport.id ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSelectedSportId(sport.id)}
+                            >
+                                {sport.name}
+                            </Button>
+                        ))}
                     </div>
                 </div>
 
@@ -150,7 +165,10 @@ export function BenchmarksContent() {
                         <div className="text-6xl mb-4">🔍</div>
                         <p className="text-xl font-semibold mb-2">Aucun benchmark disponible</p>
                         <p className="text-muted-foreground">
-                            Aucun workout de référence n'est encore disponible pour ce sport
+                            {selectedSportId
+                                ? "Aucun workout de référence n'est disponible pour ce sport"
+                                : "Aucun workout de référence n'est encore disponible"
+                            }
                         </p>
                     </div>
                 ) : (
@@ -168,90 +186,74 @@ export function BenchmarksContent() {
                                 href={`/workout/${workout.id}`}
                                 className="block group"
                             >
-                                <div className="bg-card rounded-xl border hover:border-primary/50 transition-all overflow-hidden hover:shadow-xl">
-                                    <div className="md:flex">
-                                        {/* Image/Icon Section */}
-                                        <div className="md:w-64 h-48 md:h-auto relative bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                                            {workout.image_url ? (
-                                                <div
-                                                    className="absolute inset-0 bg-cover bg-center"
-                                                    style={{ backgroundImage: `url(${workout.image_url})` }}
-                                                >
-                                                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
-                                                </div>
-                                            ) : (
-                                                <div className="text-8xl opacity-30">🏆</div>
-                                            )}
-                                            {/* Badge BENCHMARK */}
-                                            <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                                                BENCHMARK
+                                <div className="bg-card rounded-xl border hover:border-primary/50 transition-all overflow-hidden hover:shadow-xl p-6">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <h3 className="text-2xl font-bold group-hover:text-primary transition-colors">
+                                                    {workout.name}
+                                                </h3>
+                                                {(workout as any).sport_name && (
+                                                    <Badge variant="secondary" className="text-xs">
+                                                        {(workout as any).sport_name}
+                                                    </Badge>
+                                                )}
                                             </div>
+                                            <p className="text-muted-foreground mb-3">
+                                                {workout.description}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Metadata */}
+                                    <div className="flex flex-wrap gap-3 mb-4">
+                                        {/* Type */}
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                                            <span className="text-lg">💪</span>
+                                            <span className="text-xs font-medium uppercase tracking-wide">
+                                                {workout.workout_type?.replace('_', ' ')}
+                                            </span>
                                         </div>
 
-                                        {/* Content Section */}
-                                        <div className="flex-1 p-6">
-                                            {/* Header */}
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div className="flex-1">
-                                                    <h3 className="text-2xl font-bold mb-2 group-hover:text-primary transition-colors">
-                                                        {workout.name}
-                                                    </h3>
-                                                    <p className="text-muted-foreground mb-3">
-                                                        {workout.description}
-                                                    </p>
-                                                </div>
+                                        {/* Difficulty */}
+                                        {workout.difficulty && (
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${getDifficultyColor(workout.difficulty)}`}>
+                                                <span className="text-xs font-semibold">
+                                                    {getDifficultyLabel(workout.difficulty)}
+                                                </span>
                                             </div>
+                                        )}
 
-                                            {/* Metadata */}
-                                            <div className="flex flex-wrap gap-3 mb-4">
-                                                {/* Type */}
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-                                                    <span className="text-lg">💪</span>
-                                                    <span className="text-xs font-medium uppercase tracking-wide">
-                                                        {workout.workout_type?.replace('_', ' ')}
-                                                    </span>
-                                                </div>
-
-                                                {/* Difficulty */}
-                                                {workout.difficulty && (
-                                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${getDifficultyColor(workout.difficulty)}`}>
-                                                        <span className="text-xs font-semibold">
-                                                            {getDifficultyLabel(workout.difficulty)}
-                                                        </span>
-                                                    </div>
-                                                )}
-
-                                                {/* Duration */}
-                                                {workout.estimated_duration && (
-                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary">
-                                                        <span className="text-lg">⏱️</span>
-                                                        <span className="text-xs font-semibold">
-                                                            {workout.estimated_duration} min
-                                                        </span>
-                                                    </div>
-                                                )}
+                                        {/* Duration */}
+                                        {workout.estimated_duration && (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary">
+                                                <span className="text-lg">⏱️</span>
+                                                <span className="text-xs font-semibold">
+                                                    {workout.estimated_duration} min
+                                                </span>
                                             </div>
+                                        )}
+                                    </div>
 
-                                            {/* Coach Notes Preview */}
-                                            {workout.coach_notes && (
-                                                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 border border-muted">
-                                                    <span className="text-lg shrink-0">💡</span>
-                                                    <p className="text-sm text-muted-foreground line-clamp-2">
-                                                        {workout.coach_notes}
-                                                    </p>
-                                                </div>
-                                            )}
+                                    {/* Coach Notes Preview */}
+                                    {workout.coach_notes && (
+                                        <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 border border-muted">
+                                            <span className="text-lg shrink-0">💡</span>
+                                            <p className="text-sm text-muted-foreground line-clamp-2">
+                                                {workout.coach_notes}
+                                            </p>
+                                        </div>
+                                    )}
 
-                                            {/* CTA */}
-                                            <div className="mt-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                    <span>Cliquez pour voir les détails</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-primary font-semibold group-hover:gap-3 transition-all">
-                                                    <span>Commencer</span>
-                                                    <span className="text-xl">→</span>
-                                                </div>
-                                            </div>
+                                    {/* CTA */}
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <span>Cliquez pour voir les détails</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-primary font-semibold group-hover:gap-3 transition-all">
+                                            <span>Commencer</span>
+                                            <span className="text-xl">→</span>
                                         </div>
                                     </div>
                                 </div>
