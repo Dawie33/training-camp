@@ -46,7 +46,7 @@ export const WorkoutSectionSchema = z.object({
 export const WorkoutBlocksSchema = z.object({
   sections: z.array(WorkoutSectionSchema).min(1),
   stimulus: z.string(),
-  duration_min: z.number().positive().max(60, 'La durée doit être <= 60 minutes'),
+  duration_min: z.number().positive().max(120, 'La durée doit être <= 60 minutes'),
   estimated_calories: z.string().nullable().optional(),
 })
 
