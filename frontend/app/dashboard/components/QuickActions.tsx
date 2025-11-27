@@ -8,11 +8,19 @@ export function QuickActions() {
   const actions = [
     {
       label: 'Créer un workout',
-      description: 'Générer un nouveau workout',
+      description: 'Créer manuellement',
       icon: Plus,
-      href: '/workouts/generate-ai',
+      href: '/workouts/new',
       color: 'bg-primary',
       iconColor: 'text-primary-foreground',
+    },
+    {
+      label: 'Générer avec IA',
+      description: 'Workout automatique',
+      icon: FileText,
+      href: '/workouts/generate-ai',
+      color: 'bg-green-500',
+      iconColor: 'text-white',
     },
     {
       label: 'Voir mes stats',
@@ -20,14 +28,6 @@ export function QuickActions() {
       icon: TrendingUp,
       href: '/tracking',
       color: 'bg-blue-500',
-      iconColor: 'text-white',
-    },
-    {
-      label: 'Historique',
-      description: 'Mes workouts passés',
-      icon: FileText,
-      href: '/tracking',
-      color: 'bg-purple-500',
       iconColor: 'text-white',
     },
   ]

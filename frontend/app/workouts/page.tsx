@@ -332,12 +332,20 @@ export default function WorkoutsPage() {
           <h1 className="text-3xl font-bold">Workouts</h1>
           <p className="text-muted-foreground">Total: {total}</p>
         </div>
-        <Link href="/workouts/generate-ai">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Workout
-          </Button>
-        </Link>
+        <div className="flex items-center">
+          <Link href="/workouts/new">
+            <Button className="bg-black text-white mr-2">
+              <Plus className="mr-2 h-4 w-4 " />
+              Créer un workout
+            </Button>
+          </Link>
+          <Link href="/workouts/generate-ai">
+            <Button className="bg-green-500 text-white ">
+              🤖
+              Générer un workout avec IA
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters & Controls */}

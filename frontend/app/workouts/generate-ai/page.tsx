@@ -8,6 +8,7 @@ import { WORKOUT_TYPES_BY_SPORT } from '@/lib/types/workout-structure'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { BlocksEditor } from '../[id]/components/BlocksEditor'
 
 export default function GenerateWorkoutAIPage() {
   const router = useRouter()
@@ -21,6 +22,15 @@ export default function GenerateWorkoutAIPage() {
   const [generatedWorkout, setGeneratedWorkout] = useState<GeneratedWorkout | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sports, setSports] = useState<Sport[]>([])
+  const [isEditing, setIsEditing] = useState(false)
+
+  // États pour l'édition
+  const [editedName, setEditedName] = useState('')
+  const [editedDescription, setEditedDescription] = useState('')
+  const [editedDifficulty, setEditedDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'elite'>('intermediate')
+  const [editedDuration, setEditedDuration] = useState(0)
+  const [editedIntensity, setEditedIntensity] = useState<'low' | 'moderate' | 'high' | 'very_high'>('moderate')
+  const [editedBlocks, setEditedBlocks] = useState('')
 
   // Charger les sports au montage du composant
   useEffect(() => {
@@ -50,6 +60,14 @@ export default function GenerateWorkoutAIPage() {
       })
 
       setGeneratedWorkout(workout)
+      // Initialiser les champs éditables
+      setEditedName(workout.name)
+      setEditedDescription(workout.description)
+      setEditedDifficulty(workout.difficulty)
+      setEditedDuration(workout.estimated_duration)
+      setEditedIntensity(workout.intensity)
+      setEditedBlocks(JSON.stringify(workout.blocks, null, 2))
+      setIsEditing(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la génération')
     } finally {
@@ -71,16 +89,25 @@ export default function GenerateWorkoutAIPage() {
         return
       }
 
-      // Créer le workout personnalisé en base de données
+      // Parser les blocks édités
+      let parsedBlocks
+      try {
+        parsedBlocks = JSON.parse(editedBlocks)
+      } catch {
+        setError('Erreur dans le format des blocks')
+        return
+      }
+
+      // Créer le workout personnalisé en base de données avec les valeurs éditées
       const workoutData: any = {
-        name: generatedWorkout.name,
-        description: generatedWorkout.description,
+        name: editedName,
+        description: editedDescription,
         workout_type: generatedWorkout.workout_type,
         sport_id: selectedSport.id,
-        blocks: generatedWorkout.blocks,
-        estimated_duration: generatedWorkout.estimated_duration,
-        intensity: generatedWorkout.intensity,
-        difficulty: generatedWorkout.difficulty,
+        blocks: parsedBlocks,
+        estimated_duration: editedDuration,
+        intensity: editedIntensity,
+        difficulty: editedDifficulty,
         tags: generatedWorkout.tags,
         status: 'published',
         isActive: true,
@@ -231,33 +258,115 @@ export default function GenerateWorkoutAIPage() {
           {generatedWorkout ? (
             <div className="bg-card border rounded-lg p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">{generatedWorkout.name}</h2>
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? '⏳ Sauvegarde...' : '💾 Sauvegarder'}
-                </button>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="text-xl font-semibold bg-background border rounded px-3 py-2 flex-1 mr-4"
+                    placeholder="Nom du workout"
+                  />
+                ) : (
+                  <h2 className="text-xl font-semibold">{editedName}</h2>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    {isEditing ? '👁️ Prévisualiser' : '✏️ Modifier'}
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={loading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? '⏳ Sauvegarde...' : '💾 Sauvegarder'}
+                  </button>
+                </div>
               </div>
 
-              <p className="text-muted-foreground">{generatedWorkout.description}</p>
+              {isEditing ? (
+                <textarea
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
+                  className="w-full bg-background border rounded px-3 py-2 min-h-[80px]"
+                  placeholder="Description du workout"
+                />
+              ) : (
+                <p className="text-muted-foreground">{editedDescription}</p>
+              )}
 
-              <div className="flex gap-2 flex-wrap">
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                  {generatedWorkout.difficulty}
-                </span>
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                  {generatedWorkout.estimated_duration} min
-                </span>
-                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
-                  {generatedWorkout.intensity}
-                </span>
-              </div>
+              {isEditing ? (
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Difficulté</label>
+                    <select
+                      value={editedDifficulty}
+                      onChange={(e) => setEditedDifficulty(e.target.value as any)}
+                      className="w-full px-3 py-2 border rounded bg-background text-sm"
+                    >
+                      <option value="beginner">Débutant</option>
+                      <option value="intermediate">Intermédiaire</option>
+                      <option value="advanced">Avancé</option>
+                      <option value="elite">Elite</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Durée (min)</label>
+                    <input
+                      type="number"
+                      value={editedDuration}
+                      onChange={(e) => setEditedDuration(Number(e.target.value))}
+                      className="w-full px-3 py-2 border rounded bg-background text-sm"
+                      min="5"
+                      max="180"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Intensité</label>
+                    <select
+                      value={editedIntensity}
+                      onChange={(e) => setEditedIntensity(e.target.value as any)}
+                      className="w-full px-3 py-2 border rounded bg-background text-sm"
+                    >
+                      <option value="low">Faible</option>
+                      <option value="moderate">Modérée</option>
+                      <option value="high">Élevée</option>
+                      <option value="very_high">Très élevée</option>
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2 flex-wrap">
+                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                    {editedDifficulty}
+                  </span>
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                    {editedDuration} min
+                  </span>
+                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+                    {editedIntensity}
+                  </span>
+                </div>
+              )}
 
               <div className="border-t pt-4">
                 <h3 className="font-semibold mb-4">Structure du Workout</h3>
-                <WorkoutDisplay blocks={generatedWorkout.blocks} showTitle={false} />
+                {isEditing ? (
+                  <BlocksEditor
+                    value={editedBlocks}
+                    onChange={setEditedBlocks}
+                  />
+                ) : (
+                  editedBlocks && (() => {
+                    try {
+                      return <WorkoutDisplay blocks={JSON.parse(editedBlocks)} showTitle={false} />
+                    } catch {
+                      return <p className="text-muted-foreground">Erreur de format</p>
+                    }
+                  })()
+                )}
               </div>
 
               {generatedWorkout.tags && generatedWorkout.tags.length > 0 && (

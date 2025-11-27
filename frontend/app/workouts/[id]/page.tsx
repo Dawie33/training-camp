@@ -6,10 +6,9 @@ import { sportsService } from '@/lib/api'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
+import { useWorkoutForm } from './_hooks/useWorkoutForm'
 import { WorkoutAIGenerationModal } from './components/WorkoutAIGenerationModal'
 import { WorkoutForm } from './components/WorkoutForm'
-import { WorkoutExercisesList } from './components/WorkoutExercisesList'
-import { useWorkoutForm } from './_hooks/useWorkoutForm'
 
 /**
  * Page de modification d'un entrainement
@@ -35,7 +34,6 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
   const {
     loading,
     saving,
-    workout,
     formData,
     setFormData,
     showAIModal,
@@ -70,23 +68,7 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
         {/* Main Form Card */}
         <Card>
           <CardContent className="pt-6">
-            {/* AI Generation Button (only in new mode) */}
-            {isNewMode && (
-              <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                <h3 className="text-sm font-medium mb-2">Generation IA</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Generez automatiquement un workout personnalise avec l'IA
-                </p>
-                <Button
-                  onClick={() => setShowAIModal(true)}
-                  type="button"
-                  variant="outline"
-                  className="w-full cursor-pointer"
-                >
-                  Generer un Workout avec l'IA
-                </Button>
-              </div>
-            )}
+
 
             {/* AI Generation Modal */}
             <WorkoutAIGenerationModal
@@ -109,9 +91,6 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
             />
           </CardContent>
         </Card>
-
-        {/* Exercises List (only in edit mode) */}
-        <WorkoutExercisesList exercises={workout?.exercises} />
       </div>
     </div>
   )
