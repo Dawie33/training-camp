@@ -45,6 +45,15 @@ export class SessionService {
   async getSession(sessionId: string): Promise<WorkoutSession> {
     return apiClient.get<WorkoutSession>(`/workout-sessions/${sessionId}`)
   }
+
+  /**
+   * Supprime une session de workout
+   * @param sessionId ID de la session à supprimer
+   * @returns Promesse qui renvoie void une fois la session supprimée
+   */
+  async deleteSession(sessionId: string): Promise<void> {
+    return sessionApi.delete(sessionId)
+  }
 }
 
 export const sessionService = new SessionService()

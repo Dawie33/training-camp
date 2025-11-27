@@ -55,7 +55,14 @@ function CalendarContent() {
   const getWorkoutsForDate = useCallback((date: Date): DayWorkout[] => {
     const dateStr = format(date, 'yyyy-MM-dd')
     return schedules
-      .filter((s) => s.scheduled_date === dateStr)
+      .filter((s) => {
+        // Normaliser la date du schedule pour la comparaison
+        const scheduleDateObj = new Date(s.scheduled_date)
+        const scheduleDate = new Date(scheduleDateObj.getTime() - scheduleDateObj.getTimezoneOffset() * 60000)
+          .toISOString()
+          .split('T')[0]
+        return scheduleDate === dateStr
+      })
       .map((schedule) => ({
         id: schedule.id,
         scheduleId: schedule.id,

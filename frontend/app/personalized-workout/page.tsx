@@ -75,9 +75,37 @@ function PersonalizedWorkoutsContent() {
   }, [currentPage, debouncedSearch])
 
   const handleDelete = async (id: string, name?: string) => {
-    // TODO: Implémenter la suppression de workout personnalisé
-    toast.info('Fonctionnalité de suppression à venir')
-    console.log('Delete workout:', id, name)
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le workout "${name || 'ce workout'}" ?`)) {
+      return
+    }
+
+    try {
+      await workoutsService.deletePersonalizedWorkout(id)
+      toast.success('Workout supprimé avec succès')
+
+      // Rafraîchir la liste
+      const offset = currentPage * ITEMS_PER_PAGE
+      const response = await workoutsService.getPersonalizedWorkouts(
+        ITEMS_PER_PAGE,
+        offset,
+        debouncedSearch || undefined
+      )
+
+      const parsedWorkouts = response.rows.map((workout) => {
+        const parsedWorkout = typeof workout.plan_json === 'string'
+          ? JSON.parse(workout.plan_json)
+          : workout.plan_json
+        return {
+          ...parsedWorkout,
+          id: workout.id,
+        }
+      })
+
+      setWorkouts(parsedWorkouts)
+      setTotalWorkouts(response.count)
+    } catch (error) {
+      toast.error(`Erreur lors de la suppression: ${error}`)
+    }
   }
 
   const getDifficultyVariant = (difficulty: string): "default" | "secondary" | "destructive" | "outline" => {

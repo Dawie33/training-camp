@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { CreateWorkoutDto, GenerateWorkoutDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { AIWorkoutGeneratorService } from '../services/ai-workout-generator.service'
@@ -117,6 +117,16 @@ export class WorkoutsController {
   @UseGuards(JwtAuthGuard)
   async update(@Param('id') id: string, @Body() updateWorkoutDto: CreateWorkoutDto) {
     return await this.service.update(id, updateWorkoutDto)
+  }
+
+  @Delete('personalized/:id')
+  @UseGuards(JwtAuthGuard)
+  async deletePersonalizedWorkout(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string } },
+  ) {
+    await this.service.deletePersonalizedWorkout(id, req.user.id)
+    return { success: true, message: 'Workout personnalisé supprimé' }
   }
 
 }

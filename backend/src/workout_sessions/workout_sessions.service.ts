@@ -99,4 +99,18 @@ export class WorkoutSessionsService {
         return session || null
     }
 
+    /**
+     * Supprime une session de workout
+     * @param sessionId ID de la session
+     * @param userId ID de l'utilisateur (pour vérifier la propriété)
+     * @returns true si la session a été supprimée, false sinon
+     */
+    async delete(sessionId: string, userId: string): Promise<boolean> {
+        const deletedCount = await this.knex('workout_sessions')
+            .where({ id: sessionId, user_id: userId })
+            .delete()
+
+        return deletedCount > 0
+    }
+
 }

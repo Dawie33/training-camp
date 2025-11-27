@@ -74,10 +74,12 @@ export function WorkoutHistoryList({ sportId, limit = 10 }: WorkoutHistoryListPr
 
     try {
       setDeletingId(id)
-      // TODO: Implémenter la suppression dans l'API
+      await sessionService.deleteSession(id)
       toast.success('Session supprimée')
-      // Recharger les sessions
-      window.location.reload()
+
+      // Mettre à jour la liste en retirant la session supprimée
+      setWorkoutSessions(workoutSessions.filter(s => s.id !== id))
+      setTotalCount(prev => prev - 1)
     } catch (error) {
       toast.error('Erreur lors de la suppression')
       console.error(error)

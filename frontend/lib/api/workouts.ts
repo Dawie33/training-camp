@@ -134,6 +134,15 @@ export class WorkoutsService {
   }
 
   /**
+   * Supprime un workout personnalisé.
+   * @param id ID du workout personnalisé à supprimer
+   * @returns Promesse qui renvoie le résultat de la suppression
+   */
+  async deletePersonalizedWorkout(id: string): Promise<{ success: boolean; message: string }> {
+    return apiClient.delete<{ success: boolean; message: string }>(`/workouts/personalized/${id}`)
+  }
+
+  /**
    * Récupère les workouts de référence (benchmark) pour un sport donné.
    * Les benchmarks sont des workouts de référence pour évaluer le niveau.
    * @param sportId ID du sport

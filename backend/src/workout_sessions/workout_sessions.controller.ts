@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     NotFoundException,
     Param,
@@ -77,7 +78,16 @@ export class WorkoutSessionsController {
         return session
     }
 
+    @Delete(':id')
+    async delete(@Req() req: AuthenticatedRequest, @Param('id') sessionId: string) {
+        const userId = req.user.id
+        const deleted = await this.sessionsService.delete(sessionId, userId)
 
+        if (!deleted) {
+            throw new NotFoundException('Session non trouvée ou non autorisée')
+        }
 
+        return { success: true, message: 'Session supprimée' }
+    }
 
 }

@@ -358,6 +358,34 @@ export class WorkoutsService {
   }
 
   /**
+   * Supprime un workout personnalisé.
+   * Vérifie que l'utilisateur est bien propriétaire du workout avant de le supprimer.
+   * @param id ID du workout personnalisé
+   * @param userId ID de l'utilisateur
+   */
+  async deletePersonalizedWorkout(id: string, userId: string) {
+    try {
+      // Vérifier que le workout appartient bien à l'utilisateur
+      const workout = await this.knex('personalized_workouts')
+        .where({ id, user_id: userId })
+        .first()
+
+      if (!workout) {
+        throw new Error('Personalized workout not found or you do not have permission to delete it')
+      }
+
+      // Supprimer le workout
+      await this.knex('personalized_workouts')
+        .where({ id, user_id: userId })
+        .delete()
+
+      return { success: true }
+    } catch (error) {
+      throw new Error('Failed to delete personalized workout: ' + error.message)
+    }
+  }
+
+  /**
    * Crée un nouveau workout personnalisé.
    * Si workout.id existe, vérifie si le workout de base existe.
    * Sinon, crée un workout personnalisé sans base_id (workout généré par IA).
