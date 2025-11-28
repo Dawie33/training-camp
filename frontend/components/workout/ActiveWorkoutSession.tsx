@@ -129,12 +129,12 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
         {/* Afficher le workout avec InteractiveWorkoutDisplay */}
         <InteractiveWorkoutDisplay
           blocks={workout.blocks}
-          onExerciseComplete={(sectionIdx, exerciseIdx, completed) => {
-            // Mettre à jour le progress avec une clé unique pour chaque exercice
-            const exerciseKey = `section-${sectionIdx}-exercise-${exerciseIdx}`
+          onSectionComplete={(sectionIdx, completed) => {
+            // Mettre à jour le progress avec une clé unique pour chaque section
+            const sectionKey = `section-${sectionIdx}`
             setBlockProgress(prev => ({
               ...prev,
-              [exerciseKey]: completed
+              [sectionKey]: completed
             }))
           }}
         />

@@ -1,4 +1,5 @@
 import { WorkoutSection } from '@/lib/types/workout-structure'
+import { Check } from 'lucide-react'
 import { AMRAPTimer } from '../timers/AMRAPTimer'
 import { EMOMTimer } from '../timers/EMOMTimer'
 import { ForTimeTimer } from '../timers/ForTimeTimer'
@@ -10,8 +11,8 @@ interface SectionDisplayProps {
     section: WorkoutSection
     index: number
     isStarting?: boolean
-    isExerciseCompleted?: (sectionIdx: number, exerciseIdx: number) => boolean
-    toggleExercise?: (sectionIdx: number, exerciseIdx: number) => void
+    isSectionCompleted?: boolean
+    onSectionToggle?: () => void
     isCurrentSection?: boolean
     onSectionStart?: () => void
 }
@@ -33,8 +34,8 @@ export function SectionDisplay({
     section,
     index,
     isStarting,
-    isExerciseCompleted,
-    toggleExercise,
+    isSectionCompleted,
+    onSectionToggle,
     isCurrentSection,
     onSectionStart
 }: SectionDisplayProps) {
@@ -60,17 +61,31 @@ export function SectionDisplay({
 
 
     return (
-        <div className={`bg-card border rounded-lg p-4 space-y-3 ${isCurrentSection ? 'ring-2 ring-primary' : ''}`}>
+        <div className={`bg-card border rounded-lg p-4 space-y-3 ${isCurrentSection ? 'ring-2 ring-primary' : ''} ${isSectionCompleted ? 'opacity-60' : ''}`}>
             {/* Header de la section */}
             <div className="flex items-start justify-between">
-                <div className="flex-1">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <span>{icon}</span>
-                        <span>{section.title}</span>
-                    </h3>
-                    {section.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
+                <div className="flex items-start gap-3 flex-1">
+                    {/* Checkbox de section (seulement si isStarting) */}
+                    {isStarting && onSectionToggle && (
+                        <div
+                            onClick={onSectionToggle}
+                            className={`mt-1 w-6 h-6 rounded flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer ${isSectionCompleted
+                                ? 'bg-primary text-primary-foreground'
+                                : 'border-2 border-muted-foreground hover:border-primary'
+                            }`}
+                        >
+                            {isSectionCompleted && <Check className="w-4 h-4" />}
+                        </div>
                     )}
+                    <div className="flex-1">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <span>{icon}</span>
+                            <span>{section.title}</span>
+                        </h3>
+                        {section.description && (
+                            <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {section.duration_min && (
@@ -105,30 +120,34 @@ export function SectionDisplay({
 
             {/* Rounds et repos */}
             {(section.rounds || section.rest_between_rounds) && (
-                <div className="flex gap-4 text-sm">
-                    {section.rounds && (
-                        <span className="text-muted-foreground">
-                            <strong>Rounds:</strong> {section.rounds}
-                        </span>
-                    )}
-                    {section.rest_between_rounds && (
-                        <span className="text-muted-foreground">
-                            <strong>Repos entre rounds:</strong> {section.rest_between_rounds}s
-                        </span>
-                    )}
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
+                    <div className="font-medium text-amber-900 dark:text-amber-100 mb-1">
+                        📋 Instructions
+                    </div>
+                    <div className="text-amber-800 dark:text-amber-200">
+                        {section.rounds === 1 ? (
+                            <>Réalise 1 tour complet des exercices ci-dessous</>
+                        ) : section.rounds ? (
+                            <>Répète {section.rounds} fois la série d'exercices ci-dessous</>
+                        ) : null}
+                        {section.rest_between_rounds && section.rounds && section.rounds > 1 && (
+                            <> avec {section.rest_between_rounds}s de repos entre chaque tour</>
+                        )}
+                        .
+                    </div>
                 </div>
             )}
 
-            {/* Exercices avec checkboxes */}
+            {/* Exercices */}
             {section.exercises && section.exercises.length > 0 && (
                 <div className="space-y-2 pl-4 border-l-2 border-primary/20">
                     {section.exercises.map((exercise, exIdx) => (
                         <ExerciseDisplay
                             key={exIdx}
                             exercise={exercise}
-                            isStarting={isStarting || false}
-                            isCompleted={isExerciseCompleted ? isExerciseCompleted(index, exIdx) : false}
-                            onToggle={toggleExercise ? () => toggleExercise(index, exIdx) : undefined}
+                            isStarting={false}
+                            isCompleted={false}
+                            rounds={section.rounds}
                         />
                     ))}
                 </div>
@@ -162,8 +181,9 @@ export function SectionDisplay({
                             key={subIdx}
                             section={subsection}
                             index={index}
-                            isExerciseCompleted={isExerciseCompleted}
-                            toggleExercise={toggleExercise}
+                            isStarting={isStarting}
+                            isSectionCompleted={false}
+                            onSectionToggle={undefined}
                             isCurrentSection={false}
                             onSectionStart={onSectionStart}
                         />

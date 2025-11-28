@@ -6,6 +6,7 @@ interface ExerciseDisplayProps {
     isStarting: boolean
     isCompleted: boolean
     onToggle?: () => void
+    rounds?: number // Nombre de rounds de la section parente
 }
 /**
 * Affiche un exercice unique avec ses détails.
@@ -35,8 +36,7 @@ export function ExerciseDisplay({ exercise, isStarting, isCompleted, onToggle }:
                 <div className="flex-1">
                     <div className="font-medium">{exercise.name}</div>
                     <div className="text-muted-foreground flex flex-wrap gap-2 mt-1">
-                        {exercise.sets && <span>• {exercise.sets} sets</span>}
-                        {exercise.reps && <span>• {exercise.reps} reps</span>}
+                        {exercise.reps && <span>• {exercise.reps} répétition{typeof exercise.reps === 'number' && exercise.reps > 1 ? 's' : ''}</span>}
                         {exercise.duration && <span>• {exercise.duration}</span>}
                         {exercise.work_duration && <span>• {exercise.work_duration} travail</span>}
                         {exercise.rest_duration && <span>• {exercise.rest_duration} repos</span>}
