@@ -1,7 +1,7 @@
 'use client'
 
-import { WorkoutBlocks, WorkoutSection } from '@/lib/types/workout-structure'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { WorkoutBlocks } from '@/lib/types/workout-structure'
+import { useEffect, useRef, useState } from 'react'
 import { SectionDisplay } from './SectionDisplay'
 
 interface InteractiveWorkoutDisplayProps {
