@@ -5,6 +5,10 @@ import {
   buildWorkoutGenerationPrompt,
   WorkoutGenerationParams
 } from '../prompts/workout-generator.prompt'
+import {
+  buildMobilitySystemPrompt,
+  buildMobilityWorkoutPrompt
+} from '../prompts/mobility-generator.prompt'
 import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../prompts/workout-generator.schema'
 import { ZodError } from 'zod'
 
@@ -28,14 +32,38 @@ export class AIWorkoutGeneratorService {
 
   /**
    * Génère un workout en utilisant l'IA GPT-4o
+   * Détecte automatiquement si c'est un workout de mobilité et utilise le prompt approprié
    * @param params Paramètres de génération
    * @returns Le workout généré au format JSON
    */
   async generateWorkout(params: WorkoutGenerationParams): Promise<GeneratedWorkout> {
     try {
-      // Construire les prompts système et utilisateur
-      const systemPrompt = buildSystemPrompt(params.equipment)
-      const userPrompt = buildWorkoutGenerationPrompt(params)
+      // Détecter si c'est un workout de mobilité
+      const isMobilityWorkout = params.workoutType?.toLowerCase() === 'mobility' ||
+                                params.sport?.toLowerCase() === 'mobilité' ||
+                                params.sport?.toLowerCase() === 'mobility'
+
+      // Construire les prompts selon le type
+      let systemPrompt: string
+      let userPrompt: string
+
+      if (isMobilityWorkout) {
+        // Utiliser le prompt spécialisé mobilité
+        systemPrompt = buildMobilitySystemPrompt(params.equipment)
+        // Mapper elite -> advanced pour la mobilité
+        const mobilityDifficulty = params.difficulty === 'elite' ? 'advanced' : params.difficulty
+        userPrompt = buildMobilityWorkoutPrompt({
+          duration: params.duration,
+          difficulty: mobilityDifficulty,
+          focusAreas: params.focus,
+          equipment: params.equipment,
+          additionalInstructions: params.additionalInstructions
+        })
+      } else {
+        // Utiliser le prompt standard
+        systemPrompt = buildSystemPrompt(params.equipment)
+        userPrompt = buildWorkoutGenerationPrompt(params)
+      }
 
       // Appeler l'API OpenAI
       const completion = await this.openai.chat.completions.create({
@@ -50,7 +78,7 @@ export class AIWorkoutGeneratorService {
             content: userPrompt
           }
         ],
-        temperature: 0.8, // Créativité pour varier les workouts
+        temperature: isMobilityWorkout ? 0.7 : 0.8, // Moins de créativité pour mobilité
         max_tokens: 4096,
         response_format: { type: 'json_object' } // Force la réponse en JSON
       })
@@ -64,7 +92,7 @@ export class AIWorkoutGeneratorService {
       // Parser le JSON
       const workoutData = JSON.parse(content)
 
-      // Valider avec Zod
+      // Valider avec Zod (le schéma standard est assez flexible pour la mobilité)
       const validatedWorkout = GeneratedWorkoutSchema.parse(workoutData)
 
       return validatedWorkout

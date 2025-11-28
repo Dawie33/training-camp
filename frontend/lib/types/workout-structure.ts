@@ -135,6 +135,14 @@ export const WORKOUT_TYPES_BY_SPORT = {
     { value: 'machines', label: 'Machines Cardio' },
     { value: 'steady_state', label: 'Cardio Continu' },
   ],
+  mobility: [
+    { value: 'pre_workout', label: 'Pré-workout (Échauffement)' },
+    { value: 'post_workout', label: 'Post-workout (Récupération)' },
+    { value: 'dedicated', label: 'Séance Complète' },
+    { value: 'morning', label: 'Routine Matinale' },
+    { value: 'recovery', label: 'Récupération / Détente' },
+    { value: 'sport_specific', label: 'Spécifique Sport' },
+  ],
 } as const
 
 /**

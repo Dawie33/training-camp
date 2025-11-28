@@ -162,6 +162,7 @@ export default function GenerateWorkoutAIPage() {
                 <option value="cycling">Cyclisme</option>
                 <option value="musculation">Musculation</option>
                 <option value="cardio">Cardio</option>
+                <option value="mobility">Mobilité</option>
               </select>
             </div>
 

@@ -27,7 +27,10 @@ export const EQUIPMENT = [
   'treadmill', 'stationary-bike', 'elliptical', 'stairmaster',
 
   // Accessories
-  'foam-roller', 'lacrosse-ball', 'ab-wheel', 'suspension-trainer', 'plyo-box'
+  'foam-roller', 'lacrosse-ball', 'ab-wheel', 'suspension-trainer', 'plyo-box',
+
+  // Mobility specific
+  'yoga-block', 'strap', 'pvc-pipe', 'dowel', 'wall'
 ] as const
 
 /**
