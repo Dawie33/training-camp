@@ -36,12 +36,36 @@ export default function WorkoutEditModal({
     }, [workout, isOpen])
 
     /**
-    * Cette fonction est utilisée lorsque l'utilisateur souhaite ajouter un exercice à une section.
+    * Cette fonction est utilisée lorsque l'utilisateur souhaite ajouter un exercice depuis la bibliothèque.
     * @param {number} sectionIdx - L'index de la section à laquelle l'exercice doit être ajouté.
      */
-    const handleAddExercise = (sectionIdx: number) => {
+    const handleAddExerciseFromLibrary = (sectionIdx: number) => {
         setCurrentSectionIdx(sectionIdx)
         setShowExerciseDrawer(true)
+    }
+
+    /**
+    * Cette fonction est utilisée lorsque l'utilisateur souhaite créer un exercice manuellement.
+    * @param {number} sectionIdx - L'index de la section à laquelle l'exercice doit être ajouté.
+     */
+    const handleAddManualExercise = (sectionIdx: number) => {
+        const newWorkout = { ...editedWorkout }
+        const section = newWorkout.blocks.sections[sectionIdx]
+
+        if (!section.exercises) {
+            section.exercises = []
+        }
+
+        // Ajouter un exercice vide
+        section.exercises.push({
+            name: '',
+            reps: undefined,
+            sets: undefined,
+            weight: undefined,
+            details: undefined
+        })
+
+        setEditedWorkout(newWorkout)
     }
 
     /**
@@ -381,14 +405,23 @@ export default function WorkoutEditModal({
                                 ))}
                             </div>
 
-                            {/* Add Exercise Button */}
-                            <button
-                                onClick={() => handleAddExercise(sectionIdx)}
-                                className="w-full mt-3 py-2 border border-dashed border-gray-300 dark:border-border rounded-lg hover:bg-gray-50 dark:hover:bg-accent hover:border-blue-400 dark:hover:border-primary/50 transition-colors flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Ajouter un exercice
-                            </button>
+                            {/* Add Exercise Buttons */}
+                            <div className="mt-3 flex gap-2">
+                                <button
+                                    onClick={() => handleAddManualExercise(sectionIdx)}
+                                    className="flex-1 py-2 border border-dashed border-gray-300 dark:border-border rounded-lg hover:bg-gray-50 dark:hover:bg-accent hover:border-blue-400 dark:hover:border-primary/50 transition-colors flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Créer exercice
+                                </button>
+                                <button
+                                    onClick={() => handleAddExerciseFromLibrary(sectionIdx)}
+                                    className="flex-1 py-2 border border-dashed border-gray-300 dark:border-border rounded-lg hover:bg-gray-50 dark:hover:bg-accent hover:border-blue-400 dark:hover:border-primary/50 transition-colors flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-muted-foreground hover:text-gray-900 dark:hover:text-foreground"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Depuis bibliothèque
+                                </button>
+                            </div>
                         </div>
                     ))}
 
