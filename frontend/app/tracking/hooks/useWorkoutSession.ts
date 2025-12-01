@@ -1,5 +1,5 @@
-import { sessionService } from "@/services/sessions"
 import { WorkoutSession } from "@/domain/entities/workout"
+import { sessionService } from "@/services/sessions"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
@@ -7,8 +7,6 @@ import { toast } from "sonner"
 export function useWorkoutSession() {
     const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([])
     const [loading, setLoading] = useState(true)
-
-
 
     const fetchWorkoutsSessions = useCallback(async () => {
         try {
