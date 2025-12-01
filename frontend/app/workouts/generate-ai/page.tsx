@@ -4,6 +4,7 @@ import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { GeneratedWorkout, generateWorkoutWithAI, sportsService, workoutsService } from '@/services'
 import { ExerciseDifficulty } from '@/domain/entities/exercice'
 import { Sport } from '@/domain/entities/sport'
+import { CreateWorkoutDTO } from '@/domain/entities/workout'
 import { WORKOUT_TYPES_BY_SPORT } from '@/domain/entities/workout-structure'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -99,7 +100,7 @@ export default function GenerateWorkoutAIPage() {
       }
 
       // Créer le workout personnalisé en base de données avec les valeurs éditées
-      const workoutData: any = {
+      const workoutData: CreateWorkoutDTO = {
         name: editedName,
         description: editedDescription,
         workout_type: generatedWorkout.workout_type,
@@ -112,16 +113,14 @@ export default function GenerateWorkoutAIPage() {
         status: 'published',
         isActive: true,
         isFeatured: false,
-        isPublic: false,
-        ai_generated: true,
-        is_benchmark: false
+        isPublic: false
       }
 
-      const savedWorkout = await workoutsService.create(workoutData as any)
+      await workoutsService.create(workoutData)
 
-      // Rediriger vers la page du workout personnalisé créé
+      // Rediriger vers la liste des workouts
       toast.success('Workout généré et sauvegardé avec succès !')
-      router.push(`/workouts/${savedWorkout.id}`)
+      router.push('/workouts')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
     } finally {
@@ -304,7 +303,7 @@ export default function GenerateWorkoutAIPage() {
                     <label className="block text-xs font-medium mb-1">Difficulté</label>
                     <select
                       value={editedDifficulty}
-                      onChange={(e) => setEditedDifficulty(e.target.value as any)}
+                      onChange={(e) => setEditedDifficulty(e.target.value as 'beginner' | 'intermediate' | 'advanced' | 'elite')}
                       className="w-full px-3 py-2 border rounded bg-background text-sm"
                     >
                       <option value="beginner">Débutant</option>
@@ -328,7 +327,7 @@ export default function GenerateWorkoutAIPage() {
                     <label className="block text-xs font-medium mb-1">Intensité</label>
                     <select
                       value={editedIntensity}
-                      onChange={(e) => setEditedIntensity(e.target.value as any)}
+                      onChange={(e) => setEditedIntensity(e.target.value as 'low' | 'moderate' | 'high' | 'very_high')}
                       className="w-full px-3 py-2 border rounded bg-background text-sm"
                     >
                       <option value="low">Faible</option>
