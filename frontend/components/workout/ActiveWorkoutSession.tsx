@@ -2,7 +2,7 @@
 
 import { InteractiveWorkoutDisplay } from '@/components/workout/display/InteractiveWorkoutDisplay'
 import { WorkoutSummary } from '@/components/workout/WorkoutSummary'
-import { Workouts } from '@/lib/types/workout'
+import { Workouts } from '@/domain/entities/workout'
 import { Clock, Pause, Play, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 

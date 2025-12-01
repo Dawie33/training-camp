@@ -23,8 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { deleteExercise, getExercises } from "@/lib/api/exercices"
-import { Exercise } from "@/lib/types/exercice"
+import { deleteExercise, getExercises } from "@/services/exercices"
+import { Exercise } from "@/domain/entities/exercice"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"

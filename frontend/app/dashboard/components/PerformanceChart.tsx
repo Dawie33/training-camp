@@ -1,13 +1,13 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { useWorkoutStats } from '@/app/tracking/hooks/useWorkoutStats'
+import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { MetricType, PeriodType } from './types'
 
-type PeriodType = 'week' | 'month' | 'year'
-type MetricType = 'count' | 'duration'
+
 
 export function PerformanceChart() {
   const { workoutStats, formatDuration } = useWorkoutStats()

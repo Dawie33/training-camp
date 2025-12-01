@@ -1,5 +1,5 @@
 import { TimerType } from "@/hooks/useWorkoutTimer"
-import { WorkoutResult, WorkoutStats } from "../types/workout-history"
+import { WorkoutResult, WorkoutStats } from "@/domain/entities/workout-history"
 
 const STORAGE_KEY = 'workout_history'
 

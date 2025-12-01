@@ -12,8 +12,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { workoutsApi } from '@/lib/api/workouts'
-import { Workouts } from '@/lib/types/workout'
+import { workoutsApi } from '@/services/workouts'
+import { Workouts } from '@/domain/entities/workout'
 import { useEffect, useState } from 'react'
 import { Check, Clock, Dumbbell, Filter, Search, TrendingUp, X } from 'lucide-react'
 import {

@@ -1,6 +1,6 @@
 'use client'
 
-import { WorkoutBlocks } from '@/lib/types/workout-structure'
+import { WorkoutBlocks } from '@/domain/entities/workout-structure'
 import { useEffect, useRef, useState } from 'react'
 import { SectionDisplay } from './SectionDisplay'
 

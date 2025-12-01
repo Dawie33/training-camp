@@ -1,4 +1,4 @@
-import { CreateUserDTO, UpdateUserDTO, User, UserQueryParams } from "../types/auth"
+import { CreateUserDTO, UpdateUserDTO, User, UserQueryParams } from "@/domain/entities/auth"
 import apiClient from "./apiClient"
 import ResourceApi from "./resourceApi"
 

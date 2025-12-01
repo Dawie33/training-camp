@@ -20,7 +20,6 @@ function DashboardContent() {
   const { activeSport, setActiveSport } = useSport()
   const { sports, loading, error } = useAllSports()
   const user = useAuth()
-  console.log('user', user)
 
   // Sélectionner automatiquement le premier sport au chargement si aucun sport n'est actif
   useEffect(() => {

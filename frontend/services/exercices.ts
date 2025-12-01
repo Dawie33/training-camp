@@ -2,7 +2,7 @@
 // ============================================================================
 // Exercices API
 
-import { CreateExerciseDTO, Exercise, UpdateExerciseDTO } from "../types/exercice"
+import { CreateExerciseDTO, Exercise, UpdateExerciseDTO } from "@/domain/entities/exercice"
 import ResourceApi from "./resourceApi"
 
 // ============================================================================

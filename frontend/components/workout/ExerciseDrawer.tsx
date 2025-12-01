@@ -1,7 +1,7 @@
 'use client'
 
-import { getExercises } from "@/lib/api"
-import { Exercise } from "@/lib/types/exercice"
+import { getExercises } from "@/services"
+import { Exercise } from "@/domain/entities/exercice"
 import { slideInRight, backdropVariants, staggerContainer, fadeInUp } from "@/lib/animations"
 import { AnimatePresence, motion } from "framer-motion"
 import { Search, X } from "lucide-react"

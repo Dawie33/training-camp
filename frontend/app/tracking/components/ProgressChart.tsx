@@ -1,6 +1,6 @@
 'use client'
 
-import { ProgressData } from '@/lib/types/workout-history'
+import { ProgressData } from '@/domain/entities/workout-history'
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 

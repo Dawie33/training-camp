@@ -1,5 +1,5 @@
-import { workoutsService } from '@/lib/api'
-import { Workouts } from '@/lib/types/workout'
+import { workoutsService } from '@/services'
+import { Workouts } from '@/domain/entities/workout'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 

@@ -4,46 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useAllSports } from '@/hooks/useAllSports'
-import { getWorkoutTypesForSport } from '@/lib/constants/workout-types'
+import { WORKOUT_TYPES_BY_SPORT } from '@/domain/entities/workout-structure'
+import type { WorkoutFormProps } from '../types'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import { BlocksEditor } from './BlocksEditor'
 import { TagInput } from './TagInput'
-
-interface FormData {
-  name: string
-  description: string
-  workout_type: string
-  difficulty: string
-  intensity: string
-  estimated_duration: number
-  status: string
-  isActive: boolean
-  isFeatured: boolean
-  isPublic: boolean
-  is_benchmark: boolean
-  ai_generated: boolean
-  sport_id: string
-  blocks: string
-  tags: string
-  scheduled_date: string
-  scaling_options: string
-  equipment_required: string
-  focus_areas: string
-  metrics_tracked: string
-  coach_notes: string
-  target_metrics: string
-  ai_parameters: string
-  image_url: string
-}
-
-interface WorkoutFormProps {
-  formData: FormData
-  setFormData: (data: FormData) => void
-  onSubmit: (e: React.FormEvent) => Promise<void>
-  saving: boolean
-  isNewMode: boolean
-}
 
 export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode }: WorkoutFormProps) {
   const router = useRouter()
@@ -56,10 +22,10 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
   )
 
   // Obtenir les types de workout disponibles selon le sport sélectionné
-  const availableWorkoutTypes = useMemo(
-    () => getWorkoutTypesForSport(selectedSport?.slug),
-    [selectedSport?.slug]
-  )
+  const availableWorkoutTypes = useMemo(() => {
+    if (!selectedSport?.slug) return []
+    return WORKOUT_TYPES_BY_SPORT[selectedSport.slug as keyof typeof WORKOUT_TYPES_BY_SPORT] || []
+  }, [selectedSport?.slug])
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">

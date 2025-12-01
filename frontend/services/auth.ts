@@ -1,4 +1,4 @@
-import type { AuthResponse, LoginDto, SignupDto, User } from '../types/auth'
+import type { AuthResponse, LoginDto, SignupDto, User } from '@/domain/entities/auth'
 import apiClient from './apiClient'
 
 export class AuthService {

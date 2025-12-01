@@ -1,7 +1,7 @@
 // ============================================================================
 // Equipments API
 
-import { CreateEquipmentDTO, Equipment, UpdateEquipmentDTO } from "../types/equipment"
+import { CreateEquipmentDTO, Equipment, UpdateEquipmentDTO } from "@/domain/entities/equipment"
 import ResourceApi from "./resourceApi"
 
 // ============================================================================

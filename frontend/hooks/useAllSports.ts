@@ -1,5 +1,5 @@
-import { sportsService } from "@/lib/api"
-import { Sport } from "@/lib/types/sport"
+import { sportsService } from "@/services"
+import { Sport } from "@/domain/entities/sport"
 import { useCallback, useEffect, useState } from "react"
 
 

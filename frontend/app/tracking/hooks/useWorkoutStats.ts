@@ -1,4 +1,4 @@
-import { WorkoutStats } from '@/lib/types/workout-history'
+import { WorkoutStats } from '@/domain/entities/workout-history'
 import { useEffect, useState } from 'react'
 import { useWorkoutSession } from './useWorkoutSession'
 

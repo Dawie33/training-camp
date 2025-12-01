@@ -12,8 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { workoutsService } from '@/lib/api'
-import { Workouts } from '@/lib/types/workout'
+import { workoutsService } from '@/services'
+import { Workouts } from '@/domain/entities/workout'
 import { ArrowLeft, Eye, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'

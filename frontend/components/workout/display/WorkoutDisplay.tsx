@@ -1,4 +1,4 @@
-import { WorkoutBlocks } from '@/lib/types/workout-structure'
+import { WorkoutBlocks } from '@/domain/entities/workout-structure'
 import { SectionDisplay } from './SectionDisplay'
 
 interface WorkoutDisplayProps {

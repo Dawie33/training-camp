@@ -1,8 +1,8 @@
 'use client'
 
-import { workoutsService } from "@/lib/api"
-import { Exercise as ExerciseType } from "@/lib/types/exercice"
-import { Workouts } from "@/lib/types/workout"
+import { workoutsService } from "@/services"
+import { Exercise as ExerciseType } from "@/domain/entities/exercice"
+import { Workouts } from "@/domain/entities/workout"
 import { GripVertical, Plus, Trash2, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"

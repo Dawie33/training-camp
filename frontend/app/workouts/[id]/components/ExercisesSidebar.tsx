@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { exercisesApi } from '@/lib/api/exercices'
-import type { Exercise } from '@/lib/types/exercice'
+import { exercisesApi } from '@/services/exercices'
+import type { Exercise } from '@/domain/entities/exercice'
 import { Search, X, Plus, Dumbbell } from 'lucide-react'
 import { useEffect, useState } from 'react'
 

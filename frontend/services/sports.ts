@@ -1,4 +1,4 @@
-import type { CreateSportDTO, Sport, SportQueryParams, UpdateSportDTO } from '../types/sport'
+import type { CreateSportDTO, Sport, SportQueryParams, UpdateSportDTO } from '@/domain/entities/sport'
 import ResourceApi from './resourceApi'
 
 /**

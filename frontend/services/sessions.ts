@@ -1,4 +1,4 @@
-import { WorkoutSession, WorkoutSessionCreate, WorkoutSessionUpdate } from '../types/workout'
+import { WorkoutSession, WorkoutSessionCreate, WorkoutSessionUpdate } from '@/domain/entities/workout'
 import apiClient from './apiClient'
 import ResourceApi from './resourceApi'
 import type { QueryParams } from './types'

@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { AdminWorkoutExercise } from '@/lib/types/workout'
+import type { AdminWorkoutExercise } from '@/domain/entities/workout'
 
 interface WorkoutExercisesListProps {
   exercises?: AdminWorkoutExercise[]

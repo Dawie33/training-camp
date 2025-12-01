@@ -1,4 +1,4 @@
-import { scheduleApi, ScheduleQueryParams, WorkoutSchedule, CreateScheduleDto, UpdateScheduleDto } from '@/lib/api/schedule'
+import { scheduleApi, ScheduleQueryParams, WorkoutSchedule, CreateScheduleDto, UpdateScheduleDto } from '@/services/schedule'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { LoginDto, SignupDto, User } from '@/lib/types/auth'
+import type { LoginDto, SignupDto, User } from '@/domain/entities/auth'
 
 export interface AuthContextType {
   user: User | null

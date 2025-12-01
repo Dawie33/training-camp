@@ -4,16 +4,8 @@ import { motion } from 'framer-motion'
 import { Book, ChevronRight, Lightbulb, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { Tip } from './types'
 
-interface Tip {
-  id: string
-  type: 'advice' | 'exercise' | 'article'
-  title: string
-  description: string
-  link?: string
-  icon: 'lightbulb' | 'sparkles' | 'book'
-  color: string
-}
 
 const tips: Tip[] = [
   {
@@ -123,11 +115,10 @@ export function QuickTips() {
             <button
               key={index}
               onClick={() => setCurrentTip(index)}
-              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${
-                index === currentTip
+              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${index === currentTip
                   ? 'bg-primary w-4 sm:w-6'
                   : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-              }`}
+                }`}
               aria-label={`Voir le tip ${index + 1}`}
             />
           ))}

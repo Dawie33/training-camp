@@ -1,5 +1,5 @@
-import { SaveBenchmarkResultDto } from '../types/benchmark'
-import { CreateWorkoutDTO, GeneratedWorkout, PersonalizedWorkout, UpdateWorkoutDTO, WorkoutQueryParams, Workouts } from '../types/workout'
+import { SaveBenchmarkResultDto } from '@/domain/entities/benchmark'
+import { CreateWorkoutDTO, GeneratedWorkout, PersonalizedWorkout, UpdateWorkoutDTO, WorkoutQueryParams, Workouts } from '@/domain/entities/workout'
 import apiClient from './apiClient'
 import ResourceApi from './resourceApi'
 

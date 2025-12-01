@@ -1,7 +1,7 @@
 'use client'
 
-import { authService } from '@/lib/api'
-import type { LoginDto, SignupDto, User } from '@/lib/types/auth'
+import { authService } from '@/services'
+import type { LoginDto, SignupDto, User } from '@/domain/entities/auth'
 import { AuthContext } from '@/hooks/useAuth'
 import { ReactNode, useEffect, useState } from 'react'
 

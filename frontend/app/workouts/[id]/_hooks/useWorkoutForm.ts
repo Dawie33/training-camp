@@ -1,35 +1,9 @@
-import { workoutsApi, generateWorkoutWithAI } from '@/lib/api/workouts'
-import type { CreateWorkoutDTO, Workouts } from '@/lib/types/workout'
+import { workoutsApi, generateWorkoutWithAI } from '@/services/workouts'
+import type { CreateWorkoutDTO, Workouts } from '@/domain/entities/workout'
+import type { WorkoutFormFields } from '../types'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-
-interface FormData {
-  name: string
-  description: string
-  workout_type: string
-  difficulty: string
-  intensity: string
-  estimated_duration: number
-  status: string
-  isActive: boolean
-  isFeatured: boolean
-  isPublic: boolean
-  is_benchmark: boolean
-  ai_generated: boolean
-  sport_id: string
-  blocks: string
-  tags: string
-  scheduled_date: string
-  scaling_options: string
-  equipment_required: string
-  focus_areas: string
-  metrics_tracked: string
-  coach_notes: string
-  target_metrics: string
-  ai_parameters: string
-  image_url: string
-}
 
 interface AIParams {
   sport_id: string
@@ -56,7 +30,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
   const [workout, setWorkout] = useState<Workouts | null>(null)
   const [showAIModal, setShowAIModal] = useState(false)
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<WorkoutFormFields>({
     name: '',
     description: '',
     workout_type: '',

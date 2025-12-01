@@ -26,8 +26,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { WorkoutSession } from '@/lib/types/workout'
-import { sessionService } from '@/lib/api/sessions'
+import { WorkoutSession } from '@/domain/entities/workout'
+import { sessionService } from '@/services/sessions'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface WorkoutHistoryListProps {

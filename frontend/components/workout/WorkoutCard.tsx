@@ -1,6 +1,6 @@
 'use client'
 
-import { Workouts } from '@/lib/types/workout'
+import { Workouts } from '@/domain/entities/workout'
 import { motion } from 'framer-motion'
 import { Clock, Zap } from 'lucide-react'
 

@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { deleteEquipment, getEquipments } from '@/lib/api/equipments'
-import { Equipment } from '@/lib/types/equipment'
+import { deleteEquipment, getEquipments } from '@/services/equipments'
+import { Equipment } from '@/domain/entities/equipment'
 import {
   ColumnDef,
   SortingState,

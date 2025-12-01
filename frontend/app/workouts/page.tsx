@@ -40,9 +40,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { sportsService } from '@/lib/api/sports'
-import { workoutsApi } from '@/lib/api/workouts'
-import type { Workouts } from '@/lib/types/workout'
+import { sportsService } from '@/services/sports'
+import { workoutsApi } from '@/services/workouts'
+import type { Workouts } from '@/domain/entities/workout'
 import { toast } from 'sonner'
 
 const ITEMS_PER_PAGE = 10

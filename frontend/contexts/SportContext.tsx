@@ -3,7 +3,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { FloatingTimer } from '@/components/workout/timers/floatingTimer'
 import { WorkoutTimerProvider } from '@/contexts/WorkoutTimerContext'
-import type { Sport } from '@/lib/types/sport'
+import type { Sport } from '@/domain/entities/sport'
 import { usePathname } from 'next/navigation'
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 

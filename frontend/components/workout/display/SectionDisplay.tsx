@@ -1,4 +1,4 @@
-import { WorkoutSection } from '@/lib/types/workout-structure'
+import { WorkoutSection } from '@/domain/entities/workout-structure'
 import { Check } from 'lucide-react'
 import { AMRAPTimer } from '../timers/AMRAPTimer'
 import { EMOMTimer } from '../timers/EMOMTimer'

@@ -2,7 +2,7 @@
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useAuth } from '@/hooks/useAuth'
-import { apiClient } from '@/lib/api'
+import { apiClient } from '@/services'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 

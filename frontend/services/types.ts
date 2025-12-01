@@ -4,7 +4,7 @@
 
 
 // Re-export common types for API convenience
-export type { PaginatedResponse, QueryParams } from '../types/common'
+export type { PaginatedResponse, QueryParams } from '@/domain/entities/common'
 
 /**
  * Configuration du client API

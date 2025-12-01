@@ -1,4 +1,4 @@
-import { Exercise } from '@/lib/types/workout-structure'
+import { Exercise } from '@/domain/entities/workout-structure'
 import { Check } from 'lucide-react'
 
 interface ExerciseDisplayProps {

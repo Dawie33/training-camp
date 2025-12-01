@@ -1,9 +1,9 @@
 'use client'
 
 import { useSport } from "@/contexts/SportContext"
-import { workoutsService } from "@/lib/api"
-import { SaveBenchmarkResultDto } from "@/lib/types/benchmark"
-import { Workouts } from "@/lib/types/workout"
+import { workoutsService } from "@/services"
+import { SaveBenchmarkResultDto } from "@/domain/entities/benchmark"
+import { Workouts } from "@/domain/entities/workout"
 import { useState } from "react"
 import { toast } from "sonner"
 

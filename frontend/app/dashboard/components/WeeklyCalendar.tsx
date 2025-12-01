@@ -1,30 +1,17 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { useWorkoutSession } from '@/app/tracking/hooks/useWorkoutSession'
 import { useWorkoutSchedule } from '@/app/calendar/hooks/useWorkoutSchedule'
-import { workoutsService } from '@/lib/api/workouts'
-import { Workouts } from '@/lib/types/workout'
+import { useWorkoutSession } from '@/app/tracking/hooks/useWorkoutSession'
+import { Button } from '@/components/ui/button'
+import { Workouts } from '@/domain/entities/workout'
+import { workoutsService } from '@/services/workouts'
 import { motion } from 'framer-motion'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { DayWorkout, WeekDay } from './types'
 
-interface DayWorkout {
-  id: string
-  name: string
-  type: 'scheduled' | 'completed' | 'rest'
-  intensity?: 'low' | 'medium' | 'high'
-  duration?: number
-}
 
-interface WeekDay {
-  date: Date
-  dayName: string
-  dayNumber: number
-  isToday: boolean
-  workouts: DayWorkout[]
-}
 
 export function WeeklyCalendar() {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0)

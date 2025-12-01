@@ -9,29 +9,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { useWorkoutSchedule } from './hooks/useWorkoutSchedule'
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, addDays, addWeeks, subWeeks, subDays } from 'date-fns'
+import type { ViewMode, DayWorkout, CalendarDay } from './types'
 import { fr } from 'date-fns/locale'
-
-type ViewMode = 'day' | 'week' | 'month'
-
-interface DayWorkout {
-  id: string
-  scheduleId: string
-  name: string
-  type: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
-  intensity?: string
-  duration?: number
-  difficulty?: string
-  workout_type?: string
-}
-
-interface CalendarDay {
-  date: Date
-  dayName: string
-  dayNumber: number
-  isToday: boolean
-  isCurrentMonth?: boolean
-  workouts: DayWorkout[]
-}
 
 function CalendarContent() {
   const [viewMode, setViewMode] = useState<ViewMode>('week')

@@ -1,5 +1,5 @@
-import { sessionService } from "@/lib/api/sessions"
-import { WorkoutSession } from "@/lib/types/workout"
+import { sessionService } from "@/services/sessions"
+import { WorkoutSession } from "@/domain/entities/workout"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 

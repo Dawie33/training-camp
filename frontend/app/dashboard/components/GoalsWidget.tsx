@@ -1,20 +1,11 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { motion } from 'framer-motion'
 import { CheckCircle2, Circle, Plus, Target } from 'lucide-react'
 import { useState } from 'react'
+import type { Goal } from './types'
 
-interface Goal {
-  id: string
-  title: string
-  target: number
-  current: number
-  unit: string
-  color: string
-  completed: boolean
-}
 
 export function GoalsWidget() {
   // Données simulées - À remplacer par des vraies données
@@ -91,9 +82,8 @@ export function GoalsWidget() {
                     <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm sm:text-base font-medium truncate ${
-                      goal.completed ? 'text-muted-foreground line-through' : 'text-foreground'
-                    }`}>
+                    <p className={`text-sm sm:text-base font-medium truncate ${goal.completed ? 'text-muted-foreground line-through' : 'text-foreground'
+                      }`}>
                       {goal.title}
                     </p>
                     <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
@@ -101,9 +91,8 @@ export function GoalsWidget() {
                     </p>
                   </div>
                 </div>
-                <span className={`text-xs sm:text-sm font-bold ${
-                  goal.completed ? 'text-green-600' : 'text-foreground'
-                }`}>
+                <span className={`text-xs sm:text-sm font-bold ${goal.completed ? 'text-green-600' : 'text-foreground'
+                  }`}>
                   {Math.round(progress)}%
                 </span>
               </div>
