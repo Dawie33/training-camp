@@ -3,9 +3,12 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { useAllSports } from '@/hooks/useAllSports'
+import { getWorkoutTypesForSport } from '@/lib/constants/workout-types'
 import { useRouter } from 'next/navigation'
-import { TagInput } from './TagInput'
+import { useMemo } from 'react'
 import { BlocksEditor } from './BlocksEditor'
+import { TagInput } from './TagInput'
 
 interface FormData {
   name: string
@@ -44,6 +47,19 @@ interface WorkoutFormProps {
 
 export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode }: WorkoutFormProps) {
   const router = useRouter()
+  const { sports, loading: sportsLoading } = useAllSports()
+
+  // Trouver le sport sélectionné pour obtenir son slug
+  const selectedSport = useMemo(
+    () => sports.find((sport) => sport.id === formData.sport_id),
+    [sports, formData.sport_id]
+  )
+
+  // Obtenir les types de workout disponibles selon le sport sélectionné
+  const availableWorkoutTypes = useMemo(
+    () => getWorkoutTypesForSport(selectedSport?.slug),
+    [selectedSport?.slug]
+  )
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -52,7 +68,7 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
         <h3 className="text-lg font-semibold border-b pb-2">Informations de base</h3>
 
         <div>
-          <label className="text-sm font-medium">Name *</label>
+          <label className="text-sm font-medium">Nom du workout</label>
           <Input
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -71,30 +87,47 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
       </div>
 
       <div>
-        <label className="text-sm font-medium">Image</label>
-        <Input
-          type='url'
-          value={formData.image_url}
-          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-          placeholder="https://example.com/image.jpg"
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          URL de l'image du workout (Unsplash recommandé)
-        </p>
+        <label className="text-sm font-medium">Sport</label>
+        <select
+          className="w-full px-3 py-2 border border-input bg-background rounded-md"
+          value={formData.sport_id}
+          onChange={(e) => setFormData({ ...formData, sport_id: e.target.value, workout_type: '' })}
+          disabled={sportsLoading}
+        >
+          <option value="">Sélectionner un sport...</option>
+          {sports.map((sport) => (
+            <option key={sport.id} value={sport.id}>
+              {sport.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-medium">Workout Type</label>
-          <Input
+          <label className="text-sm font-medium">Type de workout</label>
+          <select
+            className="w-full px-3 py-2 border border-input bg-background rounded-md"
             value={formData.workout_type}
             onChange={(e) => setFormData({ ...formData, workout_type: e.target.value })}
-            placeholder="e.g., AMRAP, For Time, EMOM"
-          />
+            disabled={!formData.sport_id}
+          >
+            <option value="">Sélectionner un type...</option>
+            {availableWorkoutTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          {!formData.sport_id && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Sélectionnez d'abord un sport
+            </p>
+          )}
         </div>
 
         <div>
-          <label className="text-sm font-medium">Estimated Duration (min)</label>
+          <label className="text-sm font-medium">Temps estimé (min)</label>
           <Input
             type="number"
             value={formData.estimated_duration}
@@ -107,20 +140,20 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium">Difficulty</label>
+          <label className="text-sm font-medium">Difficulté</label>
           <select
             className="w-full px-3 py-2 border border-input bg-background rounded-md"
             value={formData.difficulty}
             onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
           >
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
+            <option value="beginner">Débutant</option>
+            <option value="intermediate">Intermédiaire</option>
+            <option value="advanced">Avancé</option>
           </select>
         </div>
 
         <div>
-          <label className="text-sm font-medium">Intensity</label>
+          <label className="text-sm font-medium">Intensité</label>
           <Input
             value={formData.intensity}
             onChange={(e) => setFormData({ ...formData, intensity: e.target.value })}
@@ -129,7 +162,7 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
         </div>
 
         <div>
-          <label className="text-sm font-medium">Status</label>
+          <label className="text-sm font-medium">Statut</label>
           <select
             className="w-full px-3 py-2 border border-input bg-background rounded-md"
             value={formData.status}
@@ -199,28 +232,10 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
 
       {/* Advanced Details */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold border-b pb-2">Details avances</h3>
+        <h3 className="text-lg font-semibold border-b pb-2">Détails avancés</h3>
 
         <div>
-          <label className="text-sm font-medium">Sport ID</label>
-          <Input
-            value={formData.sport_id}
-            onChange={(e) => setFormData({ ...formData, sport_id: e.target.value })}
-            placeholder="UUID du sport"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Scheduled Date</label>
-          <Input
-            type="date"
-            value={formData.scheduled_date}
-            onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Coach Notes</label>
+          <label className="text-sm font-medium">Notes du coach</label>
           <Textarea
             value={formData.coach_notes}
             onChange={(e) => setFormData({ ...formData, coach_notes: e.target.value })}
@@ -230,35 +245,35 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
         </div>
 
         <TagInput
-          label="Tags"
+          label="Etiquettes (tags)"
           value={formData.tags}
           onChange={(value) => setFormData({ ...formData, tags: value })}
           placeholder="cardio, strength, endurance..."
         />
 
         <TagInput
-          label="Scaling Options"
+          label="Options de Scaling"
           value={formData.scaling_options}
           onChange={(value) => setFormData({ ...formData, scaling_options: value })}
           placeholder="rx, scaled, beginner..."
         />
 
         <TagInput
-          label="Equipment Required"
+          label="Equipement requis"
           value={formData.equipment_required}
           onChange={(value) => setFormData({ ...formData, equipment_required: value })}
           placeholder="barbell, pull-up bar, rower..."
         />
 
         <TagInput
-          label="Focus Areas"
+          label="Zones ciblées"
           value={formData.focus_areas}
           onChange={(value) => setFormData({ ...formData, focus_areas: value })}
           placeholder="endurance, strength, technique..."
         />
 
         <TagInput
-          label="Metrics Tracked"
+          label="Suivis de Metrics"
           value={formData.metrics_tracked}
           onChange={(value) => setFormData({ ...formData, metrics_tracked: value })}
           placeholder="time, rounds, reps..."
