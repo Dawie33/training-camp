@@ -2,6 +2,7 @@
 
 import { InteractiveWorkoutDisplay } from '@/components/workout/display/InteractiveWorkoutDisplay'
 import { WorkoutSummary } from '@/components/workout/WorkoutSummary'
+import { ExerciseDetailModal } from '@/components/workout/ExerciseDetailModal'
 import { Workouts } from '@/domain/entities/workout'
 import { Clock, Pause, Play, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -30,6 +31,7 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
   const [blockProgress, setBlockProgress] = useState<BlockProgress>({})
   const [showCloseModal, setShowCloseModal] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
+  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null)
 
   // Timer global
   useEffect(() => {
@@ -137,6 +139,7 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
               [sectionKey]: completed
             }))
           }}
+          onExerciseClick={(exerciseName) => setSelectedExerciseName(exerciseName)}
         />
 
         {/* Bouton de complétion */}
@@ -177,6 +180,15 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modale de détails d'exercice */}
+      {selectedExerciseName && (
+        <ExerciseDetailModal
+          exerciseName={selectedExerciseName}
+          isOpen={!!selectedExerciseName}
+          onClose={() => setSelectedExerciseName(null)}
+        />
       )}
     </div>
   )

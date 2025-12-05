@@ -26,6 +26,10 @@ export interface Exercise {
     bodyweight_only?: boolean
     isActive?: boolean
     muscle_groups?: string[]
+    equipment_required?: string[]
+    scaling_options?: string[]
+    contraindications?: string[]
+    safety_notes?: string
     image_url?: string
     video_url?: string
     created_at: string
@@ -41,6 +45,11 @@ export interface CreateExerciseDTO {
     measurement_type?: MeasurementType
     bodyweight_only?: boolean
     isActive?: boolean
+    muscle_groups?: string[]
+    equipment_required?: string[]
+    scaling_options?: string[]
+    contraindications?: string[]
+    safety_notes?: string
     image_url?: string
     video_url?: string
 }

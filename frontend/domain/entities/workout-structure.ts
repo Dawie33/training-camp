@@ -128,7 +128,7 @@ export const WORKOUT_TYPES_BY_SPORT = {
     { value: 'lower_body', label: 'Bas du corps' },
     { value: 'full_body', label: 'Full Body' },
   ],
-  cardio: [
+  'cross-training': [
     { value: 'low_impact', label: 'Bas Impact' },
     { value: 'hiit', label: 'HIIT' },
     { value: 'circuit', label: 'Circuit Cardio' },

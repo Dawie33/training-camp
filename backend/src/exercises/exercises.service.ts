@@ -80,6 +80,15 @@ export class ExercisesService {
     }
 
     /**
+     * Récupère un exercice par son nom.
+     * @param {string} name - Nom de l'exercice.
+     * @returns {Promise<Exercise | null>} - Promesse qui renvoie l'exercice correspondant au nom ou null si l'exercice n'existe pas.
+     */
+    async findByName(name: string) {
+        return this.knex('exercises').where({ 'name': name }).first()
+    }
+
+    /**
      * Crée un nouvel exercice.
      * @param {object} data - Informations de l'exercice à créer.
      * @returns {Promise<Exercise | null>} - Promesse qui renvoie l'exercice créé.

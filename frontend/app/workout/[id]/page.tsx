@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import WorkoutEditModal from '@/components/workout/WorkoutEditModal'
+import { ExerciseDetailModal } from '@/components/workout/ExerciseDetailModal'
 import { useSport } from '@/contexts/SportContext'
 import { workoutsService, sessionService } from '@/services'
 import { Workouts } from '@/domain/entities/workout'
@@ -23,6 +24,7 @@ function WorkoutDetailContent() {
   const [activeSession, setActiveSession] = useState<string | null>(null)
   const [isStarting, setIsStarting] = useState(false)
   const [showEditWorkoutModal, setShowEditWorkoutModal] = useState(false)
+  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null)
 
   useEffect(() => {
     /**
@@ -217,12 +219,26 @@ function WorkoutDetailContent() {
         </div>
 
         {/* Workout Blocks */}
-        <WorkoutDisplay blocks={workout.blocks} showTitle={true} isStarting={isStarting} />
+        <WorkoutDisplay
+          blocks={workout.blocks}
+          showTitle={true}
+          isStarting={isStarting}
+          onExerciseClick={(name) => setSelectedExerciseName(name)}
+        />
+
         {showEditWorkoutModal && (
           <WorkoutEditModal
             workout={workout}
             isOpen={showEditWorkoutModal}
             onClose={() => setShowEditWorkoutModal(false)}
+          />
+        )}
+
+        {selectedExerciseName && (
+          <ExerciseDetailModal
+            exerciseName={selectedExerciseName}
+            isOpen={!!selectedExerciseName}
+            onClose={() => setSelectedExerciseName(null)}
           />
         )}
 

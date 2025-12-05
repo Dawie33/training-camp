@@ -7,6 +7,7 @@ import { SectionDisplay } from './SectionDisplay'
 interface InteractiveWorkoutDisplayProps {
   blocks: WorkoutBlocks
   onSectionComplete?: (sectionIndex: number, completed: boolean) => void
+  onExerciseClick?: (exerciseId: string) => void
 }
 
 /**
@@ -17,7 +18,7 @@ interface InteractiveWorkoutDisplayProps {
  * @param {WorkoutBlocks} blocks - Les blocs de l'entraînement.
  * @param {((sectionIdx: number, completed: boolean) => void} [onSectionComplete] - Fonction à appeler lorsque l'utilisateur coche une section.
  */
-export function InteractiveWorkoutDisplay({ blocks, onSectionComplete }: InteractiveWorkoutDisplayProps) {
+export function InteractiveWorkoutDisplay({ blocks, onSectionComplete, onExerciseClick }: InteractiveWorkoutDisplayProps) {
   const [completedSections, setCompletedSections] = useState<Record<number, boolean>>({})
   const [currentSectionIndex, setCurrentSectionIndex] = useState<number>(0)
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -90,6 +91,7 @@ export function InteractiveWorkoutDisplay({ blocks, onSectionComplete }: Interac
               onSectionToggle={() => toggleSection(idx)}
               isCurrentSection={idx === currentSectionIndex}
               onSectionStart={() => setCurrentSectionIndex(idx)}
+              onExerciseClick={onExerciseClick}
             />
           </div>
         ))}

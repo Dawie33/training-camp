@@ -39,6 +39,13 @@ export default function GenerateWorkoutAIPage() {
       try {
         const result = await sportsService.getAll()
         setSports(result.rows)
+
+        // Initialiser le sport et workout type avec le premier sport de la liste
+        if (result.rows.length > 0) {
+          const firstSport = result.rows[0]
+          setSport(firstSport.slug)
+          setWorkoutType(WORKOUT_TYPES_BY_SPORT[firstSport.slug as keyof typeof WORKOUT_TYPES_BY_SPORT]?.[0]?.value || '')
+        }
       } catch (err) {
         console.error('Error loading sports:', err)
         toast.error('Failed to load sports')
@@ -86,7 +93,7 @@ export default function GenerateWorkoutAIPage() {
       // Trouver le sport_id correspondant au slug sélectionné
       const selectedSport = sports.find(s => s.slug === sport)
       if (!selectedSport) {
-        setError('Sport non trouvé')
+        setError(`Sport non trouvé: ${sport}`)
         return
       }
 
@@ -156,12 +163,11 @@ export default function GenerateWorkoutAIPage() {
                 }}
                 className="w-full px-3 py-2 border rounded-lg bg-background"
               >
-                <option value="crossfit">CrossFit</option>
-                <option value="running">Course à pied</option>
-                <option value="cycling">Cyclisme</option>
-                <option value="musculation">Musculation</option>
-                <option value="cardio">Cardio</option>
-                <option value="mobility">Mobilité</option>
+                {sports.map((s) => (
+                  <option key={s.id} value={s.slug}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
 

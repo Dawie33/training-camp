@@ -15,6 +15,7 @@ interface SectionDisplayProps {
     onSectionToggle?: () => void
     isCurrentSection?: boolean
     onSectionStart?: () => void
+    onExerciseClick?: (exerciseId: string) => void
 }
 
 /**
@@ -37,7 +38,8 @@ export function SectionDisplay({
     isSectionCompleted,
     onSectionToggle,
     isCurrentSection,
-    onSectionStart
+    onSectionStart,
+    onExerciseClick
 }: SectionDisplayProps) {
 
     const icon = sectionIcons[section.type] || '📋'
@@ -148,6 +150,7 @@ export function SectionDisplay({
                             isStarting={false}
                             isCompleted={false}
                             rounds={section.rounds}
+                            onExerciseClick={onExerciseClick}
                         />
                     ))}
                 </div>
@@ -186,6 +189,7 @@ export function SectionDisplay({
                             onSectionToggle={undefined}
                             isCurrentSection={false}
                             onSectionStart={onSectionStart}
+                            onExerciseClick={onExerciseClick}
                         />
                     ))}
                 </div>

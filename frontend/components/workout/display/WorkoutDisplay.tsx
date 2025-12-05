@@ -5,6 +5,7 @@ interface WorkoutDisplayProps {
   blocks: WorkoutBlocks
   showTitle?: boolean
   isStarting?: boolean
+  onExerciseClick?: (exerciseId: string) => void
 }
 
 /**
@@ -12,7 +13,7 @@ interface WorkoutDisplayProps {
  * @param {WorkoutDisplayProps} props - Les propriétés de l'affichage du workout.
  * @returns {JSX.Element} - L'affichage du workout rendu.
  */
-export function WorkoutDisplay({ blocks, isStarting }: WorkoutDisplayProps) {
+export function WorkoutDisplay({ blocks, isStarting, onExerciseClick }: WorkoutDisplayProps) {
   return (
     <div className="space-y-6">
       {blocks.stimulus && (
@@ -29,6 +30,7 @@ export function WorkoutDisplay({ blocks, isStarting }: WorkoutDisplayProps) {
             section={section}
             index={idx}
             isStarting={isStarting}
+            onExerciseClick={onExerciseClick}
           />
         ))}
       </div>

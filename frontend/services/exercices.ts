@@ -24,6 +24,10 @@ export async function getExercise(id: string): Promise<Exercise> {
     return exercisesApi.getOne(id)
 }
 
+export async function getExerciseByName(name: string): Promise<Exercise> {
+    return exercisesApi.getOne(name)
+}
+
 export async function createExercise(data: CreateExerciseDTO): Promise<Exercise> {
     return exercisesApi.create(data)
 }

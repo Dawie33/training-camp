@@ -3,6 +3,7 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
+import { ExerciseDetailModal } from '@/components/workout/ExerciseDetailModal'
 import { sessionService, workoutsService } from '@/services'
 import { PersonalizedWorkout } from '@/domain/entities/workout'
 import { ArrowLeft, Calendar, Clock } from 'lucide-react'
@@ -19,6 +20,7 @@ function PersonalizedWorkoutDetailContent() {
   const [loading, setLoading] = useState(true)
   const [isStarting, setIsStarting] = useState(false)
   const [activeSession, setActiveSession] = useState<string | null>(null)
+  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null)
   useEffect(() => {
     const fetchPersonalizedWorkout = async () => {
       try {
@@ -146,7 +148,20 @@ function PersonalizedWorkoutDetailContent() {
       </div>
 
       {/* Workout Blocks */}
-      <WorkoutDisplay blocks={workout.plan_json.blocks} showTitle={true} isStarting={isStarting} />
+      <WorkoutDisplay
+        blocks={workout.plan_json.blocks}
+        showTitle={true}
+        isStarting={isStarting}
+        onExerciseClick={(exerciseName) => setSelectedExerciseName(exerciseName)}
+      />
+
+      {selectedExerciseName && (
+        <ExerciseDetailModal
+          exerciseName={selectedExerciseName}
+          isOpen={!!selectedExerciseName}
+          onClose={() => setSelectedExerciseName(null)}
+        />
+      )}
     </div>
   )
 }
