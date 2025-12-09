@@ -1,15 +1,35 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import OpenAI from 'openai'
 import {
-  buildSystemPrompt,
-  buildWorkoutGenerationPrompt,
+  buildGenericSystemPrompt,
+  buildGenericWorkoutPrompt,
   WorkoutGenerationParams
-} from '../prompts/workout-generator.prompt'
+} from '../prompts/generic-generator.prompt'
 import {
   buildMobilitySystemPrompt,
   buildMobilityWorkoutPrompt
 } from '../prompts/mobility-generator.prompt'
-import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../prompts/workout-generator.schema'
+import {
+  buildCrossFitSystemPrompt,
+  buildCrossFitWorkoutPrompt
+} from '../prompts/crossfit-generator.prompt'
+import {
+  buildRunningSystemPrompt,
+  buildRunningWorkoutPrompt
+} from '../prompts/running-generator.prompt'
+import {
+  buildCyclingSystemPrompt,
+  buildCyclingWorkoutPrompt
+} from '../prompts/cycling-generator.prompt'
+import {
+  buildMusculationSystemPrompt,
+  buildMusculationWorkoutPrompt
+} from '../prompts/musculation-generator.prompt'
+import {
+  buildCrossTrainingSystemPrompt,
+  buildCrossTrainingWorkoutPrompt
+} from '../prompts/cross-training-generator.prompt'
+import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../schemas/workout.schema'
 import { ZodError } from 'zod'
 
 /**
@@ -32,25 +52,24 @@ export class AIWorkoutGeneratorService {
 
   /**
    * Génère un workout en utilisant l'IA GPT-4o
-   * Détecte automatiquement si c'est un workout de mobilité et utilise le prompt approprié
+   * Détecte automatiquement le sport et utilise le prompt spécialisé approprié
    * @param params Paramètres de génération
    * @returns Le workout généré au format JSON
    */
   async generateWorkout(params: WorkoutGenerationParams): Promise<GeneratedWorkout> {
     try {
-      // Détecter si c'est un workout de mobilité
-      const isMobilityWorkout = params.workoutType?.toLowerCase() === 'mobility' ||
-                                params.sport?.toLowerCase() === 'mobilité' ||
-                                params.sport?.toLowerCase() === 'mobility'
+      // Normaliser le sport pour la détection
+      const sportSlug = params.sport?.toLowerCase().trim()
 
-      // Construire les prompts selon le type
+      // Construire les prompts selon le sport
       let systemPrompt: string
       let userPrompt: string
+      let temperature = 0.8
 
-      if (isMobilityWorkout) {
-        // Utiliser le prompt spécialisé mobilité
+      // Router vers le prompt spécialisé selon le sport
+      if (sportSlug === 'mobility' || sportSlug === 'mobilité') {
+        // Mobilité
         systemPrompt = buildMobilitySystemPrompt(params.equipment)
-        // Mapper elite -> advanced pour la mobilité
         const mobilityDifficulty = params.difficulty === 'elite' ? 'advanced' : params.difficulty
         userPrompt = buildMobilityWorkoutPrompt({
           duration: params.duration,
@@ -59,10 +78,79 @@ export class AIWorkoutGeneratorService {
           equipment: params.equipment,
           additionalInstructions: params.additionalInstructions
         })
+        temperature = 0.7
+
+      } else if (sportSlug === 'crossfit') {
+        // CrossFit
+        systemPrompt = buildCrossFitSystemPrompt(params.equipment)
+        userPrompt = buildCrossFitWorkoutPrompt({
+          workoutType: params.workoutType || 'mixed',
+          duration: params.duration,
+          difficulty: params.difficulty,
+          equipment: params.equipment,
+          focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
+          additionalInstructions: params.additionalInstructions
+        })
+        temperature = 0.8
+
+      } else if (sportSlug === 'running' || sportSlug === 'course') {
+        // Running
+        systemPrompt = buildRunningSystemPrompt(params.equipment)
+        userPrompt = buildRunningWorkoutPrompt({
+          workoutType: params.workoutType || 'intervals',
+          duration: params.duration,
+          difficulty: params.difficulty,
+          equipment: params.equipment,
+          additionalInstructions: params.additionalInstructions
+        })
+        temperature = 0.75
+
+      } else if (sportSlug === 'cycling' || sportSlug === 'cyclisme' || sportSlug === 'vélo') {
+        // Cycling
+        systemPrompt = buildCyclingSystemPrompt(params.equipment)
+        userPrompt = buildCyclingWorkoutPrompt({
+          workoutType: params.workoutType || 'ftp_work',
+          duration: params.duration,
+          difficulty: params.difficulty,
+          equipment: params.equipment,
+          indoor: true, // Par défaut indoor pour plus de contrôle
+          additionalInstructions: params.additionalInstructions
+        })
+        temperature = 0.75
+
+      } else if (sportSlug === 'musculation' || sportSlug === 'strength-training' || sportSlug === 'weightlifting') {
+        // Musculation
+        systemPrompt = buildMusculationSystemPrompt(params.equipment)
+        userPrompt = buildMusculationWorkoutPrompt({
+          workoutType: params.workoutType || 'hypertrophy',
+          duration: params.duration,
+          difficulty: params.difficulty,
+          equipment: params.equipment,
+          focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
+          goal: 'hypertrophy',
+          additionalInstructions: params.additionalInstructions
+        })
+        temperature = 0.75
+
+      } else if (sportSlug === 'cross-training' || sportSlug === 'cardio') {
+        // Cross-Training
+        systemPrompt = buildCrossTrainingSystemPrompt(params.equipment)
+        userPrompt = buildCrossTrainingWorkoutPrompt({
+          workoutType: params.workoutType || 'circuit',
+          duration: params.duration,
+          difficulty: params.difficulty,
+          equipment: params.equipment,
+          lowImpact: false,
+          goal: 'conditioning',
+          additionalInstructions: params.additionalInstructions
+        })
+        temperature = 0.8
+
       } else {
-        // Utiliser le prompt standard
-        systemPrompt = buildSystemPrompt(params.equipment)
-        userPrompt = buildWorkoutGenerationPrompt(params)
+        // Fallback: Utiliser le prompt générique
+        systemPrompt = buildGenericSystemPrompt(params.equipment)
+        userPrompt = buildGenericWorkoutPrompt(params)
+        temperature = 0.8
       }
 
       // Appeler l'API OpenAI
@@ -78,7 +166,7 @@ export class AIWorkoutGeneratorService {
             content: userPrompt
           }
         ],
-        temperature: isMobilityWorkout ? 0.7 : 0.8, // Moins de créativité pour mobilité
+        temperature,
         max_tokens: 4096,
         response_format: { type: 'json_object' } // Force la réponse en JSON
       })

@@ -3,12 +3,27 @@
  */
 
 import { z } from 'zod'
-import { EQUIPMENT } from './workout-generator.prompt'
+import { EQUIPMENT } from '../constants/equipment.constants'
 
 /**
- * Schéma de validation pour l'équipement
+ * Normalise le nom d'un équipement pour correspondre à la nomenclature standard
+ * Exemple: "jump rope" -> "jump-rope", "dumbbell" -> "dumbbell"
  */
-export const EquipmentSchema = z.enum(EQUIPMENT)
+function normalizeEquipmentName(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, '-')
+}
+
+/**
+ * Schéma de validation pour l'équipement avec normalisation automatique
+ */
+export const EquipmentSchema = z.string().transform((val) => {
+  const normalized = normalizeEquipmentName(val)
+  // Vérifier que l'équipement normalisé existe dans la liste
+  if (!EQUIPMENT.includes(normalized as any)) {
+    throw new Error(`Equipment "${val}" (normalized: "${normalized}") is not in the allowed list`)
+  }
+  return normalized
+})
 
 /**
  * Schéma de validation pour un exercice

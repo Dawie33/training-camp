@@ -1,57 +1,28 @@
 /**
- * Prompt système pour la génération de workouts par IA
- * Ce prompt guide l'IA pour créer des workouts structurés et variés
+ * Générateur de workout générique
+ * Utilisé comme fallback pour les sports non spécialisés
  */
+
+import { EQUIPMENT } from '../constants/equipment.constants'
 
 /**
- * Liste complète des équipements disponibles
+ * Paramètres de génération de workout
  */
-export const EQUIPMENT = [
-  // Bodyweight & basics
-  'bodyweight', 'mat', 'band',
-
-  // Free weights
-  'barbell', 'plates', 'rack', 'bench', 'dumbbell', 'kettlebell', 'trap-bar',
-
-  // CrossFit/Functional
-  'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'ski-erg', 'sled', 'wall-ball',
-  'rings', 'parallettes', 'ghd', 'medicine-ball', 'battle-ropes', 'slam-ball', 'sandbag',
-  'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles', 'yoke', 'atlas-stone',
-
-  // Gym machines & cables
-  'cable-machine', 'lat-pulldown', 'leg-press', 'leg-curl', 'leg-extension',
-  'chest-press-machine', 'shoulder-press-machine', 'pec-deck', 'cable-crossover',
-  'seated-row-machine', 'smith-machine', 'hack-squat', 'calf-raise-machine',
-  'preacher-curl-bench', 'ez-bar', 'triceps-machine', 'biceps-machine',
-
-  // Cardio machines
-  'treadmill', 'stationary-bike', 'elliptical', 'stairmaster',
-
-  // Accessories
-  'foam-roller', 'lacrosse-ball', 'ab-wheel', 'suspension-trainer', 'plyo-box',
-
-  // Mobility specific
-  'yoga-block', 'strap', 'pvc-pipe', 'dowel', 'wall'
-] as const
+export interface WorkoutGenerationParams {
+  sport: string
+  workoutType: string
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+  duration: number // en minutes
+  focus?: string[] // Ex: ["upper-body", "cardio"]
+  equipment?: string[] // Équipement disponible
+  constraints?: string[] // Ex: ["no-jump", "low-impact"]
+  additionalInstructions?: string
+}
 
 /**
- * Presets d'équipement pour différents environnements
+ * Construit le prompt système générique avec la liste d'équipements disponibles
  */
-export const EQUIPMENT_PRESETS = {
-  minimal: ['bodyweight', 'mat'],
-  home: ['bodyweight', 'mat', 'band', 'dumbbell', 'kettlebell', 'pull-up-bar', 'jump-rope'],
-  crossfit: ['bodyweight', 'mat', 'band', 'barbell', 'plates', 'rack', 'bench', 'dumbbell', 'kettlebell',
-    'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'ski-erg', 'sled', 'wall-ball',
-    'rings', 'parallettes', 'ghd', 'medicine-ball', 'battle-ropes', 'slam-ball', 'sandbag',
-    'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles'],
-  gym: EQUIPMENT.filter(e => !['rings', 'parallettes', 'ghd', 'ski-erg', 'assault-bike', 'wall-ball'].includes(e)),
-  full: [...EQUIPMENT],
-} as const
-
-/**
- * Construit le prompt système avec la liste d'équipements disponibles
- */
-export function buildSystemPrompt(availableEquipment?: string[]): string {
+export function buildGenericSystemPrompt(availableEquipment?: string[]): string {
   const equipmentList = EQUIPMENT.join('", "')
 
   const equipmentInstructions = availableEquipment && availableEquipment.length > 0
@@ -247,18 +218,10 @@ IMPORTANT : Durée totale <= 60 minutes. Crée des workouts variés et efficaces
 Pas de texte hors JSON.`
 }
 
-export interface WorkoutGenerationParams {
-  sport: string
-  workoutType: string
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
-  duration: number // en minutes
-  focus?: string[] // Ex: ["upper-body", "cardio"]
-  equipment?: string[] // Équipement disponible
-  constraints?: string[] // Ex: ["no-jump", "low-impact"]
-  additionalInstructions?: string
-}
-
-export function buildWorkoutGenerationPrompt(params: WorkoutGenerationParams): string {
+/**
+ * Construit le prompt utilisateur pour la génération de workout générique
+ */
+export function buildGenericWorkoutPrompt(params: WorkoutGenerationParams): string {
   const {
     sport,
     workoutType,
