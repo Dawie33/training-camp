@@ -7,10 +7,17 @@ import { EQUIPMENT } from '../constants/equipment.constants'
 
 /**
  * Normalise le nom d'un équipement pour correspondre à la nomenclature standard
- * Exemple: "jump rope" -> "jump-rope", "dumbbell" -> "dumbbell"
+ * Exemple: "jump rope" -> "jump-rope", "dumbbells" -> "dumbbell"
  */
 function normalizeEquipmentName(name: string): string {
-  return name.toLowerCase().trim().replace(/\s+/g, '-')
+  let normalized = name.toLowerCase().trim().replace(/\s+/g, '-')
+
+  // Gérer les pluriels courants
+  if (normalized.endsWith('s') && EQUIPMENT.includes(normalized.slice(0, -1) as any)) {
+    normalized = normalized.slice(0, -1)
+  }
+
+  return normalized
 }
 
 /**
