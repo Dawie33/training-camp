@@ -13,16 +13,16 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/workouts', label: 'Training', icon: Dumbbell },
-  { href: '/calendar', label: 'Calendar', icon: Calendar },
-  { href: '/tracking', label: 'Progress', icon: TrendingUp },
+  { href: '/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/workouts', label: 'Workouts', icon: Dumbbell },
+  { href: '/calendar', label: 'Calendrier', icon: Calendar },
+  { href: '/tracking', label: 'Suivi', icon: TrendingUp },
 ]
 
 const moreItems: NavItem[] = [
   { href: '/timer', label: 'Timer', icon: Clock },
-  { href: '/equipments', label: 'Equipment', icon: Package },
-  { href: '/exercises', label: 'Exercises', icon: Activity },
+  { href: '/equipments', label: 'Equipements', icon: Package },
+  { href: '/exercises', label: 'Exercices', icon: Activity },
   { href: '/benchmarks', label: 'Benchmarks', icon: Target },
 ]
 
