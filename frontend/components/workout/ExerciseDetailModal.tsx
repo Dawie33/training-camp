@@ -4,6 +4,7 @@ import { Equipment } from '@/domain/entities/equipment'
 import { Exercise } from '@/domain/entities/exercice'
 import { getEquipment } from '@/services/equipments'
 import { getExercises } from '@/services/exercices'
+import { motion } from 'framer-motion'
 import { AlertCircle, Dumbbell, ExternalLink, Info, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -77,20 +78,30 @@ export function ExerciseDetailModal({ exerciseName, isOpen, onClose }: ExerciseD
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center bg-black/50 backdrop-blur-sm"
             onClick={handleBackdropClick}
         >
-            <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                    <h2 className="text-2xl font-bold">Détails de l'exercice</h2>
-                    <button
+            <motion.div
+                className="bg-background rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col"
+                initial={{ y: '100%', opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: '100%', opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
+                {/* Header avec design mobile-first */}
+                <div className="relative flex items-center justify-between p-4 sm:p-6 border-b border-border">
+                    {/* Drag indicator pour mobile */}
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full sm:hidden" />
+
+                    <h2 className="text-xl sm:text-2xl font-bold mt-4 sm:mt-0">Détails de l'exercice</h2>
+                    <motion.button
                         onClick={onClose}
-                        className="p-2 hover:bg-accent rounded-lg transition-colors"
+                        className="p-2 hover:bg-accent rounded-full transition-colors mt-4 sm:mt-0"
                         aria-label="Fermer"
+                        whileTap={{ scale: 0.9 }}
                     >
                         <X className="w-5 h-5" />
-                    </button>
+                    </motion.button>
                 </div>
 
                 {/* Content */}
@@ -302,16 +313,17 @@ export function ExerciseDetailModal({ exerciseName, isOpen, onClose }: ExerciseD
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="flex justify-end gap-3 p-6 border-t border-border">
-                    <button
+                {/* Footer - simplifié pour mobile */}
+                <div className="flex justify-end gap-3 p-4 sm:p-6 border-t border-border bg-background/80 backdrop-blur-sm">
+                    <motion.button
                         onClick={onClose}
-                        className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                        className="px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors font-semibold"
+                        whileTap={{ scale: 0.98 }}
                     >
                         Fermer
-                    </button>
+                    </motion.button>
                 </div>
-            </div>
+            </motion.div>
         </div>
     )
 }

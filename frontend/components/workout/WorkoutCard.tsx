@@ -2,7 +2,7 @@
 
 import { Workouts } from '@/domain/entities/workout'
 import { motion } from 'framer-motion'
-import { Clock, Zap } from 'lucide-react'
+import { Award, Clock, Flame, Zap } from 'lucide-react'
 
 interface WorkoutCardProps {
   workout: Workouts
@@ -15,9 +15,9 @@ const difficultyLabels = {
 }
 
 const difficultyColors = {
-  beginner: 'bg-green-500/20 text-green-400 border-green-500/30',
-  intermediate: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  advanced: 'bg-red-500/20 text-red-400 border-red-500/30',
+  beginner: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  intermediate: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  advanced: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
 }
 
 const intensityLabels = {
@@ -26,106 +26,108 @@ const intensityLabels = {
   high: 'Élevée',
 }
 
-
 export function WorkoutCard({ workout }: WorkoutCardProps) {
   return (
     <motion.div
-      className="relative h-[300px] rounded-lg overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900"
+      className="relative h-[280px] sm:h-[320px] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black shadow-2xl"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       whileHover={{
         scale: 1.02,
-        y: -4,
-        transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }
+        transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] }
       }}
       whileTap={{ scale: 0.98 }}
     >
-      {/* Image de fond du workout */}
+      {/* Image de fond avec overlay gradient sophistiqué */}
       {workout.image_url && (
-        <motion.div
-          className="absolute inset-0 bg-cover bg-top"
-          style={{ backgroundImage: `url(${workout.image_url})` }}
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-        />
+        <div className="absolute inset-0">
+          <motion.div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${workout.image_url})` }}
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
+        </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
       {/* Contenu */}
-      <div className="relative h-full flex flex-col justify-between p-6 text-white">
-        {/* Badge difficulté en haut */}
-        <motion.div
-          className="flex gap-2 items-start justify-between"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
+      <div className="relative h-full flex flex-col justify-between p-5 sm:p-6 text-white">
+        {/* Header avec badges */}
+        <div className="flex gap-2 items-start justify-between">
           <motion.div
-            className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider rounded-full border backdrop-blur-sm ${difficultyColors[workout.difficulty as keyof typeof difficultyColors]}`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className={`px-3 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full border backdrop-blur-md ${difficultyColors[workout.difficulty as keyof typeof difficultyColors]}`}
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
           >
             {difficultyLabels[workout.difficulty as keyof typeof difficultyLabels]}
           </motion.div>
 
-          {/* Badge BENCHMARK */}
           {workout.is_benchmark && (
             <motion.div
-              className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold uppercase backdrop-blur-sm"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
+              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-[10px] sm:text-xs font-black uppercase backdrop-blur-md shadow-lg flex items-center gap-1.5"
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
             >
-              BENCHMARK
+              <Award className="w-3 h-3" />
+              <span>BENCHMARK</span>
             </motion.div>
           )}
-        </motion.div>
+        </div>
 
-        {/* Titre et infos en bas */}
+        {/* Footer avec titre et stats */}
         <motion.div
-          className="space-y-2"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          className="space-y-3"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
         >
+          {/* Titre */}
           <div>
-            <motion.h3
-              className="text-3xl font-bold uppercase tracking-tight mb-2"
-              whileHover={{
-                color: 'hsl(var(--primary))',
-                transition: { duration: 0.2 }
-              }}
-            >
+            <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight mb-1.5 leading-tight">
               {workout.name}
-            </motion.h3>
-            <p className="text-sm text-gray-300/90 line-clamp-2 mb-3">
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-300/90 line-clamp-2 leading-relaxed">
               {workout.description}
             </p>
           </div>
 
-          {/* Infos compactes en bas */}
-          <div className="flex items-center gap-3 text-xs text-gray-300/80">
+          {/* Stats en pills style Freeletics */}
+          <div className="flex items-center gap-2 flex-wrap">
             {workout.estimated_duration && (
-              <div className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{workout.estimated_duration}min</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full">
+                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-xs font-semibold">{workout.estimated_duration}min</span>
               </div>
             )}
             {workout.intensity && (
-              <div className="flex items-center gap-1">
-                <Zap className="w-3.5 h-3.5" />
-                <span className="capitalize">{intensityLabels[workout.intensity as keyof typeof intensityLabels]}</span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full">
+                {workout.intensity === 'high' ? (
+                  <Flame className="w-3.5 h-3.5 text-orange-400" />
+                ) : (
+                  <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                )}
+                <span className="text-xs font-semibold capitalize">
+                  {intensityLabels[workout.intensity as keyof typeof intensityLabels]}
+                </span>
               </div>
             )}
           </div>
         </motion.div>
       </div>
 
-      {/* Effet hover */}
+      {/* Effet de brillance au survol */}
       <motion.div
-        className="absolute inset-0 bg-primary/10 pointer-events-none"
-        initial={{ opacity: 0 }}
-        whileHover={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none"
+        initial={{ x: '-100%', opacity: 0 }}
+        whileHover={{ x: '100%', opacity: 1 }}
+        transition={{ duration: 0.6, ease: 'easeInOut' }}
       />
+
+      {/* Border glow effect */}
+      <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 pointer-events-none" />
     </motion.div>
   )
 }

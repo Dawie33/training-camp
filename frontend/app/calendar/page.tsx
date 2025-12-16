@@ -8,7 +8,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Trash2 } fro
 import { useCallback, useMemo, useState } from 'react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { useWorkoutSchedule } from './hooks/useWorkoutSchedule'
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, addDays, addWeeks, subWeeks, subDays } from 'date-fns'
+import { format, addMonths, subMonths, addDays, addWeeks, subWeeks, subDays } from 'date-fns'
 import type { ViewMode, DayWorkout, CalendarDay } from './types'
 import { fr } from 'date-fns/locale'
 
@@ -18,17 +18,7 @@ function CalendarContent() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
-  // Calculate date range for fetching schedules
-  const dateRange = useMemo(() => {
-    const start = startOfMonth(addMonths(currentDate, -1))
-    const end = endOfMonth(addMonths(currentDate, 1))
-    return {
-      start_date: format(start, 'yyyy-MM-dd'),
-      end_date: format(end, 'yyyy-MM-dd'),
-    }
-  }, [currentDate])
-
-  const { schedules, loading, createSchedule, deleteSchedule, markAsCompleted, markAsSkipped } = useWorkoutSchedule(dateRange)
+  const { schedules, loading, createSchedule, deleteSchedule, markAsCompleted, markAsSkipped } = useWorkoutSchedule()
 
   // Helper pour récupérer les workouts d'un jour
   const getWorkoutsForDate = useCallback((date: Date): DayWorkout[] => {

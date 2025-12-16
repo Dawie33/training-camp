@@ -4,7 +4,8 @@ import { InteractiveWorkoutDisplay } from '@/components/workout/display/Interact
 import { WorkoutSummary } from '@/components/workout/WorkoutSummary'
 import { ExerciseDetailModal } from '@/components/workout/ExerciseDetailModal'
 import { Workouts } from '@/domain/entities/workout'
-import { Clock, Pause, Play, X } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Pause, Play, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface ActiveWorkoutSessionProps {
@@ -80,59 +81,60 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 overflow-y-auto">
-      {/* Header fixe */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="relative group">
-              <button
-                onClick={() => setShowCloseModal(true)}
-                className="p-2 hover:bg-accent rounded-lg transition-colors"
-                aria-label="Fermer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <div className="absolute left-0 top-full mt-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-border">
-                Fermer
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-950 via-black to-gray-900 z-50 overflow-y-auto">
+      {/* Header fixe - style Freeletics */}
+      <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-white/5 z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            {/* Bouton close minimaliste */}
+            <motion.button
+              onClick={() => setShowCloseModal(true)}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              aria-label="Fermer"
+              whileTap={{ scale: 0.9 }}
+            >
+              <X className="w-5 h-5 text-white" />
+            </motion.button>
+
+            {/* Timer central - design Freeletics avec cercle */}
+            <div className="flex flex-col items-center">
+              <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-1">Time</div>
+              <div className="relative">
+                <div className="text-3xl sm:text-4xl font-black font-mono text-white tracking-tight">
+                  {formatTime(elapsedTime)}
+                </div>
+                {workout.blocks.duration_min != null && (
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-gray-500 whitespace-nowrap">
+                    ~{workout.blocks.duration_min}min
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="text-center">
-              <div className="text-sm text-muted-foreground mb-1">Temps écoulé</div>
-              <div className="text-3xl font-bold font-mono">{formatTime(elapsedTime)}</div>
-            </div>
-
-            <div className="relative group">
-              <button
-                onClick={() => setIsRunning(!isRunning)}
-                className="p-2 hover:bg-accent rounded-lg transition-colors"
-                aria-label={isRunning ? 'Pause' : 'Reprendre'}
-              >
-                {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-              </button>
-              <div className="absolute right-0 top-full mt-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-border">
-                {isRunning ? 'Pause' : 'Reprendre'}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
-            <Clock className="w-4 h-4" />
-            {workout.blocks.duration_min != null && (
-              <span>Durée estimée: {workout.blocks.duration_min} min</span>
-            )}
+            {/* Bouton play/pause avec effet */}
+            <motion.button
+              onClick={() => setIsRunning(!isRunning)}
+              className={`p-3 rounded-full transition-all ${
+                isRunning
+                  ? 'bg-primary/20 text-primary'
+                  : 'bg-emerald-500/20 text-emerald-400'
+              }`}
+              aria-label={isRunning ? 'Pause' : 'Reprendre'}
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1 }}
+            >
+              {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </motion.button>
           </div>
         </div>
       </div>
 
-      {/* Contenu */}
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      {/* Contenu avec espacement mobile optimisé */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 pb-32">
         {/* Afficher le workout avec InteractiveWorkoutDisplay */}
         <InteractiveWorkoutDisplay
           blocks={workout.blocks}
           onSectionComplete={(sectionIdx, completed) => {
-            // Mettre à jour le progress avec une clé unique pour chaque section
             const sectionKey = `section-${sectionIdx}`
             setBlockProgress(prev => ({
               ...prev,
@@ -141,16 +143,18 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
           }}
           onExerciseClick={(exerciseName) => setSelectedExerciseName(exerciseName)}
         />
+      </div>
 
-        {/* Bouton de complétion */}
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border pt-6 pb-8">
-          <button
-            onClick={handleComplete}
-            className="w-full bg-primary text-primary-foreground px-6 py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-          >
-            Terminer le workout
-          </button>
-        </div>
+      {/* Bouton de complétion - FAB style Freeletics */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-8 pb-6 sm:pb-8 px-4 sm:px-6">
+        <motion.button
+          onClick={handleComplete}
+          className="w-full max-w-5xl mx-auto bg-gradient-to-r from-primary to-primary/80 text-white px-6 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-lg uppercase tracking-wider shadow-2xl shadow-primary/20"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          Terminer le workout
+        </motion.button>
       </div>
 
       {/* Modale de confirmation d'arrêt */}

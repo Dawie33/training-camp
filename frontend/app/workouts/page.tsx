@@ -40,9 +40,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import type { Workouts } from '@/domain/entities/workout'
 import { sportsService } from '@/services/sports'
 import { workoutsApi } from '@/services/workouts'
-import type { Workouts } from '@/domain/entities/workout'
 import { toast } from 'sonner'
 
 const ITEMS_PER_PAGE = 10
@@ -332,17 +332,19 @@ export default function WorkoutsPage() {
           <h1 className="text-3xl font-bold">Workouts</h1>
           <p className="text-muted-foreground">Total: {total}</p>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <Link href="/workouts/new">
-            <Button className="bg-black text-white mr-2">
-              <Plus className="mr-2 h-4 w-4 " />
-              Créer un workout
+            <Button className="bg-black text-white text-xs sm:text-sm px-3 sm:px-4 h-9 sm:h-10">
+              <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Créer un workout</span>
+              <span className="sm:hidden">Créer</span>
             </Button>
           </Link>
           <Link href="/workouts/generate-ai">
-            <Button className="bg-green-500 text-white ">
+            <Button className="bg-green-500 text-white text-xs sm:text-sm px-3 sm:px-4 h-9 sm:h-10">
               🤖
-              Générer un workout avec IA
+              <span className="hidden sm:inline ml-1">Générer un workout avec IA</span>
+              <span className="sm:hidden ml-1">IA</span>
             </Button>
           </Link>
         </div>

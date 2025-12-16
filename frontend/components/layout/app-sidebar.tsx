@@ -15,6 +15,7 @@ import { motion } from 'framer-motion'
 import {
   Activity,
   Calendar,
+  Clock,
   Dumbbell,
   Home,
   Package,
@@ -51,6 +52,7 @@ export function AppSidebar({ isOpen = false, onClose }: AppSidebarProps) {
 
   const mainNavItems: NavItem[] = [
     { href: '/dashboard', label: 'Tableau de bord', icon: <Home className="w-5 h-5" /> },
+    { href: '/timer', label: 'Timer', icon: <Clock className="w-5 h-5" /> },
     { href: '/calendar', label: 'Calendrier', icon: <Calendar className="w-5 h-5" /> },
     { href: '/tracking', label: 'Suivi', icon: <TrendingUp className="w-5 h-5" /> },
     { href: '/benchmarks', label: 'Benchmarks', icon: <Target className="w-5 h-5" /> },
