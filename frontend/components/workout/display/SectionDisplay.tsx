@@ -1,9 +1,9 @@
 import { WorkoutSection } from '@/domain/entities/workout-structure'
 import { Check } from 'lucide-react'
-import { AMRAPTimer } from '../timers/AMRAPTimer'
-import { EMOMTimer } from '../timers/EMOMTimer'
-import { ForTimeTimer } from '../timers/ForTimeTimer'
-import { TabataTimer } from '../timers/TabataTimer'
+import { AMRAPTimer } from '@/app/timer/timers/AMRAPTimer'
+import { EMOMTimer } from '@/app/timer/timers/EMOMTimer'
+import { ForTimeTimer } from '@/app/timer/timers/ForTimeTimer'
+import { TabataTimer } from '@/app/timer/timers/TabataTimer'
 import { ExerciseDisplay } from './ExerciseDisplay'
 import { sectionIcons } from './SectionIcons'
 

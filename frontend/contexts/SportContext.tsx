@@ -1,10 +1,7 @@
 'use client'
 
 /* eslint-disable react-refresh/only-export-components */
-import { FloatingTimer } from '@/components/workout/timers/floatingTimer'
-import { WorkoutTimerProvider } from '@/contexts/WorkoutTimerContext'
 import type { Sport } from '@/domain/entities/sport'
-import { usePathname } from 'next/navigation'
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
 
 interface SportContextType {
@@ -24,11 +21,6 @@ const SportContext = createContext<SportContextType | undefined>(undefined)
 export function SportProvider({ children }: { children: ReactNode }) {
   const [activeSport, setActiveSportState] = useState<Sport | null>(null)
   const [loading, setLoading] = useState(true)
-  const pathname = usePathname()
-
-  // Pages où le timer ne doit pas être affiché
-  const hideTimerOnPages = ['/login', '/onboarding']
-  const shouldShowTimer = !hideTimerOnPages.includes(pathname)
 
   // Charger le sport actif depuis localStorage au montage
   useEffect(() => {
@@ -71,10 +63,7 @@ export function SportProvider({ children }: { children: ReactNode }) {
         loading,
       }}
     >
-      <WorkoutTimerProvider>
-        {children}
-        {shouldShowTimer && <FloatingTimer />}
-      </WorkoutTimerProvider>
+      {children}
     </SportContext.Provider>
   )
 }

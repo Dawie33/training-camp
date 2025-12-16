@@ -1,58 +1,61 @@
 'use client'
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { AMRAPTimer } from '@/components/workout/timers/AMRAPTimer'
-import { EMOMTimer } from '@/components/workout/timers/EMOMTimer'
-import { ForTimeTimer } from '@/components/workout/timers/ForTimeTimer'
-import { TabataTimer } from '@/components/workout/timers/TabataTimer'
+import { TimerConfig, TimerType } from '@/hooks/useWorkoutTimer'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { motion } from 'framer-motion'
-import { Clock, Timer as TimerIcon, Zap, TrendingUp, Target } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Timer as TimerIcon } from 'lucide-react'
 import { useState } from 'react'
+import { ConfigView } from './components/ConfigView'
+import { MenuView } from './components/MenuView'
+import { RunningView } from './components/RunningView'
+import { AMRAPTimer } from './timers/AMRAPTimer'
+import { EMOMTimer } from './timers/EMOMTimer'
+import { ForTimeTimer } from './timers/ForTimeTimer'
+import { TabataTimer } from './timers/TabataTimer'
 
-type TimerType = 'fortime' | 'amrap' | 'emom' | 'tabata'
+type TimerState = 'menu' | 'config' | 'running'
 
 function TimerContent() {
-  const [selectedTimer, setSelectedTimer] = useState<TimerType>('fortime')
+  const [timerState, setTimerState] = useState<TimerState>('menu')
+  const [selectedTimerType, setSelectedTimerType] = useState<TimerType | null>(null)
+  const [timerConfig, setTimerConfig] = useState<TimerConfig | null>(null)
 
-  const timerTypes = [
-    {
-      id: 'fortime' as TimerType,
-      name: 'For Time',
-      icon: Clock,
-      description: 'Chronomètre classique avec time cap optionnel',
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/30'
-    },
-    {
-      id: 'amrap' as TimerType,
-      name: 'AMRAP',
-      icon: Zap,
-      description: 'As Many Rounds As Possible',
-      color: 'text-orange-400',
-      bgColor: 'bg-orange-500/10',
-      borderColor: 'border-orange-500/30'
-    },
-    {
-      id: 'emom' as TimerType,
-      name: 'EMOM',
-      icon: TrendingUp,
-      description: 'Every Minute On the Minute',
-      color: 'text-emerald-400',
-      bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/30'
-    },
-    {
-      id: 'tabata' as TimerType,
-      name: 'Tabata',
-      icon: Target,
-      description: 'Intervalles 20s/10s',
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10',
-      borderColor: 'border-purple-500/30'
+  const handleSelectType = (type: TimerType) => {
+    setSelectedTimerType(type)
+    setTimerState('config')
+  }
+
+  const handleStart = (config: TimerConfig) => {
+    setTimerConfig(config)
+    setTimerState('running')
+  }
+
+  const handleBack = () => {
+    setTimerState('menu')
+    setSelectedTimerType(null)
+  }
+
+  const handleClose = () => {
+    setTimerState('menu')
+    setSelectedTimerType(null)
+    setTimerConfig(null)
+  }
+
+  const renderTimer = () => {
+    if (!selectedTimerType || !timerConfig) return null
+
+    switch (selectedTimerType) {
+      case 'FOR_TIME':
+        return <ForTimeTimer capMin={timerConfig.timeCap} />
+      case 'AMRAP':
+        return <AMRAPTimer duration={timerConfig.duration || 20} />
+      case 'EMOM':
+        return <EMOMTimer durationMin={timerConfig.duration || 10} intervalMin={timerConfig.intervalMinutes || 1} />
+      case 'TABATA':
+        return <TabataTimer rounds={timerConfig.rounds || 8} workSeconds={timerConfig.workSeconds || 20} restSeconds={timerConfig.restSeconds || 10} />
     }
-  ]
+  }
 
   return (
     <motion.div
@@ -66,88 +69,60 @@ function TimerContent() {
         <motion.div variants={fadeInUp} className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-black mb-2">Timers</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Choisissez le type de timer pour votre entraînement
+            Choisissez et configurez votre timer d'entraînement
           </p>
         </motion.div>
 
-        {/* Timer Type Selector */}
-        <motion.div variants={fadeInUp} className="mb-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {timerTypes.map((timer) => {
-              const Icon = timer.icon
-              const isSelected = selectedTimer === timer.id
+        {/* Timer Views Container */}
+        <motion.div
+          variants={fadeInUp}
+          className="flex justify-center items-start min-h-[200px]"
+        >
+          <AnimatePresence mode="wait">
+            {timerState === 'menu' && (
+              <MenuView
+                onSelectType={handleSelectType}
+              />
+            )}
 
-              return (
-                <motion.button
-                  key={timer.id}
-                  onClick={() => setSelectedTimer(timer.id)}
-                  className={`relative p-4 sm:p-6 rounded-2xl border-2 transition-all ${
-                    isSelected
-                      ? `${timer.bgColor} ${timer.borderColor} shadow-lg`
-                      : 'bg-card border-border hover:border-primary/30'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex flex-col items-center text-center gap-3">
-                    <div className={`p-3 rounded-xl ${isSelected ? timer.bgColor : 'bg-accent'}`}>
-                      <Icon className={`w-6 h-6 ${isSelected ? timer.color : 'text-muted-foreground'}`} />
-                    </div>
-                    <div>
-                      <h3 className={`font-bold text-base sm:text-lg ${isSelected ? '' : 'text-muted-foreground'}`}>
-                        {timer.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
-                        {timer.description}
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
-              )
-            })}
-          </div>
-        </motion.div>
+            {timerState === 'config' && selectedTimerType && (
+              <ConfigView
+                timerType={selectedTimerType}
+                onStart={handleStart}
+                onBack={handleBack}
+              />
+            )}
 
-        {/* Timer Display */}
-        <motion.div variants={fadeInUp} className="w-full max-w-3xl mx-auto">
-          {selectedTimer === 'fortime' && <ForTimeTimer capMin={20} />}
-          {selectedTimer === 'amrap' && <AMRAPTimer duration={20} />}
-          {selectedTimer === 'emom' && <EMOMTimer durationMin={10} intervalMin={1} />}
-          {selectedTimer === 'tabata' && <TabataTimer rounds={8} workSeconds={20} restSeconds={10} />}
+            {timerState === 'running' && (
+              <RunningView
+                onClose={handleClose}
+              >
+                {renderTimer()}
+              </RunningView>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Instructions */}
-        <motion.div variants={fadeInUp} className="mt-8 max-w-2xl mx-auto">
+        <motion.div variants={fadeInUp} className="mt-12 max-w-2xl mx-auto">
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
               <TimerIcon className="w-5 h-5 text-primary" />
-              À propos de {timerTypes.find(t => t.id === selectedTimer)?.name}
+              Guide des timers
             </h3>
-            <div className="text-sm text-muted-foreground space-y-2">
-              {selectedTimer === 'fortime' && (
-                <>
-                  <p><strong>For Time</strong> : Chronomètre classique pour mesurer votre temps de complétion.</p>
-                  <p>Parfait pour les WODs avec un nombre fixe de rounds ou de répétitions.</p>
-                </>
-              )}
-              {selectedTimer === 'amrap' && (
-                <>
-                  <p><strong>AMRAP</strong> : Comptez le maximum de rounds possibles dans un temps donné.</p>
-                  <p>Idéal pour repousser vos limites et mesurer votre endurance.</p>
-                </>
-              )}
-              {selectedTimer === 'emom' && (
-                <>
-                  <p><strong>EMOM</strong> : Effectuez un exercice au début de chaque minute.</p>
-                  <p>Le temps restant est votre repos avant la minute suivante.</p>
-                </>
-              )}
-              {selectedTimer === 'tabata' && (
-                <>
-                  <p><strong>Tabata</strong> : Intervalles haute intensité de 20 secondes de travail / 10 secondes de repos.</p>
-                  <p>Protocole scientifiquement prouvé pour améliorer la capacité aérobie et anaérobie.</p>
-                </>
-              )}
+            <div className="text-sm text-muted-foreground space-y-3">
+              <div>
+                <strong className="text-foreground">For Time :</strong> Chronomètre pour mesurer votre temps de complétion. Parfait pour les WODs avec un nombre fixe de rounds.
+              </div>
+              <div>
+                <strong className="text-foreground">AMRAP :</strong> As Many Rounds As Possible. Comptez le maximum de rounds dans un temps donné pour repousser vos limites.
+              </div>
+              <div>
+                <strong className="text-foreground">EMOM :</strong> Every Minute On the Minute. Effectuez un exercice au début de chaque minute, le temps restant est votre repos.
+              </div>
+              <div>
+                <strong className="text-foreground">Tabata :</strong> Intervalles haute intensité de 20 secondes de travail / 10 secondes de repos. Protocole scientifiquement prouvé.
+              </div>
             </div>
           </div>
         </motion.div>
