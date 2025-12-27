@@ -1,11 +1,13 @@
 import { WorkoutSection } from '@/domain/entities/workout-structure'
-import { Check } from 'lucide-react'
+import { Check, Play, X } from 'lucide-react'
 import { AMRAPTimer } from '@/app/timer/timers/AMRAPTimer'
 import { EMOMTimer } from '@/app/timer/timers/EMOMTimer'
 import { ForTimeTimer } from '@/app/timer/timers/ForTimeTimer'
 import { TabataTimer } from '@/app/timer/timers/TabataTimer'
 import { ExerciseDisplay } from './ExerciseDisplay'
+import { ExerciseSlider } from './ExerciseSlider'
 import { sectionIcons } from './SectionIcons'
+import { useState } from 'react'
 
 interface SectionDisplayProps {
     section: WorkoutSection
@@ -43,46 +45,137 @@ export function SectionDisplay({
 }: SectionDisplayProps) {
 
     const icon = sectionIcons[section.type] || '📋'
+    const [isActiveMode, setIsActiveMode] = useState(false)
 
-    // Déterminer quel timer afficher selon le type
+    const handleStartSection = () => {
+        setIsActiveMode(true)
+        onSectionStart?.()
+    }
+
+    const handleCloseActiveMode = () => {
+        setIsActiveMode(false)
+    }
+
+    const handleAllExercisesCompleted = () => {
+        // Marquer la section comme complétée
+        onSectionToggle?.()
+        // Fermer le mode actif après un délai
+        setTimeout(() => {
+            setIsActiveMode(false)
+        }, 1000)
+    }
+
+    // Déterminer quel timer afficher selon le type OU le format
     const renderTimer = () => {
-        if (section.type === 'amrap' && section.duration_min) {
+        // Détection AMRAP par type ou format
+        if ((section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')) && section.duration_min) {
             return <AMRAPTimer duration={section.duration_min} />
         }
-        if (section.type === 'for_time') {
+        // Détection For Time par type ou format
+        if (section.type === 'for_time' || section.format?.toLowerCase().includes('for time')) {
             return <ForTimeTimer capMin={section.duration_min} />
         }
-        if (section.type === 'emom' && section.duration_min) {
+        // Détection EMOM par type ou format
+        if ((section.type === 'emom' || section.format?.toLowerCase().includes('emom')) && section.duration_min) {
             return <EMOMTimer durationMin={section.duration_min} intervalMin={1} />
         }
-        if (section.type === 'tabata') {
+        // Détection Tabata par type ou format
+        if (section.type === 'tabata' || section.format?.toLowerCase().includes('tabata')) {
             return <TabataTimer rounds={section.rounds} workSeconds={20} restSeconds={10} />
         }
         return null
     }
 
 
+    // Mode actif : affichage plein écran des exercices uniquement
+    if (isActiveMode && section.exercises && section.exercises.length > 0) {
+        // Détection AMRAP par type ou format
+        const isAMRAP = section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')
+
+        return (
+            <div className="fixed inset-0 z-50 bg-background overflow-auto">
+                <div className="min-h-screen p-4 pb-20">
+                    {/* Header avec bouton fermer */}
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">{icon}</span>
+                            <h2 className="text-xl font-bold">{section.title}</h2>
+                        </div>
+                        <button
+                            onClick={handleCloseActiveMode}
+                            className="p-2 rounded-lg hover:bg-muted transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    {/* Description si présente */}
+                    {section.description && (
+                        <p className="text-sm text-muted-foreground mb-4">{section.description}</p>
+                    )}
+
+                    {/* Timer de section - compact pour AMRAP */}
+                    {isAMRAP ? (
+                        <div className="mb-4">
+                            {renderTimer()}
+                        </div>
+                    ) : (
+                        renderTimer()
+                    )}
+
+                    {/* Pour AMRAP: liste d'exercices sans checkboxes, sinon slider */}
+                    <div className="mt-4">
+                        {isAMRAP ? (
+                            <>
+                                <div className="space-y-3">
+                                    {section.exercises.map((exercise, idx) => (
+                                        <ExerciseDisplay
+                                            key={idx}
+                                            exercise={exercise}
+                                            isStarting={false}
+                                            isCompleted={false}
+                                            onExerciseClick={onExerciseClick}
+                                        />
+                                    ))}
+                                </div>
+                                {/* Bouton Terminé pour AMRAP */}
+                                <button
+                                    onClick={handleAllExercisesCompleted}
+                                    className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-semibold text-base"
+                                >
+                                    <Check className="w-5 h-5" />
+                                    <span>Terminer la section</span>
+                                </button>
+                            </>
+                        ) : (
+                            <ExerciseSlider
+                                exercises={section.exercises}
+                                rounds={section.rounds}
+                                onExerciseClick={onExerciseClick}
+                                onAllExercisesCompleted={handleAllExercisesCompleted}
+                            />
+                        )}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className={`bg-card border rounded-lg p-4 space-y-3 ${isCurrentSection ? 'ring-2 ring-primary' : ''} ${isSectionCompleted ? 'opacity-60' : ''}`}>
             {/* Header de la section */}
             <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
-                    {/* Checkbox de section (seulement si isStarting) */}
-                    {isStarting && onSectionToggle && (
-                        <div
-                            onClick={onSectionToggle}
-                            className={`mt-1 w-6 h-6 rounded flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer ${isSectionCompleted
-                                ? 'bg-primary text-primary-foreground'
-                                : 'border-2 border-muted-foreground hover:border-primary'
-                            }`}
-                        >
-                            {isSectionCompleted && <Check className="w-4 h-4" />}
-                        </div>
-                    )}
                     <div className="flex-1">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                             <span>{icon}</span>
                             <span>{section.title}</span>
+                            {isSectionCompleted && (
+                                <span className="ml-2 px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold flex items-center gap-1">
+                                    <Check className="w-3 h-3" />
+                                    Terminé
+                                </span>
+                            )}
                         </h3>
                         {section.description && (
                             <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
@@ -98,8 +191,7 @@ export function SectionDisplay({
                 </div>
             </div>
 
-            {/* Timer de section spécialisé selon le type */}
-            {isStarting && renderTimer()}
+            {/* Timer de section désactivé - uniquement en mode actif */}
 
             {/* Format et détails */}
             {section.format && (
@@ -140,19 +232,33 @@ export function SectionDisplay({
                 </div>
             )}
 
-            {/* Exercices */}
+            {/* Exercices - Affichage liste */}
             {section.exercises && section.exercises.length > 0 && (
-                <div className="space-y-2 pl-4 border-l-2 border-primary/20">
-                    {section.exercises.map((exercise, exIdx) => (
-                        <ExerciseDisplay
-                            key={exIdx}
-                            exercise={exercise}
-                            isStarting={false}
-                            isCompleted={false}
-                            rounds={section.rounds}
-                            onExerciseClick={onExerciseClick}
-                        />
-                    ))}
+                <div className="space-y-3">
+                    {/* Liste des exercices */}
+                    <div className="space-y-2 pl-4 border-l-2 border-primary/20">
+                        {section.exercises.map((exercise, exIdx) => (
+                            <ExerciseDisplay
+                                key={exIdx}
+                                exercise={exercise}
+                                isStarting={false}
+                                isCompleted={false}
+                                rounds={section.rounds}
+                                onExerciseClick={onExerciseClick}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Bouton Démarrer compact en bas */}
+                    {isStarting && !isSectionCompleted && (
+                        <button
+                            onClick={handleStartSection}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all font-medium shadow-md"
+                        >
+                            <Play className="w-4 h-4" />
+                            <span>Démarrer</span>
+                        </button>
+                    )}
                 </div>
             )}
 

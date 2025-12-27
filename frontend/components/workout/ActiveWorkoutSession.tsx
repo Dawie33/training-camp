@@ -130,7 +130,7 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
       </div>
 
       {/* Contenu avec espacement mobile optimisé */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 pb-32">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 pb-56">
         {/* Afficher le workout avec InteractiveWorkoutDisplay */}
         <InteractiveWorkoutDisplay
           blocks={workout.blocks}
@@ -146,10 +146,10 @@ export function ActiveWorkoutSession({ workout, sessionId, onClose }: ActiveWork
       </div>
 
       {/* Bouton de complétion - FAB style Freeletics */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-8 pb-6 sm:pb-8 px-4 sm:px-6">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-4 pb-6 sm:pb-8 px-4 sm:px-6 flex justify-center">
         <motion.button
           onClick={handleComplete}
-          className="w-full max-w-5xl mx-auto bg-gradient-to-r from-primary to-primary/80 text-white px-6 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-lg uppercase tracking-wider shadow-2xl shadow-primary/20"
+          className="w-full max-w-5xl bg-gradient-to-r from-primary to-primary/80 text-white px-6 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-lg uppercase tracking-wider shadow-2xl shadow-primary/20"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >

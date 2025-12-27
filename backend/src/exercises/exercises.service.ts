@@ -81,11 +81,27 @@ export class ExercisesService {
 
     /**
      * Récupère un exercice par son nom.
+     * Recherche d'abord une correspondance exacte, sinon recherche avec ILIKE (insensible à la casse et pluriel tolérant)
      * @param {string} name - Nom de l'exercice.
      * @returns {Promise<Exercise | null>} - Promesse qui renvoie l'exercice correspondant au nom ou null si l'exercice n'existe pas.
      */
     async findByName(name: string) {
-        return this.knex('exercises').where({ 'name': name }).first()
+        // Essayer une correspondance exacte d'abord
+        let exercise = await this.knex('exercises').where({ 'name': name }).first()
+
+        if (exercise) {
+            return exercise
+        }
+
+        // Sinon, recherche insensible à la casse et au pluriel
+        // Enlever le 's' final si présent pour supporter "Air Squats" -> "Air Squat"
+        const singularName = name.endsWith('s') ? name.slice(0, -1) : name
+        exercise = await this.knex('exercises')
+            .where('name', 'ilike', singularName)
+            .orWhere('name', 'ilike', name)
+            .first()
+
+        return exercise || null
     }
 
     /**
