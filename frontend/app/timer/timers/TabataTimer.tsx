@@ -1,7 +1,7 @@
 'use client'
 
 import { Play, Pause, RotateCcw } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface TabataTimerProps {
   rounds?: number
@@ -22,6 +22,7 @@ export function TabataTimer({
   const [secondsInPhase, setSecondsInPhase] = useState(0)
   const [isWorking, setIsWorking] = useState(true)
   const [isRunning, setIsRunning] = useState(false)
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
   const totalSeconds = rounds * (workSeconds + restSeconds)
   const cycleSeconds = workSeconds + restSeconds
@@ -85,6 +86,40 @@ export function TabataTimer({
       onTimeUpdate(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`)
     }
   }, [remainingInPhase, isRunning, onTimeUpdate])
+
+  // Gérer le Wake Lock pour empêcher l'écran de se mettre en veille
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isRunning) {
+          wakeLockRef.current = await navigator.wakeLock.request('screen')
+        }
+      } catch (err) {
+        console.log('Wake Lock error:', err)
+      }
+    }
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release()
+          wakeLockRef.current = null
+        } catch (err) {
+          console.log('Wake Lock release error:', err)
+        }
+      }
+    }
+
+    if (isRunning) {
+      requestWakeLock()
+    } else {
+      releaseWakeLock()
+    }
+
+    return () => {
+      releaseWakeLock()
+    }
+  }, [isRunning])
 
   const isComplete = currentRound > rounds
 

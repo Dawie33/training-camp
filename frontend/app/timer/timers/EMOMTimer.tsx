@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronRight, Pause, Play, RotateCcw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTimerSounds } from '@/hooks/useTimerSounds'
 
 interface EMOMTimerProps {
@@ -16,6 +16,7 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpda
   const [isRunning, setIsRunning] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const sounds = useTimerSounds()
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
   const totalSeconds = durationMin * 60
   const intervalSeconds = intervalMin * 60
@@ -93,6 +94,40 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpda
       onTimeUpdate(timeString)
     }
   }, [roundElapsed, onTimeUpdate])
+
+  // Gérer le Wake Lock pour empêcher l'écran de se mettre en veille
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isRunning) {
+          wakeLockRef.current = await navigator.wakeLock.request('screen')
+        }
+      } catch (err) {
+        console.log('Wake Lock error:', err)
+      }
+    }
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release()
+          wakeLockRef.current = null
+        } catch (err) {
+          console.log('Wake Lock release error:', err)
+        }
+      }
+    }
+
+    if (isRunning) {
+      requestWakeLock()
+    } else {
+      releaseWakeLock()
+    }
+
+    return () => {
+      releaseWakeLock()
+    }
+  }, [isRunning])
 
   const reset = () => {
     setElapsedSeconds(0)

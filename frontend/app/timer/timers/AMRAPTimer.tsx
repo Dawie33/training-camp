@@ -1,7 +1,7 @@
 'use client'
 
 import { Pause, Play, RotateCcw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTimerSounds } from '@/hooks/useTimerSounds'
 
 interface AMRAPTimerProps {
@@ -16,6 +16,7 @@ export function AMRAPTimer({ duration, onComplete, onTimeUpdate }: AMRAPTimerPro
   const [countdown, setCountdown] = useState<number | null>(null)
   const totalSeconds = duration * 60
   const sounds = useTimerSounds()
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
   // Gérer le countdown de 10 secondes
   useEffect(() => {
@@ -84,6 +85,40 @@ export function AMRAPTimer({ duration, onComplete, onTimeUpdate }: AMRAPTimerPro
       onTimeUpdate(timeString)
     }
   }, [remainingSeconds, onTimeUpdate])
+
+  // Gérer le Wake Lock pour empêcher l'écran de se mettre en veille
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isRunning) {
+          wakeLockRef.current = await navigator.wakeLock.request('screen')
+        }
+      } catch (err) {
+        console.log('Wake Lock error:', err)
+      }
+    }
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release()
+          wakeLockRef.current = null
+        } catch (err) {
+          console.log('Wake Lock release error:', err)
+        }
+      }
+    }
+
+    if (isRunning) {
+      requestWakeLock()
+    } else {
+      releaseWakeLock()
+    }
+
+    return () => {
+      releaseWakeLock()
+    }
+  }, [isRunning])
 
   const reset = () => {
     setElapsedSeconds(0)

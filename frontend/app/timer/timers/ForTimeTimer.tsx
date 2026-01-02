@@ -1,7 +1,7 @@
 'use client'
 
 import { Play, Pause, RotateCcw } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTimerSounds } from '@/hooks/useTimerSounds'
 
 interface ForTimeTimerProps {
@@ -16,6 +16,7 @@ export function ForTimeTimer({ capMin, onComplete, onTimeUpdate }: ForTimeTimerP
   const [isFinished, setIsFinished] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const sounds = useTimerSounds()
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
   // Gérer le countdown de 10 secondes
   useEffect(() => {
@@ -70,6 +71,40 @@ export function ForTimeTimer({ capMin, onComplete, onTimeUpdate }: ForTimeTimerP
       onTimeUpdate(timeString)
     }
   }, [elapsedSeconds, onTimeUpdate])
+
+  // Gérer le Wake Lock pour empêcher l'écran de se mettre en veille
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isRunning) {
+          wakeLockRef.current = await navigator.wakeLock.request('screen')
+        }
+      } catch (err) {
+        console.log('Wake Lock error:', err)
+      }
+    }
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release()
+          wakeLockRef.current = null
+        } catch (err) {
+          console.log('Wake Lock release error:', err)
+        }
+      }
+    }
+
+    if (isRunning) {
+      requestWakeLock()
+    } else {
+      releaseWakeLock()
+    }
+
+    return () => {
+      releaseWakeLock()
+    }
+  }, [isRunning])
 
   const reset = () => {
     setElapsedSeconds(0)

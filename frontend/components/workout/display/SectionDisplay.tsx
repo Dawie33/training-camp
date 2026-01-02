@@ -77,9 +77,13 @@ export function SectionDisplay({
         if (section.type === 'for_time' || section.format?.toLowerCase().includes('for time')) {
             return <ForTimeTimer capMin={section.duration_min} />
         }
-        // Détection EMOM par type ou format
+        // Détection EMOM par type ou format (EMOM, E2MOM, E3MOM, etc.)
         if ((section.type === 'emom' || section.format?.toLowerCase().includes('emom')) && section.duration_min) {
-            return <EMOMTimer durationMin={section.duration_min} intervalMin={1} />
+            // Extraire l'intervalle (E2MOM = 2 min, E3MOM = 3 min, sinon 1 min par défaut)
+            const formatLower = section.format?.toLowerCase() || ''
+            const intervalMatch = formatLower.match(/e(\d+)mom/)
+            const intervalMin = intervalMatch ? parseInt(intervalMatch[1]) : 1
+            return <EMOMTimer durationMin={section.duration_min} intervalMin={intervalMin} />
         }
         // Détection Tabata par type ou format
         if (section.type === 'tabata' || section.format?.toLowerCase().includes('tabata')) {
