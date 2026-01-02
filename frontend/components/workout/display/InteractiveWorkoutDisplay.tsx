@@ -76,25 +76,31 @@ export function InteractiveWorkoutDisplay({ blocks, onSectionComplete, onExercis
       )}
 
       <div className="space-y-4">
-        {blocks.sections.map((section, idx) => (
-          <div
-            key={idx}
-            ref={(el) => {
-              sectionRefs.current[idx] = el
-            }}
-          >
-            <SectionDisplay
-              section={section}
-              index={idx}
-              isStarting={true}
-              isSectionCompleted={isSectionCompleted(idx)}
-              onSectionToggle={() => toggleSection(idx)}
-              isCurrentSection={idx === currentSectionIndex}
-              onSectionStart={() => setCurrentSectionIndex(idx)}
-              onExerciseClick={onExerciseClick}
-            />
-          </div>
-        ))}
+        {blocks.sections.map((section, idx) => {
+          // Une section peut être démarrée si c'est la première OU si la section précédente est complétée
+          const canStart = idx === 0 || isSectionCompleted(idx - 1)
+
+          return (
+            <div
+              key={idx}
+              ref={(el) => {
+                sectionRefs.current[idx] = el
+              }}
+            >
+              <SectionDisplay
+                section={section}
+                index={idx}
+                isStarting={true}
+                isSectionCompleted={isSectionCompleted(idx)}
+                onSectionToggle={() => toggleSection(idx)}
+                isCurrentSection={idx === currentSectionIndex}
+                onSectionStart={() => setCurrentSectionIndex(idx)}
+                onExerciseClick={onExerciseClick}
+                canStart={canStart}
+              />
+            </div>
+          )
+        })}
       </div>
 
       {blocks.estimated_calories && (

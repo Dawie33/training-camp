@@ -18,6 +18,7 @@ interface SectionDisplayProps {
     isCurrentSection?: boolean
     onSectionStart?: () => void
     onExerciseClick?: (exerciseId: string) => void
+    canStart?: boolean
 }
 
 /**
@@ -41,7 +42,8 @@ export function SectionDisplay({
     onSectionToggle,
     isCurrentSection,
     onSectionStart,
-    onExerciseClick
+    onExerciseClick,
+    canStart = true
 }: SectionDisplayProps) {
 
     const icon = sectionIcons[section.type] || '📋'
@@ -251,13 +253,25 @@ export function SectionDisplay({
 
                     {/* Bouton Démarrer compact en bas */}
                     {isStarting && !isSectionCompleted && (
-                        <button
-                            onClick={handleStartSection}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all font-medium shadow-md"
-                        >
-                            <Play className="w-4 h-4" />
-                            <span>Démarrer</span>
-                        </button>
+                        <div className="space-y-2">
+                            <button
+                                onClick={handleStartSection}
+                                disabled={!canStart}
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium shadow-md ${
+                                    canStart
+                                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                        : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                                }`}
+                            >
+                                <Play className="w-4 h-4" />
+                                <span>Démarrer</span>
+                            </button>
+                            {!canStart && (
+                                <p className="text-xs text-muted-foreground text-center">
+                                    🔒 Terminez la section précédente pour débloquer
+                                </p>
+                            )}
+                        </div>
                     )}
                 </div>
             )}

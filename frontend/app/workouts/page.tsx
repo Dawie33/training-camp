@@ -342,7 +342,6 @@ export default function WorkoutsPage() {
           </Link>
           <Link href="/workouts/generate-ai">
             <Button className="bg-green-500 text-white text-xs sm:text-sm px-3 sm:px-4 h-9 sm:h-10">
-              🤖
               <span className="hidden sm:inline ml-1">Générer un workout avec IA</span>
               <span className="sm:hidden ml-1">IA</span>
             </Button>

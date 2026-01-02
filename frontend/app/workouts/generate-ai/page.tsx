@@ -1,11 +1,11 @@
 'use client'
 
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
-import { GeneratedWorkout, generateWorkoutWithAI, sportsService, workoutsService } from '@/services'
 import { ExerciseDifficulty } from '@/domain/entities/exercice'
 import { Sport } from '@/domain/entities/sport'
 import { CreateWorkoutDTO } from '@/domain/entities/workout'
 import { WORKOUT_TYPES_BY_SPORT } from '@/domain/entities/workout-structure'
+import { GeneratedWorkout, generateWorkoutWithAI, sportsService, workoutsService } from '@/services'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -247,7 +247,7 @@ export default function GenerateWorkoutAIPage() {
                   Génération en cours...
                 </span>
               ) : (
-                '🤖 Générer le Workout'
+                'Générer le Workout'
               )}
             </button>
 

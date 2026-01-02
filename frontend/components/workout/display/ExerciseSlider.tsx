@@ -33,6 +33,17 @@ export function ExerciseSlider({ exercises, rounds, onAllExercisesCompleted }: E
   }
 
   const completeCurrentExercise = () => {
+    const isAlreadyCompleted = completedExercises[currentIndex]
+
+    // Si déjà complété, on décoche pour permettre de refaire
+    if (isAlreadyCompleted) {
+      setCompletedExercises(prev => ({
+        ...prev,
+        [currentIndex]: false
+      }))
+      return
+    }
+
     // Marquer l'exercice actuel comme complété
     setCompletedExercises(prev => ({
       ...prev,
@@ -103,12 +114,12 @@ export function ExerciseSlider({ exercises, rounds, onAllExercisesCompleted }: E
       {/* Indicateur de progression */}
       <div className="flex items-center justify-between text-sm text-muted-foreground px-2">
         <div className="flex items-center gap-3">
-          <span>Exercice {currentIndex + 1} / {exercises.length}</span>
           {totalRounds > 1 && (
             <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold">
               Round {currentRound}/{totalRounds}
             </span>
           )}
+          <span>Exercice {currentIndex + 1} / {exercises.length}</span>
         </div>
         <div className="flex gap-1">
           {exercises.map((_, idx) => (
@@ -179,20 +190,13 @@ export function ExerciseSlider({ exercises, rounds, onAllExercisesCompleted }: E
 
         <button
           onClick={completeCurrentExercise}
-          disabled={completedExercises[currentIndex]}
-          className="flex items-center justify-center gap-2 px-6 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:bg-green-600 disabled:cursor-not-allowed font-medium text-sm"
+          className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg transition-all font-medium text-sm ${completedExercises[currentIndex]
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-primary text-primary-foreground hover:bg-primary/90'
+            }`}
         >
-          {completedExercises[currentIndex] ? (
-            <>
-              <Check className="w-6 h-4" />
-              <span>Terminé</span>
-            </>
-          ) : (
-            <>
-              <Check className="w-6 h-4" />
-              <span>Terminer</span>
-            </>
-          )}
+          <Check className="w-6 h-4" />
+          <span>{completedExercises[currentIndex] ? 'Terminé ✓' : 'Terminer'}</span>
         </button>
       </div>
 

@@ -3,7 +3,7 @@
 import { Exercise as ExerciseEntity } from '@/domain/entities/exercice'
 import { Exercise as WorkoutExercise } from '@/domain/entities/workout-structure'
 import { getExerciseByName } from '@/services/exercices'
-import { AlertCircle, Loader2, Play } from 'lucide-react'
+import { AlertCircle, Loader2, Play, Flame, Timer, Coffee, ArrowLeftRight, Info, FileText, Dumbbell, Wrench } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface DetailedExerciseDisplayProps {
@@ -74,61 +74,78 @@ export function DetailedExerciseDisplay({
         )}
       </div>
 
-      {/* Infos clés - Grande taille et centrées */}
-      <div className="flex items-center gap-3">
-        {exercise.reps && (
-          <div className="bg-white border-2 border-foreground text-foreground rounded-2xl px-12 py-4 text-center shadow-xl w-full max-w-md">
-            <div className="text-4xl font-bold">{exercise.reps}</div>
-            <div className="text-base font-semibold mt-2 tracking-wide">RÉPÉTITIONS</div>
+      {/* Infos clés - Taille compacte */}
+      {(() => {
+        const keyInfos = [
+          exercise.reps && { label: 'RÉPÉTITIONS', value: exercise.reps },
+          exercise.duration && { label: 'MINUTES', value: exercise.duration },
+          exercise.weight && { label: 'POIDS', value: exercise.weight },
+          exercise.distance && { label: 'DISTANCE', value: exercise.distance },
+        ].filter(Boolean)
+
+        const isSingle = keyInfos.length === 1
+
+        return (
+          <div className={`flex items-center gap-3 ${isSingle ? 'justify-center' : ''}`}>
+            {exercise.reps && (
+              <div className={`bg-white border-2 border-foreground text-foreground rounded-2xl px-2 py-2 text-center shadow-xl ${isSingle ? 'max-w-xs' : 'w-full max-w-sm'}`}>
+                <div className="text-xl font-bold">{exercise.reps}</div>
+                <div className="text-xs font-semibold mt-0.5 tracking-wide">RÉPÉTITIONS</div>
+              </div>
+            )}
+            {exercise.duration && (
+              <div className={`bg-white border-2 border-foreground text-foreground rounded-2xl px-6 py-2.5 text-center shadow-xl ${isSingle ? 'max-w-xs' : 'w-full max-w-md'}`}>
+                <div className="text-2xl font-bold">{exercise.duration}</div>
+                <div className="text-xs font-semibold mt-0.5 tracking-wide">MINUTES</div>
+              </div>
+            )}
+            {exercise.weight && (
+              <div className={`bg-white border-2 border-foreground text-foreground rounded-2xl px-6 py-2.5 text-center shadow-xl ${isSingle ? 'max-w-xs' : 'w-full max-w-md'}`}>
+                <div className="text-xl font-bold">{exercise.weight}</div>
+                <div className="text-xs font-semibold mt-0.5 tracking-wide">POIDS</div>
+              </div>
+            )}
+            {exercise.distance && (
+              <div className={`bg-white border-2 border-foreground text-foreground rounded-2xl px-6 py-2.5 text-center shadow-xl ${isSingle ? 'max-w-xs' : 'w-full max-w-md'}`}>
+                <div className="text-xl font-bold">{exercise.distance}</div>
+                <div className="text-xs font-semibold mt-0.5 tracking-wide">DISTANCE</div>
+              </div>
+            )}
           </div>
-        )}
-        {exercise.duration && (
-          <div className="bg-white border-2 border-foreground text-foreground rounded-2xl px-12 py-4 text-center shadow-xl w-full max-w-md">
-            <div className="text-6xl font-bold">{exercise.duration}</div>
-            <div className="text-base font-semibold mt-2 tracking-wide">MINUTES</div>
-          </div>
-        )}
-        {exercise.weight && (
-          <div className="bg-white border-2 border-foreground text-foreground rounded-2xl px-12 py-4 text-center shadow-xl w-full max-w-md">
-            <div className="text-3xl font-bold">{exercise.weight}</div>
-            <div className="text-base font-semibold mt-2 tracking-wide">POIDS</div>
-          </div>
-        )}
-        {exercise.distance && (
-          <div className="bg-white border-2 border-foreground text-foreground rounded-2xl px-12 py-4 text-center shadow-xl w-full max-w-md">
-            <div className="text-3xl font-bold">{exercise.distance}</div>
-            <div className="text-base font-semibold mt-2 tracking-wide">DISTANCE</div>
-          </div>
-        )}
-      </div>
+        )
+      })()}
 
       {/* Détails d'intensité et format - Pills compactes */}
       <div className="flex flex-wrap gap-2 justify-center">
         {exercise.intensity && (
-          <div className="px-4 py-2 bg-orange-100 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-800 rounded-full">
+          <div className="px-4 py-2 bg-orange-100 dark:bg-orange-950/30 border border-orange-300 dark:border-orange-800 rounded-full flex items-center gap-1.5">
+            <Flame className="w-3.5 h-3.5 text-orange-900 dark:text-orange-200" />
             <span className="text-xs font-medium text-orange-900 dark:text-orange-200">
-              💪 Intensité: {exercise.intensity}
+              Intensité: {exercise.intensity}
             </span>
           </div>
         )}
         {exercise.tempo && (
-          <div className="px-4 py-2 bg-blue-100 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-800 rounded-full">
+          <div className="px-4 py-2 bg-blue-100 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-800 rounded-full flex items-center gap-1.5">
+            <Timer className="w-3.5 h-3.5 text-blue-900 dark:text-blue-200" />
             <span className="text-xs font-medium text-blue-900 dark:text-blue-200">
-              ⏱️ Tempo: {exercise.tempo}
+              Tempo: {exercise.tempo}
             </span>
           </div>
         )}
         {exercise.rest_duration && (
-          <div className="px-4 py-2 bg-purple-100 dark:bg-purple-950/30 border border-purple-300 dark:border-purple-800 rounded-full">
+          <div className="px-4 py-2 bg-purple-100 dark:bg-purple-950/30 border border-purple-300 dark:border-purple-800 rounded-full flex items-center gap-1.5">
+            <Coffee className="w-3.5 h-3.5 text-purple-900 dark:text-purple-200" />
             <span className="text-xs font-medium text-purple-900 dark:text-purple-200">
-              ⏸️ Repos: {exercise.rest_duration}
+              Repos: {exercise.rest_duration}
             </span>
           </div>
         )}
         {exercise.per_side && (
-          <div className="px-4 py-2 bg-green-100 dark:bg-green-950/30 border border-green-300 dark:border-green-800 rounded-full">
+          <div className="px-4 py-2 bg-green-100 dark:bg-green-950/30 border border-green-300 dark:border-green-800 rounded-full flex items-center gap-1.5">
+            <ArrowLeftRight className="w-3.5 h-3.5 text-green-900 dark:text-green-200" />
             <span className="text-xs font-medium text-green-900 dark:text-green-200">
-              ↔️ Par côté
+              Par côté
             </span>
           </div>
         )}
@@ -137,8 +154,9 @@ export function DetailedExerciseDisplay({
       {/* Détails additionnels si présents */}
       {exercise.details && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-          <p className="text-sm text-amber-900 dark:text-amber-200 text-center font-medium">
-            ℹ️ {exercise.details}
+          <p className="text-sm text-amber-900 dark:text-amber-200 text-center font-medium flex items-center justify-center gap-2">
+            <Info className="w-4 h-4 flex-shrink-0" />
+            {exercise.details}
           </p>
         </div>
       )}
@@ -175,7 +193,7 @@ export function DetailedExerciseDisplay({
       {exerciseDetails?.instructions && (
         <div className="bg-card border rounded-lg p-3">
           <h3 className="font-semibold mb-2 text-sm flex items-center gap-2">
-            <span>📋</span> Instructions
+            <FileText className="w-4 h-4" /> Instructions
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{exerciseDetails.instructions}</p>
         </div>
@@ -185,7 +203,7 @@ export function DetailedExerciseDisplay({
       <div className="flex flex-wrap gap-2">
         {exerciseDetails?.muscle_groups && exerciseDetails.muscle_groups.length > 0 && (
           <>
-            <span className="text-xs font-medium">💪</span>
+            <Dumbbell className="w-4 h-4 text-primary" />
             {exerciseDetails.muscle_groups.map((muscle, idx) => (
               <span key={idx} className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium">
                 {muscle}
@@ -198,7 +216,7 @@ export function DetailedExerciseDisplay({
       {/* Équipement si présent */}
       {exerciseDetails?.equipment_required && exerciseDetails.equipment_required.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <span className="text-xs font-medium">🏋️</span>
+          <Wrench className="w-4 h-4" />
           {exerciseDetails.equipment_required.map((equipment, idx) => (
             <span key={idx} className="px-2 py-0.5 bg-muted rounded text-xs font-medium">
               {equipment}

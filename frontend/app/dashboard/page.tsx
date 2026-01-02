@@ -92,7 +92,7 @@ function DashboardContent() {
       <div className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
         {/* Header - design Freeletics */}
         <motion.div variants={fadeInUp} className="pt-2 sm:pt-0">
-          <h1 className="text-2xl sm:text-3xl font-black">Salut, {user?.user?.firstName || 'Champion'} 👋</h1>
+          <h1 className="text-2xl sm:text-3xl font-black">Salut, {user?.user?.firstName || 'Champion'}</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">Prêt à t'entraîner aujourd'hui ?</p>
         </motion.div>
 
