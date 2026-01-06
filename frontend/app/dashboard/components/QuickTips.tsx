@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Book, ChevronRight, Lightbulb, Sparkles } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Tip } from './types'
@@ -58,75 +58,47 @@ export function QuickTips() {
 
   const tip = tips[currentTip]
 
-  const getIcon = (iconType: string) => {
-    switch (iconType) {
-      case 'lightbulb':
-        return <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />
-      case 'sparkles':
-        return <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
-      case 'book':
-        return <Book className="w-5 h-5 sm:w-6 sm:h-6" />
-      default:
-        return <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />
-    }
-  }
-
-  const TipContent = () => (
-    <motion.div
-      key={currentTip}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.3 }}
-      className={`border rounded-lg p-4 sm:p-5 ${tip.color}`}
-    >
-      <div className="flex items-start gap-3 sm:gap-4">
-        <div className="flex-shrink-0 mt-0.5">
-          {getIcon(tip.icon)}
+  return (
+    <div className="rounded-2xl bg-gradient-to-r from-orange-500/10 to-rose-500/10 backdrop-blur-xl border border-orange-500/20 p-6">
+      <motion.div
+        key={currentTip}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-start gap-4"
+      >
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/30">
+          <span className="text-xl">💡</span>
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm sm:text-base font-semibold mb-1">
-            {tip.title}
-          </h4>
-          <p className="text-xs sm:text-sm opacity-90 leading-relaxed">
+          <h4 className="font-semibold text-orange-300 mb-1">{tip.title}</h4>
+          <p className="text-slate-300">
             {tip.description}
           </p>
           {tip.link && (
             <Link
               href={tip.link}
-              className="inline-flex items-center gap-1 text-xs sm:text-sm font-medium mt-2 hover:underline"
+              className="inline-flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300 mt-2 transition-colors"
             >
               En savoir plus
-              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+              <ChevronRight className="w-4 h-4" />
             </Link>
           )}
         </div>
-      </div>
-    </motion.div>
-  )
-
-  return (
-    <div className="bg-card rounded-lg border p-4 sm:p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base sm:text-lg font-semibold">Tips & Conseils</h3>
-        <div className="flex gap-1">
+        <div className="ml-auto flex gap-1">
           {tips.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentTip(index)}
-              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${index === currentTip
-                  ? 'bg-primary w-4 sm:w-6'
-                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                }`}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentTip ? 'bg-orange-400' : 'bg-white/20'
+              }`}
               aria-label={`Voir le tip ${index + 1}`}
             />
           ))}
         </div>
-      </div>
-
-      {/* Tip Content */}
-      <TipContent />
+      </motion.div>
     </div>
   )
 }

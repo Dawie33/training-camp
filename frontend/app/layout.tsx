@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang="en" className="h-full">
       <body
-        className={cn(poppins.variable, geistMono.variable, "antialiased", "h-full")}
+        className={cn(poppins.variable, geistMono.variable, "font-sans", "antialiased", "h-full", "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900")}
       >
         <ThemeProvider
           attribute="class"

@@ -2,11 +2,10 @@
 
 import { useWorkoutSchedule } from '@/app/calendar/hooks/useWorkoutSchedule'
 import { useWorkoutSession } from '@/app/tracking/hooks/useWorkoutSession'
-import { Button } from '@/components/ui/button'
 import { Workouts } from '@/domain/entities/workout'
 import { workoutsService } from '@/services/workouts'
 import { motion } from 'framer-motion'
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { DayWorkout, WeekDay } from './types'
@@ -180,63 +179,42 @@ export function WeeklyCalendar() {
 
   const currentMonth = weekDays[3].date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
-  const getWorkoutTypeStyle = (type: string) => {
-    switch (type) {
-      case 'completed':
-        return 'bg-green-500/10 border-green-500/50'
-      case 'scheduled':
-        return 'bg-blue-500/10 border-blue-500/50'
-      case 'rest':
-        return 'bg-purple-500/10 border-purple-500/50'
-      default:
-        return 'bg-muted border-border'
-    }
-  }
-
   return (
-    <div className="bg-card rounded-lg border p-4 sm:p-6">
+    <div className="h-full rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-primary" />
-          <div>
-            <h3 className="text-base sm:text-lg font-semibold">Planning hebdomadaire</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground capitalize">{currentMonth}</p>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold">Planning hebdomadaire</h3>
+          <p className="text-sm text-slate-400 capitalize">{currentMonth}</p>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+        <div className="flex items-center gap-2">
+          <button
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
             onClick={() => setCurrentWeekOffset(prev => prev - 1)}
           >
             <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs h-8"
+          </button>
+          <span
+            className="px-4 py-2 rounded-lg bg-white/5 text-sm cursor-pointer hover:bg-white/10 transition-colors"
             onClick={() => setCurrentWeekOffset(0)}
           >
             Aujourd'hui
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+          </span>
+          <button
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
             onClick={() => setCurrentWeekOffset(prev => prev + 1)}
           >
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2">
+      <div className="grid grid-cols-7 gap-3">
         {weekDays.map((day, index) => {
           const hasWorkouts = day.workouts.length > 0
           const firstWorkout = hasWorkouts ? day.workouts[0] : null
+          const isRest = hasWorkouts && firstWorkout?.type === 'rest'
 
           return (
             <motion.div
@@ -245,73 +223,46 @@ export function WeeklyCalendar() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className={`
-                relative rounded-lg border p-2 sm:p-3 min-h-[80px] sm:min-h-[100px]
-                transition-all cursor-pointer
-                ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}
-                ${hasWorkouts && firstWorkout ? getWorkoutTypeStyle(firstWorkout.type) : 'hover:bg-accent'}
+                relative p-4 rounded-2xl text-center transition-all duration-300 cursor-pointer min-h-[100px]
+                ${day.isToday
+                  ? 'bg-gradient-to-br from-orange-500/20 to-rose-500/20 border-2 border-orange-500/50 shadow-lg shadow-orange-500/20'
+                  : isRest
+                    ? 'bg-emerald-500/10 border border-emerald-500/20'
+                    : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20'}
               `}
             >
+              {/* Today indicator */}
+              {day.isToday && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
+              )}
+
               {/* Day Header */}
               <div className="flex flex-col items-center mb-2">
-                <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-                  {day.dayName}
-                </span>
-                <span className={`
-                  text-sm sm:text-base font-bold mt-0.5
-                  ${day.isToday ? 'text-primary' : 'text-foreground'}
-                `}>
+                <p className="text-xs text-slate-400 mb-1">{day.dayName}</p>
+                <p className={`text-2xl font-bold ${day.isToday ? 'text-orange-400' : ''}`}>
                   {day.dayNumber}
-                </span>
+                </p>
               </div>
 
               {/* Workout Info */}
-              {hasWorkouts ? (
-                <div className="space-y-1">
-                  {day.workouts.slice(0, 2).map((workout, idx) => (
-                    <div key={workout.id} className="space-y-0.5">
-                      <div className={`
-                        text-[9px] sm:text-xs font-medium line-clamp-1 text-center
-                        ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
-                        ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
-                        ${workout.type === 'rest' ? 'text-purple-700 dark:text-purple-400' : ''}
-                      `}>
-                        {workout.name}
-                      </div>
-                      <div className="flex items-center justify-center gap-1">
-                        {workout.duration && (
-                          <div className="text-[8px] sm:text-[10px] text-center text-muted-foreground">
-                            {Math.floor(workout.duration / 60)}min
-                          </div>
-                        )}
-                        {workout.intensity && (
-                          <div className={`
-                            text-[7px] sm:text-[9px] px-1 py-0.5 rounded font-medium
-                            ${workout.intensity === 'low' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ''}
-                            ${workout.intensity === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
-                            ${workout.intensity === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : ''}
-                          `}>
-                            {workout.intensity === 'low' && '●'}
-                            {workout.intensity === 'medium' && '●●'}
-                            {workout.intensity === 'high' && '●●●'}
-                          </div>
-                        )}
-                      </div>
-                      {idx < Math.min(day.workouts.length - 1, 1) && (
-                        <div className="h-px bg-border my-0.5" />
-                      )}
+              {isRest && (
+                <span className="inline-block mt-2 px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full">
+                  Repos
+                </span>
+              )}
+              {hasWorkouts && !isRest && (
+                <div className="space-y-1 mt-2">
+                  {day.workouts.slice(0, 1).map((workout) => (
+                    <div key={workout.id} className="text-xs text-slate-300 font-medium line-clamp-2">
+                      {workout.name}
                     </div>
                   ))}
-                  {day.workouts.length > 2 && (
-                    <div className="text-[8px] text-center text-muted-foreground mt-1">
-                      +{day.workouts.length - 2} autre{day.workouts.length > 3 ? 's' : ''}
+                  {day.workouts.length > 1 && (
+                    <div className="text-xs text-slate-500">
+                      +{day.workouts.length - 1} autre{day.workouts.length > 2 ? 's' : ''}
                     </div>
                   )}
                 </div>
-              ) : null}
-
-              {/* Today Indicator */}
-              {day.isToday && (
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
               )}
             </motion.div>
           )
@@ -319,25 +270,21 @@ export function WeeklyCalendar() {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 pt-4 border-t flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-        <div className="flex flex-wrap gap-3 sm:gap-4">
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/50" />
-            <span className="text-muted-foreground">Programmé</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded bg-green-500/10 border border-green-500/50" />
-            <span className="text-muted-foreground">Complété</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded bg-purple-500/10 border border-purple-500/50" />
-            <span className="text-muted-foreground">Repos</span>
-          </div>
+      <div className="flex items-center gap-6 mt-6 pt-4 border-t border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-white/20" />
+          <span className="text-sm text-slate-400">Programmé</span>
         </div>
-        <Link href="/calendar">
-          <Button variant="ghost" size="sm" className="text-xs">
-            Voir le calendrier complet
-          </Button>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-emerald-400" />
+          <span className="text-sm text-slate-400">Complété</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-emerald-400/30" />
+          <span className="text-sm text-slate-400">Repos</span>
+        </div>
+        <Link href="/calendar" className="ml-auto text-sm text-orange-400 hover:text-orange-300 transition-colors">
+          Voir le calendrier complet →
         </Link>
       </div>
     </div>

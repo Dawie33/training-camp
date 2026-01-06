@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { motion } from 'framer-motion'
 import { Calendar, Clock, Dumbbell, Flame } from 'lucide-react'
 import Link from 'next/link'
 import { useDailyWorkout } from '../_hooks/useDailyWorkout'
@@ -40,92 +39,84 @@ export function DailyWorkoutCard() {
   }
 
   return (
-    <motion.div
-      className="bg-card rounded-lg border p-4 sm:p-6 hover:shadow-md transition-all"
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-primary" />
-          <h3 className="text-base sm:text-lg font-semibold">Workout du jour</h3>
-        </div>
-        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-          Aujourd'hui
-        </span>
-      </div>
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 p-8">
+      {/* Decorative gradient */}
+      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-orange-500/30 to-transparent rounded-full blur-2xl" />
 
-      <div className="space-y-4">
-        {/* Workout Title */}
-        <div>
-          <h4 className="text-lg sm:text-xl font-bold text-foreground mb-2">
-            {dailyWorkout.name}
-          </h4>
-          {dailyWorkout.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {dailyWorkout.description}
-            </p>
-          )}
+      <div className="relative">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="px-3 py-1 rounded-full bg-orange-500/20 text-orange-300 text-sm font-medium border border-orange-500/30">
+            🔥 Workout du jour
+          </span>
+          <span className="px-3 py-1 rounded-full bg-white/10 text-slate-300 text-sm">
+            Aujourd'hui
+          </span>
         </div>
 
-        {/* Workout Info */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-2 text-sm">
-            <div className="p-2 rounded-lg bg-blue-500/10">
-              <Clock className="w-4 h-4 text-blue-500" />
+        <h2 className="text-3xl font-bold mb-3">{dailyWorkout.name}</h2>
+        {dailyWorkout.description && (
+          <p className="text-slate-400 max-w-2xl mb-6">
+            {dailyWorkout.description}
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-6 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center">
+              <Clock className="w-6 h-6 text-slate-300" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Durée</p>
-              <p className="font-semibold text-sm">
-                {dailyWorkout.estimated_duration || 'N/A'} min
-              </p>
+              <p className="text-sm text-slate-400">Durée</p>
+              <p className="text-xl font-bold">{dailyWorkout.estimated_duration || 'N/A'} min</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 text-sm">
-            <div className="p-2 rounded-lg bg-orange-500/10">
-              <Flame className="w-4 h-4 text-orange-500" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-orange-500/20 backdrop-blur flex items-center justify-center">
+              <Flame className="w-6 h-6 text-orange-400" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Intensité</p>
-              <p className="font-semibold text-sm capitalize">
+              <p className="text-sm text-slate-400">Intensité</p>
+              <p className="text-xl font-bold text-orange-400 capitalize">
                 {dailyWorkout.intensity || 'Modérée'}
               </p>
             </div>
           </div>
+          {dailyWorkout.blocks?.sections && (
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center">
+                <Dumbbell className="w-6 h-6 text-slate-300" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-400">Blocs</p>
+                <p className="text-xl font-bold">
+                  {dailyWorkout.blocks.sections.length} bloc{dailyWorkout.blocks.sections.length > 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Blocks Preview */}
+        {/* Workout blocks preview */}
         {dailyWorkout.blocks?.sections && dailyWorkout.blocks.sections.length > 0 && (
-          <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Dumbbell className="w-3 h-3 text-muted-foreground" />
-              <p className="text-xs font-medium text-muted-foreground">
-                {dailyWorkout.blocks.sections.length} bloc{dailyWorkout.blocks.sections.length > 1 ? 's' : ''}
-              </p>
-            </div>
-            <div className="space-y-1">
-              {dailyWorkout.blocks.sections.slice(0, 2).map((section, index) => (
-                <div key={index} className="text-xs text-muted-foreground">
-                  • {section.title || `Bloc ${index + 1}`}
-                </div>
-              ))}
-              {dailyWorkout.blocks.sections.length > 2 && (
-                <div className="text-xs text-muted-foreground">
-                  • +{dailyWorkout.blocks.sections.length - 2} autre{dailyWorkout.blocks.sections.length - 2 > 1 ? 's' : ''}
-                </div>
-              )}
-            </div>
+          <div className="flex flex-wrap gap-2 mb-8">
+            {dailyWorkout.blocks.sections.map((section, i) => (
+              <span key={i} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-300">
+                {section.title || `Bloc ${i + 1}`}
+              </span>
+            ))}
           </div>
         )}
 
-        {/* Action Button */}
-        <Button asChild className="w-full text-xs sm:text-sm h-8 sm:h-9">
+        <Button asChild className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-rose-500 rounded-2xl font-bold text-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98]">
           <Link href={`/workout/${dailyWorkout.id}`}>
-            Commencer le workout
+            <span className="relative z-10 flex items-center gap-2">
+              Commencer le workout
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-rose-400 opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
         </Button>
       </div>
-    </motion.div>
+    </div>
   )
 }

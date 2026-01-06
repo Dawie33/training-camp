@@ -1,9 +1,6 @@
 'use client'
 
 import { useWorkoutStats } from '@/app/tracking/hooks/useWorkoutStats'
-import { Button } from '@/components/ui/button'
-import { motion } from 'framer-motion'
-import { Download } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { MetricType, PeriodType } from './types'
 
@@ -87,70 +84,51 @@ export function PerformanceChart() {
   const maxValue = Math.max(...displayData, 1)
 
   return (
-    <div className="bg-card rounded-lg border p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6">
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold">Performance au fil du temps</h3>
-          <div className="flex items-center gap-4 mt-2">
-            <Button
-              variant={metric === 'count' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setMetric('count')}
+    <div className="h-full rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold">Performance au fil du temps</h3>
+        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg">
+          {[
+            { key: 'week' as PeriodType, label: 'Semaine' },
+            { key: 'month' as PeriodType, label: 'Mois' },
+            { key: 'year' as PeriodType, label: 'Année' }
+          ].map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setPeriod(p.key)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300
+                ${period === p.key
+                  ? 'bg-white/10 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                <span>Workouts</span>
-              </div>
-            </Button>
-            <Button
-              variant={metric === 'duration' ? 'secondary' : 'ghost'}
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setMetric('duration')}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span>Durée</span>
-              </div>
-            </Button>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={period === 'week' ? 'default' : 'outline'}
-            size="sm"
-            className="text-xs sm:text-sm"
-            onClick={() => setPeriod('week')}
-          >
-            Semaine
-          </Button>
-          <Button
-            variant={period === 'month' ? 'default' : 'outline'}
-            size="sm"
-            className="text-xs sm:text-sm"
-            onClick={() => setPeriod('month')}
-          >
-            Mois
-          </Button>
-          <Button
-            variant={period === 'year' ? 'default' : 'outline'}
-            size="sm"
-            className="text-xs sm:text-sm"
-            onClick={() => setPeriod('year')}
-          >
-            Année
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-          </Button>
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Chart Legend */}
+      <div className="flex items-center gap-6 mb-6">
+        <button
+          onClick={() => setMetric('count')}
+          className="flex items-center gap-2 transition-opacity hover:opacity-80"
+        >
+          <div className="w-3 h-3 rounded-full bg-orange-400" />
+          <span className={`text-sm ${metric === 'count' ? 'text-white font-medium' : 'text-slate-400'}`}>Workouts</span>
+        </button>
+        <button
+          onClick={() => setMetric('duration')}
+          className="flex items-center gap-2 transition-opacity hover:opacity-80"
+        >
+          <div className="w-3 h-3 rounded-full bg-emerald-400" />
+          <span className={`text-sm ${metric === 'duration' ? 'text-white font-medium' : 'text-slate-400'}`}>Durée</span>
+        </button>
+      </div>
+
       {/* Graphique simplifié */}
-      <div className="h-48 sm:h-64 flex items-end justify-between gap-1 sm:gap-2">
+      <div className="h-48 flex items-end gap-4">
         {displayData.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center text-slate-400">
             <p className="text-sm">Aucune donnée disponible</p>
           </div>
         ) : (
@@ -158,41 +136,41 @@ export function PerformanceChart() {
             const height = (value / maxValue) * 100
             const countValue = data[index]
             const durationValue = durations[index]
-            const barColor = metric === 'count' ? 'from-blue-500 to-blue-300' : 'from-green-500 to-green-300'
+            const barColor = metric === 'count'
+              ? 'from-orange-500 to-orange-400'
+              : 'from-emerald-500 to-emerald-400'
+            const hoverColor = metric === 'count'
+              ? 'hover:from-orange-400 hover:to-orange-300'
+              : 'hover:from-emerald-400 hover:to-emerald-300'
 
             return (
-              <motion.div
-                key={`${labels[index]}-${index}`}
-                className="flex-1 flex flex-col items-center gap-1 sm:gap-2"
-                initial={{ height: 0 }}
-                animate={{ height: 'auto' }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <div className="w-full flex flex-col items-center gap-1">
-                  <motion.div
-                    className={`w-full bg-gradient-to-t ${barColor} rounded-t-md relative group cursor-pointer`}
-                    style={{ height: `${height}%`, minHeight: value > 0 ? '20px' : '0px' }}
-                    whileHover={{ opacity: 0.8 }}
+              <div key={`${labels[index]}-${index}`} className="flex-1 flex flex-col items-center gap-2">
+                <div className="w-full flex flex-col items-center">
+                  <div
+                    className={`w-full bg-gradient-to-t ${barColor} rounded-t-lg transition-all duration-500 ${hoverColor} relative group cursor-pointer`}
+                    style={{ height: `${Math.max(height, 0)}%`, minHeight: value > 0 ? '20px' : '0px' }}
                   >
                     {value > 0 && (
-                      <div className="absolute -top-14 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        <div className="bg-popover border border-border rounded-lg shadow-lg p-2 text-xs whitespace-nowrap">
-                          <p className="font-medium">{countValue} workout{countValue > 1 ? 's' : ''}</p>
-                          <p className="text-muted-foreground">
+                      <div className="absolute -top-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        <div className="bg-slate-800/90 backdrop-blur border border-white/10 rounded-lg shadow-lg p-2 text-xs whitespace-nowrap">
+                          <p className="font-medium text-white">{countValue} workout{countValue > 1 ? 's' : ''}</p>
+                          <p className="text-slate-400">
                             {formatDuration(durationValue)}
                           </p>
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 </div>
-                <span className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full">
-                  {labels[index]}
-                </span>
-              </motion.div>
+              </div>
             )
           })
         )}
+      </div>
+      <div className="flex justify-between mt-4 text-sm text-slate-500">
+        {labels.map((label, index) => (
+          <span key={index}>{label}</span>
+        ))}
       </div>
     </div>
   )

@@ -1,9 +1,7 @@
 'use client'
 
-import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 interface StatsCardProps {
   title: string
@@ -19,29 +17,29 @@ interface StatsCardProps {
 
 const colorClasses = {
   blue: {
-    bg: 'bg-blue-500/10',
-    icon: 'text-blue-500',
-    border: 'border-blue-500/20'
+    gradient: 'from-blue-500/20 to-cyan-500/20',
+    iconBg: 'bg-blue-500/20',
+    icon: 'text-blue-400'
   },
   green: {
-    bg: 'bg-green-500/10',
-    icon: 'text-green-500',
-    border: 'border-green-500/20'
+    gradient: 'from-emerald-500/20 to-teal-500/20',
+    iconBg: 'bg-emerald-500/20',
+    icon: 'text-emerald-400'
   },
   orange: {
-    bg: 'bg-orange-500/10',
-    icon: 'text-orange-500',
-    border: 'border-orange-500/20'
+    gradient: 'from-orange-500/20 to-amber-500/20',
+    iconBg: 'bg-orange-500/20',
+    icon: 'text-orange-400'
   },
   purple: {
-    bg: 'bg-purple-500/10',
-    icon: 'text-purple-500',
-    border: 'border-purple-500/20'
+    gradient: 'from-violet-500/20 to-purple-500/20',
+    iconBg: 'bg-violet-500/20',
+    icon: 'text-violet-400'
   },
   red: {
-    bg: 'bg-red-500/10',
-    icon: 'text-red-500',
-    border: 'border-red-500/20'
+    gradient: 'from-red-500/20 to-rose-500/20',
+    iconBg: 'bg-red-500/20',
+    icon: 'text-red-400'
   }
 }
 
@@ -49,40 +47,33 @@ export function StatsCard({ title, value, icon: Icon, color, subtitle, trend }: 
   const colors = colorClasses[color]
 
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card className={cn(
-        'p-6 border-2 transition-all duration-200',
-        colors.border
-      )}>
-        <div className="flex items-start justify-between">
-          <div className="space-y-2 flex-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-bold">{value}</p>
-              {trend && (
-                <span className={cn(
-                  'text-sm font-medium',
-                  trend.isPositive ? 'text-green-500' : 'text-red-500'
-                )}>
-                  {trend.isPositive ? '+' : ''}{trend.value}%
-                </span>
-              )}
-            </div>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
-            )}
-          </div>
-          <div className={cn(
-            'p-3 rounded-xl',
-            colors.bg
-          )}>
-            <Icon className={cn('w-6 h-6', colors.icon)} />
-          </div>
+    <div className={cn(
+      'relative overflow-hidden rounded-2xl bg-gradient-to-br backdrop-blur-xl border border-white/10 p-6 group hover:border-white/20 transition-all duration-300',
+      colors.gradient
+    )}>
+      <div className="flex items-start justify-between mb-4">
+        <p className="text-sm text-slate-400">{title}</p>
+        <div className={cn(
+          'w-10 h-10 rounded-xl flex items-center justify-center',
+          colors.iconBg
+        )}>
+          <Icon className={cn('w-5 h-5', colors.icon)} />
         </div>
-      </Card>
-    </motion.div>
+      </div>
+      <p className="text-3xl font-bold">
+        {value}
+      </p>
+      {subtitle && (
+        <p className="text-xs text-slate-500 mt-2">{subtitle}</p>
+      )}
+      {trend && (
+        <p className={cn(
+          'text-xs mt-2',
+          trend.isPositive ? 'text-green-400' : 'text-red-400'
+        )}>
+          {trend.isPositive ? '+' : ''}{trend.value}%
+        </p>
+      )}
+    </div>
   )
 }
