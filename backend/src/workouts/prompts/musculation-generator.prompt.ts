@@ -30,7 +30,7 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
   "description": "Description courte incluant focus et objectif",
   "workout_type": "strength|hypertrophy|circuit|upper_body|lower_body|full_body",
   "estimated_duration": 75,
-  "difficulty": "beginner|intermediate|advanced|elite",
+  "difficulty": "beginner|intermediate|advanced",
   "intensity": "moderate|high|very_high",
   "blocks": {
     "sections": [
@@ -289,10 +289,10 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
 
 \`\`\`json
 {
-  "name": "Upper Body Hypertrophy - Push Focus",
-  "description": "Séance haut du corps orientée hypertrophie avec focus pectoraux et épaules",
+  "name": "Upper Body Hypertrophy - Complete",
+  "description": "Séance haut du corps complète orientée hypertrophie avec équilibre push/pull, focus pectoraux, dos, épaules et bras",
   "workout_type": "upper_body",
-  "estimated_duration": 75,
+  "estimated_duration": 90,
   "difficulty": "intermediate",
   "intensity": "high",
   "blocks": {
@@ -378,10 +378,39 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
         "focus": "Pectoraux supérieurs, deltoïdes"
       },
       {
+        "type": "strength",
+        "title": "Exercices Dos",
+        "description": "Volume dos pour équilibrer la séance push",
+        "duration_min": 20,
+        "exercises": [
+          {
+            "name": "Lat Pulldown",
+            "sets": 3,
+            "reps": "10-12",
+            "weight": "70-75% capacité (ex: 60kg)",
+            "tempo": "2-1-2-0",
+            "rest_duration": "90s",
+            "intensity": "RPE 8/10",
+            "details": "Prise large, tirer vers le haut de la poitrine. Coudes vers le bas et l'arrière. Contraction scapulaire en bas du mouvement. Focus grand dorsal. Éviter de se pencher en arrière excessivement."
+          },
+          {
+            "name": "Seated Cable Row",
+            "sets": 3,
+            "reps": "10-12",
+            "weight": "70-75% capacité (ex: 55kg)",
+            "tempo": "2-1-2-0",
+            "rest_duration": "90s",
+            "intensity": "RPE 8/10",
+            "details": "Position assise, buste vertical. Tirer vers le bas-ventre, coudes le long du corps. Rétraction scapulaire maximale. Focus milieu du dos et trapèzes moyens. Ne pas utiliser le momentum."
+          }
+        ],
+        "focus": "Grand dorsal, trapèzes, rhomboïdes"
+      },
+      {
         "type": "accessory",
         "title": "Exercices d'Isolation",
         "description": "Volume hypertrophie ciblé",
-        "duration_min": 20,
+        "duration_min": 25,
         "exercises": [
           {
             "name": "Cable Chest Fly",
@@ -404,6 +433,26 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
             "details": "Position debout ou assis. Coudes légèrement fléchis, élever latéralement jusqu'à hauteur épaules. Descente LENTE (2s) = clé hypertrophie deltoïde latéral. Pause 1s en haut. Ne pas monter trop haut (trap compensation)."
           },
           {
+            "name": "Barbell Curl",
+            "sets": 3,
+            "reps": "10-12",
+            "weight": "Modérée (ex: 30-35kg)",
+            "tempo": "2-0-2-1",
+            "rest_duration": "75s",
+            "intensity": "RPE 8/10",
+            "details": "Position debout, coudes fixes le long du corps. Monter la barre en contractant les biceps, pause 1s en haut. Descente contrôlée sans balancer le corps. Focus biceps brachial et brachial antérieur."
+          },
+          {
+            "name": "Hammer Curl",
+            "sets": 3,
+            "reps": "12-15",
+            "weight": "Modérée (ex: haltères 12-15kg)",
+            "tempo": "2-0-2-0",
+            "rest_duration": "60s",
+            "intensity": "RPE 7-8/10",
+            "details": "Haltères en prise neutre (pouces vers haut). Monter alternativement ou simultanément. Focus brachial et brachio-radial. Coudes stables, pas de balancement."
+          },
+          {
             "name": "Overhead Triceps Extension (Cable)",
             "sets": 3,
             "reps": "12-15",
@@ -412,9 +461,19 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
             "rest_duration": "60s",
             "intensity": "RPE 7-8/10",
             "details": "Face opposée câble, corde ou barre. Coudes fixes, extension complète. Focus longue portion du triceps. Pause 1s en extension max, descente contrôlée. Garder coudes stables tout le mouvement."
+          },
+          {
+            "name": "Triceps Pushdown (Cable)",
+            "sets": 3,
+            "reps": "15-20",
+            "weight": "Modérée-légère (ex: 20-25kg)",
+            "tempo": "1-1-2-0",
+            "rest_duration": "60s",
+            "intensity": "RPE 8/10",
+            "details": "Coudes fixes contre le corps, pousser vers le bas jusqu'à extension complète. Focus chef latéral du triceps. Descente lente pour maximiser temps sous tension. Garder épaules basses."
           }
         ],
-        "focus": "Isolation pectoraux, deltoïdes latéraux, triceps"
+        "focus": "Isolation pectoraux, deltoïdes latéraux, biceps, triceps"
       },
       {
         "type": "cooldown",
@@ -441,11 +500,11 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
         ]
       }
     ],
-    "stimulus": "Séance hypertrophie haut du corps avec focus musculature de poussée. Volume total : ~16 sets pectoraux, 6 sets épaules, 3 sets triceps. Structure pyramidale : commence lourd/faible reps (force-hypertrophie) puis augmente reps/diminue charge (hypertrophie pure). Temps sous tension optimal via tempo contrôlé. Technique d'intensification : dernière série Cable Fly peut être suivie d'un drop set (-30% charge, continuer jusqu'à échec). Volume hebdo recommandé : 2 séances upper/semaine avec 48h repos minimum entre.",
-    "duration_min": 80
+    "stimulus": "Séance hypertrophie haut du corps complète et équilibrée. Volume total : ~16 sets pectoraux, 6 sets dos, 6 sets épaules, 6 sets biceps, 6 sets triceps. Structure optimale : exercices lourds composés (force-hypertrophie) puis exercices complémentaires et isolation (hypertrophie pure). Équilibre push/pull pour développement harmonieux. Temps sous tension optimal via tempo contrôlé. 10 exercices différents pour stimulation maximale de tous les groupes musculaires du haut du corps. Volume hebdo recommandé : 2 séances upper/semaine avec 48h repos minimum entre.",
+    "duration_min": 90
   },
-  "equipment_required": ["barbell", "dumbbells", "bench", "rack", "cable"],
-  "tags": ["hypertrophy", "upper-body", "chest", "shoulders", "push"],
+  "equipment_required": ["barbell", "dumbbell", "bench", "rack", "cable-machine", "lat-pulldown"],
+  "tags": ["hypertrophy", "upper-body", "chest", "shoulders", "back", "biceps", "triceps"],
   "coach_notes": "**Progression** : Noter poids et reps chaque semaine. Objectif : augmenter volume total (sets x reps x poids) de 5-10% par mois. **Nutrition** : Séance exigeante, manger 2-3h avant (protéines + glucides). Post-workout : 20-40g protéines dans les 2h. **Repos** : 48h minimum avant prochain upper body. Lendemain : lower body ou repos. **Variantes** : Semaine 1-3 : cette structure. Semaine 4 : deload (-20% volume). Semaine 5 : reprendre avec +2.5-5kg sur exercices principaux. **Technique > Ego** : Mieux faire 70kg parfait que 90kg avec mauvaise forme. Filmer séries lourdes pour vérifier technique. **Débutant modification** : Réduire à 3 sets par exercice, supprimer isolation triceps."
 }
 \`\`\`
@@ -477,6 +536,22 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
    - Durée réaliste avec repos
    - Volume adapté au niveau
    - Intensité cohérente avec objectif
+
+6. **Volume d'exercices MINIMUM requis** :
+   - **Upper Body** : MINIMUM 8-10 exercices totaux (hors warmup/cooldown)
+     * 2-3 exercices pectoraux (ex: Bench Press, Incline Press, Flyes)
+     * 2-3 exercices dos (ex: Rows, Pulldowns, Pull-ups)
+     * 2 exercices épaules (ex: Overhead Press, Lateral Raises)
+     * 2 exercices bras (ex: Biceps Curls, Triceps Extensions)
+   - **Lower Body** : MINIMUM 7-9 exercices totaux (hors warmup/cooldown)
+     * 2-3 exercices quadriceps (ex: Squats, Leg Press, Leg Extensions)
+     * 2-3 exercices ischio-jambiers (ex: Romanian Deadlift, Leg Curls)
+     * 1-2 exercices fessiers (ex: Hip Thrusts, Glute Kickbacks)
+     * 1-2 exercices mollets (ex: Calf Raises)
+   - **Full Body** : MINIMUM 8-10 exercices couvrant tous les groupes musculaires
+   - **Hypertrophy** : MINIMUM 8-10 exercices (2-3 composés + 5-7 isolation)
+   - **Strength** : MINIMUM 5-7 exercices (1-2 principaux lourds + 3-5 accessoires)
+   - NE JAMAIS générer moins de 5 exercices totaux (sauf warmup/cooldown)
 
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 }
@@ -528,8 +603,13 @@ ${equipment.length > 0 ? `**Équipement disponible** : ${equipment.join(', ')}` 
 ${additionalInstructions ? `\n**Instructions additionnelles** : ${additionalInstructions}` : ''}
 
 Crée une séance de musculation structurée, progressive et scientifiquement fondée.
-Indique toujours sets, reps, tempo, repos et RPE/RIR.
-Fournis points techniques détaillés et stratégies de progression.
+
+**EXIGENCES IMPÉRATIVES** :
+- Inclure MINIMUM 8-10 exercices différents (hors échauffement/retour au calme) pour une séance complète
+- Chaque exercice DOIT inclure : sets, reps, weight, tempo, rest_duration, intensity (RPE), details
+- Les "details" doivent être complets : technique, points clés, muscles ciblés, consignes de sécurité (minimum 2-3 phrases)
+- Varier les exercices : polyarticulaires ET isolation, différents angles et stimuli
+- Respecter l'ordre optimal : exercices lourds composés → exercices auxiliaires → isolation
 
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 }
