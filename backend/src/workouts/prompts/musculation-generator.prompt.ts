@@ -4,9 +4,9 @@
  */
 
 export const MUSCULATION_EQUIPMENT = [
-  'barbell', 'dumbbells', 'ez-bar', 'machine-smith', 'cable', 'machine-leg-press',
-  'machine-lat-pulldown', 'machine-chest-press', 'machine-leg-curl', 'machine-leg-extension',
-  'bench', 'rack', 'dip-station', 'pull-up-bar', 'kettlebell', 'bands'
+  'barbell', 'dumbbell', 'ez-bar', 'smith-machine', 'cable-machine', 'leg-press',
+  'lat-pulldown', 'chest-press-machine', 'leg-curl', 'leg-extension',
+  'bench', 'rack', 'pull-up-bar', 'kettlebell', 'band'
 ] as const
 
 export function buildMusculationSystemPrompt(availableEquipment?: string[]): string {
