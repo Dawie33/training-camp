@@ -11,14 +11,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useSport } from '@/contexts/SportContext'
+import { sportsService } from '@/services'
 import { WorkoutHistoryService } from '@/services/workout-history'
 import { TimerConfig, TimerType } from '@/hooks/useWorkoutTimer'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { Frown, Meh, Plus, Save, Smile, Sparkles, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface Exercise {
   name: string
@@ -56,7 +56,7 @@ export function WorkoutResultModal({
   totalRounds
 }: WorkoutResultModalProps) {
   const router = useRouter()
-  const { activeSport } = useSport()
+  const [sportId, setSportId] = useState<string>('')
   const [workoutName, setWorkoutName] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [feeling, setFeeling] = useState<Feeling>('good')
@@ -64,6 +64,21 @@ export function WorkoutResultModal({
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
   const [isSaving, setIsSaving] = useState(false)
+
+  // Charger l'ID du sport musculation au montage
+  useEffect(() => {
+    const fetchSportId = async () => {
+      try {
+        const result = await sportsService.getAll({ slug: 'musculation' })
+        if (result.rows.length > 0) {
+          setSportId(result.rows[0].id)
+        }
+      } catch (err) {
+        console.error('Error loading sport:', err)
+      }
+    }
+    fetchSportId()
+  }, [])
 
   const difficulties: { value: Difficulty; label: string; color: string }[] = [
     { value: 'easy', label: 'Facile', color: 'bg-green-500' },
@@ -107,7 +122,7 @@ export function WorkoutResultModal({
   }
 
   const handleSave = async () => {
-    if (!activeSport) return
+    if (!sportId) return
 
     setIsSaving(true)
 
@@ -116,7 +131,7 @@ export function WorkoutResultModal({
 
       WorkoutHistoryService.saveWorkoutResult({
         userId,
-        sportId: activeSport.id,
+        sportId: sportId,
         workoutName: workoutName || undefined,
         timerType,
         date: new Date().toISOString(),

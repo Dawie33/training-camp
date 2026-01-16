@@ -41,7 +41,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Workouts } from '@/domain/entities/workout'
-import { sportsService } from '@/services/sports'
 import { workoutsApi } from '@/services/workouts'
 import { toast } from 'sonner'
 
@@ -49,7 +48,6 @@ const ITEMS_PER_PAGE = 10
 
 export default function WorkoutsPage() {
   const [workouts, setWorkouts] = useState<Workouts[]>([])
-  const [sports, setSports] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
 
@@ -61,7 +59,6 @@ export default function WorkoutsPage() {
   const [status, setStatus] = useState<string>('')
   const [difficulty, setDifficulty] = useState<string>('')
   const [workoutType, setWorkoutType] = useState<string>('')
-  const [selectedSportFilter, setSelectedSportFilter] = useState<string>('')
   const [orderBy, setOrderBy] = useState<string>("created_at")
   const [orderDir, setOrderDir] = useState<"asc" | "desc">("desc")
 
@@ -78,20 +75,6 @@ export default function WorkoutsPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Chargement des sports
-  useEffect(() => {
-    const fetchSports = async () => {
-      try {
-        const { rows: sportsData } = await sportsService.getAll()
-        setSports(sportsData)
-      } catch (error) {
-        console.error('Erreur lors du chargement des sports', error)
-        toast.error('Erreur lors du chargement des sports')
-      }
-    }
-    fetchSports()
-  }, [])
-
   // Chargement des workouts
   const fetchWorkouts = useCallback(async () => {
     setLoading(true)
@@ -103,7 +86,6 @@ export default function WorkoutsPage() {
         status: status || undefined,
         difficulty: difficulty || undefined,
         workout_type: workoutType || undefined,
-        sport_id: selectedSportFilter || undefined,
         orderBy: orderBy,
         orderDir: orderDir
       }
@@ -117,7 +99,7 @@ export default function WorkoutsPage() {
     } finally {
       setLoading(false)
     }
-  }, [pageIndex, pageSize, debouncedSearch, status, difficulty, workoutType, selectedSportFilter, orderBy, orderDir])
+  }, [pageIndex, pageSize, debouncedSearch, status, difficulty, workoutType, orderBy, orderDir])
 
   useEffect(() => {
     fetchWorkouts()
@@ -162,15 +144,6 @@ export default function WorkoutsPage() {
         )
       },
       cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
-    },
-    {
-      accessorKey: "sport_id",
-      header: "Sport",
-      cell: ({ row }) => {
-        const sportId = row.getValue("sport_id") as string
-        const sport = sports.find(s => s.id === sportId)
-        return <div className="capitalize">{sport?.name || '-'}</div>
-      },
     },
     {
       accessorKey: "workout_type",
@@ -362,20 +335,6 @@ export default function WorkoutsPage() {
             />
           </div>
 
-          <Select value={selectedSportFilter} onValueChange={(value: string) => { setSelectedSportFilter(value === 'all' ? '' : value); setPageIndex(0) }}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sport" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sports</SelectItem>
-              {sports.map((sport) => (
-                <SelectItem key={sport.id} value={sport.id}>
-                  {sport.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Select value={status} onValueChange={(value: string) => { setStatus(value === 'all' ? '' : value); setPageIndex(0) }}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Status" />
@@ -528,7 +487,6 @@ export default function WorkoutsPage() {
           </div>
         ) : (
           workouts.map((workout) => {
-            const sport = sports.find(s => s.id === workout.sport_id)
             const difficultyColors = {
               beginner: "bg-green-50 text-green-700 border-green-200",
               intermediate: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -553,9 +511,6 @@ export default function WorkoutsPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm line-clamp-1">{workout.name}</h3>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <Badge variant="outline" className="text-xs">
-                        {sport?.name || 'N/A'}
-                      </Badge>
                       <Badge variant={workout.workout_type === 'predefined' ? 'default' : 'secondary'} className="text-xs">
                         {workout.workout_type?.replace(/_/g, ' ') || 'N/A'}
                       </Badge>

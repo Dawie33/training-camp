@@ -1,13 +1,10 @@
 'use client'
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { useSport } from '@/contexts/SportContext'
-import { useAllSports } from '@/hooks/useAllSports'
 import { useAuth } from '@/hooks/useAuth'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
-import { useEffect } from 'react'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
 import { GoalsWidget } from './components/GoalsWidget'
 import { PerformanceChart } from './components/PerformanceChart'
@@ -17,37 +14,8 @@ import { StatsCards } from './components/StatsCards'
 import { WeeklyCalendar } from './components/WeeklyCalendar'
 
 function DashboardContent() {
-  const { activeSport, setActiveSport } = useSport()
-  const { sports, loading, error } = useAllSports()
   const user = useAuth()
   const dateNow = format(new Date(), 'dd-MM-yyyy')
-
-  // Sélectionner automatiquement le premier sport au chargement si aucun sport n'est actif
-  useEffect(() => {
-    if (sports.length > 0 && !activeSport) {
-      setActiveSport(sports[0])
-    }
-  }, [sports, activeSport, setActiveSport])
-
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">Error: {error}</div>
-      </div>
-    )
-  }
 
   return (
     <motion.div

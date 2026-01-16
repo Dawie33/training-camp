@@ -1,8 +1,5 @@
 'use client'
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { useAllSports } from "@/hooks/useAllSports"
 import { workoutsService } from "@/services"
 import { Workouts } from "@/domain/entities/workout"
 import Link from "next/link"
@@ -12,14 +9,12 @@ import { toast } from "sonner"
 export function BenchmarksContent() {
     const [benchmarkWorkouts, setBenchmarkWorkouts] = useState<Workouts[]>([])
     const [loading, setLoading] = useState(true)
-    const [selectedSportId, setSelectedSportId] = useState<string | undefined>(undefined)
-    const { sports, loading: sportsLoading } = useAllSports()
 
     useEffect(() => {
         const fetchBenchmarkWorkouts = async () => {
             try {
                 setLoading(true)
-                const { rows } = await workoutsService.getBenchmarkWorkouts(selectedSportId)
+                const { rows } = await workoutsService.getBenchmarkWorkouts()
                 setBenchmarkWorkouts(rows)
             } catch {
                 toast.error('Erreur lors de la récupération des benchmarks')
@@ -29,7 +24,7 @@ export function BenchmarksContent() {
         }
 
         fetchBenchmarkWorkouts()
-    }, [selectedSportId])
+    }, [])
 
     const getDifficultyColor = (difficulty?: string) => {
         switch (difficulty) {
@@ -49,19 +44,19 @@ export function BenchmarksContent() {
     const getDifficultyLabel = (difficulty?: string) => {
         switch (difficulty) {
             case 'beginner':
-                return '🟢 Débutant'
+                return 'Débutant'
             case 'intermediate':
-                return '🟡 Intermédiaire'
+                return 'Intermédiaire'
             case 'advanced':
-                return '🟠 Avancé'
+                return 'Avancé'
             case 'elite':
-                return '🔴 Elite'
+                return 'Elite'
             default:
                 return difficulty
         }
     }
 
-    if (loading || sportsLoading) {
+    if (loading) {
         return (
             <div className="container mx-auto p-6">
                 <div className="flex items-center justify-center min-h-[400px]">
@@ -110,30 +105,6 @@ export function BenchmarksContent() {
                     </div>
                 </div>
 
-                {/* Filtres par sport */}
-                <div className="mb-8">
-                    <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Filtrer par sport</h3>
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            variant={selectedSportId === undefined ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedSportId(undefined)}
-                        >
-                            Tous les sports
-                        </Button>
-                        {sports.map((sport) => (
-                            <Button
-                                key={sport.id}
-                                variant={selectedSportId === sport.id ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setSelectedSportId(sport.id)}
-                            >
-                                {sport.name}
-                            </Button>
-                        ))}
-                    </div>
-                </div>
-
                 {/* Explication */}
                 <div className="mb-8 grid md:grid-cols-3 gap-4">
                     <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
@@ -154,7 +125,7 @@ export function BenchmarksContent() {
                         <div className="text-3xl mb-3">3️⃣</div>
                         <h3 className="font-semibold mb-2">Découvrez votre niveau</h3>
                         <p className="text-sm text-muted-foreground">
-                            Votre niveau sera calculé automatiquement selon les standards du sport
+                            Votre niveau sera calculé automatiquement selon les standards
                         </p>
                     </div>
                 </div>
@@ -165,10 +136,7 @@ export function BenchmarksContent() {
                         <div className="text-6xl mb-4">🔍</div>
                         <p className="text-xl font-semibold mb-2">Aucun benchmark disponible</p>
                         <p className="text-muted-foreground">
-                            {selectedSportId
-                                ? "Aucun workout de référence n'est disponible pour ce sport"
-                                : "Aucun workout de référence n'est encore disponible"
-                            }
+                            Aucun workout de référence n'est encore disponible
                         </p>
                     </div>
                 ) : (
@@ -194,11 +162,6 @@ export function BenchmarksContent() {
                                                 <h3 className="text-2xl font-bold group-hover:text-primary transition-colors">
                                                     {workout.name}
                                                 </h3>
-                                                {(workout as any).sport_name && (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {(workout as any).sport_name}
-                                                    </Badge>
-                                                )}
                                             </div>
                                             <p className="text-muted-foreground mb-3">
                                                 {workout.description}
@@ -279,7 +242,7 @@ export function BenchmarksContent() {
                                     <div className="flex gap-2">
                                         <span className="text-primary shrink-0">✓</span>
                                         <span className="text-muted-foreground">
-                                            Comparez vos performances avec les standards de votre sport
+                                            Comparez vos performances avec les standards
                                         </span>
                                     </div>
                                     <div className="flex gap-2">

@@ -3,29 +3,42 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { useAllSports } from '@/hooks/useAllSports'
+import { sportsService } from '@/services'
 import { WORKOUT_TYPES_BY_SPORT } from '@/domain/entities/workout-structure'
 import type { WorkoutFormProps } from '../types'
 import { useRouter } from 'next/navigation'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BlocksEditor } from './BlocksEditor'
 import { TagInput } from './TagInput'
 
 export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode }: WorkoutFormProps) {
   const router = useRouter()
-  const { sports, loading: sportsLoading } = useAllSports()
+  const [sportId, setSportId] = useState<string>('')
 
-  // Trouver le sport sélectionné pour obtenir son slug
-  const selectedSport = useMemo(
-    () => sports.find((sport) => sport.id === formData.sport_id),
-    [sports, formData.sport_id]
-  )
+  // Charger l'ID du sport musculation au montage
+  useEffect(() => {
+    const fetchSportId = async () => {
+      try {
+        const result = await sportsService.getAll({ slug: 'musculation' })
+        if (result.rows.length > 0) {
+          const id = result.rows[0].id
+          setSportId(id)
+          // Auto-set sport_id if not already set
+          if (!formData.sport_id) {
+            setFormData({ ...formData, sport_id: id })
+          }
+        }
+      } catch (err) {
+        console.error('Error loading sport:', err)
+      }
+    }
+    fetchSportId()
+  }, [])
 
-  // Obtenir les types de workout disponibles selon le sport sélectionné
+  // Obtenir les types de workout disponibles pour musculation
   const availableWorkoutTypes = useMemo(() => {
-    if (!selectedSport?.slug) return []
-    return WORKOUT_TYPES_BY_SPORT[selectedSport.slug as keyof typeof WORKOUT_TYPES_BY_SPORT] || []
-  }, [selectedSport?.slug])
+    return WORKOUT_TYPES_BY_SPORT['musculation'] || []
+  }, [])
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -52,23 +65,6 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium">Sport</label>
-        <select
-          className="w-full px-3 py-2 border border-input bg-background rounded-md"
-          value={formData.sport_id}
-          onChange={(e) => setFormData({ ...formData, sport_id: e.target.value, workout_type: '' })}
-          disabled={sportsLoading}
-        >
-          <option value="">Sélectionner un sport...</option>
-          {sports.map((sport) => (
-            <option key={sport.id} value={sport.id}>
-              {sport.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Type de workout</label>
@@ -76,7 +72,6 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
             className="w-full px-3 py-2 border border-input bg-background rounded-md"
             value={formData.workout_type}
             onChange={(e) => setFormData({ ...formData, workout_type: e.target.value })}
-            disabled={!formData.sport_id}
           >
             <option value="">Sélectionner un type...</option>
             {availableWorkoutTypes.map((type) => (
@@ -85,11 +80,6 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
               </option>
             ))}
           </select>
-          {!formData.sport_id && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Sélectionnez d'abord un sport
-            </p>
-          )}
         </div>
 
         <div>
@@ -254,7 +244,7 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
 
       {/* Submit Buttons */}
       <div className="flex gap-4 pt-4">
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving || !sportId}>
           {saving ? 'Enregistrement...' : isNewMode ? 'Creer' : 'Sauvegarder'}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>

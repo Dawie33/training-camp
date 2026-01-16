@@ -2,7 +2,7 @@
 
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { ExerciseDifficulty } from '@/domain/entities/exercice'
-import { Sport } from '@/domain/entities/sport'
+import { DEFAULT_SPORT } from '@/domain/entities/sport'
 import { CreateWorkoutDTO } from '@/domain/entities/workout'
 import { WORKOUT_TYPES_BY_SPORT } from '@/domain/entities/workout-structure'
 import { GeneratedWorkout, generateWorkoutWithAI, sportsService, workoutsService } from '@/services'
@@ -13,8 +13,8 @@ import { BlocksEditor } from '../[id]/components/BlocksEditor'
 
 export default function GenerateWorkoutAIPage() {
   const router = useRouter()
-  const [sport, setSport] = useState('crossfit')
-  const [workoutType, setWorkoutType] = useState('technique_metcon')
+  const [sportId, setSportId] = useState<string>('')
+  const [workoutType, setWorkoutType] = useState<string>(WORKOUT_TYPES_BY_SPORT['musculation']?.[0]?.value || 'strength')
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'elite'>('intermediate')
   const [duration, setDuration] = useState(45)
   const [additionalInstructions, setAdditionalInstructions] = useState('')
@@ -22,7 +22,6 @@ export default function GenerateWorkoutAIPage() {
   const [loading, setLoading] = useState(false)
   const [generatedWorkout, setGeneratedWorkout] = useState<GeneratedWorkout | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [sports, setSports] = useState<Sport[]>([])
   const [isEditing, setIsEditing] = useState(false)
 
   // États pour l'édition
@@ -33,25 +32,19 @@ export default function GenerateWorkoutAIPage() {
   const [editedIntensity, setEditedIntensity] = useState<'low' | 'moderate' | 'high' | 'very_high'>('moderate')
   const [editedBlocks, setEditedBlocks] = useState('')
 
-  // Charger les sports au montage du composant
+  // Charger l'ID du sport musculation au montage
   useEffect(() => {
-    const fetchSports = async () => {
+    const fetchSportId = async () => {
       try {
-        const result = await sportsService.getAll()
-        setSports(result.rows)
-
-        // Initialiser le sport et workout type avec le premier sport de la liste
+        const result = await sportsService.getAll({ slug: 'musculation' })
         if (result.rows.length > 0) {
-          const firstSport = result.rows[0]
-          setSport(firstSport.slug)
-          setWorkoutType(WORKOUT_TYPES_BY_SPORT[firstSport.slug as keyof typeof WORKOUT_TYPES_BY_SPORT]?.[0]?.value || '')
+          setSportId(result.rows[0].id)
         }
       } catch (err) {
-        console.error('Error loading sports:', err)
-        toast.error('Failed to load sports')
+        console.error('Error loading sport:', err)
       }
     }
-    fetchSports()
+    fetchSportId()
   }, [])
 
   const handleGenerate = async () => {
@@ -60,7 +53,7 @@ export default function GenerateWorkoutAIPage() {
       setError(null)
 
       const workout = await generateWorkoutWithAI({
-        sport,
+        sport: DEFAULT_SPORT.slug,
         workoutType,
         difficulty,
         duration,
@@ -84,18 +77,11 @@ export default function GenerateWorkoutAIPage() {
   }
 
   const handleSave = async () => {
-    if (!generatedWorkout) return
+    if (!generatedWorkout || !sportId) return
 
     try {
       setLoading(true)
       setError(null)
-
-      // Trouver le sport_id correspondant au slug sélectionné
-      const selectedSport = sports.find(s => s.slug === sport)
-      if (!selectedSport) {
-        setError(`Sport non trouvé: ${sport}`)
-        return
-      }
 
       // Parser les blocks édités
       let parsedBlocks
@@ -111,7 +97,7 @@ export default function GenerateWorkoutAIPage() {
         name: editedName,
         description: editedDescription,
         workout_type: generatedWorkout.workout_type,
-        sport_id: selectedSport.id,
+        sport_id: sportId,
         blocks: parsedBlocks,
         estimated_duration: editedDuration,
         intensity: editedIntensity,
@@ -135,7 +121,7 @@ export default function GenerateWorkoutAIPage() {
     }
   }
 
-  const workoutTypes = WORKOUT_TYPES_BY_SPORT[sport as keyof typeof WORKOUT_TYPES_BY_SPORT] || []
+  const workoutTypes = WORKOUT_TYPES_BY_SPORT['musculation'] || []
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -151,25 +137,6 @@ export default function GenerateWorkoutAIPage() {
         <div className="space-y-6">
           <div className="bg-card border rounded-lg p-6 space-y-4">
             <h2 className="text-xl font-semibold">Paramètres du Workout</h2>
-
-            {/* Sport */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Sport</label>
-              <select
-                value={sport}
-                onChange={(e) => {
-                  setSport(e.target.value)
-                  setWorkoutType(WORKOUT_TYPES_BY_SPORT[e.target.value as keyof typeof WORKOUT_TYPES_BY_SPORT]?.[0]?.value || '')
-                }}
-                className="w-full px-3 py-2 border rounded-lg bg-background"
-              >
-                {sports.map((s) => (
-                  <option key={s.id} value={s.slug}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             {/* Type de workout */}
             <div>
@@ -280,14 +247,14 @@ export default function GenerateWorkoutAIPage() {
                     onClick={() => setIsEditing(!isEditing)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
-                    {isEditing ? '👁️ Prévisualiser' : '✏️ Modifier'}
+                    {isEditing ? 'Prévisualiser' : 'Modifier'}
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={loading}
+                    disabled={loading || !sportId}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? '⏳ Sauvegarde...' : '💾 Sauvegarder'}
+                    {loading ? 'Sauvegarde...' : 'Sauvegarder'}
                   </button>
                 </div>
               </div>

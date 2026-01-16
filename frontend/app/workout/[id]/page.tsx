@@ -5,7 +5,6 @@ import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import WorkoutEditModal from '@/components/workout/WorkoutEditModal'
 import { ExerciseDetailModal } from '@/components/workout/ExerciseDetailModal'
-import { useSport } from '@/contexts/SportContext'
 import { workoutsService, sessionService } from '@/services'
 import { Workouts } from '@/domain/entities/workout'
 import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react'
@@ -17,7 +16,6 @@ import { useEffect, useState } from 'react'
 function WorkoutDetailContent() {
   const params = useParams()
   const router = useRouter()
-  const { activeSport } = useSport()
   const [workout, setWorkout] = useState<Workouts | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -145,7 +143,7 @@ function WorkoutDetailContent() {
             </div>
 
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-              {workout.name || `${activeSport?.name} Workout`}
+              {workout.name || 'Workout'}
             </h1>
 
             <div className="flex items-center gap-4 text-white/90 flex-wrap">

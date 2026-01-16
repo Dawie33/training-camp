@@ -24,6 +24,26 @@ export interface Sport {
 }
 
 /**
+ * Sport par défaut de l'application (musculation)
+ * Ce sport est hardcodé car l'application est spécialisée dans un seul sport
+ */
+export const DEFAULT_SPORT: Sport = {
+  id: '', // Sera récupéré dynamiquement via l'API au premier chargement
+  name: 'Musculation',
+  slug: 'musculation',
+  icon: '💪',
+  description: 'Entraînement de musculation',
+  category: 'strength',
+  common_metrics: ['reps', 'sets', 'weight'],
+  equipment_categories: ['barbell', 'dumbbells', 'machines', 'bench'],
+  isActive: true,
+  requires_premium: false,
+  sort_order: 0,
+  created_at: '',
+  updated_at: '',
+}
+
+/**
  * Types pour l'API Sports
  */
 export interface CreateSportDTO {

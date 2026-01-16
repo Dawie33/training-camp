@@ -1,10 +1,9 @@
 'use client'
 
-import { useSport } from "@/contexts/SportContext"
-import { workoutsService } from "@/services"
+import { sportsService, workoutsService } from "@/services"
 import { SaveBenchmarkResultDto } from "@/domain/entities/benchmark"
 import { Workouts } from "@/domain/entities/workout"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface BenchmarkResultFormProps {
@@ -13,7 +12,7 @@ interface BenchmarkResultFormProps {
 }
 
 export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormProps) {
-    const { activeSport } = useSport()
+    const [sportId, setSportId] = useState<string>('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showForm, setShowForm] = useState(false)
 
@@ -25,6 +24,21 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
     const [weight, setWeight] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
 
+    // Charger l'ID du sport musculation au montage
+    useEffect(() => {
+        const fetchSportId = async () => {
+            try {
+                const result = await sportsService.getAll({ slug: 'musculation' })
+                if (result.rows.length > 0) {
+                    setSportId(result.rows[0].id)
+                }
+            } catch (err) {
+                console.error('Error loading sport:', err)
+            }
+        }
+        fetchSportId()
+    }, [])
+
     if (!workout.is_benchmark) {
         return null
     }
@@ -32,8 +46,8 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!activeSport?.id) {
-            toast.error('Veuillez sélectionner un sport')
+        if (!sportId) {
+            toast.error('Sport non chargé')
             return
         }
 
@@ -73,7 +87,7 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
             }
 
             const data: SaveBenchmarkResultDto = {
-                sportId: activeSport.id,
+                sportId: sportId,
                 workoutId: workout.id,
                 workoutName: workout.name,
                 result
@@ -105,10 +119,10 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
 
     const getLevelLabel = (level: string) => {
         switch (level) {
-            case 'beginner': return '🟢 Débutant'
-            case 'intermediate': return '🟡 Intermédiaire'
-            case 'advanced': return '🟠 Avancé'
-            case 'elite': return '🔴 Elite'
+            case 'beginner': return 'Débutant'
+            case 'intermediate': return 'Intermédiaire'
+            case 'advanced': return 'Avancé'
+            case 'elite': return 'Elite'
             default: return level
         }
     }
@@ -153,7 +167,7 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
                     onClick={() => setShowForm(false)}
                     className="text-muted-foreground hover:text-foreground"
                 >
-                    ✕
+                    X
                 </button>
             </div>
 
@@ -260,7 +274,7 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
                 <div className="flex gap-3">
                     <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !sportId}
                         className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? 'Enregistrement...' : 'Enregistrer mon résultat'}
