@@ -59,7 +59,7 @@ function TimerContent() {
 
   return (
     <motion.div
-      className="min-h-screen bg-background p-4 sm:p-6"
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4 sm:p-6"
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
@@ -67,8 +67,10 @@ function TimerContent() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div variants={fadeInUp} className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-black mb-2">Timers</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <h1 className="text-3xl sm:text-4xl font-black mb-2">
+            <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Timers</span>
+          </h1>
+          <p className="text-sm sm:text-base text-slate-400">
             Choisissez et configurez votre timer d'entraînement
           </p>
         </motion.div>
@@ -105,23 +107,23 @@ function TimerContent() {
 
         {/* Instructions */}
         <motion.div variants={fadeInUp} className="mt-12 max-w-2xl mx-auto">
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <TimerIcon className="w-5 h-5 text-primary" />
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2 text-white">
+              <TimerIcon className="w-5 h-5 text-orange-400" />
               Guide des timers
             </h3>
-            <div className="text-sm text-muted-foreground space-y-3">
+            <div className="text-sm text-slate-400 space-y-3">
               <div>
-                <strong className="text-foreground">For Time :</strong> Chronomètre pour mesurer votre temps de complétion. Parfait pour les WODs avec un nombre fixe de rounds.
+                <strong className="text-white">For Time :</strong> Chronomètre pour mesurer votre temps de complétion. Parfait pour les WODs avec un nombre fixe de rounds.
               </div>
               <div>
-                <strong className="text-foreground">AMRAP :</strong> As Many Rounds As Possible. Comptez le maximum de rounds dans un temps donné pour repousser vos limites.
+                <strong className="text-white">AMRAP :</strong> As Many Rounds As Possible. Comptez le maximum de rounds dans un temps donné pour repousser vos limites.
               </div>
               <div>
-                <strong className="text-foreground">EMOM :</strong> Every Minute On the Minute. Effectuez un exercice au début de chaque minute, le temps restant est votre repos.
+                <strong className="text-white">EMOM :</strong> Every Minute On the Minute. Effectuez un exercice au début de chaque minute, le temps restant est votre repos.
               </div>
               <div>
-                <strong className="text-foreground">Tabata :</strong> Intervalles haute intensité de 20 secondes de travail / 10 secondes de repos. Protocole scientifiquement prouvé.
+                <strong className="text-white">Tabata :</strong> Intervalles haute intensité de 20 secondes de travail / 10 secondes de repos. Protocole scientifiquement prouvé.
               </div>
             </div>
           </div>

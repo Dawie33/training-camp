@@ -2,6 +2,8 @@
 
 import { workoutsService } from "@/services"
 import { Workouts } from "@/domain/entities/workout"
+import { fadeInUp, staggerContainer } from "@/lib/animations"
+import { motion } from "framer-motion"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -58,28 +60,34 @@ export function BenchmarksContent() {
 
     if (loading) {
         return (
-            <div className="container mx-auto p-6">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-            <div className="container mx-auto p-6 max-w-7xl">
+        <motion.div
+            className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+        >
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
                 {/* Hero Section */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border mb-8">
+                <motion.div
+                    variants={fadeInUp}
+                    className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500/20 to-rose-500/20 backdrop-blur-xl border border-white/10"
+                >
                     <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
                     <div className="relative p-8 md:p-12">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="text-5xl">🏆</div>
                             <div>
-                                <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                    Benchmarks
+                                <h1 className="text-3xl md:text-5xl font-bold">
+                                    <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Benchmarks</span>
                                 </h1>
-                                <p className="text-muted-foreground mt-2">
+                                <p className="text-slate-400 mt-2">
                                     Évaluez votre niveau et suivez votre progression
                                 </p>
                             </div>
@@ -87,63 +95,63 @@ export function BenchmarksContent() {
 
                         {/* Stats rapides */}
                         <div className="flex flex-wrap gap-4 mt-6">
-                            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background/50 backdrop-blur">
+                            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 backdrop-blur border border-white/10">
                                 <span className="text-2xl">📊</span>
                                 <div>
-                                    <div className="text-xs text-muted-foreground">Benchmarks</div>
-                                    <div className="font-bold">{benchmarkWorkouts.length} disponibles</div>
+                                    <div className="text-xs text-slate-400">Benchmarks</div>
+                                    <div className="font-bold text-white">{benchmarkWorkouts.length} disponibles</div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background/50 backdrop-blur">
+                            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 backdrop-blur border border-white/10">
                                 <span className="text-2xl">🎯</span>
                                 <div>
-                                    <div className="text-xs text-muted-foreground">Objectif</div>
-                                    <div className="font-bold">Évaluation niveau</div>
+                                    <div className="text-xs text-slate-400">Objectif</div>
+                                    <div className="font-bold text-white">Évaluation niveau</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Explication */}
-                <div className="mb-8 grid md:grid-cols-3 gap-4">
-                    <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+                <motion.div variants={fadeInUp} className="grid md:grid-cols-3 gap-4">
+                    <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/30 transition-all">
                         <div className="text-3xl mb-3">1️⃣</div>
-                        <h3 className="font-semibold mb-2">Choisissez un benchmark</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-semibold mb-2 text-white">Choisissez un benchmark</h3>
+                        <p className="text-sm text-slate-400">
                             Sélectionnez un workout de référence adapté à votre niveau actuel
                         </p>
                     </div>
-                    <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+                    <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/30 transition-all">
                         <div className="text-3xl mb-3">2️⃣</div>
-                        <h3 className="font-semibold mb-2">Effectuez le test</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-semibold mb-2 text-white">Effectuez le test</h3>
+                        <p className="text-sm text-slate-400">
                             Complétez le workout et enregistrez votre performance (temps, rounds, poids...)
                         </p>
                     </div>
-                    <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+                    <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/30 transition-all">
                         <div className="text-3xl mb-3">3️⃣</div>
-                        <h3 className="font-semibold mb-2">Découvrez votre niveau</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-semibold mb-2 text-white">Découvrez votre niveau</h3>
+                        <p className="text-sm text-slate-400">
                             Votre niveau sera calculé automatiquement selon les standards
                         </p>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Benchmarks List */}
                 {benchmarkWorkouts.length === 0 ? (
-                    <div className="text-center py-20 bg-card rounded-2xl border">
+                    <motion.div variants={fadeInUp} className="text-center py-20 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
                         <div className="text-6xl mb-4">🔍</div>
-                        <p className="text-xl font-semibold mb-2">Aucun benchmark disponible</p>
-                        <p className="text-muted-foreground">
+                        <p className="text-xl font-semibold mb-2 text-white">Aucun benchmark disponible</p>
+                        <p className="text-slate-400">
                             Aucun workout de référence n'est encore disponible
                         </p>
-                    </div>
+                    </motion.div>
                 ) : (
-                    <div className="space-y-4">
-                        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <motion.div variants={fadeInUp} className="space-y-4">
+                        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-white">
                             <span>Workouts de référence</span>
-                            <span className="text-sm font-normal text-muted-foreground">
+                            <span className="text-sm font-normal text-slate-400">
                                 ({benchmarkWorkouts.length})
                             </span>
                         </h2>
@@ -154,16 +162,20 @@ export function BenchmarksContent() {
                                 href={`/workout/${workout.id}`}
                                 className="block group"
                             >
-                                <div className="bg-card rounded-xl border hover:border-primary/50 transition-all overflow-hidden hover:shadow-xl p-6">
+                                <motion.div
+                                    className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:border-white/30 transition-all overflow-hidden p-6"
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
+                                >
                                     {/* Header */}
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <h3 className="text-2xl font-bold group-hover:text-primary transition-colors">
+                                                <h3 className="text-2xl font-bold text-white group-hover:text-orange-400 transition-colors">
                                                     {workout.name}
                                                 </h3>
                                             </div>
-                                            <p className="text-muted-foreground mb-3">
+                                            <p className="text-slate-400 mb-3">
                                                 {workout.description}
                                             </p>
                                         </div>
@@ -172,16 +184,16 @@ export function BenchmarksContent() {
                                     {/* Metadata */}
                                     <div className="flex flex-wrap gap-3 mb-4">
                                         {/* Type */}
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/10">
                                             <span className="text-lg">💪</span>
-                                            <span className="text-xs font-medium uppercase tracking-wide">
+                                            <span className="text-xs font-medium uppercase tracking-wide text-slate-300">
                                                 {workout.workout_type?.replace('_', ' ')}
                                             </span>
                                         </div>
 
                                         {/* Difficulty */}
                                         {workout.difficulty && (
-                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${getDifficultyColor(workout.difficulty)}`}>
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${getDifficultyColor(workout.difficulty)}`}>
                                                 <span className="text-xs font-semibold">
                                                     {getDifficultyLabel(workout.difficulty)}
                                                 </span>
@@ -190,7 +202,7 @@ export function BenchmarksContent() {
 
                                         {/* Duration */}
                                         {workout.estimated_duration && (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30">
                                                 <span className="text-lg">⏱️</span>
                                                 <span className="text-xs font-semibold">
                                                     {workout.estimated_duration} min
@@ -201,9 +213,9 @@ export function BenchmarksContent() {
 
                                     {/* Coach Notes Preview */}
                                     {workout.coach_notes && (
-                                        <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 border border-muted">
+                                        <div className="flex items-start gap-2 p-3 rounded-xl bg-white/5 border border-white/10">
                                             <span className="text-lg shrink-0">💡</span>
-                                            <p className="text-sm text-muted-foreground line-clamp-2">
+                                            <p className="text-sm text-slate-400 line-clamp-2">
                                                 {workout.coach_notes}
                                             </p>
                                         </div>
@@ -211,58 +223,58 @@ export function BenchmarksContent() {
 
                                     {/* CTA */}
                                     <div className="mt-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-2 text-sm text-slate-500">
                                             <span>Cliquez pour voir les détails</span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-primary font-semibold group-hover:gap-3 transition-all">
+                                        <div className="flex items-center gap-2 text-orange-400 font-semibold group-hover:gap-3 transition-all">
                                             <span>Commencer</span>
                                             <span className="text-xl">→</span>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             </Link>
                         ))}
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Bottom Info */}
                 {benchmarkWorkouts.length > 0 && (
-                    <div className="mt-12 p-8 bg-gradient-to-r from-primary/5 to-background border rounded-2xl">
+                    <motion.div variants={fadeInUp} className="mt-8 p-8 bg-gradient-to-r from-orange-500/10 to-rose-500/10 backdrop-blur-xl border border-white/10 rounded-2xl">
                         <div className="flex items-start gap-4">
                             <div className="text-4xl">📈</div>
                             <div className="flex-1">
-                                <h3 className="text-xl font-bold mb-3">Suivez votre progression</h3>
+                                <h3 className="text-xl font-bold mb-3 text-white">Suivez votre progression</h3>
                                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                                     <div className="flex gap-2">
-                                        <span className="text-primary shrink-0">✓</span>
-                                        <span className="text-muted-foreground">
+                                        <span className="text-orange-400 shrink-0">✓</span>
+                                        <span className="text-slate-400">
                                             Refaites régulièrement les mêmes benchmarks pour mesurer vos progrès
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <span className="text-primary shrink-0">✓</span>
-                                        <span className="text-muted-foreground">
+                                        <span className="text-orange-400 shrink-0">✓</span>
+                                        <span className="text-slate-400">
                                             Comparez vos performances avec les standards
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <span className="text-primary shrink-0">✓</span>
-                                        <span className="text-muted-foreground">
+                                        <span className="text-orange-400 shrink-0">✓</span>
+                                        <span className="text-slate-400">
                                             Votre niveau s'ajuste automatiquement selon vos résultats
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <span className="text-primary shrink-0">✓</span>
-                                        <span className="text-muted-foreground">
+                                        <span className="text-orange-400 shrink-0">✓</span>
+                                        <span className="text-slate-400">
                                             Débloquez de nouveaux objectifs en progressant
                                         </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
             </div>
-        </div>
+        </motion.div>
     )
 }

@@ -216,11 +216,11 @@ function CalendarContent() {
 
   const renderDayView = () => (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-card rounded-lg border p-6">
-        <div className="text-center mb-6 pb-4 border-b">
-          <h2 className="text-3xl font-bold capitalize">{dayView.dayName}</h2>
-          <p className="text-4xl font-bold text-primary mt-2">{dayView.dayNumber}</p>
-          <p className="text-sm text-muted-foreground mt-1">
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+        <div className="text-center mb-6 pb-4 border-b border-white/10">
+          <h2 className="text-3xl font-bold capitalize text-white">{dayView.dayName}</h2>
+          <p className="text-4xl font-bold text-orange-400 mt-2">{dayView.dayNumber}</p>
+          <p className="text-sm text-slate-400 mt-1">
             {format(currentDate, 'MMMM yyyy', { locale: fr })}
           </p>
         </div>
@@ -230,7 +230,7 @@ function CalendarContent() {
             <motion.div
               key={workout.id}
               className={`
-                w-full p-4 rounded-lg border
+                w-full p-4 rounded-xl border
                 ${getWorkoutTypeStyle(workout.type)}
               `}
               whileHover={{ scale: 1.02 }}
@@ -239,26 +239,26 @@ function CalendarContent() {
                 <div className="flex-1">
                   <div className={`
                     text-base font-semibold mb-2
-                    ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
-                    ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
-                    ${workout.type === 'skipped' ? 'text-gray-700 dark:text-gray-400' : ''}
-                    ${workout.type === 'rescheduled' ? 'text-orange-700 dark:text-orange-400' : ''}
+                    ${workout.type === 'completed' ? 'text-green-400' : ''}
+                    ${workout.type === 'scheduled' ? 'text-blue-400' : ''}
+                    ${workout.type === 'skipped' ? 'text-gray-400' : ''}
+                    ${workout.type === 'rescheduled' ? 'text-orange-400' : ''}
                   `}>
                     {workout.name}
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     {workout.workout_type && (
-                      <div className="text-xs text-muted-foreground capitalize">
+                      <div className="text-xs text-slate-400 capitalize">
                         {workout.workout_type.replace(/_/g, ' ')}
                       </div>
                     )}
                     {workout.difficulty && (
-                      <div className="text-xs px-2 py-1 rounded bg-muted font-medium capitalize">
+                      <div className="text-xs px-2 py-1 rounded-lg bg-white/10 font-medium capitalize text-slate-300">
                         {workout.difficulty}
                       </div>
                     )}
                     {workout.duration && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-slate-400">
                         {workout.duration} min
                       </div>
                     )}
@@ -268,7 +268,7 @@ function CalendarContent() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDeleteSchedule(workout.scheduleId)}
-                  className="ml-2"
+                  className="ml-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -277,15 +277,15 @@ function CalendarContent() {
                 <div className="flex gap-2 mt-3">
                   <Button
                     size="sm"
-                    variant="outline"
                     onClick={() => markAsCompleted(workout.scheduleId)}
+                    className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
                   >
                     Marquer complété
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
                     onClick={() => markAsSkipped(workout.scheduleId)}
+                    className="bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30"
                   >
                     Marquer sauté
                   </Button>
@@ -295,19 +295,19 @@ function CalendarContent() {
           ))}
 
           {dayView.workouts.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-slate-400">
               Aucun workout prévu pour ce jour
             </div>
           )}
 
           <motion.button
             onClick={() => handleAddWorkout(dayView.date)}
-            className="w-full flex items-center justify-center gap-2 p-4 rounded-lg border-2 border-dashed transition-all hover:bg-accent hover:border-primary"
+            className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-white/20 transition-all hover:bg-white/5 hover:border-orange-400"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Plus className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">Ajouter un workout</span>
+            <Plus className="w-5 h-5 text-slate-400" />
+            <span className="text-sm font-medium text-slate-400">Ajouter un workout</span>
           </motion.button>
         </div>
       </div>
@@ -323,18 +323,18 @@ function CalendarContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
           className={`
-            relative rounded-lg border p-4 min-h-[160px]
+            relative rounded-xl border p-4 min-h-[160px]
             transition-all
-            ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : 'bg-card hover:bg-accent'}
+            ${day.isToday ? 'ring-2 ring-orange-400 bg-orange-500/10 border-orange-500/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}
           `}
         >
-          <div className="flex flex-col items-center mb-3 pb-2 border-b">
-            <span className="text-xs text-muted-foreground font-medium">
+          <div className="flex flex-col items-center mb-3 pb-2 border-b border-white/10">
+            <span className="text-xs text-slate-400 font-medium">
               {day.dayName}
             </span>
             <span className={`
               text-lg font-bold mt-1
-              ${day.isToday ? 'text-primary' : 'text-foreground'}
+              ${day.isToday ? 'text-orange-400' : 'text-white'}
             `}>
               {day.dayNumber}
             </span>
@@ -345,16 +345,16 @@ function CalendarContent() {
               <div
                 key={workout.id}
                 className={`
-                  w-full p-2 rounded border
+                  w-full p-2 rounded-lg border
                   ${getWorkoutTypeStyle(workout.type)}
                 `}
               >
                 <div className={`
                   text-xs font-medium line-clamp-2
-                  ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
-                  ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
-                  ${workout.type === 'skipped' ? 'text-gray-700 dark:text-gray-400' : ''}
-                  ${workout.type === 'rescheduled' ? 'text-orange-700 dark:text-orange-400' : ''}
+                  ${workout.type === 'completed' ? 'text-green-400' : ''}
+                  ${workout.type === 'scheduled' ? 'text-blue-400' : ''}
+                  ${workout.type === 'skipped' ? 'text-gray-400' : ''}
+                  ${workout.type === 'rescheduled' ? 'text-orange-400' : ''}
                 `}>
                   {workout.name}
                 </div>
@@ -365,19 +365,19 @@ function CalendarContent() {
           <motion.button
             onClick={() => handleAddWorkout(day.date)}
             className={`
-              w-full flex items-center justify-center gap-2 p-2 rounded border-2 border-dashed
-              transition-all hover:bg-accent hover:border-primary
+              w-full flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-white/20
+              transition-all hover:bg-white/10 hover:border-orange-400
               ${day.workouts.length > 0 ? 'mt-2 opacity-50 hover:opacity-100' : 'mt-0'}
             `}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Plus className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Ajouter</span>
+            <Plus className="w-4 h-4 text-slate-400" />
+            <span className="text-xs text-slate-400">Ajouter</span>
           </motion.button>
 
           {day.isToday && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-400 rounded-full" />
           )}
         </motion.div>
       ))}
@@ -389,7 +389,7 @@ function CalendarContent() {
       {/* Headers des jours */}
       <div className="grid grid-cols-7 gap-2 mb-2">
         {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
-          <div key={day} className="text-center text-sm font-semibold text-muted-foreground py-2">
+          <div key={day} className="text-center text-sm font-semibold text-slate-400 py-2">
             {day}
           </div>
         ))}
@@ -404,16 +404,16 @@ function CalendarContent() {
             animate={{ opacity: 1 }}
             transition={{ delay: index * 0.01 }}
             className={`
-              relative rounded-lg border p-2 min-h-[100px]
+              relative rounded-xl border p-2 min-h-[100px]
               transition-all
-              ${day.isToday ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}
+              ${day.isToday ? 'ring-2 ring-orange-400 bg-orange-500/10 border-orange-500/30' : 'bg-white/5 border-white/10'}
               ${!day.isCurrentMonth ? 'opacity-40' : ''}
             `}
           >
             <div className="text-right mb-1">
               <span className={`
                 text-sm font-semibold
-                ${day.isToday ? 'text-primary' : day.isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'}
+                ${day.isToday ? 'text-orange-400' : day.isCurrentMonth ? 'text-white' : 'text-slate-500'}
               `}>
                 {day.dayNumber}
               </span>
@@ -424,19 +424,19 @@ function CalendarContent() {
                 <div
                   key={workout.id}
                   className={`
-                    w-full text-[9px] px-1 py-0.5 rounded truncate
+                    w-full text-[9px] px-1 py-0.5 rounded-lg truncate
                     ${getWorkoutTypeStyle(workout.type)}
-                    ${workout.type === 'completed' ? 'text-green-700 dark:text-green-400' : ''}
-                    ${workout.type === 'scheduled' ? 'text-blue-700 dark:text-blue-400' : ''}
-                    ${workout.type === 'skipped' ? 'text-gray-700 dark:text-gray-400' : ''}
-                    ${workout.type === 'rescheduled' ? 'text-orange-700 dark:text-orange-400' : ''}
+                    ${workout.type === 'completed' ? 'text-green-400' : ''}
+                    ${workout.type === 'scheduled' ? 'text-blue-400' : ''}
+                    ${workout.type === 'skipped' ? 'text-gray-400' : ''}
+                    ${workout.type === 'rescheduled' ? 'text-orange-400' : ''}
                   `}
                 >
                   {workout.name}
                 </div>
               ))}
               {day.workouts.length > 2 && (
-                <div className="text-[8px] text-center text-muted-foreground">
+                <div className="text-[8px] text-center text-slate-500">
                   +{day.workouts.length - 2}
                 </div>
               )}
@@ -448,13 +448,13 @@ function CalendarContent() {
                 e.stopPropagation()
                 handleAddWorkout(day.date)
               }}
-              className="w-full flex items-center justify-center p-1 rounded border border-dashed border-muted-foreground/30 hover:border-primary hover:bg-accent transition-all group"
+              className="w-full flex items-center justify-center p-1 rounded-lg border border-dashed border-white/20 hover:border-orange-400 hover:bg-white/5 transition-all group"
             >
-              <Plus className="w-3 h-3 text-muted-foreground group-hover:text-primary" />
+              <Plus className="w-3 h-3 text-slate-500 group-hover:text-orange-400" />
             </button>
 
             {day.isToday && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full" />
             )}
           </motion.div>
         ))}
@@ -464,40 +464,42 @@ function CalendarContent() {
 
   return (
     <motion.div
-      className="min-h-screen bg-background"
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
     >
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 pt-16 lg:pt-4">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
         <motion.div variants={fadeInUp}>
-          <h1 className="text-2xl sm:text-3xl font-bold">Calendrier</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Gérez votre planning d'entraînement</p>
+          <h1 className="text-2xl sm:text-4xl font-bold">
+            <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Calendrier</span>
+          </h1>
+          <p className="text-sm sm:text-base text-slate-400">Gérez votre planning d'entraînement</p>
         </motion.div>
 
         {/* Calendar Card */}
-        <motion.div variants={fadeInUp} className="bg-card rounded-lg border p-4 sm:p-6">
+        <motion.div variants={fadeInUp} className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6">
           {/* View Mode Tabs */}
           <div className="flex items-center justify-center gap-2 mb-6">
             <Button
-              variant={viewMode === 'day' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('day')}
+              className={viewMode === 'day' ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
             >
               Jour
             </Button>
             <Button
-              variant={viewMode === 'week' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('week')}
+              className={viewMode === 'week' ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
             >
               Semaine
             </Button>
             <Button
-              variant={viewMode === 'month' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('month')}
+              className={viewMode === 'month' ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
             >
               Mois
             </Button>
@@ -506,9 +508,9 @@ function CalendarContent() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-primary" />
+              <CalendarIcon className="w-5 h-5 text-orange-400" />
               <div>
-                <h3 className="text-lg font-semibold capitalize">{getHeaderTitle()}</h3>
+                <h3 className="text-lg font-semibold capitalize text-white">{getHeaderTitle()}</h3>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -516,6 +518,7 @@ function CalendarContent() {
                 variant="ghost"
                 size="icon"
                 onClick={handlePrevious}
+                className="text-slate-300 hover:text-white hover:bg-white/10"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -523,6 +526,7 @@ function CalendarContent() {
                 variant="ghost"
                 size="sm"
                 onClick={handleToday}
+                className="text-slate-300 hover:text-white hover:bg-white/10"
               >
                 Aujourd'hui
               </Button>
@@ -530,6 +534,7 @@ function CalendarContent() {
                 variant="ghost"
                 size="icon"
                 onClick={handleNext}
+                className="text-slate-300 hover:text-white hover:bg-white/10"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -539,7 +544,7 @@ function CalendarContent() {
           {/* Calendar Views */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
             </div>
           ) : (
             <>
@@ -550,22 +555,22 @@ function CalendarContent() {
           )}
 
           {/* Legend */}
-          <div className="mt-6 pt-4 border-t flex flex-wrap gap-4">
+          <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap gap-4">
             <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/50" />
-              <span className="text-muted-foreground">Programmé</span>
+              <div className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/50" />
+              <span className="text-slate-400">Programmé</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded bg-green-500/10 border border-green-500/50" />
-              <span className="text-muted-foreground">Complété</span>
+              <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/50" />
+              <span className="text-slate-400">Complété</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded bg-gray-500/10 border border-gray-500/50" />
-              <span className="text-muted-foreground">Sauté</span>
+              <div className="w-3 h-3 rounded bg-gray-500/20 border border-gray-500/50" />
+              <span className="text-slate-400">Sauté</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded bg-orange-500/10 border border-orange-500/50" />
-              <span className="text-muted-foreground">Replanifié</span>
+              <div className="w-3 h-3 rounded bg-orange-500/20 border border-orange-500/50" />
+              <span className="text-slate-400">Replanifié</span>
             </div>
           </div>
         </motion.div>

@@ -1,11 +1,4 @@
-export type SportCategory =
-  | 'endurance'
-  | 'strength'
-  | 'mixed'
-  | 'team'
-  | 'individual'
-  | 'water'
-  | 'combat'
+export type SportCategory = 'mixed'
 
 export interface Sport {
   id: string
@@ -33,7 +26,7 @@ export const DEFAULT_SPORT: Sport = {
   slug: 'crossfit',
   icon: '💪',
   description: 'Entraînement de Crossfit',
-  category: 'strength',
+  category: 'mixed',
   common_metrics: ['reps', 'sets', 'weight'],
   equipment_categories: ['barbell', 'dumbbells', 'machines', 'bench'],
   isActive: true,
