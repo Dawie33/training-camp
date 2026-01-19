@@ -11,10 +11,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { sportsService } from '@/services'
-import { WorkoutHistoryService } from '@/services/workout-history'
 import { TimerConfig, TimerType } from '@/hooks/useWorkoutTimer'
 import { cn } from '@/lib/utils'
+import { sportsService } from '@/services'
+import { WorkoutHistoryService } from '@/services/workout-history'
 import { motion } from 'framer-motion'
 import { Frown, Meh, Plus, Save, Smile, Sparkles, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -65,11 +65,11 @@ export function WorkoutResultModal({
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
   const [isSaving, setIsSaving] = useState(false)
 
-  // Charger l'ID du sport musculation au montage
+  // Charger l'ID du sport crossfit au montage
   useEffect(() => {
     const fetchSportId = async () => {
       try {
-        const result = await sportsService.getAll({ slug: 'musculation' })
+        const result = await sportsService.getAll({ slug: 'crossfit' })
         if (result.rows.length > 0) {
           setSportId(result.rows[0].id)
         }

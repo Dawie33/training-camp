@@ -4,7 +4,7 @@ import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { ExerciseDifficulty } from '@/domain/entities/exercice'
 import { DEFAULT_SPORT } from '@/domain/entities/sport'
 import { CreateWorkoutDTO } from '@/domain/entities/workout'
-import { WORKOUT_TYPES_BY_SPORT } from '@/domain/entities/workout-structure'
+import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
 import { GeneratedWorkout, generateWorkoutWithAI, sportsService, workoutsService } from '@/services'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -14,7 +14,7 @@ import { BlocksEditor } from '../[id]/components/BlocksEditor'
 export default function GenerateWorkoutAIPage() {
   const router = useRouter()
   const [sportId, setSportId] = useState<string>('')
-  const [workoutType, setWorkoutType] = useState<string>(WORKOUT_TYPES_BY_SPORT['musculation']?.[0]?.value || 'strength')
+  const [workoutType, setWorkoutType] = useState<string>(WORKOUT_TYPES.crossfit[0].value)
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'elite'>('intermediate')
   const [duration, setDuration] = useState(45)
   const [additionalInstructions, setAdditionalInstructions] = useState('')
@@ -32,11 +32,11 @@ export default function GenerateWorkoutAIPage() {
   const [editedIntensity, setEditedIntensity] = useState<'low' | 'moderate' | 'high' | 'very_high'>('moderate')
   const [editedBlocks, setEditedBlocks] = useState('')
 
-  // Charger l'ID du sport musculation au montage
+  // Charger l'ID du sport crossfit au montage
   useEffect(() => {
     const fetchSportId = async () => {
       try {
-        const result = await sportsService.getAll({ slug: 'musculation' })
+        const result = await sportsService.getAll({ slug: 'crossfit' })
         if (result.rows.length > 0) {
           setSportId(result.rows[0].id)
         }
@@ -121,7 +121,7 @@ export default function GenerateWorkoutAIPage() {
     }
   }
 
-  const workoutTypes = WORKOUT_TYPES_BY_SPORT['musculation'] || []
+  const workoutTypes = WORKOUT_TYPES.crossfit
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">

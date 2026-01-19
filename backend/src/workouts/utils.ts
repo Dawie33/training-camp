@@ -41,20 +41,6 @@ export function calculateLevelFromBenchmarks(
         'Fran': { elite: 180, advanced: 360, intermediate: 600, beginner: 999999, metric: 'time' },
         'Helen': { elite: 480, advanced: 720, intermediate: 900, beginner: 999999, metric: 'time' },
         'Grace': { elite: 180, advanced: 420, intermediate: 720, beginner: 999999, metric: 'time' },
-
-        // ===== RUNNING =====
-        '5K Time Trial': { elite: 900, advanced: 1200, intermediate: 1800, beginner: 999999, metric: 'time' },
-        'Cooper Test': { elite: 3000, advanced: 2400, intermediate: 1800, beginner: 0, metric: 'distance' },
-        '1 Mile Time Trial': { elite: 300, advanced: 420, intermediate: 600, beginner: 999999, metric: 'time' },
-
-        // ===== CYCLING =====
-        'FTP Test (20 min)': { elite: 300, advanced: 250, intermediate: 200, beginner: 0, metric: 'power' },
-        '5K Cycling Time Trial': { elite: 420, advanced: 540, intermediate: 720, beginner: 999999, metric: 'time' },
-
-        // ===== MUSCULATION =====
-        '1RM Bench Press': { elite: 140, advanced: 100, intermediate: 70, beginner: 0, metric: 'weight' },
-        '1RM Back Squat': { elite: 180, advanced: 140, intermediate: 100, beginner: 0, metric: 'weight' },
-        '1RM Deadlift': { elite: 220, advanced: 170, intermediate: 120, beginner: 0, metric: 'weight' }
     }
 
     const standard = benchmarkStandards[workoutName]

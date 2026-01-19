@@ -20,7 +20,7 @@ export interface WorkoutBlock {
 }
 
 
-export type SportSlug = 'crossfit' | 'running' | 'cycling' | 'musculation'
+export type SportSlug = 'crossfit'
 
 export type WithEquipment = { equipment?: string[] }
 
@@ -60,8 +60,8 @@ export type WorkoutBlocks = {
   duration_min: number
   stimulus?: string
   warmup?: WarmupItem[]
-  strength?: StrengthBlock      // Crossfit & Musculation
-  metcon?: MetconBlock          // Crossfit / Running / Cycling (Intervals)
+  strength?: StrengthBlock
+  metcon?: MetconBlock
   accessory?: AccessoryItem[]
   cooldown?: CooldownItem[]
   availableEquipment?: string[] // Liste du matériel dispo (bodyweight si rien)
@@ -82,5 +82,5 @@ export type DailyPlan = {
 }
 
 
-export type SportRef = { id: string; slug: string } // ex: { id: 'uuid', slug: 'musculation' }
+export type SportRef = { id: string; slug: string } // ex: { id: 'uuid', slug: 'crossfit' }
 export type TargetZone = 'E' | 'M' | 'T' | 'I' | 'R'

@@ -88,7 +88,7 @@ export class ResourceApi<T, CreateDTO = Partial<T>, UpdateDTO = Partial<T>> {
    * const newExercise = await exercisesApi.create({
    *   name: 'Push-ups',
    *   category: 'Strength',
-   *   description: 'Exercise de musculation'
+   *   description: 'Exercise de crossfit'
    * })
    * ```
    */

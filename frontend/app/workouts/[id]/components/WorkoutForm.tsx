@@ -3,11 +3,11 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
 import { sportsService } from '@/services'
-import { WORKOUT_TYPES_BY_SPORT } from '@/domain/entities/workout-structure'
-import type { WorkoutFormProps } from '../types'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
+import type { WorkoutFormProps } from '../types'
 import { BlocksEditor } from './BlocksEditor'
 import { TagInput } from './TagInput'
 
@@ -15,11 +15,11 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
   const router = useRouter()
   const [sportId, setSportId] = useState<string>('')
 
-  // Charger l'ID du sport musculation au montage
+  // Charger l'ID du sport crossfit au montage
   useEffect(() => {
     const fetchSportId = async () => {
       try {
-        const result = await sportsService.getAll({ slug: 'musculation' })
+        const result = await sportsService.getAll({ slug: 'crossfit' })
         if (result.rows.length > 0) {
           const id = result.rows[0].id
           setSportId(id)
@@ -35,9 +35,9 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
     fetchSportId()
   }, [])
 
-  // Obtenir les types de workout disponibles pour musculation
+  // Obtenir les types de workout disponibles pour crossfit
   const availableWorkoutTypes = useMemo(() => {
-    return WORKOUT_TYPES_BY_SPORT['musculation'] || []
+    return WORKOUT_TYPES.crossfit
   }, [])
 
   return (

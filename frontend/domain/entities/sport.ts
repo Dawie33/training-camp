@@ -24,15 +24,15 @@ export interface Sport {
 }
 
 /**
- * Sport par défaut de l'application (musculation)
+ * Sport par défaut de l'application (Crossfit)
  * Ce sport est hardcodé car l'application est spécialisée dans un seul sport
  */
 export const DEFAULT_SPORT: Sport = {
   id: '', // Sera récupéré dynamiquement via l'API au premier chargement
-  name: 'Musculation',
-  slug: 'musculation',
+  name: 'Crossfit',
+  slug: 'crossfit',
   icon: '💪',
-  description: 'Entraînement de musculation',
+  description: 'Entraînement de Crossfit',
   category: 'strength',
   common_metrics: ['reps', 'sets', 'weight'],
   equipment_categories: ['barbell', 'dumbbells', 'machines', 'bench'],

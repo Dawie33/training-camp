@@ -15,14 +15,6 @@ interface Equipment {
 
 const SPORTS = [
   { value: 'crossfit', label: 'Crossfit' },
-  { value: 'running', label: 'Course à pied' },
-  { value: 'cycling', label: 'Cyclisme' },
-  { value: 'swimming', label: 'Natation' },
-  { value: 'weightlifting', label: 'Musculation' },
-  { value: 'cross-training', label: 'Cross Training' },
-  { value: 'yoga', label: 'Yoga' },
-  { value: 'martial_arts', label: 'Arts martiaux' },
-  { value: 'other', label: 'Autre' },
 ]
 
 const LEVELS = [

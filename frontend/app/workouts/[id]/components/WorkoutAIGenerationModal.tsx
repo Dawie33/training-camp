@@ -79,7 +79,7 @@ export function WorkoutAIGenerationModal({
                 <Input
                   value={aiParams.sport_slug}
                   onChange={(e) => setAiParams({ ...aiParams, sport_slug: e.target.value })}
-                  placeholder="crossfit, running..."
+                  placeholder="crossfit"
                 />
               </div>
             </div>

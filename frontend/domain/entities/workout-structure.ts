@@ -94,9 +94,9 @@ export interface WorkoutBlocks {
 }
 
 /**
- * Types de workouts disponibles par sport
+ * Types de workouts disponibles 
  */
-export const WORKOUT_TYPES_BY_SPORT = {
+export const WORKOUT_TYPES = {
   crossfit: [
     { value: 'technique_metcon', label: 'Technique + MetCon' },
     { value: 'strength_max', label: 'Force Max (RM)' },
@@ -104,45 +104,7 @@ export const WORKOUT_TYPES_BY_SPORT = {
     { value: 'strength_accessory', label: 'Force + Accessoires' },
     { value: 'benchmark', label: 'Benchmark (Fran, Murph, etc.)' },
     { value: 'mixed', label: 'Mixte / Varié' },
-  ],
-  running: [
-    { value: 'intervals', label: 'Intervalles' },
-    { value: 'tempo', label: 'Tempo Run' },
-    { value: 'long_run', label: 'Sortie Longue' },
-    { value: 'fartlek', label: 'Fartlek' },
-    { value: 'hill_repeats', label: 'Côtes' },
-    { value: 'recovery', label: 'Récupération' },
-  ],
-  cycling: [
-    { value: 'intervals', label: 'Intervalles' },
-    { value: 'endurance', label: 'Endurance' },
-    { value: 'ftp_work', label: 'Travail FTP' },
-    { value: 'vo2max', label: 'VO2max' },
-    { value: 'recovery', label: 'Récupération' },
-  ],
-  musculation: [
-    { value: 'strength', label: 'Force' },
-    { value: 'hypertrophy', label: 'Hypertrophie' },
-    { value: 'circuit', label: 'Circuit Training' },
-    { value: 'upper_body', label: 'Haut du corps' },
-    { value: 'lower_body', label: 'Bas du corps' },
-    { value: 'full_body', label: 'Full Body' },
-  ],
-  'cross-training': [
-    { value: 'low_impact', label: 'Bas Impact' },
-    { value: 'hiit', label: 'HIIT' },
-    { value: 'circuit', label: 'Circuit Cardio' },
-    { value: 'machines', label: 'Machines Cardio' },
-    { value: 'steady_state', label: 'Cardio Continu' },
-  ],
-  mobility: [
-    { value: 'pre_workout', label: 'Pré-workout (Échauffement)' },
-    { value: 'post_workout', label: 'Post-workout (Récupération)' },
-    { value: 'dedicated', label: 'Séance Complète' },
-    { value: 'morning', label: 'Routine Matinale' },
-    { value: 'recovery', label: 'Récupération / Détente' },
-    { value: 'sport_specific', label: 'Spécifique Sport' },
-  ],
+  ]
 } as const
 
 /**

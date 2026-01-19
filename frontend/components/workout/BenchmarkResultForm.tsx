@@ -1,8 +1,8 @@
 'use client'
 
-import { sportsService, workoutsService } from "@/services"
 import { SaveBenchmarkResultDto } from "@/domain/entities/benchmark"
 import { Workouts } from "@/domain/entities/workout"
+import { sportsService, workoutsService } from "@/services"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
@@ -24,11 +24,11 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
     const [weight, setWeight] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
 
-    // Charger l'ID du sport musculation au montage
+    // Charger l'ID du sport crossfit au montage
     useEffect(() => {
         const fetchSportId = async () => {
             try {
-                const result = await sportsService.getAll({ slug: 'musculation' })
+                const result = await sportsService.getAll({ slug: 'crossfit' })
                 if (result.rows.length > 0) {
                     setSportId(result.rows[0].id)
                 }
