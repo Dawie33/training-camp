@@ -18,10 +18,6 @@ export class CreateWorkoutDto {
   @IsOptional()
   workout_type?: string
 
-  @IsUUID()
-  @IsOptional()
-  sport_id?: string
-
   @IsOptional()
   blocks?: Record<string, unknown>
 
@@ -176,9 +172,6 @@ export class UpdateWorkoutDto {
 
 export class GenerateWorkoutDto {
   @IsString()
-  sport!: string
-
-  @IsString()
   workoutType!: string
 
   @IsEnum(['beginner', 'intermediate', 'advanced', 'elite'])
@@ -241,10 +234,6 @@ export class WorkoutQueryDto {
   scheduled_date?: string
 
   @IsOptional()
-  @IsUUID()
-  sport_id?: string
-
-  @IsOptional()
   @Type(() => String)
   @IsIn(['beginner', 'intermediate', 'advanced'])
   difficulty?: string
@@ -275,10 +264,6 @@ export class WorkoutDto {
   @IsString()
   @IsOptional()
   workout_type: string
-
-  @IsUUID()
-  @IsOptional()
-  sport_id: string
 
   @IsOptional()
   blocks: Record<string, unknown>
@@ -405,10 +390,6 @@ export class BenchmarkResultDto {
  * DTO pour sauvegarder un résultat de benchmark
  */
 export class SaveBenchmarkResultDto {
-  @IsNotEmpty()
-  @IsUUID()
-  sportId!: string
-
   @IsNotEmpty()
   @IsUUID()
   workoutId!: string

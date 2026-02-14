@@ -17,7 +17,7 @@ export class UsersService {
      * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
      * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
      */
-    async getProfile(id: string, activeSportId?: string) {
+    async getProfile(id: string) {
         const user = await this.knex('users')
             .where({ id })
             .first()
@@ -26,17 +26,6 @@ export class UsersService {
 
         // Masquer le mot de passe
         const { password, ...sanitizedUser } = user
-
-        // Récupérer le niveau pour le sport actif
-        let sportLevel = 'beginner'
-        if (activeSportId) {
-            const sportProfile = await this.knex('user_sport_profiles')
-                .where({ user_id: id, sport_id: activeSportId })
-                .first()
-            if (sportProfile) {
-                sportLevel = sportProfile.sport_level
-            }
-        }
 
         // Récupérer les stats de l'utilisateur
         const [workoutsCount, sessionsCount, totalTime] = await Promise.all([
@@ -74,7 +63,6 @@ export class UsersService {
 
         return {
             ...sanitizedUser,
-            sport_level: sportLevel,
             stats: {
                 workouts: Number(workoutsCount?.count || 0),
                 sessions: Number(sessionsCount?.count || 0),

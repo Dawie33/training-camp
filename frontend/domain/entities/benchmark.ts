@@ -18,7 +18,6 @@ export interface BenchmarkResult {
 }
 
 export interface SaveBenchmarkResultDto {
-  sportId: string
   workoutId: string
   workoutName: string
   result: BenchmarkResult
@@ -32,7 +31,6 @@ export interface SaveBenchmarkResultDto {
 export interface BenchmarkAttempt {
   id: string
   user_id: string
-  sport_id: string
   workout_id: string
   workout_name: string
 

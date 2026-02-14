@@ -3,11 +3,8 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface AIParams {
-  sport_id: string
-  sport_slug: string
   date: string
   duration_min: number
   intensity: string
@@ -22,7 +19,6 @@ interface WorkoutAIGenerationModalProps {
   onSubmit: (e: React.FormEvent) => Promise<void>
   aiParams: AIParams
   setAiParams: (params: AIParams) => void
-  sports: Array<{ id: string; name: string; slug: string }>
   saving: boolean
 }
 
@@ -32,7 +28,6 @@ export function WorkoutAIGenerationModal({
   onSubmit,
   aiParams,
   setAiParams,
-  sports,
   saving,
 }: WorkoutAIGenerationModalProps) {
   if (!isOpen) return null
@@ -48,42 +43,6 @@ export function WorkoutAIGenerationModal({
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={onSubmit}>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Sports *</label>
-                <Select
-                  value={aiParams.sport_id}
-                  onValueChange={(value: string) => {
-                    const sport = sports.find(s => s.id === value)
-                    setAiParams({
-                      ...aiParams,
-                      sport_id: value,
-                      sport_slug: sport?.slug || ''
-                    })
-                  }}
-                >
-                  <SelectTrigger className="w-[300px]">
-                    <SelectValue placeholder="Selectionnez un sport" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sports.map(sport => (
-                      <SelectItem key={sport.id} value={sport.id}>
-                        {sport.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Sport Slug *</label>
-                <Input
-                  value={aiParams.sport_slug}
-                  onChange={(e) => setAiParams({ ...aiParams, sport_slug: e.target.value })}
-                  placeholder="crossfit"
-                />
-              </div>
-            </div>
-
             <div>
               <label className="text-sm font-medium">Date *</label>
               <Input
@@ -152,7 +111,7 @@ export function WorkoutAIGenerationModal({
             <div className="flex gap-4 pt-4">
               <Button
                 type="submit"
-                disabled={saving || !aiParams.sport_id || !aiParams.sport_slug || !aiParams.date}
+                disabled={saving || !aiParams.date}
                 className="flex-1"
               >
                 {saving ? 'Generation...' : 'Generer'}

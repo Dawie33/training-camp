@@ -2,10 +2,9 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { sportsService } from '@/services'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { use, useEffect, useState } from 'react'
+import { use } from 'react'
 import { useWorkoutForm } from './_hooks/useWorkoutForm'
 import { WorkoutAIGenerationModal } from './components/WorkoutAIGenerationModal'
 import { WorkoutForm } from './components/WorkoutForm'
@@ -18,17 +17,6 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params)
   const router = useRouter()
   const isNewMode = id === 'new'
-
-  // Load sports list
-  const [sports, setSports] = useState<{ id: string; name: string; slug: string }[]>([])
-
-  useEffect(() => {
-    const fetchSports = async () => {
-      const { rows } = await sportsService.getAll()
-      setSports(rows)
-    }
-    fetchSports()
-  }, [])
 
   // Use custom hook for workout form management
   const {
@@ -77,7 +65,6 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
               onSubmit={handleSubmitGenerateWorkout}
               aiParams={aiParams}
               setAiParams={setAiParams}
-              sports={sports}
               saving={saving}
             />
 

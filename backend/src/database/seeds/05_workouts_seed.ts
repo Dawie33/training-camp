@@ -3,9 +3,6 @@ import type { Knex } from "knex"
 export async function seed(knex: Knex): Promise<void> {
   await knex('workouts').del();
 
-  // Get CrossFit sport ID (seul sport de l'application)
-  const crossfitSport = await knex('sports').where({ slug: 'crossfit' }).first();
-
   const workouts = [
     // ============================================================================
     // CROSSFIT WORKOUTS
@@ -16,7 +13,6 @@ export async function seed(knex: Knex): Promise<void> {
       slug: 'cindy',
       description: 'AMRAP 20 min: 5 Pull-Ups, 10 Push-Ups, 15 Air Squats',
       workout_type: 'amrap',
-      sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
         stimulus: 'Endurance musculaire et cardio',
         sections: [
@@ -77,7 +73,6 @@ export async function seed(knex: Knex): Promise<void> {
       slug: 'fran',
       description: '21-15-9 Thrusters (95/65 lbs) et Pull-Ups',
       workout_type: 'for_time',
-      sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
         stimulus: 'Sprint métabolique intense',
         sections: [
@@ -138,7 +133,6 @@ export async function seed(knex: Knex): Promise<void> {
       slug: 'helen',
       description: '3 rounds: 400m Run, 21 KB Swings (53/35), 12 Pull-Ups',
       workout_type: 'for_time',
-      sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
         stimulus: 'Endurance et puissance',
         sections: [
@@ -200,7 +194,6 @@ export async function seed(knex: Knex): Promise<void> {
       slug: 'dt',
       description: '5 rounds: 12 Deadlifts, 9 Hang Power Cleans, 6 Push Jerks (155/105)',
       workout_type: 'for_time',
-      sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
         stimulus: 'Force et endurance avec barbell',
         sections: [
@@ -262,7 +255,6 @@ export async function seed(knex: Knex): Promise<void> {
       slug: 'strength-metcon-1',
       description: 'Back Squat 5x5 + Short MetCon',
       workout_type: 'strength',
-      sport_id: crossfitSport?.id || null,
       blocks: JSON.stringify({
         stimulus: 'Force maximale puis conditioning court',
         sections: [

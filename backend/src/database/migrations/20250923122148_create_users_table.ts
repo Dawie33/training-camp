@@ -16,13 +16,10 @@ export async function up(knex: Knex): Promise<void> {
     table.date('dateOfBirth').nullable();
     table.enum('gender', ['male', 'female', 'other']).nullable();
     
-    // Profil athlétique général
-    table.enum('primary_sport', [
-      'crossfit', 'running', 'cycling', 'swimming', 
-      'weightlifting', 'yoga', 'martial_arts', 'other'
-    ]).defaultTo('crossfit');
-    table.json('sports_practiced').nullable(); // Multiple sports
-    table.enum('overall_level', ['beginner', 'intermediate', 'advanced', 'elite']).defaultTo('beginner');
+    // Profil athlétique
+    table.enum('sport_level', ['beginner', 'intermediate', 'advanced', 'elite']).defaultTo('beginner');
+    table.json('benchmark_results').nullable(); // Résultats des benchmarks
+    table.json('personal_records').nullable(); // Records personnels
     
     // Données physiologiques
     table.integer('height').nullable(); // en cm
@@ -31,7 +28,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('max_heart_rate').nullable(); // BPM
     table.decimal('body_fat_percentage', 4, 1).nullable(); // %
     
-    // Objectifs généraux (sport-agnostique)
+    // Objectifs généraux
     table.json('global_goals').nullable(); // { weight_loss: true, endurance: true, strength: true, ... }
     
     // Blessures et limitations (générales)
@@ -40,7 +37,7 @@ export async function up(knex: Knex): Promise<void> {
     table.json('physical_limitations').nullable(); // Restrictions physiques
     
     // Matériel disponible (étendu)
-    table.json('equipment_available').nullable(); // Équipement multi-sports
+    table.json('equipment_available').nullable(); // Équipement disponible
     table.enum('training_location', ['home', 'gym', 'outdoor', 'mixed']).defaultTo('gym');
     
     // Préférences générales
@@ -62,8 +59,7 @@ export async function up(knex: Knex): Promise<void> {
     
     // Index pour optimisation
     table.index(['email']);
-    table.index(['primary_sport']);
-    table.index(['overall_level']);
+    table.index(['sport_level']);
     table.index(['isActive']);
     table.index(['premium_member']);
   });

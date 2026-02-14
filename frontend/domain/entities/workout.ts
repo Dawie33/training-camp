@@ -27,7 +27,6 @@ export interface AdminWorkout {
     slug?: string
     description?: string
     workout_type?: string
-    sport_id?: string
     blocks?: WorkoutBlocks
     estimated_duration?: number
     intensity?: string
@@ -49,7 +48,6 @@ export interface CreateWorkoutDTO {
     name?: string
     description?: string
     workout_type?: string
-    sport_id?: string
     blocks?: WorkoutBlocks
     estimated_duration?: number
     intensity?: string
@@ -70,7 +68,6 @@ export interface WorkoutQueryParams {
     offset?: number
     search?: string
     status?: string
-    sport_id?: string
     orderBy?: string
     orderDir?: 'asc' | 'desc'
     [key: string]: string | number | boolean | undefined
@@ -84,7 +81,6 @@ export interface Workouts {
     slug: string
     description: string
     workout_type: string
-    sport_id: string
     blocks: WorkoutBlocks
     estimated_duration?: number
     intensity: string

@@ -5,14 +5,14 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
     table.uuid('user_id').notNullable()
       .references('id').inTable('users').onDelete('CASCADE')
-    table.uuid('workout_id').notNullable()
-      .references('id').inTable('workout_bases').onDelete('CASCADE')
-    table.date('date').notNullable()
-    table.jsonb('plan_json').notNullable()   // plan final adapté pour l’utilisateur
+    table.uuid('base_id').nullable()
+      .references('id').inTable('workouts').onDelete('CASCADE')
+    table.date('wod_date').notNullable()
+    table.jsonb('plan_json').notNullable()   // plan final adapté pour l'utilisateur
     table.jsonb('params_json').notNullable() // snapshot: level, equipment, 1RM, fatigue, time_budget
 
-    table.unique(['user_id', 'date'], { useConstraint: true, indexName: 'uq_personalized_user_date' })
-    table.index(['workout_id'], 'idx_personalized_base')
+    table.unique(['user_id', 'wod_date'], { useConstraint: true, indexName: 'uq_personalized_user_date' })
+    table.index(['base_id'], 'idx_personalized_base')
     table.timestamps(true, true)
   })
 }

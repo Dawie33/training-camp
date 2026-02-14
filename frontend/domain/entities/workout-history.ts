@@ -3,7 +3,6 @@ import { TimerType } from "@/hooks/useWorkoutTimer"
 export interface WorkoutResult {
   id: string
   userId: string
-  sportId: string
   workoutId?: string
   workoutName?: string
   timerType: TimerType

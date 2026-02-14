@@ -12,16 +12,8 @@ export class UpdateProfileDto {
   gender?: 'male' | 'female' | 'other'
 
   @IsOptional()
-  @IsIn(['crossfit', 'running', 'cycling', 'swimming', 'weightlifting', 'yoga', 'martial_arts', 'other'])
-  primary_sport?: string
-
-  @IsOptional()
-  @IsArray()
-  sports_practiced?: string[]
-
-  @IsOptional()
   @IsIn(['beginner', 'intermediate', 'advanced', 'elite'])
-  overall_level?: string
+  sport_level?: string
 
   @IsOptional()
   @Type(() => Number)

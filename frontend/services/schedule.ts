@@ -16,8 +16,6 @@ export interface WorkoutSchedule {
   difficulty?: string
   intensity?: string
   estimated_duration?: number
-  sport_id?: string
-  sport_name?: string
 }
 
 export interface CreateScheduleDto {

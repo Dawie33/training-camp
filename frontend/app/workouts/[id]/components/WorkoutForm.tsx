@@ -4,36 +4,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
-import { sportsService } from '@/services'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { WorkoutFormProps } from '../types'
 import { BlocksEditor } from './BlocksEditor'
 import { TagInput } from './TagInput'
 
 export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode }: WorkoutFormProps) {
   const router = useRouter()
-  const [sportId, setSportId] = useState<string>('')
-
-  // Charger l'ID du sport crossfit au montage
-  useEffect(() => {
-    const fetchSportId = async () => {
-      try {
-        const result = await sportsService.getAll({ slug: 'crossfit' })
-        if (result.rows.length > 0) {
-          const id = result.rows[0].id
-          setSportId(id)
-          // Auto-set sport_id if not already set
-          if (!formData.sport_id) {
-            setFormData({ ...formData, sport_id: id })
-          }
-        }
-      } catch (err) {
-        console.error('Error loading sport:', err)
-      }
-    }
-    fetchSportId()
-  }, [])
 
   // Obtenir les types de workout disponibles pour crossfit
   const availableWorkoutTypes = useMemo(() => {
@@ -244,7 +222,7 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
 
       {/* Submit Buttons */}
       <div className="flex gap-4 pt-4">
-        <Button type="submit" disabled={saving || !sportId}>
+        <Button type="submit" disabled={saving}>
           {saving ? 'Enregistrement...' : isNewMode ? 'Creer' : 'Sauvegarder'}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>

@@ -21,9 +21,8 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     async getProfile(
         @Request() req: { user: { id: string } },
-        @Query('sportId') sportId?: string,
     ) {
-        return await this.service.getProfile(req.user.id, sportId)
+        return await this.service.getProfile(req.user.id)
     }
 
     @Patch(':id')

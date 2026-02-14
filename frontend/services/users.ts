@@ -9,14 +9,12 @@ export class UsersService {
     /**
      * Récupère le profil de l'utilisateur connecté.
      * L'ID de l'utilisateur est automatiquement récupéré depuis le token JWT.
-     * @param sportId - ID du sport actif (optionnel) pour récupérer le niveau spécifique au sport
      * @returns {Promise<User>} - Promesse qui renvoie l'utilisateur connecté.
      * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
      * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
      */
-    async getUserProfile(sportId?: string): Promise<User> {
-        const params = sportId ? { sportId } : {}
-        const response = await apiClient.get<User>('/users/me', { params })
+    async getUserProfile(): Promise<User> {
+        const response = await apiClient.get<User>('/users/me')
         return response
     }
 

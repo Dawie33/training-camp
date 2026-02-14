@@ -18,7 +18,7 @@ export class WorkoutsService {
    * Recherche tous les workouts.
    * @returns Tous les workouts.
    */
-  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, sport_id, difficulty, workout_type }: WorkoutQueryDto) {
+  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, difficulty, workout_type }: WorkoutQueryDto) {
 
     let query = this.knex('workouts').select('*')
 
@@ -32,10 +32,6 @@ export class WorkoutsService {
 
     if (scheduled_date) {
       query = query.where('workouts.scheduled_date', scheduled_date)
-    }
-
-    if (sport_id) {
-      query = query.where('workouts.sport_id', sport_id)
     }
 
     if (difficulty) {
@@ -64,10 +60,6 @@ export class WorkoutsService {
       countQuery.where('scheduled_date', scheduled_date)
     }
 
-    if (sport_id) {
-      countQuery.where('sport_id', sport_id)
-    }
-
     if (difficulty) {
       countQuery.where('difficulty', difficulty)
     }
@@ -91,8 +83,7 @@ export class WorkoutsService {
    */
   async findOne(id: string) {
     const workout = await this.knex('workouts')
-      .select('workouts.*', 'sports.name as sport_name')
-      .leftJoin('sports', 'workouts.sport_id', 'sports.id')
+      .select('workouts.*')
       .where('workouts.id', id)
       .first()
 
@@ -112,67 +103,29 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère le workout du jour pour un sport donné.
-   * Si un workout est déjà planifié pour cette date, le retourne.
-   * Sinon, sélectionne un workout aléatoire de la bibliothèque et le planifie pour ce jour.
-   * @param sportId ID du sport
+   * Récupère le workout du jour.
+   * Sélectionne un workout publié basé sur un hash de la date.
+   * @param userId ID de l'utilisateur
    * @param date Date (format YYYY-MM-DD), par défaut aujourd'hui
    * @returns Le workout du jour
    */
-
   async getDailyWorkout(userId: string, date?: string): Promise<WorkoutDto> {
     const targetDate = date && date.trim() !== '' ? date : format(new Date(), 'yyyy-MM-dd')
 
-    // Étape 1 : Récupérer les sports du profil utilisateur
-    const userSports = await this.knex('user_sport_profiles')
-      .where({ user_id: userId })
-      .select('sport_id')
-
-    if (!userSports || userSports.length === 0) {
-      throw new Error('Aucun profil sportif trouvé pour cet utilisateur')
-    }
-
-    const sportIds = userSports.map((s) => s.sport_id)
-
-    // Étape 2 : Déterminer le sport du jour
-    const dateHash = parseInt(targetDate.split('-').join(''), 10)
-    const sportIndex = dateHash % sportIds.length
-
-    // Étape 3 : Récupérer les workouts en essayant tous les sports si nécessaire
-    let workouts: WorkoutDto[] = []
-    let chosenSportId = sportIds[sportIndex]
-
-    // Essayer le sport du jour d'abord
-    workouts = await this.knex('workouts')
-      .where({ sport_id: chosenSportId, status: 'published' })
+    // Récupérer tous les workouts publiés
+    const workouts = await this.knex('workouts')
+      .where({ status: 'published' })
       .orderBy('id', 'asc')
 
-    // Si aucun workout trouvé, essayer les autres sports
     if (!workouts || workouts.length === 0) {
-      for (const sportId of sportIds) {
-        if (sportId === chosenSportId) continue // Déjà essayé
-
-        workouts = await this.knex('workouts')
-          .where({ sport_id: sportId, status: 'published' })
-          .orderBy('id', 'asc')
-
-        if (workouts && workouts.length > 0) {
-          chosenSportId = sportId
-          break
-        }
-      }
+      throw new Error('Aucun workout publié trouvé')
     }
 
-    // Si toujours aucun workout trouvé
-    if (!workouts || workouts.length === 0) {
-      throw new Error('Aucun workout publié trouvé pour vos sports')
-    }
-
-    // Étape 4 : Sélectionner le workout du jour
+    // Sélectionner le workout du jour basé sur un hash de la date
+    const dateHash = parseInt(targetDate.split('-').join(''), 10)
     const workoutIndex = dateHash % workouts.length
     const workout = workouts[workoutIndex]
 
-    // Retourner le résultat
     const { blocks, tags, ...rest } = workout
     return {
       ...rest,
@@ -182,24 +135,15 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère les workouts benchmark pour un sport donné ou tous les benchmarks
+   * Récupère les workouts benchmark
    * Les benchmarks sont des workouts de référence pour évaluer le niveau
-   * @param sportId ID du sport (optionnel - si non fourni, retourne tous les benchmarks)
    * @returns Liste des workouts benchmark triés par difficulté
    */
-  async getBenchmarkWorkouts(sportId?: string) {
+  async getBenchmarkWorkouts() {
     try {
-      let query = this.knex('workouts')
-        .select('workouts.*', 'sports.name as sport_name')
-        .leftJoin('sports', 'workouts.sport_id', 'sports.id')
+      const rows = await this.knex('workouts')
+        .select('workouts.*')
         .where({ 'workouts.status': 'published', 'workouts.is_benchmark': true })
-
-      // Filtrer par sport uniquement si sportId est fourni
-      if (sportId) {
-        query = query.where({ 'workouts.sport_id': sportId })
-      }
-
-      const rows = await query
         .orderBy('workouts.difficulty', 'asc')
         .orderBy('workouts.name', 'asc')
 
@@ -444,18 +388,12 @@ export class WorkoutsService {
    * @returns Le workout créé
    */
   async create(data: CreateWorkoutDto) {
-    // Ensure sport_id is provided
-    if (!data.sport_id) {
-      throw new Error('sport_id is required')
-    }
-
     // Build the record with proper JSON handling
     const record: {
       name: string | null
       slug: string | null
       description: string | null
       workout_type: string | null
-      sport_id: string
       blocks: string | null
       estimated_duration: number | null
       intensity: string | null
@@ -482,7 +420,6 @@ export class WorkoutsService {
       slug: data.slug || null,
       description: data.description || null,
       workout_type: data.workout_type || null,
-      sport_id: data.sport_id,
       blocks: safeJsonStringify(data.blocks, {}),
       estimated_duration: data.estimated_duration || null,
       intensity: data.intensity || null,
@@ -522,17 +459,17 @@ export class WorkoutsService {
   /**
      * Enregistre le résultat d'un benchmark et calcule/met à jour le niveau de l'utilisateur
      * @param user_id ID de l'utilisateur
-     * @param data Données du benchmark (sportId, workoutId, workoutName, result)
+     * @param data Données du benchmark (workoutId, workoutName, result)
      */
   async saveBenchmarkResult(user_id: string, data: SaveBenchmarkResultDto) {
-    const { sportId, workoutId, workoutName, result } = data
+    const { workoutId, workoutName, result } = data
 
-    // Vérifier si un profil sportif existe pour l'utilisateur et le sport actif
-    const userSportProfile = await this.knex('user_sport_profiles')
-      .where({ user_id, sport_id: sportId })
+    // Récupérer le profil utilisateur
+    const user = await this.knex('users')
+      .where({ id: user_id })
       .first()
 
-    const existingResults = userSportProfile?.benchmark_results || {}
+    const existingResults = user?.benchmark_results || {}
 
     const updatedResults = {
       ...existingResults,
@@ -547,33 +484,17 @@ export class WorkoutsService {
     const calculatedLevel = calculateLevelFromBenchmarks(
       workoutName,
       result,
-      userSportProfile?.sport_level || 'beginner'
+      user?.sport_level || 'beginner'
     )
 
-    if (userSportProfile) {
-      // Mettre à jour le profil existant
-      await this.knex('user_sport_profiles')
-        .where({ user_id, sport_id: sportId })
-        .update({
-          benchmark_results: JSON.stringify(updatedResults),
-          sport_level: calculatedLevel,
-          last_activity_at: new Date(),
-          updated_at: new Date()
-        })
-    } else {
-      // Créer un nouveau profil sport
-      await this.knex('user_sport_profiles').insert({
-        user_id,
-        sport_id: sportId,
-        sport_level: calculatedLevel,
+    // Mettre à jour directement dans la table users
+    await this.knex('users')
+      .where({ id: user_id })
+      .update({
         benchmark_results: JSON.stringify(updatedResults),
-        is_primary_sport: false,
-        is_active: true,
-        last_activity_at: new Date(),
-        created_at: new Date(),
+        sport_level: calculatedLevel,
         updated_at: new Date()
       })
-    }
 
     return {
       success: true,

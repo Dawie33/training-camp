@@ -54,13 +54,13 @@ export class EquipmentsService {
         if (!id) {
             throw new BadRequestException('id de l\'équipement manquant')
         }
-        const sport = await this.knex("equipments").where({ id }).first()
+        const equipment = await this.knex("equipments").where({ id }).first()
 
-        if (!sport) {
+        if (!equipment) {
             throw new BadRequestException('Equipments introuvable')
         }
 
-        return sport
+        return equipment
     }
 
     /**

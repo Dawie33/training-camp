@@ -134,7 +134,6 @@ export class AuthService {
     try {
       // Colonnes JSON/JSONB (objets et arrays) qui nécessitent une conversion
       const jsonColumns = [
-        'sports_practiced',
         'global_goals',
         'injuries',
         'physical_limitations',
@@ -143,8 +142,8 @@ export class AuthService {
         'schedule_preferences'
       ]
 
-      // Extraire equipment_available et sports_practiced pour traitement séparé
-      const { equipment_available, sports_practiced, primary_sport, overall_level, ...restData } = updateProfileDto
+      // Extraire equipment_available pour traitement séparé
+      const { equipment_available, ...restData } = updateProfileDto
 
       // Filtrer les valeurs undefined et convertir les colonnes JSON
       const dataToUpdate = Object.entries(restData).reduce<Record<string, string | number | boolean>>((acc, [key, value]) => {
@@ -159,18 +158,8 @@ export class AuthService {
         return acc
       }, {})
 
-      // Ajouter primary_sport et overall_level s'ils sont définis
-      if (primary_sport !== undefined) {
-        dataToUpdate.primary_sport = primary_sport
-      }
-      if (overall_level !== undefined) {
-        dataToUpdate.overall_level = overall_level
-      }
       if (equipment_available !== undefined) {
         dataToUpdate.equipment_available = JSON.stringify(equipment_available)
-      }
-      if (sports_practiced !== undefined) {
-        dataToUpdate.sports_practiced = JSON.stringify(sports_practiced)
       }
 
       // Mettre à jour la table users
@@ -179,12 +168,12 @@ export class AuthService {
         const [updatedUser] = await trx('users')
           .where({ id: userId })
           .update(dataToUpdate)
-          .returning(['id', 'email', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'primary_sport', 'overall_level', 'height', 'weight'])
+          .returning(['id', 'email', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'sport_level', 'height', 'weight'])
         user = updatedUser
       } else {
         user = await trx('users')
           .where({ id: userId })
-          .first(['id', 'email', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'primary_sport', 'overall_level', 'height', 'weight'])
+          .first(['id', 'email', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'sport_level', 'height', 'weight'])
       }
 
       // Gérer les équipements (user_equipments)
@@ -207,84 +196,6 @@ export class AuthService {
 
         if (equipmentInserts.length > 0) {
           await trx('user_equipments').insert(equipmentInserts)
-        }
-      }
-
-      // Gérer les profils sportifs (user_sport_profiles)
-      if (primary_sport) {
-        // Récupérer l'ID du sport principal
-        const sport = await trx('sports').where({ slug: primary_sport }).first('id')
-
-        if (sport) {
-          // Vérifier si un profil existe déjà
-          const existingProfile = await trx('user_sport_profiles')
-            .where({ user_id: userId, sport_id: sport.id })
-            .first()
-
-          if (existingProfile) {
-            // Mettre à jour le profil existant
-            await trx('user_sport_profiles')
-              .where({ user_id: userId, sport_id: sport.id })
-              .update({
-                sport_level: overall_level || existingProfile.sport_level,
-                is_primary_sport: true,
-                is_active: true,
-                last_activity_at: trx.fn.now()
-              })
-          } else {
-            // Créer un nouveau profil
-            await trx('user_sport_profiles').insert({
-              user_id: userId,
-              sport_id: sport.id,
-              sport_level: overall_level || 'beginner',
-              is_primary_sport: true,
-              is_active: true,
-              started_at: trx.fn.now(),
-              last_activity_at: trx.fn.now()
-            })
-          }
-
-          // Mettre à jour is_primary_sport à false pour les autres sports
-          await trx('user_sport_profiles')
-            .where({ user_id: userId })
-            .whereNot({ sport_id: sport.id })
-            .update({ is_primary_sport: false })
-        }
-      }
-
-      // Gérer les autres sports pratiqués
-      if (sports_practiced && sports_practiced.length > 0) {
-        // Récupérer les IDs des sports
-        const sports = await trx('sports')
-          .whereIn('slug', sports_practiced)
-          .select('id', 'slug')
-
-        for (const sport of sports) {
-          // Vérifier si un profil existe déjà
-          const existingProfile = await trx('user_sport_profiles')
-            .where({ user_id: userId, sport_id: sport.id })
-            .first()
-
-          if (!existingProfile) {
-            // Créer un nouveau profil pour ce sport
-            await trx('user_sport_profiles').insert({
-              user_id: userId,
-              sport_id: sport.id,
-              sport_level: overall_level || 'beginner',
-              is_primary_sport: false,
-              is_active: true,
-              started_at: trx.fn.now(),
-              last_activity_at: trx.fn.now()
-            })
-          } else {
-            // Mettre à jour le profil existant
-            await trx('user_sport_profiles')
-              .where({ user_id: userId, sport_id: sport.id })
-              .update({
-                is_active: true,
-                last_activity_at: trx.fn.now()
-              })
-          }
         }
       }
 

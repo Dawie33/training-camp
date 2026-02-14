@@ -25,12 +25,9 @@ export class WorkoutScheduleService {
         'workouts.workout_type',
         'workouts.difficulty',
         'workouts.intensity',
-        'workouts.estimated_duration',
-        'workouts.sport_id',
-        'sports.name as sport_name'
+        'workouts.estimated_duration'
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
-      .leftJoin('sports', 'workouts.sport_id', 'sports.id')
       .where('user_workout_schedule.user_id', userId)
 
     if (start_date) {
@@ -97,12 +94,9 @@ export class WorkoutScheduleService {
         'workouts.workout_type',
         'workouts.difficulty',
         'workouts.intensity',
-        'workouts.estimated_duration',
-        'workouts.sport_id',
-        'sports.name as sport_name'
+        'workouts.estimated_duration'
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
-      .leftJoin('sports', 'workouts.sport_id', 'sports.id')
       .where('user_workout_schedule.id', id)
       .where('user_workout_schedule.user_id', userId)
       .first()
@@ -128,12 +122,9 @@ export class WorkoutScheduleService {
         'workouts.workout_type',
         'workouts.difficulty',
         'workouts.intensity',
-        'workouts.estimated_duration',
-        'workouts.sport_id',
-        'sports.name as sport_name'
+        'workouts.estimated_duration'
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
-      .leftJoin('sports', 'workouts.sport_id', 'sports.id')
       .where('user_workout_schedule.user_id', userId)
       .where('user_workout_schedule.scheduled_date', date)
       .first()

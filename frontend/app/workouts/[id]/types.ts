@@ -21,7 +21,6 @@ export interface WorkoutFormFields {
   isPublic: boolean
   is_benchmark: boolean
   ai_generated: boolean
-  sport_id: string
   blocks: string
   tags: string
   scheduled_date: string

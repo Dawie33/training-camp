@@ -9,18 +9,11 @@ export async function up(knex: Knex): Promise<void> {
     table.string('slug').nullable().unique();
     table.text('description').nullable();
 
-    // Type de workout (adapté multi-sport)
+    // Type de workout
     table.string('workout_type').nullable(); // amrap, for_time, interval, endurance, strength, fartlek, tempo, etc.
 
-    // Sport
-    table.uuid('sport_id')
-      .nullable()
-      .references('id')
-      .inTable('sports')
-      .onDelete('SET NULL');
-
-    // Structure du workout (format flexible multi-sport)
-    table.jsonb('blocks').nullable(); // warmup, main, cooldown - structure adaptée selon le sport
+    // Structure du workout
+    table.jsonb('blocks').nullable(); // warmup, main, cooldown
     table.integer('estimated_duration').nullable(); // en minutes
     table.string('intensity').nullable(); // low, moderate, high, very_high, recovery, tempo, threshold, vo2max
 
@@ -28,10 +21,10 @@ export async function up(knex: Knex): Promise<void> {
     table.string('difficulty').nullable(); // beginner, intermediate, advanced
     table.json('scaling_options').nullable(); // Options pour adapter le workout
 
-    // Matériel/équipement requis (générique pour tous sports)
+    // Matériel/équipement requis
     table.json('equipment_required').nullable(); // bike, shoes, weights, pool, etc.
 
-    // Ciblage (applicable à tous sports)
+    // Ciblage
     table.json('focus_areas').nullable(); // endurance, speed, power, technique, etc.
     table.json('metrics_tracked').nullable(); // distance, pace, heart_rate, power, cadence, etc.
     
@@ -41,7 +34,7 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('created_by_user_id').nullable()
     .references('id').inTable('users')
     .onDelete('SET NULL');
-    // Objectifs et résultats (multi-sport)
+    // Objectifs et résultats
     table.json('target_metrics').nullable(); // {distance: 10km, pace: '5:00/km', duration: 3600, power: 250, etc.}
     
     // Statistiques d'usage
@@ -55,10 +48,10 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean('isPublic').defaultTo(true); // Visible par tous ou privé
     table.string('status').defaultTo('published'); // draft, published, archived
 
-    // Planification (workouts journaliers pour tous sports)
+    // Planification
     table.date('scheduled_date').nullable(); // Date de planification du workout
 
-    // Catégories spéciales (applicable à tous sports)
+    // Catégories spéciales
     table.boolean('is_benchmark').defaultTo(false); // Workouts de référence (ex: FTP test, 5k time trial, Fran, etc.)
     
     // Métadonnées
@@ -68,7 +61,7 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamps(true, true);
 
     // Contrainte unique pour éviter les doublons de workouts journaliers
-    table.unique(['scheduled_date', 'sport_id']);
+    table.unique(['scheduled_date']);
 
     // Index pour optimisation
     table.index(['workout_type']);
@@ -80,7 +73,6 @@ export async function up(knex: Knex): Promise<void> {
     table.index(['isPublic']);
     table.index(['is_benchmark']);
     table.index(['created_by_user_id']);
-    table.index(['sport_id']);
     table.index(['scheduled_date']);
     table.index(['status']);
    });

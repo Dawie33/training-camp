@@ -31,11 +31,10 @@ import { sessionService } from '@/services/sessions'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface WorkoutHistoryListProps {
-  sportId?: string
   limit?: number
 }
 
-export function WorkoutHistoryList({ sportId, limit = 10 }: WorkoutHistoryListProps) {
+export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
   const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSession, setSelectedSession] = useState<WorkoutSession | null>(null)
@@ -63,9 +62,7 @@ export function WorkoutHistoryList({ sportId, limit = 10 }: WorkoutHistoryListPr
     loadSessions()
   }, [page, limit])
 
-  // Filtrer les sessions selon sportId si nécessaire
   const filteredSessions = workoutSessions
-    .filter(session => !sportId || session.workout_id === sportId)
 
   const handleDelete = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {

@@ -6,7 +6,7 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('user_id').notNullable()
       .references('id').inTable('users').onDelete('CASCADE')
     table.uuid('workout_id').nullable()
-      .references('id').inTable('workout_bases').onDelete('SET NULL') // peut être null si séance libre
+      .references('id').inTable('workouts').onDelete('SET NULL') // peut être null si séance libre
     table.date('date').notNullable()
     table.jsonb('results_json').notNullable() // {strength:{sets:[...]}, metcon:{time_sec|rounds}, ...}
     table.integer('rpe').notNullable().defaultTo(7) // 1..10

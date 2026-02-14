@@ -13,12 +13,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { TimerConfig, TimerType } from '@/hooks/useWorkoutTimer'
 import { cn } from '@/lib/utils'
-import { sportsService } from '@/services'
 import { WorkoutHistoryService } from '@/services/workout-history'
 import { motion } from 'framer-motion'
 import { Frown, Meh, Plus, Save, Smile, Sparkles, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 interface Exercise {
   name: string
@@ -56,7 +55,6 @@ export function WorkoutResultModal({
   totalRounds
 }: WorkoutResultModalProps) {
   const router = useRouter()
-  const [sportId, setSportId] = useState<string>('')
   const [workoutName, setWorkoutName] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [feeling, setFeeling] = useState<Feeling>('good')
@@ -64,21 +62,6 @@ export function WorkoutResultModal({
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
   const [isSaving, setIsSaving] = useState(false)
-
-  // Charger l'ID du sport crossfit au montage
-  useEffect(() => {
-    const fetchSportId = async () => {
-      try {
-        const result = await sportsService.getAll({ slug: 'crossfit' })
-        if (result.rows.length > 0) {
-          setSportId(result.rows[0].id)
-        }
-      } catch (err) {
-        console.error('Error loading sport:', err)
-      }
-    }
-    fetchSportId()
-  }, [])
 
   const difficulties: { value: Difficulty; label: string; color: string }[] = [
     { value: 'easy', label: 'Facile', color: 'bg-green-500' },
@@ -122,8 +105,6 @@ export function WorkoutResultModal({
   }
 
   const handleSave = async () => {
-    if (!sportId) return
-
     setIsSaving(true)
 
     try {
@@ -131,7 +112,6 @@ export function WorkoutResultModal({
 
       WorkoutHistoryService.saveWorkoutResult({
         userId,
-        sportId: sportId,
         workoutName: workoutName || undefined,
         timerType,
         date: new Date().toISOString(),

@@ -20,8 +20,6 @@ export interface WorkoutBlock {
 }
 
 
-export type SportSlug = 'crossfit'
-
 export type WithEquipment = { equipment?: string[] }
 
 export type StrengthBlock = {
@@ -69,7 +67,6 @@ export type WorkoutBlocks = {
 
 export type DailyPlan = {
   date: string                  // ISO yyyy-mm-dd
-  sportId: string               // repris tel quel
   tags: string[]
   blocks: WorkoutBlocks
   description?: string          // Description du workout
@@ -82,5 +79,4 @@ export type DailyPlan = {
 }
 
 
-export type SportRef = { id: string; slug: string } // ex: { id: 'uuid', slug: 'crossfit' }
 export type TargetZone = 'E' | 'M' | 'T' | 'I' | 'R'

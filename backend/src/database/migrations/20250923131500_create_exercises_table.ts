@@ -38,10 +38,6 @@ export async function up(knex: Knex): Promise<void> {
     // Média
     table.string('video_url').nullable();
     table.string('image_url').nullable();
-    // table.integer('sport_id').unsigned().nullable(); // Sport associé
-    // table.foreign('sport_id').references('id').inTable('sports').onDelete('SET NULL');
-    // table.index(['sport_id']);
-    
     // Métadonnées
     table.boolean('isActive').defaultTo(true);
     table.timestamps(true, true);

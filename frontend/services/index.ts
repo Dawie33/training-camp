@@ -9,9 +9,6 @@ export { default as ResourceApi } from './resourceApi'
 // Auth
 export * from './auth'
 
-// Sports
-export * from './sports'
-
 // Workouts
 export * from './workouts'
 

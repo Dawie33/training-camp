@@ -14,7 +14,6 @@ import { ZodError } from 'zod'
 export type GeneratedWorkout = GeneratedWorkoutValidated
 
 export interface WorkoutGenerationParams {
-  sport?: string
   workoutType?: string
   duration: number
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'

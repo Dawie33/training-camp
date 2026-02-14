@@ -10,10 +10,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('description').nullable();
     table.text('objectives').nullable(); // Objectifs du programme
     
-    // Sport et niveau
-    table.uuid('sport_id').notNullable()
-    .references('id').inTable('sports')
-    .onDelete('CASCADE');
+    // Niveau cible
     table.enum('target_level', ['beginner', 'intermediate', 'advanced', 'elite']).notNullable();
     
     // Structure temporelle
@@ -66,7 +63,6 @@ export async function up(knex: Knex): Promise<void> {
  
     
     // Index
-    table.index(['sport_id']);
     table.index(['target_level']);
     table.index(['program_type']);
     table.index(['program_status']);

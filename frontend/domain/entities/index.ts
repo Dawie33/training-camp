@@ -4,7 +4,6 @@
 
 export * from './workout'
 export * from './workout-history'
-export * from './sport'
 export * from './exercice'
 export * from './equipment'
 export * from './auth'

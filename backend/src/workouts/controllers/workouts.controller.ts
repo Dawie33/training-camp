@@ -24,17 +24,15 @@ export class WorkoutsController {
   ) {
     const workout = await this.service.getDailyWorkout(req.user.id, date)
     if (!workout) {
-      throw new NotFoundException('Aucun workout trouvé pour ce sport et cette date')
+      throw new NotFoundException('Aucun workout trouvé pour cette date')
     }
     return workout
   }
 
   @Get('benchmark')
   @UseGuards(JwtAuthGuard)
-  async getBenchmarkWorkouts(
-    @Query('sportId') sportId?: string,
-  ) {
-    return await this.service.getBenchmarkWorkouts(sportId)
+  async getBenchmarkWorkouts() {
+    return await this.service.getBenchmarkWorkouts()
   }
 
   @Get('personalized')

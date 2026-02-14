@@ -45,13 +45,6 @@ export class WorkoutHistoryService {
   }
 
   /**
-   * Récupérer les workouts par sport
-   */
-  static getWorkoutsBySport(sportId: string): WorkoutResult[] {
-    return this.getAllWorkouts().filter(w => w.sportId === sportId)
-  }
-
-  /**
    * Récupérer les workouts par période
    */
   static getWorkoutsByDateRange(startDate: Date, endDate: Date): WorkoutResult[] {
@@ -73,10 +66,8 @@ export class WorkoutHistoryService {
   /**
    * Calculer les statistiques globales
    */
-  static getWorkoutStats(sportId?: string): WorkoutStats {
-    const workouts = sportId
-      ? this.getWorkoutsBySport(sportId)
-      : this.getAllWorkouts()
+  static getWorkoutStats(): WorkoutStats {
+    const workouts = this.getAllWorkouts()
 
     const now = new Date()
     const startOfWeek = new Date(now)

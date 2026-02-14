@@ -6,8 +6,6 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 interface AIParams {
-  sport_id: string
-  sport_slug: string
   date: string
   duration_min: number
   intensity: string
@@ -43,7 +41,6 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
     isPublic: true,
     is_benchmark: false,
     ai_generated: false,
-    sport_id: '',
     blocks: '',
     tags: '',
     scheduled_date: '',
@@ -58,8 +55,6 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
   })
 
   const [aiParams, setAiParams] = useState<AIParams>({
-    sport_id: '',
-    sport_slug: '',
     date: '',
     duration_min: 45,
     intensity: 'moderate',
@@ -92,7 +87,6 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
           isPublic: data.isPublic !== undefined ? data.isPublic : true,
           is_benchmark: false,
           ai_generated: data.ai_generated || false,
-          sport_id: data.sport_id || '',
           blocks: data.blocks ? JSON.stringify(data.blocks, null, 2) : '',
           tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
           scheduled_date: data.scheduled_date || '',
@@ -142,7 +136,6 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
         isActive: formData.isActive,
         isFeatured: formData.isFeatured,
         isPublic: formData.isPublic,
-        sport_id: formData.sport_id || undefined,
         scheduled_date: formData.scheduled_date || undefined,
         tags: parseJsonOrArray(formData.tags),
         blocks: formData.blocks ? JSON.parse(formData.blocks) : undefined,
@@ -173,7 +166,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
 
     try {
       const generationParams = {
-        sport: aiParams.sport_slug,
+        sport: 'crossfit',
         workoutType: aiParams.workout_type || 'mixed',
         difficulty: aiParams.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'elite',
         duration: aiParams.duration_min,
@@ -194,7 +187,6 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
         intensity: generatedWorkout.intensity || '',
         difficulty: generatedWorkout.difficulty || '',
         estimated_duration: generatedWorkout.estimated_duration || 0,
-        sport_id: aiParams.sport_id,
         scheduled_date: aiParams.date,
         blocks: generatedWorkout.blocks ? JSON.stringify(generatedWorkout.blocks, null, 2) : '',
         tags: generatedWorkout.tags?.join(', ') || '',

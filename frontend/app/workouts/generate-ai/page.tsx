@@ -2,18 +2,16 @@
 
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { ExerciseDifficulty } from '@/domain/entities/exercice'
-import { DEFAULT_SPORT } from '@/domain/entities/sport'
 import { CreateWorkoutDTO } from '@/domain/entities/workout'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
-import { GeneratedWorkout, generateWorkoutWithAI, sportsService, workoutsService } from '@/services'
+import { GeneratedWorkout, generateWorkoutWithAI, workoutsService } from '@/services'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { BlocksEditor } from '../[id]/components/BlocksEditor'
 
 export default function GenerateWorkoutAIPage() {
   const router = useRouter()
-  const [sportId, setSportId] = useState<string>('')
   const [workoutType, setWorkoutType] = useState<string>(WORKOUT_TYPES.crossfit[0].value)
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'elite'>('intermediate')
   const [duration, setDuration] = useState(45)
@@ -32,28 +30,12 @@ export default function GenerateWorkoutAIPage() {
   const [editedIntensity, setEditedIntensity] = useState<'low' | 'moderate' | 'high' | 'very_high'>('moderate')
   const [editedBlocks, setEditedBlocks] = useState('')
 
-  // Charger l'ID du sport crossfit au montage
-  useEffect(() => {
-    const fetchSportId = async () => {
-      try {
-        const result = await sportsService.getAll({ slug: 'crossfit' })
-        if (result.rows.length > 0) {
-          setSportId(result.rows[0].id)
-        }
-      } catch (err) {
-        console.error('Error loading sport:', err)
-      }
-    }
-    fetchSportId()
-  }, [])
-
   const handleGenerate = async () => {
     try {
       setLoading(true)
       setError(null)
 
       const workout = await generateWorkoutWithAI({
-        sport: DEFAULT_SPORT.slug,
         workoutType,
         difficulty,
         duration,
@@ -77,7 +59,7 @@ export default function GenerateWorkoutAIPage() {
   }
 
   const handleSave = async () => {
-    if (!generatedWorkout || !sportId) return
+    if (!generatedWorkout) return
 
     try {
       setLoading(true)
@@ -97,7 +79,6 @@ export default function GenerateWorkoutAIPage() {
         name: editedName,
         description: editedDescription,
         workout_type: generatedWorkout.workout_type,
-        sport_id: sportId,
         blocks: parsedBlocks,
         estimated_duration: editedDuration,
         intensity: editedIntensity,
@@ -251,7 +232,7 @@ export default function GenerateWorkoutAIPage() {
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={loading || !sportId}
+                    disabled={loading}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Sauvegarde...' : 'Sauvegarder'}
