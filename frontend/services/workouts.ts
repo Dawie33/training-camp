@@ -11,7 +11,6 @@ export const workoutsApi = new ResourceApi<Workouts, CreateWorkoutDTO, UpdateWor
 // Helper functions for backward compatibility
 export const createWorkout = (data: CreateWorkoutDTO) => workoutsApi.create(data)
 export const generateWorkoutWithAI = (data: {
-  sport: string
   workoutType: string
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
   duration: number
@@ -176,7 +175,6 @@ export class WorkoutsService {
    * @returns Promesse contenant le workout généré par l'IA
    */
   async generateWorkoutWithAI(data: {
-    sport: string
     workoutType: string
     difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
     duration: number

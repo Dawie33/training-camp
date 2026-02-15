@@ -8,8 +8,7 @@ export function useDailyWorkout() {
     const [workoutLoading, setWorkoutLoading] = useState(false)
 
     /**
-     * Récupère le workout du jour pour le sport actif.
-     * Si le sport actif n'est pas défini, ne fait rien.
+     * Récupère le workout du jour.
      * Si une erreur survient lors de la récupération, affiche null comme workout du jour.
      * Met à jour le statut de chargement du workout du jour.
      */

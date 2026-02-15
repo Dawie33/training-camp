@@ -166,7 +166,6 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
 
     try {
       const generationParams = {
-        sport: 'crossfit',
         workoutType: aiParams.workout_type || 'mixed',
         difficulty: aiParams.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'elite',
         duration: aiParams.duration_min,
