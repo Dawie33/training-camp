@@ -20,7 +20,7 @@ export class AuthService {
    * @throws {ConflictException} - si l'utilisateur existe deja.
    */
   async signup(signupDto: SignupDto): Promise<AuthResponseDto> {
-    const { email, password, firstName, lastName, dateOfBirth, gender } = signupDto
+    const { email, password, firstName, lastName } = signupDto
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await this.knex('users').where({ email }).first()
@@ -38,8 +38,6 @@ export class AuthService {
         password: hashedPassword,
         firstName,
         lastName,
-        dateOfBirth,
-        gender,
       })
       .returning(['id', 'email', 'firstName', 'lastName'])
 

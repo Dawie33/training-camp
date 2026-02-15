@@ -1,4 +1,4 @@
-import { IsDateString, IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsString, MinLength } from 'class-validator'
 
 /**
  * DTOs pour l'authentification
@@ -16,14 +16,6 @@ export class SignupDto {
 
   @IsString()
   lastName: string
-
-  @IsOptional()
-  @IsDateString()
-  dateOfBirth?: Date
-
-  @IsOptional()
-  @IsIn(['male', 'female', 'other'])
-  gender?: 'male' | 'female' | 'other'
 }
 
 export class LoginDto {

@@ -25,7 +25,7 @@ export default function SignupPage() {
 
     try {
       await signup(formData)
-      router.push('/onboarding')
+      router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')
     } finally {

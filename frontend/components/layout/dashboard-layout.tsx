@@ -12,7 +12,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname()
 
   // Pages qui ne doivent pas afficher la navigation
-  const noNavRoutes = ['/login', '/signup', '/onboarding', '/']
+  const noNavRoutes = ['/login', '/signup', '/']
 
   // Pages en fullscreen (pas de bottom nav ni sidebar)
   const fullscreenRoutes = ['/workout/']

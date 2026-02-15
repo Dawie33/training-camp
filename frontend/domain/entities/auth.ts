@@ -3,8 +3,6 @@ export interface SignupDto {
   password: string
   firstName: string
   lastName: string
-  dateOfBirth?: string
-  gender?: 'male' | 'female' | 'other'
 }
 
 export interface LoginDto {
@@ -22,8 +20,6 @@ export interface User {
   id: string
   email: string
   username: string
-  primary_sport?: string
-  sports_practiced?: string | string[]
   firstName?: string
   lastName?: string
   role: string
