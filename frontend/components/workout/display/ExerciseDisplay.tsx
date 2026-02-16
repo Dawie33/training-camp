@@ -1,5 +1,4 @@
 import { Exercise } from '@/domain/entities/workout-structure'
-import { Check, Info } from 'lucide-react'
 
 interface ExerciseDisplayProps {
     exercise: Exercise
@@ -15,7 +14,7 @@ interface ExerciseDisplayProps {
 * @param {ExerciseDisplayProps} props - L'exercice à afficher.
 * @returns {JSX.Element} - L'affichage de l'exercice rendu.
  */
-export function ExerciseDisplay({ exercise, isStarting, isCompleted, onToggle, onExerciseClick }: ExerciseDisplayProps) {
+export function ExerciseDisplay({ exercise, isCompleted, onToggle, onExerciseClick }: ExerciseDisplayProps) {
     const handleExerciseNameClick = (e: React.MouseEvent) => {
         if (exercise.name && onExerciseClick) {
             e.stopPropagation()
@@ -32,15 +31,7 @@ export function ExerciseDisplay({ exercise, isStarting, isCompleted, onToggle, o
                 }`}
         >
             <div className="flex items-start gap-3">
-                {isStarting && (<div
-                    className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${isCompleted
-                        ? 'bg-primary text-primary-foreground'
-                        : 'border-2 border-muted-foreground'
-                        }`}
-                >
-                    {isCompleted && <Check className="w-3 h-3" />}
-                </div>
-                )}
+
                 <div className="flex-1 cursor-pointer">
                     <div className="flex items-center gap-2">
                         <span
@@ -49,12 +40,6 @@ export function ExerciseDisplay({ exercise, isStarting, isCompleted, onToggle, o
                         >
                             {exercise.name}
                         </span>
-                        {exercise.name && onExerciseClick && (
-                            <Info
-                                className="w-4 h-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors"
-                                onClick={handleExerciseNameClick}
-                            />
-                        )}
                     </div>
                     <div className="text-muted-foreground flex flex-wrap gap-2 mt-1">
                         {exercise.reps && <span>• {exercise.reps} répétition{typeof exercise.reps === 'number' && exercise.reps > 1 ? 's' : ''}</span>}
