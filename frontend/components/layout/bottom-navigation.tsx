@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Activity, Calendar, Clock, Dumbbell, Home, MoreHorizontal, Package, Target, TrendingUp, X } from 'lucide-react'
+import { Calendar, Clock, Dumbbell, Home, MoreHorizontal, Target, TrendingUp, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -21,8 +21,6 @@ const navItems: NavItem[] = [
 
 const moreItems: NavItem[] = [
   { href: '/timer', label: 'Timer', icon: Clock },
-  { href: '/equipments', label: 'Equipements', icon: Package },
-  { href: '/exercises', label: 'Exercices', icon: Activity },
   { href: '/benchmarks', label: 'Benchmarks', icon: Target },
 ]
 

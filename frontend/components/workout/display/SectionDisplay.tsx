@@ -99,17 +99,16 @@ export function SectionDisplay({
         const isAMRAP = section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')
 
         return (
-            <div className="fixed inset-0 z-50 bg-background overflow-auto">
+            <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-auto">
                 <div className="min-h-screen p-4 pb-20">
                     {/* Header avec bouton fermer */}
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                            <span className="text-2xl">{icon}</span>
                             <h2 className="text-xl font-bold">{section.title}</h2>
                         </div>
                         <button
                             onClick={handleCloseActiveMode}
-                            className="p-2 rounded-lg hover:bg-muted transition-colors"
+                            className="p-2 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
                         >
                             <X className="w-6 h-6" />
                         </button>
@@ -117,7 +116,7 @@ export function SectionDisplay({
 
                     {/* Description si présente */}
                     {section.description && (
-                        <p className="text-sm text-muted-foreground mb-4">{section.description}</p>
+                        <p className="text-sm text-slate-400 mb-4">{section.description}</p>
                     )}
 
                     {/* Timer de section - compact pour AMRAP */}
@@ -147,7 +146,7 @@ export function SectionDisplay({
                                 {/* Bouton Terminé pour AMRAP */}
                                 <button
                                     onClick={handleAllExercisesCompleted}
-                                    className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-semibold text-base"
+                                    className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all font-semibold text-base shadow-lg shadow-green-500/30"
                                 >
                                     <Check className="w-5 h-5" />
                                     <span>Terminer la section</span>
@@ -168,63 +167,60 @@ export function SectionDisplay({
     }
 
     return (
-        <div className={`bg-card border rounded-lg p-4 space-y-3 ${isCurrentSection ? 'ring-2 ring-primary' : ''} ${isSectionCompleted ? 'opacity-60' : ''}`}>
+        <div className={`bg-slate-800/50 border border-slate-700/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 space-y-3 lg:space-y-4 ${isCurrentSection ? 'ring-2 ring-orange-500/50' : ''} ${isSectionCompleted ? 'opacity-60' : ''}`}>
             {/* Header de la section */}
             <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                            <span>{icon}</span>
+                        <h3 className="text-base lg:text-lg font-semibold flex items-center gap-2">
                             <span>{section.title}</span>
                             {isSectionCompleted && (
-                                <span className="ml-2 px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold flex items-center gap-1">
+                                <span className="ml-2 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold flex items-center gap-1">
                                     <Check className="w-3 h-3" />
                                     Terminé
                                 </span>
                             )}
                         </h3>
                         {section.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
+                            <p className="text-sm text-slate-400 mt-1">{section.description}</p>
                         )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {section.duration_min && (
-                        <span className="px-3 py-1 bg-muted rounded-full text-sm font-medium">
+                        <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs lg:text-sm font-semibold">
                             {section.duration_min} min
                         </span>
                     )}
                 </div>
             </div>
 
-            {/* Timer de section désactivé - uniquement en mode actif */}
-
             {/* Format et détails */}
             {section.format && (
-                <div className="text-sm px-3 py-2 bg-muted/50 rounded">
-                    <strong>Format:</strong> {section.format}
+                <div className="text-sm px-3 py-2 bg-slate-900/50 rounded-lg border border-slate-700/50">
+                    <span className="text-slate-400 font-medium">Format:</span> <span className="text-slate-300">{section.format}</span>
                 </div>
             )}
 
             {section.goal && (
-                <div className="text-sm text-muted-foreground">
-                    <strong>Objectif:</strong> {section.goal}
+                <div className="text-sm text-slate-400">
+                    <span className="text-slate-300 font-medium">Objectif:</span> {section.goal}
                 </div>
             )}
 
             {section.focus && (
-                <div className="text-sm text-muted-foreground">
-                    <strong>Focus:</strong> {section.focus}
+                <div className="text-sm text-slate-400">
+                    <span className="text-slate-300 font-medium">Focus:</span> {section.focus}
                 </div>
             )}
 
             {/* Rounds et repos */}
             {(section.rounds || section.rest_between_rounds) && (
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
-                    <div className="font-medium text-amber-900 dark:text-amber-100 mb-1">
-                        📋 Instructions
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm">
+                    <div className="font-medium text-amber-400 mb-1">
+                        Instructions
                     </div>
-                    <div className="text-amber-800 dark:text-amber-200">
+                    <div className="text-amber-300">
                         {section.rounds === 1 ? (
                             <>Réalise 1 tour complet des exercices ci-dessous</>
                         ) : section.rounds ? (
@@ -242,7 +238,7 @@ export function SectionDisplay({
             {section.exercises && section.exercises.length > 0 && (
                 <div className="space-y-3">
                     {/* Liste des exercices */}
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20">
+                    <div className="space-y-2 pl-4 border-l-2 border-orange-500/30">
                         {section.exercises.map((exercise, exIdx) => (
                             <ExerciseDisplay
                                 key={exIdx}
@@ -261,18 +257,18 @@ export function SectionDisplay({
                             <button
                                 onClick={handleStartSection}
                                 disabled={!canStart}
-                                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium shadow-md ${
+                                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all font-medium shadow-md ${
                                     canStart
-                                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                                        : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+                                        ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-orange-500/30'
+                                        : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
                                 }`}
                             >
                                 <Play className="w-4 h-4" />
                                 <span>Démarrer</span>
                             </button>
                             {!canStart && (
-                                <p className="text-xs text-muted-foreground text-center">
-                                    🔒 Terminez la section précédente pour débloquer
+                                <p className="text-xs text-slate-500 text-center">
+                                    Terminez la section précédente pour débloquer
                                 </p>
                             )}
                         </div>
@@ -282,20 +278,20 @@ export function SectionDisplay({
 
             {/* Intervalles */}
             {section.intervals && (
-                <div className="bg-muted/30 rounded p-3 space-y-2">
-                    <div className="text-sm">
-                        <strong>Travail:</strong>
+                <div className="bg-slate-900/50 rounded-xl p-3 space-y-2 border border-slate-700/50">
+                    <div className="text-sm text-slate-300">
+                        <span className="font-medium">Travail:</span>
                         {section.intervals.work.distance && ` ${section.intervals.work.distance}`}
                         {section.intervals.work.duration && ` ${section.intervals.work.duration}`}
                         {section.intervals.work.pace && ` @ ${section.intervals.work.pace}`}
                         {section.intervals.work.effort && ` (${section.intervals.work.effort})`}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                        <strong>Repos:</strong> {section.intervals.rest.duration}
+                    <div className="text-sm text-slate-400">
+                        <span className="font-medium">Repos:</span> {section.intervals.rest.duration}
                         {section.intervals.rest.type && ` (${section.intervals.rest.type})`}
                     </div>
                     {section.rounds && (
-                        <div className="text-sm font-medium">× {section.rounds} répétitions</div>
+                        <div className="text-sm font-medium text-orange-400">x {section.rounds} répétitions</div>
                     )}
                 </div>
             )}

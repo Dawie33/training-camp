@@ -12,12 +12,10 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { motion } from 'framer-motion'
 import {
-  Activity,
   Calendar,
   Clock,
   Dumbbell,
   Home,
-  Package,
   Settings,
   Target,
   TrendingUp,
@@ -56,8 +54,6 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
     { href: '/benchmarks', label: 'Benchmarks', icon: <Target className="w-5 h-5" /> },
     { href: '/workouts', label: 'Workouts', icon: <Dumbbell className="w-5 h-5" /> },
     { href: '/personalized-workout', label: 'Mes Workouts', icon: <Dumbbell className="w-5 h-5" /> },
-    { href: '/equipments', label: 'Equipements', icon: <Package className="w-5 h-5" /> },
-    { href: '/exercises', label: 'Exercices', icon: <Activity className="w-5 h-5" /> },
   ]
 
   return (

@@ -15,15 +15,15 @@ interface WorkoutDisplayProps {
  */
 export function WorkoutDisplay({ blocks, isStarting, onExerciseClick }: WorkoutDisplayProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {blocks.stimulus && (
-        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🎯 Objectif</h3>
-          <p className="text-blue-800 dark:text-blue-200">{blocks.stimulus}</p>
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl lg:rounded-2xl p-4 lg:p-6">
+          <h3 className="font-semibold text-orange-400 mb-2">Objectif</h3>
+          <p className="text-slate-300 text-sm lg:text-base">{blocks.stimulus}</p>
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-3 lg:space-y-4">
         {blocks.sections.map((section, idx) => (
           <SectionDisplay
             key={idx}
@@ -36,8 +36,8 @@ export function WorkoutDisplay({ blocks, isStarting, onExerciseClick }: WorkoutD
       </div>
 
       {blocks.estimated_calories && (
-        <div className="text-sm text-muted-foreground text-center pt-4 border-t">
-          🔥 Estimation : {blocks.estimated_calories} calories
+        <div className="text-sm text-slate-500 text-center pt-4 border-t border-slate-700/50">
+          Estimation : {blocks.estimated_calories} calories
         </div>
       )}
     </div>
