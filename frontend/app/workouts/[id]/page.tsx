@@ -1,24 +1,30 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
 import { useWorkoutForm } from './_hooks/useWorkoutForm'
 import { WorkoutAIGenerationModal } from './components/WorkoutAIGenerationModal'
 import { WorkoutForm } from './components/WorkoutForm'
 
-/**
- * Page de modification d'un entrainement
- * @param {string} props.params.id - The workout id
- */
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+}
+
 export default function WorkoutEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const isNewMode = id === 'new'
 
-  // Use custom hook for workout form management
   const {
     loading,
     saving,
@@ -34,51 +40,74 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Chargement...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-lg text-slate-400">Chargement...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <motion.div
+        className="max-w-4xl mx-auto p-6 space-y-6 pb-32"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">
-            {isNewMode ? 'Nouveau Workout' : 'Modifier Workout'}
-          </h1>
-        </div>
+        <motion.div variants={fadeInUp} className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+          >
+            <span className="text-lg">←</span>
+          </button>
+          <div>
+            <h1 className="text-3xl font-black text-white">
+              {isNewMode ? 'Nouveau' : 'Modifier'}{' '}
+              <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">
+                Workout
+              </span>
+            </h1>
+            {isNewMode && (
+              <p className="text-sm text-slate-400 mt-1">
+                Crée ton WOD rapidement
+              </p>
+            )}
+          </div>
 
-        {/* Main Form Card */}
-        <Card>
-          <CardContent className="pt-6">
+          {isNewMode && (
+            <button
+              type="button"
+              onClick={() => setShowAIModal(true)}
+              className="ml-auto px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              ✨ Générer avec IA
+            </button>
+          )}
+        </motion.div>
 
+        {/* AI Generation Modal */}
+        <WorkoutAIGenerationModal
+          isOpen={showAIModal}
+          onClose={() => setShowAIModal(false)}
+          onSubmit={handleSubmitGenerateWorkout}
+          aiParams={aiParams}
+          setAiParams={setAiParams}
+          saving={saving}
+        />
 
-            {/* AI Generation Modal */}
-            <WorkoutAIGenerationModal
-              isOpen={showAIModal}
-              onClose={() => setShowAIModal(false)}
-              onSubmit={handleSubmitGenerateWorkout}
-              aiParams={aiParams}
-              setAiParams={setAiParams}
-              saving={saving}
-            />
-
-            {/* Workout Form */}
-            <WorkoutForm
-              formData={formData}
-              setFormData={setFormData}
-              onSubmit={handleSubmit}
-              saving={saving}
-              isNewMode={isNewMode}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        {/* Workout Form */}
+        <motion.div variants={fadeInUp}>
+          <WorkoutForm
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            saving={saving}
+            isNewMode={isNewMode}
+          />
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

@@ -14,6 +14,14 @@ interface AIParams {
   tags: string
 }
 
+const generateAutoName = () => {
+  const now = new Date()
+  const dd = String(now.getDate()).padStart(2, '0')
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const yyyy = now.getFullYear()
+  return `Workout ${dd}/${mm}/${yyyy}`
+}
+
 /**
 * Géneration de l'état et la soumission du formulaire d'entraînement.
 *
@@ -29,13 +37,13 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
   const [showAIModal, setShowAIModal] = useState(false)
 
   const [formData, setFormData] = useState<WorkoutFormFields>({
-    name: '',
+    name: isNewMode ? generateAutoName() : '',
     description: '',
     workout_type: '',
     difficulty: 'intermediate',
     intensity: '',
     estimated_duration: 0,
-    status: 'draft',
+    status: 'published',
     isActive: true,
     isFeatured: false,
     isPublic: true,
@@ -52,6 +60,11 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
     target_metrics: '',
     ai_parameters: '',
     image_url: '',
+    wod_format: '',
+    rm_type: '',
+    rm_exercise: '',
+    rm_weight: '',
+    personal_notes: '',
   })
 
   const [aiParams, setAiParams] = useState<AIParams>({
@@ -98,6 +111,11 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
           target_metrics: '',
           ai_parameters: '',
           image_url: data.image_url || '',
+          wod_format: '',
+          rm_type: '',
+          rm_exercise: '',
+          rm_weight: '',
+          personal_notes: '',
         })
       } catch {
         toast.error('Erreur lors du chargement du workout')
@@ -125,17 +143,34 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
     setSaving(true)
 
     try {
+      // Build description from format + RM info + personal notes
+      const parts: string[] = []
+      if (formData.wod_format) {
+        const formatLabels: Record<string, string> = {
+          for_time: 'For Time', amrap: 'AMRAP', emom: 'EMOM', tabata: 'Tabata',
+          circuit: 'Circuit / Rounds', intervals: 'Intervals', strength: 'Strength',
+        }
+        parts.push(`Format: ${formatLabels[formData.wod_format] || formData.wod_format}`)
+      }
+      if (formData.rm_type && formData.rm_exercise) {
+        parts.push(`Objectif: ${formData.rm_type} ${formData.rm_exercise}${formData.rm_weight ? ` @ ${formData.rm_weight}` : ''}`)
+      }
+      if (formData.personal_notes) {
+        parts.push(formData.personal_notes)
+      }
+      const description = parts.join('\n')
+
       const submitData: CreateWorkoutDTO = {
-        name: formData.name,
-        description: formData.description || undefined,
+        name: isNewMode ? generateAutoName() : formData.name,
+        description: description || undefined,
         workout_type: formData.workout_type || undefined,
         difficulty: formData.difficulty,
         intensity: formData.intensity || undefined,
         estimated_duration: formData.estimated_duration || undefined,
-        status: formData.status,
-        isActive: formData.isActive,
+        status: isNewMode ? 'published' : formData.status,
+        isActive: true,
         isFeatured: formData.isFeatured,
-        isPublic: formData.isPublic,
+        isPublic: true,
         scheduled_date: formData.scheduled_date || undefined,
         tags: parseJsonOrArray(formData.tags),
         blocks: formData.blocks ? JSON.parse(formData.blocks) : undefined,
@@ -144,16 +179,16 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
 
       if (isNewMode) {
         await workoutsApi.create(submitData)
-        toast.success('Workout cree avec succes')
+        toast.success('Workout créé avec succès')
       } else {
         await workoutsApi.update(id, submitData)
-        toast.success('Workout mis a jour')
+        toast.success('Workout mis à jour')
       }
 
       router.push('/workouts')
     } catch (error) {
       console.error(error)
-      toast.error(isNewMode ? 'Erreur lors de la creation du workout' : 'Erreur lors de la mise a jour du workout')
+      toast.error(isNewMode ? 'Erreur lors de la création du workout' : 'Erreur lors de la mise à jour du workout')
     } finally {
       setSaving(false)
     }
@@ -180,7 +215,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
       // Pre-fill form with generated data
       setFormData({
         ...formData,
-        name: generatedWorkout.name || '',
+        name: generatedWorkout.name || generateAutoName(),
         description: generatedWorkout.description || '',
         workout_type: generatedWorkout.workout_type || '',
         intensity: generatedWorkout.intensity || '',
@@ -193,9 +228,9 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
       })
 
       setShowAIModal(false)
-      toast.success('Workout genere avec succes!')
+      toast.success('Workout généré avec succès!')
     } catch {
-      toast.error('Erreur lors de la generation du workout')
+      toast.error('Erreur lors de la génération du workout')
     } finally {
       setSaving(false)
     }

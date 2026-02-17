@@ -3,6 +3,7 @@
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { PersonalRecords } from './components/PersonalRecords'
 import { ProgressChart } from './components/ProgressChart'
 import { StatsCard } from './components/StatsCard'
@@ -24,13 +25,21 @@ function TrackingContent() {
     >
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Header */}
-        <motion.section variants={fadeInUp} className="space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Suivi des performances</span>
-          </h1>
-          <p className="text-slate-400 text-lg">
-            Analyse tes progrès et ton historique d'entraînement
-          </p>
+        <motion.section variants={fadeInUp} className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Suivi des performances</span>
+            </h1>
+            <p className="text-slate-400 text-lg">
+              Analyse tes progrès et ton historique d'entraînement
+            </p>
+          </div>
+          <Link
+            href="/log-workout"
+            className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all"
+          >
+            + Enregistrer un WOD
+          </Link>
         </motion.section>
 
         {/* Stats Cards */}

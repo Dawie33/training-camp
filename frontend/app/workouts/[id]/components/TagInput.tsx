@@ -1,7 +1,5 @@
 'use client'
 
-import { Input } from '@/components/ui/input'
-import { X } from 'lucide-react'
 import { KeyboardEvent, useState } from 'react'
 
 interface TagInputProps {
@@ -14,7 +12,6 @@ interface TagInputProps {
 export function TagInput({ value, onChange, placeholder = 'Ajouter...', label }: TagInputProps) {
   const [inputValue, setInputValue] = useState('')
 
-  // Parse current tags from comma-separated string
   const tags = value ? value.split(',').map(t => t.trim()).filter(Boolean) : []
 
   const addTag = (tag: string) => {
@@ -41,39 +38,37 @@ export function TagInput({ value, onChange, placeholder = 'Ajouter...', label }:
 
   return (
     <div className="space-y-2">
-      {label && <label className="text-sm font-medium">{label}</label>}
+      {label && <label className="text-sm font-medium text-slate-300">{label}</label>}
 
-      {/* Tags display */}
-      <div className="flex flex-wrap gap-2 min-h-[38px] p-2 border rounded-md bg-background">
+      <div className="flex flex-wrap gap-2 min-h-[46px] p-3 border border-slate-700 rounded-xl bg-slate-900/50">
         {tags.map((tag, index) => (
           <span
             key={index}
-            className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-md text-sm"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-500/15 text-orange-400 rounded-lg text-sm font-medium"
           >
             {tag}
             <button
               type="button"
               onClick={() => removeTag(index)}
-              className="hover:bg-primary/20 rounded-full p-0.5"
+              className="hover:bg-orange-500/25 rounded-full p-0.5 transition-colors"
             >
-              <X className="h-3 w-3" />
+              <span className="text-xs">×</span>
             </button>
           </span>
         ))}
 
-        {/* Input for new tag */}
-        <Input
+        <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => inputValue.trim() && addTag(inputValue.trim())}
           placeholder={tags.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[120px] border-0 focus-visible:ring-0 shadow-none p-0 h-auto"
+          className="flex-1 min-w-[120px] bg-transparent border-0 text-white placeholder:text-slate-500 outline-none text-sm"
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-slate-500">
         Appuyez sur Entrée ou cliquez ailleurs pour ajouter
       </p>
     </div>

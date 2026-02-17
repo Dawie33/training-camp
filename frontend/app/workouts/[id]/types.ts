@@ -32,6 +32,12 @@ export interface WorkoutFormFields {
   target_metrics: string
   ai_parameters: string
   image_url: string
+  // New fields for simplified create form
+  wod_format: string
+  rm_type: string
+  rm_exercise: string
+  rm_weight: string
+  personal_notes: string
 }
 
 export interface WorkoutFormProps {

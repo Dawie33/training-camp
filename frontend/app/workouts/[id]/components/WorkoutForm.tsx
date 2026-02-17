@@ -1,8 +1,5 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
@@ -13,169 +10,53 @@ import { TagInput } from './TagInput'
 export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode }: WorkoutFormProps) {
   const router = useRouter()
 
-  // Obtenir les types de workout disponibles pour crossfit
   const availableWorkoutTypes = useMemo(() => {
     return WORKOUT_TYPES.crossfit
   }, [])
 
+  const isStrengthType = formData.workout_type === 'strength_max' || formData.workout_type === 'strength_accessory'
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      {/* Basic Information */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold border-b pb-2">Informations de base</h3>
+      {/* Type de workout */}
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+        <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+          Type de WOD
+        </h3>
 
-        <div>
-          <label className="text-sm font-medium">Nom du workout</label>
-          <Input
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="text-sm font-medium">Description</label>
-        <Textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={3}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium">Type de workout</label>
-          <select
-            className="w-full px-3 py-2 border border-input bg-background rounded-md"
-            value={formData.workout_type}
-            onChange={(e) => setFormData({ ...formData, workout_type: e.target.value })}
-          >
-            <option value="">Sélectionner un type...</option>
-            {availableWorkoutTypes.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Temps estimé (min)</label>
-          <Input
-            type="number"
-            value={formData.estimated_duration}
-            onChange={(e) =>
-              setFormData({ ...formData, estimated_duration: Number(e.target.value) })
-            }
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <label className="text-sm font-medium">Difficulté</label>
-          <select
-            className="w-full px-3 py-2 border border-input bg-background rounded-md"
-            value={formData.difficulty}
-            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-          >
-            <option value="beginner">Débutant</option>
-            <option value="intermediate">Intermédiaire</option>
-            <option value="advanced">Avancé</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Intensité</label>
-          <Input
-            value={formData.intensity}
-            onChange={(e) => setFormData({ ...formData, intensity: e.target.value })}
-            placeholder="e.g., low, moderate, high"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Statut</label>
-          <select
-            className="w-full px-3 py-2 border border-input bg-background rounded-md"
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Checkboxes */}
-      <div className="flex gap-4">
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="isActive"
-            checked={formData.isActive}
-            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            className="h-4 w-4"
-          />
-          <label htmlFor="isActive" className="text-sm font-medium">
-            Active
-          </label>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="isFeatured"
-            checked={formData.isFeatured}
-            onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-            className="h-4 w-4"
-          />
-          <label htmlFor="isFeatured" className="text-sm font-medium">
-            Featured
-          </label>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="isPublic"
-            checked={formData.isPublic}
-            onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
-            className="h-4 w-4"
-          />
-          <label htmlFor="isPublic" className="text-sm font-medium">
-            Public
-          </label>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="is_benchmark"
-            checked={formData.is_benchmark}
-            onChange={(e) => setFormData({ ...formData, is_benchmark: e.target.checked })}
-            className="h-4 w-4"
-          />
-          <label htmlFor="is_benchmark" className="text-sm font-medium">
-            Benchmark
-          </label>
-        </div>
-      </div>
-
-      {/* Advanced Details */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold border-b pb-2">Détails avancés</h3>
-
-        <div>
-          <label className="text-sm font-medium">Notes du coach</label>
-          <Textarea
-            value={formData.coach_notes}
-            onChange={(e) => setFormData({ ...formData, coach_notes: e.target.value })}
-            rows={3}
-            placeholder="Notes pour les coachs..."
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-slate-300 block mb-2">Catégorie</label>
+            <select
+              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+              value={formData.workout_type}
+              onChange={(e) => setFormData({ ...formData, workout_type: e.target.value })}
+            >
+              <option value="">Sélectionner...</option>
+              {availableWorkoutTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-300 block mb-2">Format du WOD</label>
+            <select
+              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+              value={formData.wod_format}
+              onChange={(e) => setFormData({ ...formData, wod_format: e.target.value })}
+            >
+              <option value="">Sélectionner...</option>
+              <option value="for_time">For Time</option>
+              <option value="amrap">AMRAP</option>
+              <option value="emom">EMOM</option>
+              <option value="tabata">Tabata</option>
+              <option value="circuit">Circuit / Rounds</option>
+              <option value="intervals">Intervals</option>
+              <option value="strength">Strength (séries/reps)</option>
+            </select>
+          </div>
         </div>
 
         <TagInput
@@ -184,50 +65,99 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
           onChange={(value) => setFormData({ ...formData, tags: value })}
           placeholder="cardio, strength, endurance..."
         />
+      </div>
 
-        <TagInput
-          label="Options de Scaling"
-          value={formData.scaling_options}
-          onChange={(value) => setFormData({ ...formData, scaling_options: value })}
-          placeholder="rx, scaled, beginner..."
-        />
+      {/* Bloc RM - visible uniquement pour les types Force */}
+      {isStrengthType && (
+        <div className="bg-slate-800/50 border border-orange-500/30 rounded-2xl p-6 space-y-4">
+          <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+            🏋️ Objectif Force
+          </h3>
 
-        <TagInput
-          label="Equipement requis"
-          value={formData.equipment_required}
-          onChange={(value) => setFormData({ ...formData, equipment_required: value })}
-          placeholder="barbell, pull-up bar, rower..."
-        />
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-300 block mb-2">Type RM</label>
+              <select
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+                value={formData.rm_type}
+                onChange={(e) => setFormData({ ...formData, rm_type: e.target.value })}
+              >
+                <option value="">Sélectionner...</option>
+                <option value="1RM">1RM</option>
+                <option value="3RM">3RM</option>
+                <option value="5RM">5RM</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-300 block mb-2">Exercice</label>
+              <input
+                type="text"
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+                value={formData.rm_exercise}
+                onChange={(e) => setFormData({ ...formData, rm_exercise: e.target.value })}
+                placeholder="ex: Back Squat"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-300 block mb-2">Poids cible</label>
+              <input
+                type="text"
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+                value={formData.rm_weight}
+                onChange={(e) => setFormData({ ...formData, rm_weight: e.target.value })}
+                placeholder="ex: 120kg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
-        <TagInput
-          label="Zones ciblées"
-          value={formData.focus_areas}
-          onChange={(value) => setFormData({ ...formData, focus_areas: value })}
-          placeholder="endurance, strength, technique..."
-        />
-
-        <TagInput
-          label="Suivis de Metrics"
-          value={formData.metrics_tracked}
-          onChange={(value) => setFormData({ ...formData, metrics_tracked: value })}
-          placeholder="time, rounds, reps..."
-        />
+      {/* Structure du workout */}
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+        <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+          Structure du WOD
+        </h3>
 
         <BlocksEditor
-          label="Structure du Workout (Blocks)"
           value={formData.blocks}
           onChange={(value) => setFormData({ ...formData, blocks: value })}
         />
       </div>
 
+      {/* Notes personnelles */}
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+        <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+          Notes
+        </h3>
+
+        <div>
+          <label className="text-sm font-medium text-slate-300 block mb-2">Notes personnelles</label>
+          <textarea
+            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all resize-none"
+            value={formData.personal_notes}
+            onChange={(e) => setFormData({ ...formData, personal_notes: e.target.value })}
+            rows={3}
+            placeholder="Remarques, objectifs, consignes..."
+          />
+        </div>
+      </div>
+
       {/* Submit Buttons */}
-      <div className="flex gap-4 pt-4">
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Enregistrement...' : isNewMode ? 'Creer' : 'Sauvegarder'}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
+      <div className="flex gap-4 pt-2">
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex-1 py-3 px-6 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {saving ? 'Enregistrement...' : isNewMode ? 'Créer le Workout' : 'Sauvegarder'}
+        </button>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="py-3 px-6 bg-white/5 border border-white/10 text-slate-300 font-medium rounded-xl hover:bg-white/10 transition-all"
+        >
           Annuler
-        </Button>
+        </button>
       </div>
     </form>
   )
