@@ -4,7 +4,6 @@ import { StatsCard } from '@/app/tracking/components/StatsCard'
 import { useWorkoutStats } from '@/app/tracking/hooks/useWorkoutStats'
 import { fadeInUp } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Calendar, Clock, Flame } from 'lucide-react'
 
 export function StatsCards() {
   const { workoutStats, formatDuration } = useWorkoutStats()
@@ -17,25 +16,25 @@ export function StatsCards() {
       <StatsCard
         title="Total Workouts"
         value={workoutStats?.totalWorkouts ?? 0}
-        icon={Activity}
+        emoji="💪"
         color="blue"
       />
       <StatsCard
         title="Temps Total"
         value={workoutStats ? formatDuration(workoutStats.totalDuration) : '0m'}
-        icon={Clock}
+        emoji="⏱"
         color="green"
       />
       <StatsCard
         title="Série actuelle"
         value={workoutStats ? `${workoutStats.currentStreak} jours` : '0 jours'}
-        icon={Flame}
+        emoji="🔥"
         color="orange"
       />
       <StatsCard
         title="Cette Semaine"
         value={workoutStats ? formatDuration(workoutStats.totalDurationThisWeek) : '0m'}
-        icon={Calendar}
+        emoji="📅"
         color="purple"
       />
     </motion.div>

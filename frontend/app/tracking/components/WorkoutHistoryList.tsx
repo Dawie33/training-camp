@@ -1,34 +1,10 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import {
-  Clock,
-  Dumbbell,
-  Eye,
-  Star,
-  Trash2
-} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { WorkoutSession } from '@/domain/entities/workout'
 import { sessionService } from '@/services/sessions'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface WorkoutHistoryListProps {
   limit?: number
@@ -44,7 +20,6 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
 
   const totalPages = Math.ceil(totalCount / limit)
 
-  // Charger les sessions avec pagination
   useEffect(() => {
     const loadSessions = async () => {
       try {
@@ -65,16 +40,12 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
   const filteredSessions = workoutSessions
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) {
-      return
-    }
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) return
 
     try {
       setDeletingId(id)
       await sessionService.deleteSession(id)
       toast.success('Session supprimée')
-
-      // Mettre à jour la liste en retirant la session supprimée
       setWorkoutSessions(workoutSessions.filter(s => s.id !== id))
       setTotalCount(prev => prev - 1)
     } catch (error) {
@@ -89,13 +60,8 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    }
-    if (minutes > 0) {
-      return `${minutes}m ${secs}s`
-    }
+    if (hours > 0) return `${hours}h ${minutes}m`
+    if (minutes > 0) return `${minutes}m ${secs}s`
     return `${secs}s`
   }
 
@@ -105,12 +71,8 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
 
-    if (date.toDateString() === today.toDateString()) {
-      return "Aujourd'hui"
-    }
-    if (date.toDateString() === yesterday.toDateString()) {
-      return 'Hier'
-    }
+    if (date.toDateString() === today.toDateString()) return "Aujourd'hui"
+    if (date.toDateString() === yesterday.toDateString()) return 'Hier'
 
     return date.toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -121,150 +83,141 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
     })
   }
 
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[...Array(5)].map((_, i) => (
+          <span
+            key={i}
+            className={cn(
+              'text-sm',
+              i < rating ? 'text-yellow-500' : 'text-slate-600'
+            )}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <>
       {/* Vue Desktop - Table */}
-      <div className="hidden md:block rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Durée</TableHead>
-              <TableHead>Exercices</TableHead>
-              <TableHead>Note</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="hidden md:block rounded-xl overflow-hidden border border-slate-700/50">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-700/50 bg-slate-800/30">
+              <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-4 py-3">Date</th>
+              <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-4 py-3">Statut</th>
+              <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-4 py-3">Durée</th>
+              <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-4 py-3">Blocs</th>
+              <th className="text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-4 py-3">Note</th>
+              <th className="text-right text-xs font-medium text-slate-400 uppercase tracking-wider px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+              <tr>
+                <td colSpan={6} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <Dumbbell className="w-8 h-8 text-muted-foreground animate-pulse" />
-                    <p className="text-sm text-muted-foreground">Chargement...</p>
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/20 animate-pulse" />
+                    <p className="text-sm text-slate-400">Chargement...</p>
                   </div>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : filteredSessions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+              <tr>
+                <td colSpan={6} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <Dumbbell className="w-8 h-8 text-muted-foreground opacity-50" />
-                    <p className="text-sm text-muted-foreground">Aucune session trouvée</p>
+                    <span className="text-2xl opacity-50">🏋️</span>
+                    <p className="text-sm text-slate-400">Aucune session trouvée</p>
                   </div>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               filteredSessions.map((session) => {
-              const isCompleted = !!session.completed_at
-              const duration = isCompleted
-                ? Math.floor((new Date(session.completed_at!).getTime() - new Date(session.started_at).getTime()) / 1000)
-                : 0
+                const isCompleted = !!session.completed_at
+                const duration = isCompleted
+                  ? Math.floor((new Date(session.completed_at!).getTime() - new Date(session.started_at).getTime()) / 1000)
+                  : 0
+                const rating = session.results?.rating || 0
+                const blockProgress = session.results?.block_progress || {}
+                const completedBlocks = Object.values(blockProgress).filter(Boolean).length
+                const totalBlocks = Object.keys(blockProgress).length
 
-              const rating = session.results?.rating || 0
-              const blockProgress = session.results?.block_progress || {}
-              const completedBlocks = Object.values(blockProgress).filter(Boolean).length
-              const totalBlocks = Object.keys(blockProgress).length
-
-              return (
-                <TableRow key={session.id}>
-                  <TableCell className="font-medium">
-                    {formatDate(session.started_at)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={isCompleted ? "default" : "outline"}
-                      className="text-xs"
-                    >
-                      {isCompleted ? "Complété" : "En cours"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {isCompleted ? (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        {formatDuration(duration)}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {totalBlocks > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <Dumbbell className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {completedBlocks}/{totalBlocks}
-                        </span>
-                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary transition-all"
-                            style={{ width: `${(completedBlocks / totalBlocks) * 100}%` }}
-                          />
+                return (
+                  <tr key={session.id} className="border-b border-slate-700/30 hover:bg-slate-800/30 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-white">
+                      {formatDate(session.started_at)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn(
+                        'text-xs px-2 py-0.5 rounded-full font-medium',
+                        isCompleted
+                          ? 'bg-emerald-500/15 text-emerald-400'
+                          : 'bg-slate-700/50 text-slate-400 border border-slate-600/50'
+                      )}>
+                        {isCompleted ? 'Complété' : 'En cours'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-300">
+                      {isCompleted ? formatDuration(duration) : <span className="text-slate-600">-</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      {totalBlocks > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-300">{completedBlocks}/{totalBlocks}</span>
+                          <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-orange-500 transition-all"
+                              style={{ width: `${(completedBlocks / totalBlocks) * 100}%` }}
+                            />
+                          </div>
                         </div>
+                      ) : (
+                        <span className="text-slate-600">-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isCompleted && rating > 0 ? renderStars(rating) : <span className="text-slate-600">-</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          className="px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
+                          onClick={() => setSelectedSession(session)}
+                        >
+                          Voir
+                        </button>
+                        <button
+                          className="px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          onClick={() => handleDelete(session.id)}
+                          disabled={deletingId === session.id}
+                        >
+                          {deletingId === session.id ? '...' : 'Suppr.'}
+                        </button>
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isCompleted && rating > 0 ? (
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={cn(
-                              'w-3.5 h-3.5',
-                              i < rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
-                            )}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setSelectedSession(session)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => handleDelete(session.id)}
-                        disabled={deletingId === session.id}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )
-            })
+                    </td>
+                  </tr>
+                )
+              })
             )}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
 
       {/* Vue Mobile - Cards */}
       <div className="md:hidden space-y-3">
         {loading ? (
           <div className="flex flex-col items-center justify-center gap-2 py-12">
-            <Dumbbell className="w-8 h-8 text-muted-foreground animate-pulse" />
-            <p className="text-sm text-muted-foreground">Chargement...</p>
+            <div className="w-8 h-8 rounded-lg bg-orange-500/20 animate-pulse" />
+            <p className="text-sm text-slate-400">Chargement...</p>
           </div>
         ) : filteredSessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-12">
-            <Dumbbell className="w-8 h-8 text-muted-foreground opacity-50" />
-            <p className="text-sm text-muted-foreground">Aucune session trouvée</p>
+            <span className="text-2xl opacity-50">🏋️</span>
+            <p className="text-sm text-slate-400">Aucune session trouvée</p>
           </div>
         ) : (
           filteredSessions.map((session) => {
@@ -272,7 +225,6 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
             const duration = isCompleted
               ? Math.floor((new Date(session.completed_at!).getTime() - new Date(session.started_at).getTime()) / 1000)
               : 0
-
             const rating = session.results?.rating || 0
             const blockProgress = session.results?.block_progress || {}
             const completedBlocks = Object.values(blockProgress).filter(Boolean).length
@@ -281,87 +233,66 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
             return (
               <div
                 key={session.id}
-                className="bg-card border rounded-lg p-4 space-y-3"
+                className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 space-y-3"
               >
-                {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <Badge
-                        variant={isCompleted ? "default" : "outline"}
-                        className="text-xs"
-                      >
-                        {isCompleted ? "Complété" : "En cours"}
-                      </Badge>
+                      <span className={cn(
+                        'text-xs px-2 py-0.5 rounded-full font-medium',
+                        isCompleted
+                          ? 'bg-emerald-500/15 text-emerald-400'
+                          : 'bg-slate-700/50 text-slate-400 border border-slate-600/50'
+                      )}>
+                        {isCompleted ? 'Complété' : 'En cours'}
+                      </span>
                     </div>
-                    <p className="text-sm font-medium mt-1">
+                    <p className="text-sm font-medium mt-1 text-white">
                       {formatDate(session.started_at)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
+                    <button
+                      className="px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
                       onClick={() => setSelectedSession(session)}
                     >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                      Voir
+                    </button>
+                    <button
+                      className="px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       onClick={() => handleDelete(session.id)}
                       disabled={deletingId === session.id}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      {deletingId === session.id ? '...' : 'Suppr.'}
+                    </button>
                   </div>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Duration */}
                   {isCompleted && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <span className="text-slate-500">⏱</span>
                       <span>{formatDuration(duration)}</span>
                     </div>
                   )}
-
-                  {/* Exercises Progress */}
                   {totalBlocks > 0 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <span className="text-slate-500">📋</span>
                       <span>{completedBlocks}/{totalBlocks}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Progress Bar */}
                 {totalBlocks > 0 && (
-                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary transition-all"
+                      className="h-full bg-orange-500 transition-all"
                       style={{ width: `${(completedBlocks / totalBlocks) * 100}%` }}
                     />
                   </div>
                 )}
 
-                {/* Rating */}
-                {isCompleted && rating > 0 && (
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={cn(
-                          'w-4 h-4',
-                          i < rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
-                        )}
-                      />
-                    ))}
-                  </div>
-                )}
+                {isCompleted && rating > 0 && renderStars(rating)}
               </div>
             )
           })
@@ -370,139 +301,128 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
 
       {/* Pagination */}
       <div className="flex items-center justify-between mt-4">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-slate-500">
           {totalCount > 0 ? (
-            <>
-              Affichage de {page * limit + 1} à {Math.min((page + 1) * limit, totalCount)} sur {totalCount} sessions
-            </>
+            <>Affichage de {page * limit + 1} à {Math.min((page + 1) * limit, totalCount)} sur {totalCount} sessions</>
           ) : (
             <>Aucune session</>
           )}
         </div>
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-700/50 bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Précédent
-            </Button>
-            <div className="text-sm text-muted-foreground px-2">
+              ← Précédent
+            </button>
+            <div className="text-sm text-slate-400 px-2">
               Page {page + 1} / {totalPages}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-700/50 bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
             >
-              Suivant
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+              Suivant →
+            </button>
           </div>
         )}
       </div>
 
-      {/* Dialog pour les détails */}
-      <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Détails de la session</DialogTitle>
-          </DialogHeader>
-          {selectedSession && (
-            <div className="space-y-4">
-              {/* Informations générales */}
+      {/* Dialog détails */}
+      {selectedSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSelectedSession(null)}>
+          <div
+            className="bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50">
+              <h3 className="text-lg font-bold text-white">Détails de la session</h3>
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="text-slate-400 hover:text-white transition-colors text-xl"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Date de début</h4>
-                  <p className="text-sm">{new Date(selectedSession.started_at).toLocaleString('fr-FR')}</p>
+                  <h4 className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">Date de début</h4>
+                  <p className="text-sm text-white">{new Date(selectedSession.started_at).toLocaleString('fr-FR')}</p>
                 </div>
                 {selectedSession.completed_at && (
                   <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Date de fin</h4>
-                    <p className="text-sm">{new Date(selectedSession.completed_at).toLocaleString('fr-FR')}</p>
+                    <h4 className="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">Date de fin</h4>
+                    <p className="text-sm text-white">{new Date(selectedSession.completed_at).toLocaleString('fr-FR')}</p>
                   </div>
                 )}
               </div>
 
-              {/* Notes */}
               {selectedSession.notes && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Notes</h4>
-                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                  <h4 className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Notes</h4>
+                  <p className="text-sm text-slate-300 bg-slate-800/50 border border-slate-700/50 p-3 rounded-lg">
                     {selectedSession.notes}
                   </p>
                 </div>
               )}
 
-              {/* Métriques */}
               {selectedSession.results?.metrics && Object.keys(selectedSession.results.metrics).length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Métriques</h4>
+                  <h4 className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Métriques</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {selectedSession.results.metrics.calories && (
-                      <div className="text-sm bg-muted rounded p-3">
-                        <span className="text-muted-foreground">Calories:</span>{' '}
-                        <span className="font-medium">{selectedSession.results.metrics.calories}</span>
+                      <div className="text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
+                        <span className="text-slate-400">Calories:</span>{' '}
+                        <span className="font-medium text-white">{selectedSession.results.metrics.calories}</span>
                       </div>
                     )}
                     {selectedSession.results.metrics.avg_heart_rate && (
-                      <div className="text-sm bg-muted rounded p-3">
-                        <span className="text-muted-foreground">FC Moy:</span>{' '}
-                        <span className="font-medium">{selectedSession.results.metrics.avg_heart_rate} bpm</span>
+                      <div className="text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
+                        <span className="text-slate-400">FC Moy:</span>{' '}
+                        <span className="font-medium text-white">{selectedSession.results.metrics.avg_heart_rate} bpm</span>
                       </div>
                     )}
                     {selectedSession.results.metrics.max_heart_rate && (
-                      <div className="text-sm bg-muted rounded p-3">
-                        <span className="text-muted-foreground">FC Max:</span>{' '}
-                        <span className="font-medium">{selectedSession.results.metrics.max_heart_rate} bpm</span>
+                      <div className="text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
+                        <span className="text-slate-400">FC Max:</span>{' '}
+                        <span className="font-medium text-white">{selectedSession.results.metrics.max_heart_rate} bpm</span>
                       </div>
                     )}
                     {selectedSession.results.metrics.perceived_effort && (
-                      <div className="text-sm bg-muted rounded p-3">
-                        <span className="text-muted-foreground">Effort perçu:</span>{' '}
-                        <span className="font-medium">{selectedSession.results.metrics.perceived_effort}/10</span>
+                      <div className="text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
+                        <span className="text-slate-400">Effort perçu:</span>{' '}
+                        <span className="font-medium text-white">{selectedSession.results.metrics.perceived_effort}/10</span>
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Note et progression */}
               <div className="grid grid-cols-2 gap-4">
                 {selectedSession.results?.rating && selectedSession.results.rating > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Note</h4>
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={cn(
-                            'w-5 h-5',
-                            i < selectedSession.results!.rating! ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
-                          )}
-                        />
-                      ))}
-                    </div>
+                    <h4 className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Note</h4>
+                    {renderStars(selectedSession.results.rating)}
                   </div>
                 )}
                 {selectedSession.results?.block_progress && Object.keys(selectedSession.results.block_progress).length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Progression</h4>
+                    <h4 className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Progression</h4>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-primary transition-all"
+                          className="h-full bg-orange-500 transition-all"
                           style={{
                             width: `${(Object.values(selectedSession.results.block_progress).filter(Boolean).length /
                               Object.keys(selectedSession.results.block_progress).length) * 100}%`
                           }}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-slate-400">
                         {Object.values(selectedSession.results.block_progress).filter(Boolean).length}/
                         {Object.keys(selectedSession.results.block_progress).length}
                       </span>
@@ -511,9 +431,9 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                 )}
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
     </>
   )
 }

@@ -1,12 +1,11 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { LucideIcon } from 'lucide-react'
 
 interface StatsCardProps {
   title: string
   value: string | number
-  icon: LucideIcon
+  emoji: string
   color: 'blue' | 'green' | 'orange' | 'purple' | 'red'
   subtitle?: string
   trend?: {
@@ -18,32 +17,27 @@ interface StatsCardProps {
 const colorClasses = {
   blue: {
     gradient: 'from-blue-500/20 to-cyan-500/20',
-    iconBg: 'bg-blue-500/20',
-    icon: 'text-blue-400'
+    emojiBg: 'bg-blue-500/20',
   },
   green: {
     gradient: 'from-emerald-500/20 to-teal-500/20',
-    iconBg: 'bg-emerald-500/20',
-    icon: 'text-emerald-400'
+    emojiBg: 'bg-emerald-500/20',
   },
   orange: {
     gradient: 'from-orange-500/20 to-amber-500/20',
-    iconBg: 'bg-orange-500/20',
-    icon: 'text-orange-400'
+    emojiBg: 'bg-orange-500/20',
   },
   purple: {
     gradient: 'from-violet-500/20 to-purple-500/20',
-    iconBg: 'bg-violet-500/20',
-    icon: 'text-violet-400'
+    emojiBg: 'bg-violet-500/20',
   },
   red: {
     gradient: 'from-red-500/20 to-rose-500/20',
-    iconBg: 'bg-red-500/20',
-    icon: 'text-red-400'
+    emojiBg: 'bg-red-500/20',
   }
 }
 
-export function StatsCard({ title, value, icon: Icon, color, subtitle, trend }: StatsCardProps) {
+export function StatsCard({ title, value, emoji, color, subtitle, trend }: StatsCardProps) {
   const colors = colorClasses[color]
 
   return (
@@ -54,10 +48,10 @@ export function StatsCard({ title, value, icon: Icon, color, subtitle, trend }: 
       <div className="flex items-start justify-between mb-4">
         <p className="text-sm text-slate-400">{title}</p>
         <div className={cn(
-          'w-10 h-10 rounded-xl flex items-center justify-center',
-          colors.iconBg
+          'w-10 h-10 rounded-xl flex items-center justify-center text-lg',
+          colors.emojiBg
         )}>
-          <Icon className={cn('w-5 h-5', colors.icon)} />
+          {emoji}
         </div>
       </div>
       <p className="text-3xl font-bold">

@@ -1,4 +1,5 @@
 import { WorkoutStats } from '@/domain/entities/workout-history'
+import { workoutsService } from '@/services'
 import { useEffect, useState } from 'react'
 import { useWorkoutSession } from './useWorkoutSession'
 
@@ -95,12 +96,20 @@ export function useWorkoutStats() {
         return acc + duration
       }, 0)
 
-    // Calculer le nombre de workouts ce mois
     const workoutsThisMonth = completedSessions.filter(s => {
       const sessionDate = new Date(s.started_at)
       return sessionDate >= oneMonthAgo
     }).length
 
+    // Calculer la note moyenne
+    const ratings = completedSessions
+      .map(s => s.results?.rating)
+      .filter((r): r is number => r !== undefined && r !== null && r > 0)
+    const averageDifficulty = ratings.length > 0
+      ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
+      : 0
+
+    // Commencer avec les stats de base
     setWorkoutStats({
       totalWorkouts,
       totalDuration,
@@ -109,22 +118,110 @@ export function useWorkoutStats() {
       currentStreak,
       longestStreak,
       workoutsByDay,
-      workoutsByType: {
+      workoutsByType: { FOR_TIME: 0, AMRAP: 0, EMOM: 0, TABATA: 0 },
+      personalRecords: [],
+      averageDifficulty,
+      favoriteTimerType: 'FOR_TIME',
+      workoutsThisMonth
+    })
+
+    // Enrichir async avec les données par type et records
+    const fetchWorkoutTypes = async () => {
+      const workoutsByType: Record<string, number> = {
         FOR_TIME: 0,
         AMRAP: 0,
         EMOM: 0,
         TABATA: 0
-      },
-      personalRecords: [],
-      averageDifficulty: 0,
-      favoriteTimerType: 'FOR_TIME',
-      workoutsThisMonth
-    })
+      }
+
+      const personalRecords: { type: string; value: number; unit: string; date: string }[] = []
+
+      // Regrouper sessions par workout_id
+      const grouped: Record<string, typeof completedSessions> = {}
+      for (const session of completedSessions) {
+        if (!session.workout_id) continue
+        if (!grouped[session.workout_id]) {
+          grouped[session.workout_id] = []
+        }
+        grouped[session.workout_id].push(session)
+      }
+
+      const workoutCache: Record<string, { name: string; type: string }> = {}
+      for (const workoutId of Object.keys(grouped)) {
+        try {
+          const workout = await workoutsService.getById(workoutId)
+          const type = (workout.workout_type || '').toUpperCase().replace(/\s+/g, '_')
+          workoutCache[workoutId] = { name: workout.name, type }
+          if (type in workoutsByType) {
+            workoutsByType[type] += grouped[workoutId].length
+          }
+        } catch {
+          // Workout supprimé
+        }
+      }
+
+      // Personal records par workout
+      for (const [workoutId, sessions] of Object.entries(grouped)) {
+        const info = workoutCache[workoutId]
+        if (!info) continue
+
+        const isAmrap = info.type === 'AMRAP'
+
+        if (isAmrap) {
+          const rounds = sessions
+            .map(s => (s.results?.rounds as number) || 0)
+            .filter(r => r > 0)
+          if (rounds.length > 0) {
+            const bestRounds = Math.max(...rounds)
+            const bestSession = sessions.find(s => (s.results?.rounds as number) === bestRounds)
+            personalRecords.push({
+              type: info.name,
+              value: bestRounds,
+              unit: 'rounds',
+              date: bestSession?.started_at || sessions[0].started_at,
+            })
+          }
+        } else {
+          const times = sessions
+            .map(s => s.results?.elapsed_time_seconds || 0)
+            .filter(t => t > 0)
+          if (times.length > 0) {
+            const bestTime = Math.min(...times)
+            const bestSession = sessions.find(s => s.results?.elapsed_time_seconds === bestTime)
+            const mins = Math.floor(bestTime / 60)
+            const secs = bestTime % 60
+            personalRecords.push({
+              type: info.name,
+              value: bestTime,
+              unit: `${mins}:${secs.toString().padStart(2, '0')}`,
+              date: bestSession?.started_at || sessions[0].started_at,
+            })
+          }
+        }
+      }
+
+      const sortedTypes = Object.entries(workoutsByType).sort((a, b) => b[1] - a[1])
+      const favoriteTimerType = sortedTypes[0]?.[1] > 0 ? sortedTypes[0][0] as 'FOR_TIME' | 'AMRAP' | 'EMOM' | 'TABATA' : 'FOR_TIME'
+
+      setWorkoutStats({
+        totalWorkouts,
+        totalDuration,
+        totalDurationThisWeek,
+        totalDurationThisMonth,
+        currentStreak,
+        longestStreak,
+        workoutsByDay,
+        workoutsByType: workoutsByType as Record<'FOR_TIME' | 'AMRAP' | 'EMOM' | 'TABATA', number>,
+        personalRecords,
+        averageDifficulty,
+        favoriteTimerType,
+        workoutsThisMonth
+      })
+    }
+
+    fetchWorkoutTypes()
   }, [workoutSessions])
 
-  /**
-   * Formate une durée en secondes en format lisible
-   */
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)

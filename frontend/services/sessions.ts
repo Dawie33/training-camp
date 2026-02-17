@@ -47,6 +47,15 @@ export class SessionService {
   }
 
   /**
+   * Récupère toutes les sessions pour un workout spécifique
+   * @param workoutId ID du workout
+   * @returns Promesse contenant les sessions du workout
+   */
+  async getByWorkoutId(workoutId: string): Promise<WorkoutSession[]> {
+    return apiClient.get<WorkoutSession[]>(`/workout-sessions/workout/${workoutId}`)
+  }
+
+  /**
    * Supprime une session de workout
    * @param sessionId ID de la session à supprimer
    * @returns Promesse qui renvoie void une fois la session supprimée
