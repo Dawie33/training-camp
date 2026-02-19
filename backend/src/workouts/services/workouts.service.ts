@@ -503,4 +503,9 @@ export class WorkoutsService {
     }
   }
 
+  async remove(id: string) {
+    await this.knex('workouts').where({ id }).delete()
+    return { success: true }
+  }
+
 }

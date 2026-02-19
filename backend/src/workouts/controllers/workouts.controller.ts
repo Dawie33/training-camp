@@ -127,6 +127,12 @@ export class WorkoutsController {
     return { success: true, message: 'Workout personnalisé supprimé' }
   }
 
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async remove(@Param('id') id: string) {
+    return await this.service.remove(id)
+  }
+
 }
 
 
