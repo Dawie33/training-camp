@@ -102,9 +102,9 @@ function SectionDisplay({ section }: { section: WorkoutSection }) {
             {section.goal && (
               <p className="text-sm lg:text-base text-slate-400">{section.goal}</p>
             )}
-            {section.rounds && section.rounds > 1 && (
+            {section.rounds && section.rounds > 1 && !section.exercises?.some(e => e.reps) && (
               <p className="text-sm lg:text-base text-slate-400">
-                {section.rounds}-{Math.max(1, section.rounds - 6)}-{Math.max(1, section.rounds - 12)} reps de chaque exercice
+                {section.rounds} rounds
               </p>
             )}
           </div>
@@ -134,12 +134,9 @@ function SectionDisplay({ section }: { section: WorkoutSection }) {
                       </div>
                     </div>
                     {/* Reps/Info - Grand affichage orange */}
-                    {(exercise.reps || section.rounds || exercise.duration || exercise.distance) && (
+                    {(exercise.reps || exercise.duration || exercise.distance) && (
                       <div className="text-xl lg:text-2xl font-bold text-orange-400 flex-shrink-0 ml-2">
-                        {section.rounds && section.rounds > 1
-                          ? `${section.rounds}-${Math.max(1, section.rounds - 6)}-${Math.max(1, section.rounds - 12)}`
-                          : exercise.reps || exercise.duration || exercise.distance
-                        }
+                        {exercise.reps || exercise.duration || exercise.distance}
                       </div>
                     )}
                   </div>
