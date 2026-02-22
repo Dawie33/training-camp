@@ -8,7 +8,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import WorkoutEditModal from '@/components/workout/WorkoutEditModal'
 import { WorkoutResultsModal } from '@/components/workout/WorkoutResultsModal'
 import { Workouts } from '@/domain/entities/workout'
-import { WorkoutBlocks, WorkoutSection, Exercise } from '@/domain/entities/workout-structure'
+import { Exercise, WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
 import { useTimerVibration } from '@/hooks/useTimerVibration'
 import { workoutsService } from '@/services'
 import { motion } from 'framer-motion'
@@ -17,28 +17,86 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 type TimerConfig =
-  | { type: 'amrap'; duration: number }
-  | { type: 'for_time'; capMin?: number }
-  | { type: 'emom'; durationMin: number; intervalMin: number }
-  | { type: 'tabata'; rounds?: number; workSeconds: number; restSeconds: number }
+  | { type: 'amrap'; duration: number; label: string }
+  | { type: 'for_time'; capMin?: number; label: string }
+  | { type: 'emom'; durationMin: number; intervalMin: number; label: string }
+  | { type: 'tabata'; rounds?: number; workSeconds: number; restSeconds: number; label: string }
 
-function detectTimerConfig(blocks: WorkoutBlocks): TimerConfig | null {
+function detectTimerConfigs(blocks: WorkoutBlocks): TimerConfig[] {
+  const configs: TimerConfig[] = []
+
   for (const section of blocks.sections) {
-    if ((section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')) && section.duration_min) {
-      return { type: 'amrap', duration: section.duration_min }
+    const formatLower = section.format?.toLowerCase() || ''
+    const sectionType = section.type
+
+    // AMRAP
+    if (sectionType === 'amrap' || formatLower.includes('amrap')) {
+      if (section.duration_min) {
+        configs.push({
+          type: 'amrap',
+          duration: section.duration_min,
+          label: section.title || `AMRAP ${section.duration_min}'`,
+        })
+      }
+      continue
     }
-    if (section.type === 'for_time' || section.format?.toLowerCase().includes('for time')) {
-      return { type: 'for_time', capMin: section.duration_min }
+
+    // EMOM
+    if (sectionType === 'emom' || formatLower.includes('emom')) {
+      const match = formatLower.match(/e(\d+)mom/)
+      const intervalMin = match ? parseInt(match[1]) : 1
+      const durationMin = section.duration_min || (section.rounds ? section.rounds * intervalMin : undefined)
+      if (durationMin) {
+        configs.push({
+          type: 'emom',
+          durationMin,
+          intervalMin,
+          label: section.title || `EMOM ${durationMin}'`,
+        })
+      }
+      continue
     }
-    if ((section.type === 'emom' || section.format?.toLowerCase().includes('emom')) && section.duration_min) {
-      const match = section.format?.toLowerCase().match(/e(\d+)mom/)
-      return { type: 'emom', durationMin: section.duration_min, intervalMin: match ? parseInt(match[1]) : 1 }
+
+    // Tabata
+    if (sectionType === 'tabata' || formatLower.includes('tabata')) {
+      configs.push({
+        type: 'tabata',
+        rounds: section.rounds,
+        workSeconds: 20,
+        restSeconds: 10,
+        label: section.title || 'Tabata',
+      })
+      continue
     }
-    if (section.type === 'tabata' || section.format?.toLowerCase().includes('tabata')) {
-      return { type: 'tabata', rounds: section.rounds, workSeconds: 20, restSeconds: 10 }
+
+    // For Time
+    if (sectionType === 'for_time' || formatLower.includes('for time')) {
+      configs.push({
+        type: 'for_time',
+        capMin: section.duration_min,
+        label: section.title || 'For Time',
+      })
+      continue
+    }
+
+    // Check format on non-timer section types (e.g. skill_work with format EMOM)
+    if (formatLower.includes('amrap') && section.duration_min) {
+      configs.push({ type: 'amrap', duration: section.duration_min, label: section.title || `AMRAP ${section.duration_min}'` })
+    } else if (formatLower.includes('emom')) {
+      const match2 = formatLower.match(/e(\d+)mom/)
+      const interval = match2 ? parseInt(match2[1]) : 1
+      const dur = section.duration_min || (section.rounds ? section.rounds * interval : undefined)
+      if (dur) {
+        configs.push({ type: 'emom', durationMin: dur, intervalMin: interval, label: section.title || `EMOM ${dur}'` })
+      }
+    } else if (formatLower.includes('tabata')) {
+      configs.push({ type: 'tabata', rounds: section.rounds, workSeconds: 20, restSeconds: 10, label: section.title || 'Tabata' })
+    } else if (formatLower.includes('for time')) {
+      configs.push({ type: 'for_time', capMin: section.duration_min, label: section.title || 'For Time' })
     }
   }
-  return null
+
+  return configs
 }
 
 const difficultyConfig: Record<string, { label: string; color: string }> = {
@@ -47,128 +105,169 @@ const difficultyConfig: Record<string, { label: string; color: string }> = {
   advanced: { label: 'Avance', color: 'text-red-500' },
 }
 
-function formatExercise(exercise: Exercise): string {
-  const parts: string[] = [exercise.name]
-
-  if (exercise.reps) parts.push(`${exercise.reps} reps`)
-  if (exercise.duration) parts.push(exercise.duration)
-  if (exercise.distance) parts.push(exercise.distance)
-  if (exercise.weight) parts.push(`(${exercise.weight})`)
-  if (exercise.per_side) parts.push('par côté')
-
-  return parts.join(' ')
+const FORMAT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  amrap: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500' },
+  emom: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500' },
+  'for time': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500' },
+  'for_time': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500' },
+  tabata: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500' },
+  warmup: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500' },
+  cooldown: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500' },
+  strength: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500' },
+  skill_work: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500' },
 }
 
+const TIMER_TAB_COLORS: Record<string, { active: string; inactive: string }> = {
+  amrap: { active: 'bg-orange-500 text-white', inactive: 'text-orange-400 hover:bg-orange-500/20' },
+  for_time: { active: 'bg-blue-500 text-white', inactive: 'text-blue-400 hover:bg-blue-500/20' },
+  emom: { active: 'bg-purple-500 text-white', inactive: 'text-purple-400 hover:bg-purple-500/20' },
+  tabata: { active: 'bg-green-500 text-white', inactive: 'text-green-400 hover:bg-green-500/20' },
+}
 
-function SectionDisplay({ section }: { section: WorkoutSection }) {
-  const isWarmup = section.type?.toLowerCase().includes('warm') || section.title?.toLowerCase().includes('échauffement')
-  const isCooldown = section.type?.toLowerCase().includes('cool') || section.title?.toLowerCase().includes('retour')
-  const isMetcon = section.type === 'amrap' || section.type === 'for_time' || section.type === 'emom' || section.format?.toLowerCase().includes('for time')
+function getSectionColors(section: WorkoutSection) {
+  const formatLower = section.format?.toLowerCase() || ''
+  const sectionType = section.type
 
+  // Try format first
+  for (const key of Object.keys(FORMAT_COLORS)) {
+    if (formatLower.includes(key)) return FORMAT_COLORS[key]
+  }
+  // Then type
+  if (FORMAT_COLORS[sectionType]) return FORMAT_COLORS[sectionType]
+
+  // Default
+  return { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-600' }
+}
+
+function getFormatLabel(section: WorkoutSection): string | null {
+  if (section.format) return section.format
+  const typeFormats: Record<string, string> = {
+    amrap: 'AMRAP',
+    emom: 'EMOM',
+    for_time: 'For Time',
+    tabata: 'Tabata',
+  }
+  return typeFormats[section.type] || null
+}
+
+function ExerciseDisplay({ exercise, idx, colors }: { exercise: Exercise; idx: number; colors: ReturnType<typeof getSectionColors> }) {
   return (
-    <div className="space-y-4">
-      {/* Section Header */}
-      {isWarmup || isCooldown ? (
-        // Warmup/Cooldown - Bloc avec fond et bordure
-        <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-700/50">
-          <h3 className="text-base lg:text-lg font-semibold mb-2 lg:mb-3">
-            <span>{section.title || section.format}</span>
-            {section.duration_min && (
-              <span className="text-slate-400 font-normal text-sm lg:text-base">({section.duration_min} min)</span>
-            )}
-          </h3>
-          {section.exercises && section.exercises.length > 0 && (
-            <div className="space-y-1.5 lg:space-y-2">
-              {section.exercises.map((exercise, idx) => (
-                <div key={idx} className="text-slate-300 pl-3 lg:pl-4 text-sm lg:text-base">
-                  • {formatExercise(exercise)}
-                </div>
-              ))}
-            </div>
-          )}
+    <div className="flex items-start justify-between p-3 bg-slate-900/50 rounded-lg lg:rounded-xl hover:bg-slate-900/70 transition-colors">
+      <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+        {/* Number badge */}
+        <div className={`w-6 h-6 lg:w-10 lg:h-10 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} font-bold text-sm lg:text-base flex-shrink-0 mt-0.5`}>
+          {idx + 1}
         </div>
-      ) : isMetcon ? (
-        // Metcon/Main workout style avec cartes d'exercices
-        <div className="space-y-3 lg:space-y-4">
-          <div className="space-y-1 lg:space-y-2">
-            <h3 className="text-xl lg:text-2xl font-bold">
-              <span>{section.format || section.title}</span>
-              {section.duration_min && (
-                <span className="text-sm lg:text-base font-normal text-slate-400">
-                  {' '}- Cap {section.duration_min} min
-                </span>
-              )}
-            </h3>
-            {section.goal && (
-              <p className="text-sm lg:text-base text-slate-400">{section.goal}</p>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold ">{exercise.name}</div>
+
+          {/* Tags: duration, distance, per_side */}
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {exercise.duration && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">{exercise.duration}</span>
             )}
-            {section.rounds && section.rounds > 1 && !section.exercises?.some(e => e.reps) && (
-              <p className="text-sm lg:text-base text-slate-400">
-                {section.rounds} rounds
-              </p>
+            {exercise.distance && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">{exercise.distance}</span>
+            )}
+            {exercise.per_side && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">par côté</span>
+            )}
+            {exercise.tempo && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">Tempo: {exercise.tempo}</span>
             )}
           </div>
 
-          {/* Exercise Cards */}
-          {section.exercises && section.exercises.length > 0 && (
-            <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-700/50">
-              <div className="space-y-3 lg:space-y-4">
-                {section.exercises.map((exercise, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3 lg:p-4 bg-slate-900/50 rounded-lg lg:rounded-xl hover:bg-slate-900/70 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
-                      {/* Number badge */}
-                      <div className="w-8 h-8 lg:w-10 lg:h-10 bg-orange-500/20 rounded-lg flex items-center justify-center text-orange-400 font-bold text-sm lg:text-base flex-shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-base lg:text-lg truncate">{exercise.name}</div>
-                        {exercise.weight && (
-                          <div className="text-xs lg:text-sm text-slate-400">{exercise.weight}</div>
-                        )}
-                        {exercise.details && (
-                          <div className="text-xs text-slate-500 mt-0.5 lg:mt-1 line-clamp-1">{exercise.details}</div>
-                        )}
-                      </div>
-                    </div>
-                    {/* Reps/Info - Grand affichage orange */}
-                    {(exercise.reps || exercise.duration || exercise.distance) && (
-                      <div className="text-xl lg:text-2xl font-bold text-orange-400 flex-shrink-0 ml-2">
-                        {exercise.reps || exercise.duration || exercise.distance}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+          {exercise.weight && (
+            <div className="text-xs lg:text-sm text-slate-400 mt-0.5">{exercise.weight}</div>
           )}
 
-          {section.description && (
-            <p className="text-xs lg:text-sm text-slate-400 italic">{section.description}</p>
+          {/* Extra fields: intensity, pace, effort */}
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+            {exercise.intensity && (
+              <span className="text-xs text-slate-500">Intensité: {exercise.intensity}</span>
+            )}
+            {exercise.pace && (
+              <span className="text-xs text-slate-500">Pace: {exercise.pace}</span>
+            )}
+            {exercise.effort && (
+              <span className="text-xs text-slate-500">Effort: {exercise.effort}</span>
+            )}
+          </div>
+
+          {exercise.details && (
+            <div className="text-xs text-slate-500 mt-1">{exercise.details}</div>
           )}
         </div>
-      ) : (
-        // Autres sections (strength, etc.)
-        <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-700/50">
-          <h3 className="text-lg lg:text-xl font-semibold mb-2 lg:mb-3">
-            <span>{section.title || section.format}</span>
-          </h3>
+      </div>
+      {/* Reps/Info */}
+      {(exercise.reps || (!exercise.duration && !exercise.distance)) && exercise.reps && (
+        <div className={``}>
+          {exercise.reps} reps
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SectionDisplay({ section }: { section: WorkoutSection }) {
+  const colors = getSectionColors(section)
+  const formatLabel = getFormatLabel(section)
+
+  return (
+    <div className="space-y-4">
+      <div className={` rounded-xl lg:rounded-2xl overflow-hidden`}>
+        <div className="bg-slate-800/50 p-4 lg:p-6 border border-slate-700/50 border-l-0 rounded-r-xl lg:rounded-r-2xl">
+          {/* Section Header */}
+          <div className="flex items-center gap-2 lg:gap-3 mb-3">
+            <h3 className="text-lg lg:text-xl font-semibold">
+              {section.title || section.format || section.type}
+            </h3>
+            {formatLabel && (
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                {formatLabel}
+              </span>
+            )}
+            {section.duration_min && (
+              <span className="text-slate-400 text-sm">{section.duration_min} min</span>
+            )}
+          </div>
+
+          {/* Section metadata */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {section.rounds && section.rounds > 1 && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
+                {section.rounds} rounds
+              </span>
+            )}
+            {section.rest_between_rounds && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
+                Rest: {section.rest_between_rounds}s entre rounds
+              </span>
+            )}
+            {section.focus && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
+                Focus: {section.focus}
+              </span>
+            )}
+          </div>
+
+          {section.goal && (
+            <p className="text-sm text-slate-400 mb-3">{section.goal}</p>
+          )}
+          {section.description && (
+            <p className="text-sm text-slate-400 italic mb-3">{section.description}</p>
+          )}
+
+          {/* Exercises */}
           {section.exercises && section.exercises.length > 0 && (
-            <div className="space-y-1.5 lg:space-y-2">
+            <div className="space-y-3 lg:space-y-4">
               {section.exercises.map((exercise, idx) => (
-                <div key={idx} className="text-slate-300 pl-3 lg:pl-4 text-sm lg:text-base">
-                  • {formatExercise(exercise)}
-                </div>
+                <ExerciseDisplay key={idx} exercise={exercise} idx={idx} colors={colors} />
               ))}
             </div>
           )}
-          {section.description && (
-            <p className="text-xs lg:text-sm text-slate-400 italic mt-2">{section.description}</p>
-          )}
         </div>
-      )}
+      </div>
 
       {/* Nested sections */}
       {section.sections?.map((sub, idx) => (
@@ -192,9 +291,9 @@ function WorkoutDetailContent() {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [timerElapsed, setTimerElapsed] = useState('0:00')
   const [amrapRounds, setAmrapRounds] = useState(0)
+  const [activeTimerIndex, setActiveTimerIndex] = useState(0)
   const vibration = useTimerVibration()
 
-  // Détecter si le timer a démarré
   const isTimerStarted = timerElapsed !== '0:00'
 
   const handleFinishWorkout = () => {
@@ -261,7 +360,8 @@ function WorkoutDetailContent() {
     )
   }
 
-  const timerConfig = detectTimerConfig(workout.blocks)
+  const timerConfigs = detectTimerConfigs(workout.blocks)
+  const activeConfig = timerConfigs[activeTimerIndex] || null
   const diff = workout.difficulty ? difficultyConfig[workout.difficulty] : null
 
   return (
@@ -306,9 +406,8 @@ function WorkoutDetailContent() {
               {/* Sound toggle */}
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
-                className={`p-1.5 lg:p-2 rounded-lg transition-colors ${
-                  soundEnabled ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-800 text-slate-400'
-                }`}
+                className={`p-1.5 lg:p-2 rounded-lg transition-colors ${soundEnabled ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-800 text-slate-400'
+                  }`}
                 title={soundEnabled ? 'Désactiver le son' : 'Activer le son'}
               >
                 <span className="text-xs lg:text-sm font-semibold">{soundEnabled ? 'ON' : 'OFF'}</span>
@@ -335,21 +434,19 @@ function WorkoutDetailContent() {
             <div className="flex gap-2 mt-4 lg:mt-6">
               <button
                 onClick={() => setWorkoutVersion('RX')}
-                className={`flex-1 py-2.5 lg:py-3 px-4 lg:px-6 rounded-xl text-sm lg:text-base font-semibold transition-all ${
-                  workoutVersion === 'RX'
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
-                }`}
+                className={`flex-1 py-2.5 lg:py-3 px-4 lg:px-6 rounded-xl text-sm lg:text-base font-semibold transition-all ${workoutVersion === 'RX'
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                  : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
+                  }`}
               >
                 RX
               </button>
               <button
                 onClick={() => setWorkoutVersion('SCALED')}
-                className={`flex-1 py-2.5 lg:py-3 px-4 lg:px-6 rounded-xl text-sm lg:text-base font-semibold transition-all ${
-                  workoutVersion === 'SCALED'
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
-                }`}
+                className={`flex-1 py-2.5 lg:py-3 px-4 lg:px-6 rounded-xl text-sm lg:text-base font-semibold transition-all ${workoutVersion === 'SCALED'
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                  : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
+                  }`}
               >
                 SCALED
               </button>
@@ -398,15 +495,38 @@ function WorkoutDetailContent() {
       </div>
 
       {/* RIGHT PANEL - Timer */}
-      {timerConfig && (
-        <div className="w-full lg:w-[450px] bg-slate-950/50 border-t lg:border-t-0 lg:border-l border-slate-700/50 flex flex-col items-center justify-center p-4 lg:p-8 backdrop-blur-sm order-1 lg:order-2 flex-shrink-0">
+      {timerConfigs.length > 0 && (
+        <div className="w-full lg:w-[450px] bg-slate-950/50 border-t lg:border-t-0 lg:border-l border-slate-700/50 flex flex-col items-center p-4 lg:p-8 backdrop-blur-sm order-1 lg:order-2 flex-shrink-0">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="text-center space-y-8 w-full"
+            className="text-center space-y-6 w-full flex flex-col flex-1"
           >
-            {renderTimer(timerConfig)}
+            {/* Timer tabs */}
+            {timerConfigs.length > 1 && (
+              <div className="flex gap-1 bg-slate-800/50 rounded-xl p-1">
+                {timerConfigs.map((config, idx) => {
+                  const tabColors = TIMER_TAB_COLORS[config.type] || TIMER_TAB_COLORS.for_time
+                  const isActive = idx === activeTimerIndex
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveTimerIndex(idx)}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all ${isActive ? tabColors.active : tabColors.inactive
+                        }`}
+                    >
+                      {config.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Active timer */}
+            <div className="flex-1 flex items-center justify-center">
+              {activeConfig && renderTimer(activeConfig)}
+            </div>
 
             {/* Finish Workout Button */}
             {isTimerStarted && (
@@ -443,7 +563,7 @@ function WorkoutDetailContent() {
           workoutId={workout.id}
           workoutName={workout.name}
           timeElapsed={timerElapsed}
-          rounds={timerConfig?.type === 'amrap' ? amrapRounds : undefined}
+          rounds={activeConfig?.type === 'amrap' ? amrapRounds : undefined}
           version={workoutVersion}
         />
       )}
