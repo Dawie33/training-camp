@@ -155,7 +155,7 @@ function ExerciseDisplay({ exercise, idx, colors }: { exercise: Exercise; idx: n
     <div className="flex items-start justify-between p-3 bg-slate-900/50 rounded-lg lg:rounded-xl hover:bg-slate-900/70 transition-colors">
       <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
         {/* Number badge */}
-        <div className={`w-6 h-6 lg:w-10 lg:h-10 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} font-bold text-sm lg:text-base flex-shrink-0 mt-0.5`}>
+        <div className={`w-6 h-8 lg:w-10 lg:h-10 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} font-bold text-sm lg:text-base flex-shrink-0 mt-0.5`}>
           {idx + 1}
         </div>
         <div className="flex-1 min-w-0">

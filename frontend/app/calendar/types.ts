@@ -1,26 +1,4 @@
 /**
  * Types pour la page Calendar
+ * Note: DayWorkout pour le dashboard est dans app/dashboard/components/types.ts
  */
-
-export type ViewMode = 'day' | 'week' | 'month'
-
-export interface DayWorkout {
-  id: string
-  scheduleId: string
-  name: string
-  type: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
-  intensity?: string
-  duration?: number
-  difficulty?: string
-  workout_type?: string
-}
-
-export interface CalendarDay {
-  date: Date
-  dayName: string
-  dayNumber: number
-  isToday: boolean
-  isCurrentMonth?: boolean
-  workouts: DayWorkout[]
-}
-
