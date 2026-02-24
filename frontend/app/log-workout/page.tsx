@@ -14,6 +14,7 @@ function getAllExercises(workout: Workouts): Exercise[] {
   const exercises: Exercise[] = []
   const collectExercises = (sections: Workouts['blocks']['sections']) => {
     for (const section of sections) {
+      if (section.type === 'warmup' || section.type === 'cooldown') continue
       if (section.exercises) {
         exercises.push(...section.exercises)
       }
@@ -36,17 +37,16 @@ function LogWorkoutContent() {
   const [personalizedWorkouts, setPersonalizedWorkouts] = useState<PersonalizedWorkout[]>([])
   const [loadingWorkouts, setLoadingWorkouts] = useState(true)
   const [search, setSearch] = useState('')
-  const [selectedWorkout, setSelectedWorkout] = useState<Workouts | null>(null)
+  const [selectedWorkout, setSelectedWorkout] = useState<(Workouts & { personalized_id?: string }) | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
 
   // Exercise weights
-  const [weightsUsed, setWeightsUsed] = useState<Record<string, string>>({})
+  const [exerciseNotes, setWeightsUsed] = useState<Record<string, string>>({})
 
   // Results
   const [timeMinutes, setTimeMinutes] = useState('')
   const [timeSeconds, setTimeSeconds] = useState('')
   const [rounds, setRounds] = useState('')
-  const [version, setVersion] = useState<'RX' | 'SCALED'>('RX')
   const [rating, setRating] = useState<number>(0)
   const [notes, setNotes] = useState('')
   const [wodDate, setWodDate] = useState(() => {
@@ -78,21 +78,18 @@ function LogWorkoutContent() {
     fetchWorkouts()
   }, [])
 
-  // Combined workout list for search
+  // Combined workout list for search, with personalized_workout_id tracked
   const allWorkoutsList = useMemo(() => {
-    const fromPersonalized = personalizedWorkouts.map(pw => pw.plan_json)
-    return [...workouts, ...fromPersonalized]
+    const regular = workouts.map(w => ({ ...w, personalized_id: undefined as string | undefined }))
+    const fromPersonalized = personalizedWorkouts.map(pw => ({
+      ...pw.plan_json,
+      personalized_id: pw.id,
+      created_at: pw.created_at
+    }))
+    const result = [...regular, ...fromPersonalized]
+    result.sort((a, b) => b.created_at.localeCompare(a.created_at))
+    return result
   }, [workouts, personalizedWorkouts])
-
-  const filteredWorkouts = useMemo(() => {
-    if (!search.trim()) return allWorkoutsList.slice(0, 20)
-    const q = search.toLowerCase()
-    return allWorkoutsList.filter(w =>
-      w.name?.toLowerCase().includes(q) ||
-      w.workout_type?.toLowerCase().includes(q) ||
-      w.tags?.some(t => t.toLowerCase().includes(q))
-    ).slice(0, 20)
-  }, [allWorkoutsList, search])
 
   // Exercises from selected workout
   const exercises = useMemo(() => {
@@ -115,15 +112,11 @@ function LogWorkoutContent() {
     setWeightsUsed({})
   }, [])
 
-  const handleWeightChange = useCallback((exerciseName: string, value: string) => {
+  const handleExerciseNoteChange = useCallback((exerciseName: string, value: string) => {
     setWeightsUsed(prev => ({ ...prev, [exerciseName]: value }))
   }, [])
 
   const handleSave = async () => {
-    if (!selectedWorkout) {
-      toast.error('Sélectionne un workout')
-      return
-    }
 
     const totalSeconds = (parseInt(timeMinutes || '0') * 60) + parseInt(timeSeconds || '0')
     if (totalSeconds === 0 && !rounds) {
@@ -137,17 +130,22 @@ function LogWorkoutContent() {
       const completedAt = new Date(wodDate)
       const startedAt = new Date(completedAt.getTime() - totalSeconds * 1000)
 
-      // Create session
-      const session = await sessionService.startSession({
-        workout_id: selectedWorkout.id,
+      // Create session - use personalized_workout_id if applicable
+      const sessionData: { workout_id?: string; personalized_workout_id?: string; started_at: string } = {
         started_at: startedAt.toISOString()
-      })
+      }
+      if (selectedWorkout?.personalized_id) {
+        sessionData.personalized_workout_id = selectedWorkout.personalized_id
+      } else {
+        sessionData.workout_id = selectedWorkout?.id
+      }
+      const session = await sessionService.startSession(sessionData)
 
-      // Clean weights (remove empty values)
-      const cleanWeights: Record<string, string> = {}
-      for (const [name, weight] of Object.entries(weightsUsed)) {
-        if (weight.trim()) {
-          cleanWeights[name] = weight.trim()
+      // Clean exercise notes (remove empty values)
+      const cleanNotes: Record<string, string> = {}
+      for (const [name, note] of Object.entries(exerciseNotes)) {
+        if (note.trim()) {
+          cleanNotes[name] = note.trim()
         }
       }
 
@@ -158,9 +156,8 @@ function LogWorkoutContent() {
         results: {
           elapsed_time_seconds: totalSeconds,
           rounds: rounds ? parseInt(rounds) : undefined,
-          version,
           rating: rating > 0 ? rating : undefined,
-          weights_used: Object.keys(cleanWeights).length > 0 ? cleanWeights : undefined,
+          exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
         }
       })
 
@@ -173,6 +170,7 @@ function LogWorkoutContent() {
       setIsSaving(false)
     }
   }
+
 
   return (
     <motion.div
@@ -199,7 +197,17 @@ function LogWorkoutContent() {
 
         {/* Workout Selection */}
         <div className="relative z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4 overflow-visible">
-          <h2 className="text-lg font-semibold text-white">Quel WOD as-tu fait ?</h2>
+          <div className='flex justify-between items-center'>
+
+            <h2 className="text-lg font-semibold text-white">Quel WOD as-tu fait ?</h2>
+            <Link href={'/workouts/new'} >
+              <button
+                onClick={handleSave}
+                className="p-3.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >Ajouter un wod</button>
+            </Link>
+
+          </div>
 
           <div className="relative">
             <input
@@ -221,16 +229,21 @@ function LogWorkoutContent() {
               <div className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto bg-slate-800 border border-slate-700/50 rounded-xl shadow-2xl">
                 {loadingWorkouts ? (
                   <div className="p-4 text-center text-slate-400">Chargement...</div>
-                ) : filteredWorkouts.length === 0 ? (
+                ) : allWorkoutsList.length === 0 ? (
                   <div className="p-4 text-center text-slate-400">Aucun workout trouvé</div>
                 ) : (
-                  filteredWorkouts.map((w, idx) => (
+                  allWorkoutsList.map((w, idx) => (
                     <button
-                      key={`${w.id}-${idx}`}
+                      key={`${w.personalized_id || w.id}-${idx}`}
                       className="w-full text-left px-4 py-3 hover:bg-slate-700/50 transition-colors border-b border-slate-700/30 last:border-0"
                       onClick={() => handleSelectWorkout(w)}
                     >
-                      <div className="font-medium text-white">{w.name}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white">{w.name}</span>
+                        {w.personalized_id && (
+                          <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 text-[10px] font-semibold rounded">Perso</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         {w.workout_type && (
                           <span className="text-xs text-orange-400">{w.workout_type.replace(/_/g, ' ')}</span>
@@ -250,7 +263,12 @@ function LogWorkoutContent() {
             <div className="flex items-center gap-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
               <div className="w-1.5 h-8 bg-orange-500 rounded-full" />
               <div className="flex-1">
-                <p className="font-semibold text-white">{selectedWorkout.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-white">{selectedWorkout.name}</p>
+                  {selectedWorkout.personalized_id && (
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 text-[10px] font-semibold rounded">Perso</span>
+                  )}
+                </div>
                 <div className="flex gap-2 mt-0.5">
                   {selectedWorkout.workout_type && (
                     <span className="text-xs text-orange-400">{selectedWorkout.workout_type.replace(/_/g, ' ')}</span>
@@ -274,34 +292,55 @@ function LogWorkoutContent() {
           )}
         </div>
 
-        {/* Exercise Weights */}
-        {selectedWorkout && exercises.length > 0 && (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
-            <h2 className="text-lg font-semibold text-white">Poids utilisés</h2>
-            <div className="space-y-3">
-              {exercises.map((exercise, idx) => (
-                <div key={`${exercise.name}-${idx}`} className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center text-orange-400 font-bold text-sm flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{exercise.name}</p>
-                    {exercise.reps && (
-                      <p className="text-xs text-slate-500">{exercise.reps} reps</p>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    value={weightsUsed[exercise.name] || ''}
-                    onChange={(e) => handleWeightChange(exercise.name, e.target.value)}
-                    placeholder={exercise.weight || 'ex: 60kg'}
-                    className="w-28 px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-all text-right"
-                  />
-                </div>
-              ))}
+        {/* Exercise Details */}
+        {
+          selectedWorkout && exercises.length > 0 && (
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Details des exercices</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Poids, distance, scaling, variante...</p>
+              </div>
+              <div className="space-y-3">
+                {exercises.map((exercise, idx) => {
+                  const hints: string[] = []
+                  if (exercise.weight) hints.push(exercise.weight)
+                  if (exercise.distance) hints.push(exercise.distance)
+                  if (exercise.details) {
+                    const scaledMatch = exercise.details.match(/Scaled:\s*([^|]+)/i)
+                    if (scaledMatch) hints.push(`Scaled: ${scaledMatch[1].trim()}`)
+                  }
+                  const placeholder = hints.length > 0 ? hints.join(' / ') : 'ex: 60kg, Scaled, 500m...'
+
+                  return (
+                    <div key={`${exercise.name}-${idx}`} className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center text-orange-400 font-bold text-sm flex-shrink-0 mt-0.5">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{exercise.name}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-0.5">
+                          {exercise.reps && (
+                            <span className="text-xs text-slate-500">{exercise.reps} reps</span>
+                          )}
+                          {exercise.duration && (
+                            <span className="text-xs text-slate-500">{exercise.duration}</span>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={exerciseNotes[exercise.name] || ''}
+                          onChange={(e) => handleExerciseNoteChange(exercise.name, e.target.value)}
+                          placeholder={placeholder}
+                          className="w-full mt-1.5 px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-all"
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         {/* Results */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-5">
@@ -319,31 +358,34 @@ function LogWorkoutContent() {
           </div>
 
           {/* Time */}
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Temps réalisé</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={timeMinutes}
-                onChange={(e) => setTimeMinutes(e.target.value)}
-                placeholder="00"
-                min="0"
-                max="999"
-                className="w-24 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
-              />
-              <span className="text-2xl font-bold text-slate-500">:</span>
-              <input
-                type="number"
-                value={timeSeconds}
-                onChange={(e) => setTimeSeconds(e.target.value)}
-                placeholder="00"
-                min="0"
-                max="59"
-                className="w-24 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
-              />
-              <span className="text-sm text-slate-500 ml-2">min : sec</span>
+          {!isAmrap && (
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">Temps réalisé</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={timeMinutes}
+                  onChange={(e) => setTimeMinutes(e.target.value)}
+                  placeholder="00"
+                  min="0"
+                  max="999"
+                  className="w-24 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
+                />
+                <span className="text-2xl font-bold text-slate-500">:</span>
+                <input
+                  type="number"
+                  value={timeSeconds}
+                  onChange={(e) => setTimeSeconds(e.target.value)}
+                  placeholder="00"
+                  min="0"
+                  max="59"
+                  className="w-24 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
+                />
+                <span className="text-sm text-slate-500 ml-2">min : sec</span>
+              </div>
             </div>
-          </div>
+          )}
+
 
           {/* Rounds (if AMRAP) */}
           {isAmrap && (
@@ -360,33 +402,6 @@ function LogWorkoutContent() {
             </div>
           )}
 
-          {/* Version RX/SCALED */}
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Version</label>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setVersion('RX')}
-                className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
-                  version === 'RX'
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800 border border-slate-700/50'
-                }`}
-              >
-                RX
-              </button>
-              <button
-                onClick={() => setVersion('SCALED')}
-                className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
-                  version === 'SCALED'
-                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800 border border-slate-700/50'
-                }`}
-              >
-                SCALED
-              </button>
-            </div>
-          </div>
-
           {/* Rating */}
           <div>
             <label className="block text-sm text-slate-400 mb-2">Comment tu t'es senti ?</label>
@@ -395,11 +410,10 @@ function LogWorkoutContent() {
                 <button
                   key={star}
                   onClick={() => setRating(star === rating ? 0 : star)}
-                  className={`text-3xl transition-all ${
-                    star <= rating
-                      ? 'text-yellow-500 scale-110'
-                      : 'text-slate-600 hover:text-yellow-400 hover:scale-105'
-                  }`}
+                  className={`text-3xl transition-all ${star <= rating
+                    ? 'text-yellow-500 scale-110'
+                    : 'text-slate-600 hover:text-yellow-400 hover:scale-105'
+                    }`}
                 >
                   ★
                 </button>
@@ -436,8 +450,8 @@ function LogWorkoutContent() {
             {isSaving ? 'Enregistrement...' : 'Enregistrer le WOD'}
           </button>
         </div>
-      </div>
-    </motion.div>
+      </div >
+    </motion.div >
   )
 }
 

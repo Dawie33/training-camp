@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "WebFetch(domain:schedule-x.dev)"
+      "WebFetch(domain:schedule-x.dev)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

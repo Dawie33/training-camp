@@ -65,12 +65,20 @@ export class WorkoutSessionsService {
     * @returns La session créée
     */
     async create(userId: string, data: CreateWorkoutSessionDto): Promise<WorkoutSession> {
+        const insertData: Record<string, unknown> = {
+            user_id: userId,
+            started_at: data.started_at || new Date().toISOString(),
+        }
+
+        if (data.workout_id) {
+            insertData.workout_id = data.workout_id
+        }
+        if (data.personalized_workout_id) {
+            insertData.personalized_workout_id = data.personalized_workout_id
+        }
+
         const [session] = await this.knex('workout_sessions')
-            .insert({
-                workout_id: data.workout_id,
-                user_id: userId,
-                started_at: data.started_at || new Date().toISOString(),
-            })
+            .insert(insertData)
             .returning('*')
 
         return session

@@ -103,7 +103,8 @@ export interface Workouts {
 }
 
 export interface WorkoutSessionCreate {
-    workout_id: string
+    workout_id?: string
+    personalized_workout_id?: string
     started_at?: string
 }
 
@@ -131,7 +132,8 @@ export interface WorkoutSessionUpdate {
 
 export interface WorkoutSession {
     id: string
-    workout_id: string
+    workout_id?: string
+    personalized_workout_id?: string
     user_id: string
     started_at: string
     completed_at?: string | null

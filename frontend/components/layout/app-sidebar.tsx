@@ -14,6 +14,7 @@ import { motion } from 'framer-motion'
 import {
   Calendar,
   Dumbbell,
+  Flame,
   Home,
   PenLine,
   Settings,
@@ -55,6 +56,7 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
     { href: '/workouts', label: 'Workouts', icon: <Dumbbell className="w-5 h-5" /> },
     { href: '/personalized-workout', label: 'Mes Workouts', icon: <Dumbbell className="w-5 h-5" /> },
     { href: '/log-workout', label: 'Log WOD', icon: <PenLine className="w-5 h-5" /> },
+    { href: '/skills', label: 'Progressions', icon: <Flame className="w-5 h-5" /> },
   ]
 
   return (

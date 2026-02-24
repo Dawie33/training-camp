@@ -5,10 +5,11 @@ import { EMOMTimer } from '@/app/timer/timers/EMOMTimer'
 import { ForTimeTimer } from '@/app/timer/timers/ForTimeTimer'
 import { TabataTimer } from '@/app/timer/timers/TabataTimer'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { RichSectionDisplay } from '@/components/workout/display/RichSectionDisplay'
 import WorkoutEditModal from '@/components/workout/WorkoutEditModal'
 import { WorkoutResultsModal } from '@/components/workout/WorkoutResultsModal'
 import { Workouts } from '@/domain/entities/workout'
-import { Exercise, WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
+import { WorkoutBlocks } from '@/domain/entities/workout-structure'
 import { useTimerVibration } from '@/hooks/useTimerVibration'
 import { workoutsService } from '@/services'
 import { motion } from 'framer-motion'
@@ -105,178 +106,11 @@ const difficultyConfig: Record<string, { label: string; color: string }> = {
   advanced: { label: 'Avance', color: 'text-red-500' },
 }
 
-const FORMAT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  amrap: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500' },
-  emom: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500' },
-  'for time': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500' },
-  'for_time': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500' },
-  tabata: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500' },
-  warmup: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500' },
-  cooldown: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500' },
-  strength: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500' },
-  skill_work: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500' },
-}
-
 const TIMER_TAB_COLORS: Record<string, { active: string; inactive: string }> = {
   amrap: { active: 'bg-orange-500 text-white', inactive: 'text-orange-400 hover:bg-orange-500/20' },
   for_time: { active: 'bg-blue-500 text-white', inactive: 'text-blue-400 hover:bg-blue-500/20' },
   emom: { active: 'bg-purple-500 text-white', inactive: 'text-purple-400 hover:bg-purple-500/20' },
   tabata: { active: 'bg-green-500 text-white', inactive: 'text-green-400 hover:bg-green-500/20' },
-}
-
-function getSectionColors(section: WorkoutSection) {
-  const formatLower = section.format?.toLowerCase() || ''
-  const sectionType = section.type
-
-  // Try format first
-  for (const key of Object.keys(FORMAT_COLORS)) {
-    if (formatLower.includes(key)) return FORMAT_COLORS[key]
-  }
-  // Then type
-  if (FORMAT_COLORS[sectionType]) return FORMAT_COLORS[sectionType]
-
-  // Default
-  return { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-600' }
-}
-
-function getFormatLabel(section: WorkoutSection): string | null {
-  if (section.format) return section.format
-  const typeFormats: Record<string, string> = {
-    amrap: 'AMRAP',
-    emom: 'EMOM',
-    for_time: 'For Time',
-    tabata: 'Tabata',
-  }
-  return typeFormats[section.type] || null
-}
-
-function ExerciseDisplay({ exercise, idx, colors }: { exercise: Exercise; idx: number; colors: ReturnType<typeof getSectionColors> }) {
-  return (
-    <div className="flex items-start justify-between p-3 bg-slate-900/50 rounded-lg lg:rounded-xl hover:bg-slate-900/70 transition-colors">
-      <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
-        {/* Number badge */}
-        <div className={`w-6 h-8 lg:w-10 lg:h-10 ${colors.bg} rounded-lg flex items-center justify-center ${colors.text} font-bold text-sm lg:text-base flex-shrink-0 mt-0.5`}>
-          {idx + 1}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold ">{exercise.name}</div>
-
-          {/* Tags: duration, distance, per_side */}
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {exercise.duration && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">{exercise.duration}</span>
-            )}
-            {exercise.distance && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">{exercise.distance}</span>
-            )}
-            {exercise.per_side && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">par côté</span>
-            )}
-            {exercise.tempo && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">Tempo: {exercise.tempo}</span>
-            )}
-          </div>
-
-          {exercise.weight && (
-            <div className="text-xs lg:text-sm text-slate-400 mt-0.5">{exercise.weight}</div>
-          )}
-
-          {/* Extra fields: intensity, pace, effort */}
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
-            {exercise.intensity && (
-              <span className="text-xs text-slate-500">Intensité: {exercise.intensity}</span>
-            )}
-            {exercise.pace && (
-              <span className="text-xs text-slate-500">Pace: {exercise.pace}</span>
-            )}
-            {exercise.effort && (
-              <span className="text-xs text-slate-500">Effort: {exercise.effort}</span>
-            )}
-          </div>
-
-          {exercise.details && (
-            <div className="text-xs text-slate-500 mt-1">{exercise.details}</div>
-          )}
-        </div>
-      </div>
-      {/* Reps/Info */}
-      {(exercise.reps || (!exercise.duration && !exercise.distance)) && exercise.reps && (
-        <div className={``}>
-          {exercise.reps} reps
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SectionDisplay({ section }: { section: WorkoutSection }) {
-  const colors = getSectionColors(section)
-  const formatLabel = getFormatLabel(section)
-
-  return (
-    <div className="space-y-4">
-      <div className={` rounded-xl lg:rounded-2xl overflow-hidden`}>
-        <div className="bg-slate-800/50 p-4 lg:p-6 border border-slate-700/50 border-l-0 rounded-r-xl lg:rounded-r-2xl">
-          {/* Section Header */}
-          <div className="flex items-center gap-2 lg:gap-3 mb-3">
-            <h3 className="text-lg lg:text-xl font-semibold">
-              {section.title || section.format || section.type}
-            </h3>
-            {formatLabel && (
-              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${colors.bg} ${colors.text}`}>
-                {formatLabel}
-              </span>
-            )}
-            {section.duration_min && (
-              <span className="text-slate-400 text-sm">{section.duration_min} min</span>
-            )}
-          </div>
-
-          {/* Section metadata */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {section.rounds && section.rounds > 1 && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
-                {section.rounds} rounds
-              </span>
-            )}
-            {section.rest_between_rounds && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
-                Rest: {section.rest_between_rounds}s entre rounds
-              </span>
-            )}
-            {section.focus && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
-                Focus: {section.focus}
-              </span>
-            )}
-          </div>
-
-          {section.goal && (
-            <p className="text-sm text-slate-400 mb-3">{section.goal}</p>
-          )}
-          {section.description && (
-            <p className="text-sm text-slate-400 italic mb-3">{section.description}</p>
-          )}
-
-          {/* Exercises */}
-          {section.exercises && section.exercises.length > 0 && (
-            <div className="space-y-3 lg:space-y-4">
-              {section.exercises.map((exercise, idx) => (
-                <ExerciseDisplay key={idx} exercise={exercise} idx={idx} colors={colors} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Nested sections */}
-      {section.sections?.map((sub, idx) => (
-        <div key={idx} className="ml-0 mt-4">
-          <SectionDisplay section={sub} />
-        </div>
-      ))}
-    </div>
-  )
 }
 
 function WorkoutDetailContent() {
@@ -479,7 +313,7 @@ function WorkoutDetailContent() {
             {/* All sections */}
             {workout.blocks.sections.map((section, idx) => (
               <div key={idx}>
-                <SectionDisplay section={section} />
+                <RichSectionDisplay section={section} />
               </div>
             ))}
 

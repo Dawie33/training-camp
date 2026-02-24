@@ -18,6 +18,7 @@ export class CreateWorkoutDto {
   @IsOptional()
   workout_type?: string
 
+
   @IsOptional()
   blocks?: Record<string, unknown>
 
@@ -124,6 +125,7 @@ export class UpdateWorkoutDto {
   @IsString()
   @IsOptional()
   workout_type?: string
+
 
   @IsInt()
   @IsOptional()
@@ -264,6 +266,10 @@ export class WorkoutDto {
   @IsString()
   @IsOptional()
   workout_type: string
+
+  @IsString()
+  @IsOptional()
+  wod_format: string
 
   @IsOptional()
   blocks: Record<string, unknown>

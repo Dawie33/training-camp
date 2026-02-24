@@ -9,6 +9,7 @@ import { ExercisesModule } from './exercises/exercises.module'
 import { HealthcheckModule } from './healthcheck/healthcheck.module'
 import { UsersModule } from './users/users.module'
 import { WorkoutsModule } from './workouts/workouts.module'
+import { SkillsModule } from './skills/skills.module'
 import { WorkoutSessionsModule } from './workout_sessions/workout_sessions.module'
 
 @Module({
@@ -24,7 +25,8 @@ import { WorkoutSessionsModule } from './workout_sessions/workout_sessions.modul
     HealthcheckModule,
     EquipmentsModule,
     ExercisesModule,
-    UsersModule
+    UsersModule,
+    SkillsModule
   ],
 })
 export class AppModule { }

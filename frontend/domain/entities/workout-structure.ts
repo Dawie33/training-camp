@@ -52,6 +52,7 @@ export interface WorkoutSection {
   type: SectionType
   title: string
   duration_min?: number
+  duration_max?: number
   description?: string
 
   // Format du bloc (AMRAP, EMOM, For Time, etc.)
@@ -90,6 +91,7 @@ export interface WorkoutBlocks {
   sections: WorkoutSection[]
   stimulus?: string
   duration_min?: number
+  duration_max?: number
   estimated_calories?: string
 }
 
@@ -98,10 +100,9 @@ export interface WorkoutBlocks {
  */
 export const WORKOUT_TYPES = {
   crossfit: [
-    { value: 'technique_metcon', label: 'Technique + MetCon' },
+    { value: 'technique_metcon', label: 'MetCon' },
     { value: 'strength_max', label: 'Force Max (RM)' },
-    { value: 'conditioning', label: 'Conditioning / MetCon' },
-    { value: 'strength_accessory', label: 'Force + Accessoires' },
+    { value: 'conditioning', label: 'Conditioning' },
     { value: 'benchmark', label: 'Benchmark (Fran, Murph, etc.)' },
     { value: 'mixed', label: 'Mixte / Varié' },
   ]

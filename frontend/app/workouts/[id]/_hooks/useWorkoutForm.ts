@@ -173,7 +173,23 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
         isPublic: true,
         scheduled_date: formData.scheduled_date || undefined,
         tags: parseJsonOrArray(formData.tags),
-        blocks: formData.blocks ? JSON.parse(formData.blocks) : undefined,
+        blocks: (() => {
+          if (!formData.blocks) return undefined
+          const parsed = JSON.parse(formData.blocks)
+          // Inject wod_format into main sections that don't have a format yet
+          if (formData.wod_format && parsed.sections) {
+            const formatLabels: Record<string, string> = {
+              for_time: 'For Time', amrap: 'AMRAP', emom: 'EMOM', tabata: 'Tabata',
+              circuit: 'Circuit', intervals: 'Intervals', strength: 'Strength',
+            }
+            for (const section of parsed.sections) {
+              if (!section.format && section.type !== 'warmup' && section.type !== 'cooldown') {
+                section.format = formatLabels[formData.wod_format] || formData.wod_format
+              }
+            }
+          }
+          return parsed
+        })(),
         image_url: formData.image_url || undefined,
       }
 

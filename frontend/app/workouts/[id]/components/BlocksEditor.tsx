@@ -1,7 +1,7 @@
 'use client'
 
-import type { WorkoutBlocks, WorkoutSection, Exercise } from '@/domain/entities/workout-structure'
 import type { Exercise as ExerciseType } from '@/domain/entities/exercice'
+import type { Exercise, WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
 import { useState } from 'react'
 import { ExercisesSidebar } from './ExercisesSidebar'
 
@@ -152,6 +152,7 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
         {blocks.sections.map((section, sectionIndex) => {
           const isExpanded = expandedSections.has(sectionIndex)
           const hasTimecap = TIMECAP_TYPES.includes(section.type)
+          const hasTimeAttack = section.type === 'for_time'
 
           return (
             <div key={sectionIndex} className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
@@ -218,14 +219,30 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                       <label className="text-xs font-medium text-slate-400 block mb-1">
                         {hasTimecap ? 'TimeCap (min)' : 'Durée (min)'}
                       </label>
+
                       <input
                         type="number"
                         className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
                         value={section.duration_min || ''}
                         onChange={(e) => updateSection(sectionIndex, { duration_min: Number(e.target.value) || undefined })}
-                        placeholder={hasTimecap ? 'ex: 20' : ''}
+                        placeholder='ex: 20min'
                       />
                     </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-slate-400 block mb-1">
+                        {hasTimeAttack ? 'TimeAttack (max)' : 'Durée max)'}
+                      </label>
+
+                      <input
+                        type="number"
+                        className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                        value={section.duration_max || ''}
+                        onChange={(e) => updateSection(sectionIndex, { duration_max: Number(e.target.value) || undefined })}
+                        placeholder='ex: 20min'
+                      />
+                    </div>
+
                     <div>
                       <label className="text-xs font-medium text-slate-400 block mb-1">Rounds</label>
                       <input
@@ -261,25 +278,10 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-medium text-slate-400">Exercices</label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openExerciseLibrary(sectionIndex)}
-                          className="px-3 py-1.5 text-xs font-medium bg-white/5 border border-white/10 text-slate-300 rounded-lg hover:bg-white/10 transition-all"
-                        >
-                          📚 Bibliothèque
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => addExercise(sectionIndex)}
-                          className="px-3 py-1.5 text-xs font-medium bg-orange-500/10 border border-orange-500/30 text-orange-400 rounded-lg hover:bg-orange-500/20 transition-all"
-                        >
-                          + Ajouter
-                        </button>
-                      </div>
                     </div>
 
                     {(section.exercises || []).map((exercise, exerciseIndex) => (
+
                       <div key={exerciseIndex} className="bg-slate-900/50 border border-slate-700/30 rounded-xl p-3 space-y-2">
                         <div className="flex items-start gap-2">
                           <span className="text-slate-600 mt-2 cursor-move text-sm">≡</span>
@@ -365,9 +367,26 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                             ×
                           </button>
                         </div>
-                      </div>
-                    ))}
 
+                      </div>
+
+                    ))}
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openExerciseLibrary(sectionIndex)}
+                        className="px-3 py-1.5 text-xs font-medium bg-white/5 border border-white/10 text-slate-300 rounded-lg hover:bg-white/10 transition-all"
+                      >
+                        📚 Bibliothèque
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addExercise(sectionIndex)}
+                        className="px-3 py-1.5 text-xs font-medium bg-orange-500/10 border border-orange-500/30 text-orange-400 rounded-lg hover:bg-orange-500/20 transition-all"
+                      >
+                        + Ajouter
+                      </button>
+                    </div>
                     {(!section.exercises || section.exercises.length === 0) && (
                       <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-700/50 rounded-xl">
                         Aucun exercice. Clique sur &quot;+ Ajouter&quot; pour commencer.

@@ -9,12 +9,41 @@ import { EQUIPMENT } from '../constants/equipment.constants'
  * Normalise le nom d'un équipement pour correspondre à la nomenclature standard
  * Exemple: "jump rope" -> "jump-rope", "dumbbells" -> "dumbbell"
  */
+const EQUIPMENT_ALIASES: Record<string, string> = {
+  'pullup-bar': 'pull-up-bar',
+  'pullups-bar': 'pull-up-bar',
+  'pull-ups-bar': 'pull-up-bar',
+  'pull-up': 'pull-up-bar',
+  'jumprope': 'jump-rope',
+  'skierg': 'ski-erg',
+  'assault': 'assault-bike',
+  'wallball': 'wall-ball',
+  'medicine': 'medicine-ball',
+  'medicineball': 'medicine-ball',
+  'slam': 'slam-ball',
+  'slamball': 'slam-ball',
+  'battleropes': 'battle-ropes',
+  'battle-rope': 'battle-ropes',
+  'farmer-walk': 'farmer-walk-handles',
+  'farmers-walk': 'farmer-walk-handles',
+  'atlas': 'atlas-stone',
+  'ab-mat': 'abmat',
+  'yoga': 'yoga-block',
+  'suspension': 'suspension-trainer',
+  'trx': 'suspension-trainer',
+}
+
 function normalizeEquipmentName(name: string): string {
-  let normalized = name.toLowerCase().trim().replace(/\s+/g, '-')
+  let normalized = name.toLowerCase().trim().replace(/[\s_]+/g, '-')
 
   // Gérer les pluriels courants
   if (normalized.endsWith('s') && EQUIPMENT.includes(normalized.slice(0, -1) as any)) {
     normalized = normalized.slice(0, -1)
+  }
+
+  // Vérifier les alias
+  if (EQUIPMENT_ALIASES[normalized]) {
+    normalized = EQUIPMENT_ALIASES[normalized]
   }
 
   return normalized

@@ -250,6 +250,7 @@ export class WorkoutsService {
       slug: string
       description: string
       workout_type: string
+      wod_format: string
       difficulty: string
       intensity: string
       estimated_duration: number

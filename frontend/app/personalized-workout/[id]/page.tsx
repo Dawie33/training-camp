@@ -1,39 +1,134 @@
 'use client'
 
+import { AMRAPTimer } from '@/app/timer/timers/AMRAPTimer'
+import { EMOMTimer } from '@/app/timer/timers/EMOMTimer'
+import { ForTimeTimer } from '@/app/timer/timers/ForTimeTimer'
+import { TabataTimer } from '@/app/timer/timers/TabataTimer'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
-import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
-import { ExerciseDetailModal } from '@/components/workout/ExerciseDetailModal'
-import { sessionService, workoutsService } from '@/services'
+import { RichSectionDisplay } from '@/components/workout/display/RichSectionDisplay'
+import { WorkoutResultsModal } from '@/components/workout/WorkoutResultsModal'
 import { PersonalizedWorkout } from '@/domain/entities/workout'
-import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
+import { useTimerVibration } from '@/hooks/useTimerVibration'
+import { workoutsService, sessionService } from '@/services'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Clock } from 'lucide-react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+type TimerConfig =
+  | { type: 'amrap'; duration: number; label: string }
+  | { type: 'for_time'; capMin?: number; label: string }
+  | { type: 'emom'; durationMin: number; intervalMin: number; label: string }
+  | { type: 'tabata'; rounds?: number; workSeconds: number; restSeconds: number; label: string }
 
+function detectTimerConfigs(blocks: WorkoutBlocks): TimerConfig[] {
+  const configs: TimerConfig[] = []
+
+  for (const section of blocks.sections) {
+    const formatLower = section.format?.toLowerCase() || ''
+    const sectionType = section.type
+
+    if (sectionType === 'amrap' || formatLower.includes('amrap')) {
+      if (section.duration_min) {
+        configs.push({ type: 'amrap', duration: section.duration_min, label: section.title || `AMRAP ${section.duration_min}'` })
+      }
+      continue
+    }
+
+    if (sectionType === 'emom' || formatLower.includes('emom')) {
+      const match = formatLower.match(/e(\d+)mom/)
+      const intervalMin = match ? parseInt(match[1]) : 1
+      const durationMin = section.duration_min || (section.rounds ? section.rounds * intervalMin : undefined)
+      if (durationMin) {
+        configs.push({ type: 'emom', durationMin, intervalMin, label: section.title || `EMOM ${durationMin}'` })
+      }
+      continue
+    }
+
+    if (sectionType === 'tabata' || formatLower.includes('tabata')) {
+      configs.push({ type: 'tabata', rounds: section.rounds, workSeconds: 20, restSeconds: 10, label: section.title || 'Tabata' })
+      continue
+    }
+
+    if (sectionType === 'for_time' || formatLower.includes('for time')) {
+      configs.push({ type: 'for_time', capMin: section.duration_min, label: section.title || 'For Time' })
+      continue
+    }
+
+    // Check format on non-timer section types
+    if (formatLower.includes('amrap') && section.duration_min) {
+      configs.push({ type: 'amrap', duration: section.duration_min, label: section.title || `AMRAP ${section.duration_min}'` })
+    } else if (formatLower.includes('emom')) {
+      const match2 = formatLower.match(/e(\d+)mom/)
+      const interval = match2 ? parseInt(match2[1]) : 1
+      const dur = section.duration_min || (section.rounds ? section.rounds * interval : undefined)
+      if (dur) configs.push({ type: 'emom', durationMin: dur, intervalMin: interval, label: section.title || `EMOM ${dur}'` })
+    } else if (formatLower.includes('tabata')) {
+      configs.push({ type: 'tabata', rounds: section.rounds, workSeconds: 20, restSeconds: 10, label: section.title || 'Tabata' })
+    } else if (formatLower.includes('for time')) {
+      configs.push({ type: 'for_time', capMin: section.duration_min, label: section.title || 'For Time' })
+    }
+  }
+
+  return configs
+}
+
+const difficultyConfig: Record<string, { label: string; color: string }> = {
+  beginner: { label: 'Debutant', color: 'text-emerald-500' },
+  intermediate: { label: 'Intermediaire', color: 'text-amber-500' },
+  advanced: { label: 'Avance', color: 'text-red-500' },
+}
+
+const TIMER_TAB_COLORS: Record<string, { active: string; inactive: string }> = {
+  amrap: { active: 'bg-orange-500 text-white', inactive: 'text-orange-400 hover:bg-orange-500/20' },
+  for_time: { active: 'bg-blue-500 text-white', inactive: 'text-blue-400 hover:bg-blue-500/20' },
+  emom: { active: 'bg-purple-500 text-white', inactive: 'text-purple-400 hover:bg-purple-500/20' },
+  tabata: { active: 'bg-green-500 text-white', inactive: 'text-green-400 hover:bg-green-500/20' },
+}
 
 function PersonalizedWorkoutDetailContent() {
   const params = useParams()
+  const router = useRouter()
   const [workout, setWorkout] = useState<PersonalizedWorkout | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isStarting, setIsStarting] = useState(false)
   const [activeSession, setActiveSession] = useState<string | null>(null)
-  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null)
+  const [isStarting, setIsStarting] = useState(false)
+  const [showResultsModal, setShowResultsModal] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [timerElapsed, setTimerElapsed] = useState('0:00')
+  const [amrapRounds, setAmrapRounds] = useState(0)
+  const [activeTimerIndex, setActiveTimerIndex] = useState(0)
+  const vibration = useTimerVibration()
+
+  const isTimerStarted = timerElapsed !== '0:00'
+
+  const handleFinishWorkout = () => {
+    vibration.vibrateFinish()
+    setShowResultsModal(true)
+  }
+
+  const renderTimer = (config: TimerConfig) => {
+    switch (config.type) {
+      case 'amrap':
+        return <AMRAPTimer duration={config.duration} onTimeUpdate={setTimerElapsed} onRoundsUpdate={setAmrapRounds} soundEnabled={soundEnabled} />
+      case 'for_time':
+        return <ForTimeTimer capMin={config.capMin} onTimeUpdate={setTimerElapsed} />
+      case 'emom':
+        return <EMOMTimer durationMin={config.durationMin} intervalMin={config.intervalMin} onTimeUpdate={setTimerElapsed} />
+      case 'tabata':
+        return <TabataTimer rounds={config.rounds} workSeconds={config.workSeconds} restSeconds={config.restSeconds} onTimeUpdate={setTimerElapsed} />
+    }
+  }
+
   useEffect(() => {
     const fetchPersonalizedWorkout = async () => {
       try {
         setLoading(true)
-
         const response = await workoutsService.getPersonalizedWorkout(params.id as string)
-
-        if (!response) {
-          throw new Error('Failed to fetch personalized workout')
-        }
-
+        if (!response) throw new Error('Failed to fetch personalized workout')
         setWorkout(response)
       } catch (error) {
         toast.error(`Failed to fetch personalized workout: ${error}`)
@@ -41,15 +136,11 @@ function PersonalizedWorkoutDetailContent() {
         setLoading(false)
       }
     }
-
-    if (params.id) {
-      fetchPersonalizedWorkout()
-    }
+    if (params.id) fetchPersonalizedWorkout()
   }, [params.id])
 
   const handleStartWorkout = async () => {
     if (!workout) return
-
     try {
       setIsStarting(true)
       const session = await sessionService.startSession({
@@ -59,50 +150,34 @@ function PersonalizedWorkoutDetailContent() {
       setActiveSession(session.id)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Impossible de démarrer le workout'
-      alert(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsStarting(false)
     }
   }
 
-  const getDifficultyStyle = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-      case 'intermediate':
-        return 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-      case 'advanced':
-        return 'bg-red-500/20 text-red-400 border-red-500/30'
-      default:
-        return 'bg-white/10 text-slate-300 border-white/20'
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto"></div>
-          <p className="mt-4 text-slate-400">Chargement de votre workout personnalisé...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 animate-pulse" />
       </div>
     )
   }
 
   if (!workout) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-slate-400">Workout personnalisé introuvable</p>
-          <Link href="/dashboard" className="text-orange-400 hover:text-orange-300 mt-4 inline-block">
-            Retour au dashboard
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-3">
+          <p className="text-red-400 font-medium">Workout personnalisé introuvable</p>
+          <Link href="/personalized-workout" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Retour aux workouts personnalisés
           </Link>
         </div>
       </div>
     )
   }
 
-  if (activeSession && workout) {
+  if (activeSession) {
     return (
       <ActiveWorkoutSession
         workout={workout.plan_json}
@@ -112,89 +187,191 @@ function PersonalizedWorkoutDetailContent() {
     )
   }
 
+  const w = workout.plan_json
+  const timerConfigs = w.blocks ? detectTimerConfigs(w.blocks) : []
+  const activeConfig = timerConfigs[activeTimerIndex] || null
+  const diff = w.difficulty ? difficultyConfig[w.difficulty] : null
+
   return (
-    <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-    >
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Back Button */}
-        <motion.div variants={fadeInUp}>
-          <Link
-            href="/personalized-workout"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Retour aux workouts personnalisés
-          </Link>
-        </motion.div>
+    <div className="min-h-screen lg:h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+      {/* LEFT PANEL - Workout Details */}
+      <div className="flex-1 flex flex-col overflow-y-auto lg:overflow-hidden order-2 lg:order-1 min-h-0">
+        {/* HEADER */}
+        <div className="flex-shrink-0 px-4 lg:px-8 py-4 lg:py-6 border-b border-slate-700/50 sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10 lg:static lg:bg-transparent">
+          <div className="flex items-start gap-2 lg:gap-4">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white mt-1"
+            >
+              <span className="text-sm lg:text-base">&larr;</span>
+            </button>
 
-        {/* Workout Header */}
-        <motion.div variants={fadeInUp} className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                  Personnalisé
-                </span>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getDifficultyStyle(workout.plan_json.difficulty)}`}>
-                  {workout.plan_json.difficulty}
-                </span>
+            <div className="flex items-center gap-2 lg:gap-3 flex-1 min-w-0">
+              <div className="w-1.5 lg:w-2 h-8 lg:h-12 bg-orange-500 rounded-full flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight truncate">{w.name || 'Workout'}</h1>
+                <div className="flex items-center gap-2 lg:gap-3 mt-1 lg:mt-2 flex-wrap">
+                  <span className="px-2 lg:px-3 py-0.5 lg:py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs lg:text-sm font-semibold">
+                    Personnalisé
+                  </span>
+                  {w.workout_type && (
+                    <span className="px-2 lg:px-3 py-0.5 lg:py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs lg:text-sm font-semibold">
+                      {w.workout_type.replace(/_/g, ' ')}
+                    </span>
+                  )}
+                  {diff && (
+                    <span className={`${diff.color} text-xs lg:text-sm`}>
+                      {diff.label}
+                    </span>
+                  )}
+                  {w.estimated_duration && (
+                    <span className="text-slate-400 text-xs lg:text-sm">
+                      Cap: {w.estimated_duration} min
+                    </span>
+                  )}
+                </div>
               </div>
-              <h1 className="text-3xl font-bold mb-2">
-                <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">
-                  {workout.plan_json.name}
-                </span>
-              </h1>
-              <p className="text-slate-400">{workout.plan_json.description}</p>
+            </div>
+
+            <div className="flex items-center gap-1 lg:gap-2">
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`p-1.5 lg:p-2 rounded-lg transition-colors ${soundEnabled ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-800 text-slate-400'}`}
+                title={soundEnabled ? 'Désactiver le son' : 'Activer le son'}
+              >
+                <span className="text-xs lg:text-sm font-semibold">{soundEnabled ? 'ON' : 'OFF'}</span>
+              </button>
             </div>
           </div>
 
-          {/* Workout Info */}
-          <div className="flex flex-wrap gap-4 mt-4">
-            <div className="flex items-center gap-2 text-sm text-slate-400">
-              <Clock className="w-4 h-4 text-orange-400" />
-              <span>{workout.plan_json.estimated_duration || 30} min</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-400">
-              <Calendar className="w-4 h-4 text-orange-400" />
-              <span>Créé le {new Date(workout.plan_json.created_at || workout.created_at).toLocaleDateString('fr-FR')}</span>
-            </div>
-          </div>
+          {/* Stimulus */}
+          {w.blocks?.stimulus && (
+            <p className="text-slate-300 text-sm lg:text-lg mt-3 lg:mt-4 italic">{w.blocks.stimulus}</p>
+          )}
 
-          {/* Start Button */}
-          <motion.button
-            onClick={handleStartWorkout}
-            disabled={isStarting}
-            className="mt-6 w-full bg-gradient-to-r from-orange-500 to-rose-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-orange-600 hover:to-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          {/* Description */}
+          {w.description && (
+            <p className="text-slate-400 text-sm mt-2">{w.description}</p>
+          )}
+        </div>
+
+        {/* MAIN CONTENT */}
+        <div className="flex-1 lg:overflow-y-auto px-4 lg:px-8 py-4 lg:py-6 pb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-6"
           >
-            {isStarting ? 'Démarrage...' : 'Commencer le workout'}
-          </motion.button>
-        </motion.div>
+            {/* All sections */}
+            {w.blocks?.sections.map((section, idx) => (
+              <div key={idx}>
+                <RichSectionDisplay section={section} />
+              </div>
+            ))}
 
-        {/* Workout Blocks */}
-        <motion.div variants={fadeInUp}>
-          <WorkoutDisplay
-            blocks={workout.plan_json.blocks}
-            showTitle={true}
-            isStarting={isStarting}
-            onExerciseClick={(exerciseName) => setSelectedExerciseName(exerciseName)}
-          />
-        </motion.div>
+            {/* Equipment */}
+            {w.equipment_required && w.equipment_required.length > 0 && (
+              <div className="pt-4 border-t border-slate-700/50 text-sm text-slate-400">
+                <strong className="text-white">Équipement : </strong>
+                {w.equipment_required.join(', ')}
+              </div>
+            )}
 
-        {selectedExerciseName && (
-          <ExerciseDetailModal
-            exerciseName={selectedExerciseName}
-            isOpen={!!selectedExerciseName}
-            onClose={() => setSelectedExerciseName(null)}
-          />
-        )}
+            {/* Coach notes */}
+            {w.coach_notes && (
+              <div className="pt-4 border-t border-slate-700/50 text-sm text-slate-400">
+                <strong className="text-white">Notes du coach : </strong>
+                {w.coach_notes}
+              </div>
+            )}
+          </motion.div>
+        </div>
       </div>
-    </motion.div>
+
+      {/* RIGHT PANEL - Timer */}
+      {timerConfigs.length > 0 ? (
+        <div className="w-full lg:w-[450px] bg-slate-950/50 border-t lg:border-t-0 lg:border-l border-slate-700/50 flex flex-col items-center p-4 lg:p-8 backdrop-blur-sm order-1 lg:order-2 flex-shrink-0">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="text-center space-y-6 w-full flex flex-col flex-1"
+          >
+            {/* Timer tabs */}
+            {timerConfigs.length > 1 && (
+              <div className="flex gap-1 bg-slate-800/50 rounded-xl p-1">
+                {timerConfigs.map((config, idx) => {
+                  const tabColors = TIMER_TAB_COLORS[config.type] || TIMER_TAB_COLORS.for_time
+                  const isActive = idx === activeTimerIndex
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveTimerIndex(idx)}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all ${isActive ? tabColors.active : tabColors.inactive}`}
+                    >
+                      {config.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Active timer */}
+            <div className="flex-1 flex items-center justify-center">
+              {activeConfig && renderTimer(activeConfig)}
+            </div>
+
+            {/* Finish Workout Button */}
+            {isTimerStarted && (
+              <button
+                onClick={handleFinishWorkout}
+                className="w-full py-3 lg:py-4 bg-green-500 hover:bg-green-600 rounded-xl text-sm lg:text-base font-semibold transition-all shadow-lg shadow-green-500/30 flex items-center justify-center active:scale-95"
+              >
+                Terminer le WOD
+              </button>
+            )}
+
+            {!isTimerStarted && (
+              <div className="text-slate-500 text-xs lg:text-sm">
+                Appuyez sur play pour démarrer
+              </div>
+            )}
+          </motion.div>
+        </div>
+      ) : (
+        /* No timer - show start button in right panel */
+        <div className="w-full lg:w-[450px] bg-slate-950/50 border-t lg:border-t-0 lg:border-l border-slate-700/50 flex flex-col items-center justify-center p-4 lg:p-8 backdrop-blur-sm order-1 lg:order-2 flex-shrink-0">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="text-center space-y-4 w-full"
+          >
+            <button
+              onClick={handleStartWorkout}
+              disabled={isStarting}
+              className="w-full py-3 lg:py-4 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 rounded-xl text-sm lg:text-base font-semibold transition-all shadow-lg shadow-orange-500/30 flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isStarting ? 'Démarrage...' : 'Commencer le workout'}
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Results Modal */}
+      {showResultsModal && (
+        <WorkoutResultsModal
+          isOpen={showResultsModal}
+          onClose={() => setShowResultsModal(false)}
+          workoutId={workout.id}
+          workoutName={w.name}
+          timeElapsed={timerElapsed}
+          rounds={activeConfig?.type === 'amrap' ? amrapRounds : undefined}
+          version="RX"
+        />
+      )}
+    </div>
   )
 }
 
