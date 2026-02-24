@@ -22,7 +22,7 @@ import {
   TrendingUp
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 interface NavItem {
   href: string
@@ -37,7 +37,7 @@ interface isSidebarOpen {
 
 export function AppSidebar({ isOpen }: isSidebarOpen) {
   const { user, logout } = useAuth()
-  const [activeTab, setActiveTab] = useState('/dashboard')
+  const pathname = usePathname()
 
   const getInitials = (name: string) => {
     return name
@@ -81,27 +81,29 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
         {/* Navigation */}
         {isOpen && (
           <nav className="flex-1 space-y-1">
-            {mainNavItems.map((item) => (
-              <Link
-                href={item.href}
-                key={item.href}
-                onClick={() => setActiveTab(item.href)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group
-                  ${activeTab === item.href
-                    ? 'bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg'
-                    : 'hover:bg-white/5'}`}
-              >
-                <span className={`text-lg transition-all duration-300 ${activeTab === item.href ? 'text-orange-400' : 'text-slate-400 group-hover:text-orange-300'}`}>
-                  {item.icon}
-                </span>
-                <span className={`font-medium ${activeTab === item.href ? 'text-white' : 'text-slate-300'}`}>
-                  {item.label}
-                </span>
-                {activeTab === item.href && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-400 shadow-lg shadow-orange-400/50" />
-                )}
-              </Link>
-            ))}
+            {mainNavItems.map((item) => {
+              const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+              return (
+                <Link
+                  href={item.href}
+                  key={item.href}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group
+                    ${isActive
+                      ? 'bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg'
+                      : 'hover:bg-white/5'}`}
+                >
+                  <span className={`text-lg transition-all duration-300 ${isActive ? 'text-orange-400' : 'text-slate-400 group-hover:text-orange-300'}`}>
+                    {item.icon}
+                  </span>
+                  <span className={`font-medium ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                    {item.label}
+                  </span>
+                  {isActive && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-400 shadow-lg shadow-orange-400/50" />
+                  )}
+                </Link>
+              )
+            })}
           </nav>
         )}
 
