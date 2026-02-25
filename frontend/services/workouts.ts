@@ -20,6 +20,15 @@ export const generateWorkoutWithAI = (data: {
   additionalInstructions?: string
 }) => workoutsService.generateWorkoutWithAI(data)
 
+export const generatePersonalizedWorkoutWithAI = (data: {
+  workoutType: string
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+  duration: number
+  focus?: string[]
+  equipment?: string[]
+  additionalInstructions?: string
+}) => workoutsService.generatePersonalizedWorkoutWithAI(data)
+
 export class WorkoutsService {
 
   /**
@@ -184,6 +193,23 @@ export class WorkoutsService {
     additionalInstructions?: string
   }): Promise<GeneratedWorkout> {
     return apiClient.post<GeneratedWorkout>('/workouts/generate-ai', data)
+  }
+
+  /**
+   * Génère un workout personnalisé enrichi avec le profil de l'utilisateur connecté
+   * difficulty et equipment sont optionnels (fallback sur le profil)
+   * @param data Paramètres de génération
+   * @returns Promesse contenant le workout généré par l'IA
+   */
+  async generatePersonalizedWorkoutWithAI(data: {
+    workoutType: string
+    difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+    duration: number
+    focus?: string[]
+    equipment?: string[]
+    additionalInstructions?: string
+  }): Promise<GeneratedWorkout> {
+    return apiClient.post<GeneratedWorkout>('/workouts/generate-ai-personalized', data)
   }
 }
 

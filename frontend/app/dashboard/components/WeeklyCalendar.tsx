@@ -90,7 +90,7 @@ export function WeeklyCalendar() {
 
             // Récupérer le nom du workout depuis les détails
             const workoutDetail = workoutsDetails.get(session.workout_id)
-            const workoutName = workoutDetail?.name || `Workout ${session.workout_id.substring(0, 8)}`
+            const workoutName = workoutDetail?.name || `Workout ${(session.workout_id ?? session.id).substring(0, 8)}`
 
             // Récupérer l'intensité du workout
             let intensity: 'low' | 'medium' | 'high' | undefined

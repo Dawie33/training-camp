@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { CreateWorkoutDto, GenerateWorkoutDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
-import { AIWorkoutGeneratorService } from '../services/ai-workout-generator.service'
+import { CreateWorkoutDto, GeneratePersonalizedWorkoutDto, GenerateWorkoutDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
+import { AIWorkoutGeneratorService, GeneratedWorkout } from '../services/ai-workout-generator.service'
 import { WorkoutsService } from '../services/workouts.service'
 
 @Controller('workouts')
@@ -95,6 +95,15 @@ export class WorkoutsController {
   @UseGuards(JwtAuthGuard)
   async create(@Body() createWorkoutDto: CreateWorkoutDto) {
     return await this.service.create(createWorkoutDto)
+  }
+
+  @Post('generate-ai-personalized')
+  @UseGuards(JwtAuthGuard)
+  async generatePersonalizedWithAI(
+    @Body() dto: GeneratePersonalizedWorkoutDto,
+    @Request() req: { user: { id: string } },
+  ): Promise<GeneratedWorkout> {
+    return this.aiGenerator.generatePersonalizedWorkout(req.user.id, dto)
   }
 
   @Post('generate-ai')

@@ -8,15 +8,106 @@ export const CROSSFIT_EQUIPMENT = [
   'box', 'wall-ball', 'medicine-ball', 'rope', 'mat', 'plate', 'sandbag'
 ] as const
 
-export function buildCrossFitSystemPrompt(availableEquipment?: string[]): string {
+import { UserAIContext } from '../services/user-context.service'
+
+export function buildAthleteContextSection(context: UserAIContext): string {
+  const lines: string[] = ['## PROFIL DE L\'ATHLÈTE', '']
+
+  const levelMap: Record<string, string> = {
+    beginner: 'Débutant',
+    intermediate: 'Intermédiaire',
+    advanced: 'Avancé',
+    elite: 'Elite',
+  }
+  lines.push(`**Niveau** : ${levelMap[context.sport_level] ?? context.sport_level}`)
+
+  if (context.height || context.weight) {
+    const parts: string[] = []
+    if (context.height) parts.push(`${context.height}cm`)
+    if (context.weight) parts.push(`${context.weight}kg`)
+    lines.push(`**Physique** : ${parts.join(', ')}`)
+  }
+
+  if (context.oneRepMaxes.length > 0) {
+    lines.push('')
+    lines.push('**Forces (1RM mesurés)** :')
+    for (const rm of context.oneRepMaxes) {
+      lines.push(`- ${rm.lift} : ${rm.value}kg`)
+    }
+  }
+
+  const benchmarkKeys = Object.keys(context.benchmarkResults)
+  if (benchmarkKeys.length > 0) {
+    lines.push('')
+    lines.push('**Benchmarks officiels** :')
+    for (const name of benchmarkKeys) {
+      const b = context.benchmarkResults[name]
+      const resultStr = Object.entries(b.result)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ')
+      lines.push(`- ${name} : ${resultStr}`)
+    }
+  }
+
+  const goalKeys = Object.keys(context.global_goals).filter((k) => context.global_goals[k])
+  if (goalKeys.length > 0) {
+    lines.push('')
+    lines.push(`**Objectifs** : ${goalKeys.join(', ')}`)
+  }
+
+  const injuryKeys = Object.keys(context.injuries)
+  if (injuryKeys.length > 0) {
+    lines.push('')
+    lines.push('**Limitations physiques** :')
+    for (const k of injuryKeys) {
+      lines.push(`- ${k} : ${JSON.stringify(context.injuries[k])}`)
+    }
+  } else {
+    const limKeys = Object.keys(context.physical_limitations)
+    if (limKeys.length > 0) {
+      lines.push('')
+      lines.push('**Limitations physiques** :')
+      for (const k of limKeys) {
+        lines.push(`- ${k} : ${JSON.stringify(context.physical_limitations[k])}`)
+      }
+    }
+  }
+
+  if (context.equipment_available.length > 0) {
+    lines.push('')
+    lines.push(`**Équipement disponible** : ${context.equipment_available.join(', ')}`)
+  }
+
+  if (context.recentSessions.length > 0) {
+    lines.push('')
+    lines.push('**Activité récente (7 jours)** :')
+    for (const s of context.recentSessions) {
+      const effort = s.perceived_effort ? `, RPE ${s.perceived_effort}/10` : ''
+      const type = s.workout_type ? ` : ${s.workout_type}` : ''
+      lines.push(`- ${s.date}${type}, ${s.duration_minutes}min${effort}`)
+    }
+  }
+
+  lines.push('')
+  lines.push(
+    '**Directives** : Adapte le workout à ce profil. Respecte les limitations physiques.' +
+      ' Utilise l\'équipement disponible. Programme en cohérence avec l\'activité récente.',
+  )
+
+  return lines.join('\n')
+}
+
+export function buildCrossFitSystemPrompt(availableEquipment?: string[], userContext?: UserAIContext): string {
   const equipmentList = availableEquipment && availableEquipment.length > 0
     ? availableEquipment.join('", "')
     : CROSSFIT_EQUIPMENT.join('", "')
 
+  const athleteSection = userContext ? `\n${buildAthleteContextSection(userContext)}\n` : ''
+
   return `Tu es un coach CrossFit certifié Level 2+ avec une expertise approfondie en programmation.
 
 Ta mission est de générer des WODs (Workout of the Day) structurés et efficaces en format JSON.
-
+${athleteSection}
 ÉQUIPEMENT DISPONIBLE : ["${equipmentList}"]
 
 # STRUCTURE JSON REQUISE
@@ -342,7 +433,7 @@ Exemple :
           {
             "name": "Box Jump Overs",
             "reps": 15,
-            "details": "24\"/20\" - step down autorisé. Scaled: step-ups"
+            "details": "24"/20" - step down autorisé. Scaled: step-ups"
           }
         ],
         "goal": "Viser 5-7 rounds pour Intermediate, 7-9 rounds pour Advanced"

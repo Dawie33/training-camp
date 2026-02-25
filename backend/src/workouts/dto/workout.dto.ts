@@ -203,6 +203,33 @@ export class GenerateWorkoutDto {
   additionalInstructions?: string
 }
 
+export class GeneratePersonalizedWorkoutDto {
+  @IsString()
+  workoutType!: string
+
+  @IsOptional()
+  @IsEnum(['beginner', 'intermediate', 'advanced', 'elite'])
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+
+  @IsNumber()
+  @Type(() => Number)
+  duration!: number
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  focus?: string[]
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  equipment?: string[]
+
+  @IsOptional()
+  @IsString()
+  additionalInstructions?: string
+}
+
 export class WorkoutQueryDto {
   @IsOptional()
   @Type(() => String)

@@ -4,7 +4,7 @@ import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { ExerciseDifficulty } from '@/domain/entities/exercice'
 import { CreateWorkoutDTO } from '@/domain/entities/workout'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
-import { GeneratedWorkout, generateWorkoutWithAI, workoutsService } from '@/services'
+import { GeneratedWorkout, generatePersonalizedWorkoutWithAI, generateWorkoutWithAI, workoutsService } from '@/services'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -18,6 +18,7 @@ export default function GenerateWorkoutAIPage() {
   const [equipment, setEquipment] = useState<string[]>([])
   const [additionalInstructions, setAdditionalInstructions] = useState('')
 
+  const [personalized, setPersonalized] = useState(true)
   const [loading, setLoading] = useState(false)
   const [generatedWorkout, setGeneratedWorkout] = useState<GeneratedWorkout | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -36,13 +37,20 @@ export default function GenerateWorkoutAIPage() {
       setLoading(true)
       setError(null)
 
-      const workout = await generateWorkoutWithAI({
-        workoutType,
-        difficulty,
-        duration,
-        equipment: equipment.length > 0 ? equipment : undefined,
-        additionalInstructions: additionalInstructions || undefined
-      })
+      const workout = personalized
+        ? await generatePersonalizedWorkoutWithAI({
+            workoutType,
+            duration,
+            equipment: equipment.length > 0 ? equipment : undefined,
+            additionalInstructions: additionalInstructions || undefined,
+          })
+        : await generateWorkoutWithAI({
+            workoutType,
+            difficulty,
+            duration,
+            equipment: equipment.length > 0 ? equipment : undefined,
+            additionalInstructions: additionalInstructions || undefined,
+          })
 
       setGeneratedWorkout(workout)
       // Initialiser les champs éditables
@@ -133,6 +141,30 @@ export default function GenerateWorkoutAIPage() {
           <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-700/50 space-y-4 lg:space-y-5">
               <h2 className="text-lg lg:text-xl font-bold">Paramètres du Workout</h2>
 
+              {/* Toggle Mode Coach Personnalisé */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/50 border border-slate-700/50">
+                <div>
+                  <p className="text-sm font-semibold text-white">Mode coach personnalisé</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Adapte le workout à votre profil, 1RMs et historique</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {personalized && (
+                    <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-medium rounded-full border border-green-500/30">
+                      Basé sur votre profil
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPersonalized(!personalized)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${personalized ? 'bg-orange-500' : 'bg-slate-700'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${personalized ? 'translate-x-5' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
+              </div>
+
               {/* Type de workout + Difficulté */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -150,11 +182,17 @@ export default function GenerateWorkoutAIPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Difficulté</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Difficulté
+                    {personalized && (
+                      <span className="ml-2 text-xs text-slate-500 font-normal">(déterminé par votre profil)</span>
+                    )}
+                  </label>
                   <select
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as ExerciseDifficulty)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors"
+                    disabled={personalized}
+                    className={`w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors ${personalized ? 'opacity-40 cursor-not-allowed' : ''}`}
                   >
                     <option value="beginner">Débutant</option>
                     <option value="intermediate">Intermédiaire</option>
@@ -339,7 +377,7 @@ export default function GenerateWorkoutAIPage() {
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Génération en cours...
+                    {personalized ? 'Analyse de votre profil et génération...' : 'Génération en cours...'}
                   </span>
                 ) : (
                   'Générer le Workout'
@@ -360,7 +398,14 @@ export default function GenerateWorkoutAIPage() {
               <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl border border-slate-700/50 overflow-hidden">
                 {/* Bandeau vert succès */}
                 <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/10 border-b border-slate-700/50 px-4 lg:px-6 py-3 flex items-center justify-between">
-                  <span className="text-green-400 text-sm font-semibold">Workout généré avec succès</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400 text-sm font-semibold">Workout généré avec succès</span>
+                    {personalized && (
+                      <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-medium rounded-full border border-green-500/30">
+                        Généré sur mesure pour vous
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setIsEditing(!isEditing)}
