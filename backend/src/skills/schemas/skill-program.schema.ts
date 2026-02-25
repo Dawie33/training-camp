@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const ValidationCriteriaSchema = z.object({
-  type: z.enum(['reps', 'time', 'weight', 'quality']),
+  type: z.enum(['reps', 'time', 'weight', 'quality', 'distance', 'steps']),
   target: z.number(),
   metric: z.string(),
   unit: z.string(),

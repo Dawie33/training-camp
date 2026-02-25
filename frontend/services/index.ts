@@ -27,5 +27,8 @@ export * from './equipments'
 // Users
 export * from './users'
 
+// One Rep Maxes
+export * from './one-rep-maxes'
+
 // Types
 export * from './types'

@@ -28,6 +28,10 @@ export interface User {
   updated_at: string
   workouts_count?: number
   sport_level?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+  height?: number
+  weight?: number
+  body_fat_percentage?: number
+  equipment_available?: string[]
   stats?: {
     workouts: number
     sessions: number
@@ -52,6 +56,11 @@ export interface UpdateUserDTO {
   lastName?: string
   role?: string
   is_active?: boolean
+  sport_level?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
+  height?: number
+  weight?: number
+  body_fat_percentage?: number
+  equipment_available?: string[]
 }
 
 export interface UserQueryParams {

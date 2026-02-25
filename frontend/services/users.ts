@@ -18,6 +18,10 @@ export class UsersService {
         return response
     }
 
+    async updateMe(data: UpdateUserDTO): Promise<User> {
+        return apiClient.patch<User>('/users/me', data)
+    }
+
     async getUsers(params?: UserQueryParams) {
         return usersApi.getAll(params)
     }

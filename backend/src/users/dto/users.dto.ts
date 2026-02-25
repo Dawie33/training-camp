@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator'
+import { IsArray, IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString, MinLength } from 'class-validator'
 
 export class CreateUserDto {
   @IsEmail()
@@ -47,6 +47,26 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean
+
+  @IsOptional()
+  @IsIn(['beginner', 'intermediate', 'advanced', 'elite'])
+  sport_level?: string
+
+  @IsOptional()
+  @IsNumber()
+  height?: number
+
+  @IsOptional()
+  @IsNumber()
+  weight?: number
+
+  @IsOptional()
+  @IsNumber()
+  body_fat_percentage?: number
+
+  @IsOptional()
+  @IsArray()
+  equipment_available?: string[]
 }
 
 export class UserQueryDto {

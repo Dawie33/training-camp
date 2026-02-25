@@ -12,17 +12,23 @@ export class UsersController {
         return this.service.findAll(query)
     }
 
-    @Get(':id')
-    async findOne(@Param('id') id: string) {
-        return this.service.findOne(id)
-    }
-
     @Get('me')
     @UseGuards(JwtAuthGuard)
     async getProfile(
         @Request() req: { user: { id: string } },
     ) {
         return await this.service.getProfile(req.user.id)
+    }
+
+    @Get(':id')
+    async findOne(@Param('id') id: string) {
+        return this.service.findOne(id)
+    }
+
+    @Patch('me')
+    @UseGuards(JwtAuthGuard)
+    async updateMe(@Body() data: UpdateUserDto, @Request() req: { user: { id: string } }) {
+        return this.service.update(req.user.id, data)
     }
 
     @Patch(':id')

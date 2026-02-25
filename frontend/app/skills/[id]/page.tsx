@@ -20,6 +20,7 @@ import type { GeneratedWorkout, Workouts } from '@/domain/entities/workout'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { getEquipments } from '@/services/equipments'
 import { skillsService } from '@/services/skills'
+import { usersService } from '@/services/users'
 import { workoutsService } from '@/services/workouts'
 import { motion } from 'framer-motion'
 import {
@@ -250,12 +251,20 @@ function SkillDetailContent() {
     setGeneratedWod(null)
     setWodIncludeWarmup(true)
     setWodModalOpen(true)
-    if (!equipmentsLoaded) {
-      try {
-        const res = await getEquipments({ limit: 100 })
-        setAllEquipments(res.rows)
-        setEquipmentsLoaded(true)
-      } catch { /* ignore */ }
+
+    // Charger les équipements de la DB et pré-remplir depuis le profil user en parallèle
+    const [equipRes, userProfile] = await Promise.allSettled([
+      equipmentsLoaded ? Promise.resolve({ rows: allEquipments }) : getEquipments({ limit: 100 }),
+      usersService.getUserProfile(),
+    ])
+
+    if (equipRes.status === 'fulfilled') {
+      setAllEquipments(equipRes.value.rows)
+      setEquipmentsLoaded(true)
+    }
+
+    if (userProfile.status === 'fulfilled' && userProfile.value.equipment_available?.length) {
+      setWodSelectedEquipment(userProfile.value.equipment_available)
     }
   }
 
@@ -873,9 +882,16 @@ function SkillDetailContent() {
 
               {/* Equipment selection */}
               <div className="space-y-2">
-                <Label className="text-white">Equipement disponible</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-white">Equipement disponible</Label>
+                  {wodSelectedEquipment.length > 0 && (
+                    <span className="text-xs text-orange-400">
+                      {wodSelectedEquipment.length} depuis votre profil
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-500">
-                  Selectionnez votre equipement. Si vide, l&apos;IA genere sans contrainte.
+                  Pre-rempli depuis votre profil. Modifiez si besoin.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {allEquipments.map((eq) => {

@@ -21,7 +21,7 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
       "title": "Titre de l'etape",
       "description": "Description detaillee de cette etape et son objectif",
       "validation_criteria": {
-        "type": "reps|time|weight|quality",
+        "type": "reps|time|weight|quality|distance|steps",
         "target": 10,
         "metric": "consecutive|total|unbroken|hold",
         "unit": "reps|seconds|kg|score",
@@ -80,11 +80,13 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
 
 ## 3. VALIDATION DES ETAPES
 - Chaque etape a des criteres MESURABLES
-- Types de validation :
+- Types de validation AUTORISÉS (utilise UNIQUEMENT ces 6 valeurs) :
   - **reps** : nombre de repetitions (ex: 10 strict pull-ups)
-  - **time** : duree (ex: 30s L-sit hold)
-  - **weight** : charge (ex: bodyweight+20kg pull-up)
+  - **time** : duree en secondes (ex: 30s L-sit hold)
+  - **weight** : charge en kg (ex: bodyweight+20kg pull-up)
   - **quality** : qualite du mouvement (score 1-10 par un coach)
+  - **distance** : distance en metres (ex: 10m handstand walk)
+  - **steps** : nombre de pas/etapes (ex: 5 steps handstand walk)
 
 ## 4. EXERCICES RECOMMANDES
 - Exercices specifiques a chaque etape

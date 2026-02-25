@@ -182,13 +182,18 @@ export class UsersService {
      * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
      */
     async update(id: string, data: UpdateUserDto) {
-        const updateData: Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }> = {}
+        const updateData: Record<string, unknown> = {}
 
         if (data.email !== undefined) updateData.email = data.email
         if (data.firstName !== undefined) updateData.firstName = data.firstName
         if (data.lastName !== undefined) updateData.lastName = data.lastName
         if (data.role !== undefined) updateData.role = data.role
         if (data.isActive !== undefined) updateData.is_active = data.isActive
+        if (data.sport_level !== undefined) updateData.sport_level = data.sport_level
+        if (data.height !== undefined) updateData.height = data.height
+        if (data.weight !== undefined) updateData.weight = data.weight
+        if (data.body_fat_percentage !== undefined) updateData.body_fat_percentage = data.body_fat_percentage
+        if (data.equipment_available !== undefined) updateData.equipment_available = JSON.stringify(data.equipment_available)
 
         const [row] = await this.knex('users')
             .where({ id })
