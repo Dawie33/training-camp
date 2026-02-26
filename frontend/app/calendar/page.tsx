@@ -6,12 +6,20 @@ import './calendar-theme.css'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { Button } from '@/components/ui/button'
 import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
+import { ParseBoxWodModal } from '@/components/calendar/ParseBoxWodModal'
+import { WeeklyPlannerModal } from '@/components/calendar/WeeklyPlannerModal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { motion } from 'framer-motion'
-import { Check, ExternalLink, SkipForward, Trash2, X } from 'lucide-react'
+import { Brain, Calendar, Check, Dumbbell, ExternalLink, SkipForward, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { useWorkoutSchedule } from './hooks/useWorkoutSchedule'
-import { format } from 'date-fns'
+import { format, startOfWeek } from 'date-fns'
 import { useCalendarApp, ScheduleXCalendar } from '@schedule-x/react'
 import { createViewDay, createViewWeek, createViewMonthGrid } from '@schedule-x/calendar'
 import { createEventsServicePlugin } from '@schedule-x/events-service'
@@ -144,8 +152,11 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
 function CalendarContent() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [dateActionOpen, setDateActionOpen] = useState(false)
+  const [parseBoxWodOpen, setParseBoxWodOpen] = useState(false)
+  const [weeklyPlannerOpen, setWeeklyPlannerOpen] = useState(false)
 
-  const { schedules, loading, createSchedule, updateSchedule, deleteSchedule, markAsCompleted, markAsSkipped } = useWorkoutSchedule()
+  const { schedules, loading, createSchedule, refetch, updateSchedule, deleteSchedule, markAsCompleted, markAsSkipped } = useWorkoutSchedule()
 
   const [eventsService] = useState(() => createEventsServicePlugin())
   const [eventModalPlugin] = useState(() => createEventModalPlugin())
@@ -194,12 +205,12 @@ function CalendarContent() {
       onClickDate: (date: Temporal.PlainDate) => {
         const d = new Date(date.year, date.month - 1, date.day)
         setSelectedDate(d)
-        setModalOpen(true)
+        setDateActionOpen(true)
       },
       onClickDateTime: (dateTime: Temporal.ZonedDateTime) => {
         const d = new Date(dateTime.year, dateTime.month - 1, dateTime.day)
         setSelectedDate(d)
-        setModalOpen(true)
+        setDateActionOpen(true)
       },
       onEventUpdate: (updatedEvent: Record<string, unknown>) => {
         const start = updatedEvent.start as Temporal.PlainDate | Temporal.ZonedDateTime
@@ -246,11 +257,20 @@ function CalendarContent() {
     >
       <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
-        <motion.div variants={fadeInUp}>
-          <h1 className="text-2xl sm:text-4xl font-bold">
-            <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Calendrier</span>
-          </h1>
-          <p className="text-sm sm:text-base text-slate-400">Gérez votre planning d&apos;entraînement</p>
+        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-4xl font-bold">
+              <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Calendrier</span>
+            </h1>
+            <p className="text-sm sm:text-base text-slate-400">Gérez votre planning d&apos;entraînement</p>
+          </div>
+          <Button
+            onClick={() => setWeeklyPlannerOpen(true)}
+            className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 self-start sm:self-auto"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Planifier ma semaine
+          </Button>
         </motion.div>
 
         {/* Calendar */}
@@ -285,11 +305,64 @@ function CalendarContent() {
         </motion.div>
       </div>
 
+      {/* Date action picker */}
+      <Dialog open={dateActionOpen} onOpenChange={setDateActionOpen}>
+        <DialogContent className="sm:max-w-[320px] bg-slate-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white text-base">
+              {format(selectedDate, 'EEEE dd MMMM')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 pt-2">
+            <button
+              onClick={() => {
+                setDateActionOpen(false)
+                setModalOpen(true)
+              }}
+              className="flex items-center gap-3 w-full p-3 rounded-xl border border-white/10 hover:border-orange-500/50 hover:bg-orange-500/10 transition-all text-left"
+            >
+              <Dumbbell className="w-5 h-5 text-orange-400 flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-white">Chercher un workout existant</div>
+                <div className="text-xs text-slate-400">Parcourir la bibliothèque</div>
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setDateActionOpen(false)
+                setParseBoxWodOpen(true)
+              }}
+              className="flex items-center gap-3 w-full p-3 rounded-xl border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all text-left"
+            >
+              <Brain className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-white">Box WOD — coller depuis Instagram</div>
+                <div className="text-xs text-slate-400">L&apos;IA parse et structure le WOD</div>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <ScheduleWorkoutModal
         open={modalOpen}
         onOpenChange={setModalOpen}
         selectedDate={selectedDate}
         onSchedule={handleScheduleWorkout}
+      />
+
+      <ParseBoxWodModal
+        open={parseBoxWodOpen}
+        onOpenChange={setParseBoxWodOpen}
+        selectedDate={selectedDate}
+        onSchedule={handleScheduleWorkout}
+      />
+
+      <WeeklyPlannerModal
+        open={weeklyPlannerOpen}
+        onOpenChange={setWeeklyPlannerOpen}
+        weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })}
+        onPlanned={() => refetch()}
       />
     </motion.div>
   )

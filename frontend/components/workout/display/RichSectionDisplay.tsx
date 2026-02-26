@@ -16,6 +16,9 @@ function getSectionColors(section: WorkoutSection) {
   const formatLower = section.format?.toLowerCase() || ''
   const sectionType = section.type
 
+  // E2MOM, E3MOM, etc. → EMOM colors
+  if (/e\d+mom/.test(formatLower)) return FORMAT_COLORS['emom']
+
   for (const key of Object.keys(FORMAT_COLORS)) {
     if (formatLower.includes(key)) return FORMAT_COLORS[key]
   }

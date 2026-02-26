@@ -1,5 +1,5 @@
 import { Type } from "class-transformer"
-import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, ValidateNested } from "class-validator"
+import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MinLength, ValidateNested } from "class-validator"
 
 export class CreateWorkoutDto {
   @IsString()
@@ -392,6 +392,31 @@ export class WorkoutDto {
   image_url?: string
 }
 
+
+export class ParseWorkoutTextDto {
+  @IsString()
+  @MinLength(10)
+  text!: string
+}
+
+export class WeeklyPlanDayDto {
+  @IsString()
+  date!: string // 'YYYY-MM-DD'
+
+  @IsIn(['perso', 'box', 'rest'])
+  type!: string
+
+  @IsOptional()
+  @IsString()
+  focus?: string
+}
+
+export class WeeklyPlanDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WeeklyPlanDayDto)
+  days!: WeeklyPlanDayDto[]
+}
 
 /**
  * DTO pour les résultats de benchmark

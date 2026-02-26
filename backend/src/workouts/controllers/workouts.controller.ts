@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { CreateWorkoutDto, GeneratePersonalizedWorkoutDto, GenerateWorkoutDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
-import { AIWorkoutGeneratorService, GeneratedWorkout } from '../services/ai-workout-generator.service'
+import { CreateWorkoutDto, GeneratePersonalizedWorkoutDto, GenerateWorkoutDto, ParseWorkoutTextDto, SaveBenchmarkResultDto, WeeklyPlanDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
+import { AIWorkoutGeneratorService, GeneratedWorkout, WeeklyPlanResult } from '../services/ai-workout-generator.service'
 import { WorkoutsService } from '../services/workouts.service'
 
 @Controller('workouts')
@@ -95,6 +95,21 @@ export class WorkoutsController {
   @UseGuards(JwtAuthGuard)
   async create(@Body() createWorkoutDto: CreateWorkoutDto) {
     return await this.service.create(createWorkoutDto)
+  }
+
+  @Post('parse-text')
+  @UseGuards(JwtAuthGuard)
+  async parseText(@Body() dto: ParseWorkoutTextDto): Promise<GeneratedWorkout> {
+    return this.aiGenerator.parseWorkoutText(dto.text)
+  }
+
+  @Post('weekly-plan')
+  @UseGuards(JwtAuthGuard)
+  async weeklyPlan(
+    @Body() dto: WeeklyPlanDto,
+    @Request() req: { user: { id: string } },
+  ): Promise<WeeklyPlanResult> {
+    return this.aiGenerator.generateWeeklyPlan(req.user.id, dto.days)
   }
 
   @Post('generate-ai-personalized')

@@ -3,7 +3,8 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:schedule-x.dev)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

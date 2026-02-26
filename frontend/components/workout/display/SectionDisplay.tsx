@@ -3,6 +3,7 @@ import { Check, Play, X } from 'lucide-react'
 import { AMRAPTimer } from '@/app/timer/timers/AMRAPTimer'
 import { EMOMTimer } from '@/app/timer/timers/EMOMTimer'
 import { ForTimeTimer } from '@/app/timer/timers/ForTimeTimer'
+import { StrengthRestTimer } from '@/app/timer/timers/StrengthRestTimer'
 import { TabataTimer } from '@/app/timer/timers/TabataTimer'
 import { ExerciseDisplay } from './ExerciseDisplay'
 import { ExerciseSlider } from './ExerciseSlider'
@@ -78,16 +79,23 @@ export function SectionDisplay({
             return <ForTimeTimer capMin={section.duration_min} />
         }
         // Détection EMOM par type ou format (EMOM, E2MOM, E3MOM, etc.)
-        if ((section.type === 'emom' || section.format?.toLowerCase().includes('emom')) && section.duration_min) {
+        if (section.type === 'emom' || section.format?.toLowerCase().includes('emom') || /e\d+mom/.test(section.format?.toLowerCase() || '')) {
             // Extraire l'intervalle (E2MOM = 2 min, E3MOM = 3 min, sinon 1 min par défaut)
             const formatLower = section.format?.toLowerCase() || ''
             const intervalMatch = formatLower.match(/e(\d+)mom/)
             const intervalMin = intervalMatch ? parseInt(intervalMatch[1]) : 1
-            return <EMOMTimer durationMin={section.duration_min} intervalMin={intervalMin} />
+            // rounds est la source de vérité quand présent (rounds × interval > duration_min)
+            const durationMin = section.rounds ? section.rounds * intervalMin : section.duration_min
+            if (!durationMin) return null
+            return <EMOMTimer durationMin={durationMin} intervalMin={intervalMin} />
         }
         // Détection Tabata par type ou format
         if (section.type === 'tabata' || section.format?.toLowerCase().includes('tabata')) {
             return <TabataTimer rounds={section.rounds} workSeconds={20} restSeconds={10} />
+        }
+        // Strength / skill_work avec repos entre séries (sans format EMOM)
+        if (section.rounds && section.rounds > 1 && section.rest_between_rounds) {
+            return <StrengthRestTimer rounds={section.rounds} restSeconds={section.rest_between_rounds} />
         }
         return null
     }
@@ -97,6 +105,8 @@ export function SectionDisplay({
     if (isActiveMode && section.exercises && section.exercises.length > 0) {
         // Détection AMRAP par type ou format
         const isAMRAP = section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')
+        // Strength avec repos : timer en tête + liste statique des exercices
+        const isStrengthWithRest = !isAMRAP && !!section.rounds && section.rounds > 1 && !!section.rest_between_rounds
 
         return (
             <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-auto">
@@ -119,8 +129,8 @@ export function SectionDisplay({
                         <p className="text-sm text-slate-400 mb-4">{section.description}</p>
                     )}
 
-                    {/* Timer de section - compact pour AMRAP */}
-                    {isAMRAP ? (
+                    {/* Timer : compact au-dessus pour AMRAP/Strength, plein pour les autres */}
+                    {(isAMRAP || isStrengthWithRest) ? (
                         <div className="mb-4">
                             {renderTimer()}
                         </div>
@@ -128,9 +138,9 @@ export function SectionDisplay({
                         renderTimer()
                     )}
 
-                    {/* Pour AMRAP: liste d'exercices sans checkboxes, sinon slider */}
+                    {/* Exercices : liste statique pour AMRAP et Strength+repos, slider pour les autres */}
                     <div className="mt-4">
-                        {isAMRAP ? (
+                        {(isAMRAP || isStrengthWithRest) ? (
                             <>
                                 <div className="space-y-3">
                                     {section.exercises.map((exercise, idx) => (
@@ -143,14 +153,16 @@ export function SectionDisplay({
                                         />
                                     ))}
                                 </div>
-                                {/* Bouton Terminé pour AMRAP */}
-                                <button
-                                    onClick={handleAllExercisesCompleted}
-                                    className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all font-semibold text-base shadow-lg shadow-green-500/30"
-                                >
-                                    <Check className="w-5 h-5" />
-                                    <span>Terminer la section</span>
-                                </button>
+                                {/* Bouton Terminé — uniquement pour AMRAP (Strength gère ses sets lui-même) */}
+                                {isAMRAP && (
+                                    <button
+                                        onClick={handleAllExercisesCompleted}
+                                        className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all font-semibold text-base shadow-lg shadow-green-500/30"
+                                    >
+                                        <Check className="w-5 h-5" />
+                                        <span>Terminer la section</span>
+                                    </button>
+                                )}
                             </>
                         ) : (
                             <ExerciseSlider

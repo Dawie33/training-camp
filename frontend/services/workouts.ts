@@ -6,6 +6,18 @@ import ResourceApi from './resourceApi'
 // Re-export types
 export type { GeneratedWorkout }
 
+export interface WeeklyPlanResultDay {
+  date: string
+  workout_name: string
+  schedule_id: string
+}
+
+export interface WeeklyPlanResult {
+  scheduled: WeeklyPlanResultDay[]
+  skipped: string[]
+  box_days: string[]
+}
+
 export const workoutsApi = new ResourceApi<Workouts, CreateWorkoutDTO, UpdateWorkoutDTO>('/workouts')
 
 // Helper functions for backward compatibility
@@ -210,6 +222,24 @@ export class WorkoutsService {
     additionalInstructions?: string
   }): Promise<GeneratedWorkout> {
     return apiClient.post<GeneratedWorkout>('/workouts/generate-ai-personalized', data)
+  }
+
+  /**
+   * Parse du texte brut (ex: légende Instagram d'une box) et retourne un workout structuré
+   * @param text Texte brut décrivant le WOD
+   * @returns Le workout structuré extrait par l'IA
+   */
+  async parseWorkoutText(text: string): Promise<GeneratedWorkout> {
+    return apiClient.post<GeneratedWorkout>('/workouts/parse-text', { text })
+  }
+
+  /**
+   * Génère un plan hebdomadaire : les jours Perso sont générés par l'IA et planifiés
+   * @param days Tableau des 7 jours avec leur type (perso/box/rest) et focus optionnel
+   * @returns Résumé : workouts planifiés, jours skippés (conflit), jours Box
+   */
+  async generateWeeklyPlan(days: { date: string; type: string; focus?: string }[]): Promise<WeeklyPlanResult> {
+    return apiClient.post<WeeklyPlanResult>('/workouts/weekly-plan', { days })
   }
 }
 

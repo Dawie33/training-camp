@@ -42,11 +42,12 @@ function detectTimerConfigs(blocks: WorkoutBlocks): TimerConfig[] {
       continue
     }
 
-    // EMOM
-    if (sectionType === 'emom' || formatLower.includes('emom')) {
+    // EMOM — handles EMOM, E2MOM, E3MOM, etc.
+    if (sectionType === 'emom' || formatLower.includes('emom') || /e\d+mom/.test(formatLower)) {
       const match = formatLower.match(/e(\d+)mom/)
       const intervalMin = match ? parseInt(match[1]) : 1
-      const durationMin = section.duration_min || (section.rounds ? section.rounds * intervalMin : undefined)
+      // rounds is authoritative when set (e.g. E2MOM × 6 rounds = 12 min, not duration_min which may be wrong)
+      const durationMin = section.rounds ? section.rounds * intervalMin : section.duration_min
       if (durationMin) {
         configs.push({
           type: 'emom',
@@ -83,10 +84,10 @@ function detectTimerConfigs(blocks: WorkoutBlocks): TimerConfig[] {
     // Check format on non-timer section types (e.g. skill_work with format EMOM)
     if (formatLower.includes('amrap') && section.duration_min) {
       configs.push({ type: 'amrap', duration: section.duration_min, label: section.title || `AMRAP ${section.duration_min}'` })
-    } else if (formatLower.includes('emom')) {
+    } else if (formatLower.includes('emom') || /e\d+mom/.test(formatLower)) {
       const match2 = formatLower.match(/e(\d+)mom/)
       const interval = match2 ? parseInt(match2[1]) : 1
-      const dur = section.duration_min || (section.rounds ? section.rounds * interval : undefined)
+      const dur = section.rounds ? section.rounds * interval : section.duration_min
       if (dur) {
         configs.push({ type: 'emom', durationMin: dur, intervalMin: interval, label: section.title || `EMOM ${dur}'` })
       }
