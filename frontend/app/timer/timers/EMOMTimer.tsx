@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronRight, Pause, Play, RotateCcw } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 import { useTimerSounds } from '@/hooks/useTimerSounds'
 
@@ -23,21 +23,22 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpda
   const currentRound = Math.floor(elapsedSeconds / intervalSeconds) + 1
   const totalRounds = Math.ceil(totalSeconds / intervalSeconds)
   const roundElapsed = elapsedSeconds % intervalSeconds
+  const roundRemaining = intervalSeconds - roundElapsed
 
-  // Gérer le countdown de 10 secondes
+  const label = intervalMin === 1 ? 'EMOM' : `E${intervalMin}MOM`
+
+  // Countdown de départ (10s)
   useEffect(() => {
     if (countdown === null || countdown === 0) return
 
     const interval = setInterval(() => {
       setCountdown(prev => {
         if (prev === null) return null
-
         if (prev <= 1) {
           sounds.playStartSound()
           setIsRunning(true)
           return null
         }
-
         sounds.playCountdownBeep()
         return prev - 1
       })
@@ -47,7 +48,7 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpda
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countdown])
 
-  // Gérer le timer principal
+  // Timer principal
   useEffect(() => {
     if (!isRunning || countdown !== null) return
 
@@ -57,17 +58,17 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpda
         const nextRoundElapsed = next % intervalSeconds
         const remainingInRound = intervalSeconds - nextRoundElapsed
 
-        // Son d'alerte à 10 secondes de la fin du round
+        // Alerte 10s avant la fin du round
         if (remainingInRound === 10 && next < totalSeconds) {
           sounds.playAlertSound()
         }
 
-        // Son de nouveau round quand on commence un nouveau round
+        // Son de nouveau round
         if (nextRoundElapsed === 0 && next < totalSeconds) {
           sounds.playRoundSound()
         }
 
-        // Son de fin
+        // Fin du workout
         if (next >= totalSeconds) {
           sounds.playFinishSound()
           setIsRunning(false)
@@ -89,44 +90,27 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpda
   }
 
   useEffect(() => {
-    if (onTimeUpdate) {
-      const timeString = formatTime(roundElapsed)
-      onTimeUpdate(timeString)
-    }
-  }, [roundElapsed, onTimeUpdate])
+    if (onTimeUpdate) onTimeUpdate(formatTime(roundRemaining))
+  }, [roundRemaining, onTimeUpdate])
 
-  // Gérer le Wake Lock pour empêcher l'écran de se mettre en veille
+  // Wake lock
   useEffect(() => {
-    const requestWakeLock = async () => {
+    const request = async () => {
       try {
         if ('wakeLock' in navigator && isRunning) {
           wakeLockRef.current = await navigator.wakeLock.request('screen')
         }
-      } catch (err) {
-        console.log('Wake Lock error:', err)
-      }
+      } catch { /* ignore */ }
     }
-
-    const releaseWakeLock = async () => {
+    const release = async () => {
       if (wakeLockRef.current) {
-        try {
-          await wakeLockRef.current.release()
-          wakeLockRef.current = null
-        } catch (err) {
-          console.log('Wake Lock release error:', err)
-        }
+        await wakeLockRef.current.release().catch(() => {})
+        wakeLockRef.current = null
       }
     }
-
-    if (isRunning) {
-      requestWakeLock()
-    } else {
-      releaseWakeLock()
-    }
-
-    return () => {
-      releaseWakeLock()
-    }
+    if (isRunning) request()
+    else release()
+    return () => { release() }
   }, [isRunning])
 
   const reset = () => {
@@ -144,107 +128,126 @@ export function EMOMTimer({ durationMin, intervalMin = 1, onComplete, onTimeUpda
   }
 
   const skipToNextRound = () => {
-    const nextRoundStart = currentRound * intervalSeconds
-    setElapsedSeconds(nextRoundStart)
+    setElapsedSeconds(currentRound * intervalSeconds)
   }
 
-  const progressPercent = (elapsedSeconds / totalSeconds) * 100
-  const roundProgressPercent = (roundElapsed / intervalSeconds) * 100
+  const ringProgress = (roundElapsed / intervalSeconds) * 565
+  const totalProgress = (elapsedSeconds / totalSeconds) * 100
+  const isComplete = elapsedSeconds >= totalSeconds
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border-2 border-purple-300 dark:border-purple-800 rounded-xl p-6 space-y-4">
-      {/* Afficher le countdown si actif */}
+    <div className="relative flex flex-col items-center justify-center space-y-4 lg:space-y-8 w-full">
+      {/* Countdown de départ */}
       {countdown !== null && countdown > 0 ? (
-        <div className="text-center py-8">
-          <div className="text-xs font-medium text-muted-foreground mb-2">Préparez-vous...</div>
-          <div className="text-8xl font-bold font-mono text-purple-600 dark:text-purple-400 animate-pulse">
+        <div className="text-center py-4 lg:py-8">
+          <div className="text-xs font-medium text-slate-400 mb-2">Préparez-vous...</div>
+          <div className="text-6xl lg:text-8xl font-bold font-mono text-purple-500 animate-pulse">
             {countdown}
           </div>
-          <div className="text-sm text-muted-foreground mt-2">Get Ready!</div>
+          <div className="text-sm text-slate-400 mt-2">Get Ready!</div>
         </div>
       ) : (
         <>
-          {/* Round actuel */}
-          <div className="text-center">
-            <div className="text-sm font-medium text-muted-foreground mb-1">EMOM</div>
-            <div className="text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-              Round {currentRound} / {totalRounds}
-            </div>
+          {/* Badge label */}
+          <div className="inline-block px-3 lg:px-4 py-1.5 lg:py-2 bg-purple-500/10 border border-purple-500/30 rounded-full">
+            <span className="text-purple-400 text-xs lg:text-sm font-semibold tracking-wide">
+              {label}
+            </span>
           </div>
 
-          {/* Timer du round */}
-          <div className="text-center">
-            <div className="text-sm text-muted-foreground mb-1">Temps dans le round</div>
-            <div className="text-4xl font-bold font-mono text-purple-600 dark:text-purple-400">
-              {formatTime(roundElapsed)}
-            </div>
-            <div className="text-sm text-muted-foreground mt-1">
-              / {formatTime(intervalSeconds)}
-            </div>
+          {/* Indicateur de round */}
+          <div className="text-slate-400 text-base lg:text-lg">
+            Round{' '}
+            <span className="text-white font-bold text-xl lg:text-2xl">{currentRound}</span>
+            {' '}/ {totalRounds}
           </div>
 
-          {/* Barre de progression du round */}
-          <div className="w-full bg-muted rounded-full h-4 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000 ease-linear"
-              style={{ width: `${roundProgressPercent}%` }}
-            />
+          {/* Timer principal avec anneau SVG (temps restant dans le round) */}
+          <div className="relative">
+            <div className="text-7xl lg:text-[120px] font-bold leading-none tracking-tighter font-mono text-purple-400">
+              {formatTime(roundRemaining)}
+            </div>
+
+            <svg
+              className="absolute inset-0 -m-4 lg:-m-8 w-[calc(100%+2rem)] lg:w-[calc(100%+4rem)] h-[calc(100%+2rem)] lg:h-[calc(100%+4rem)]"
+              viewBox="0 0 200 200"
+            >
+              <circle
+                cx="100" cy="100" r="90"
+                fill="none"
+                stroke="rgba(148, 163, 184, 0.1)"
+                strokeWidth="4"
+              />
+              <circle
+                cx="100" cy="100" r="90"
+                fill="none"
+                stroke="rgb(168, 85, 247)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={`${ringProgress} 565`}
+                transform="rotate(-90 100 100)"
+                className="transition-all duration-1000"
+              />
+            </svg>
           </div>
 
           {/* Progression totale */}
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Temps total: {formatTime(elapsedSeconds)}</span>
-            <span>{formatTime(totalSeconds)}</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-            <div
-              className="h-full bg-purple-300 dark:bg-purple-700 transition-all duration-1000 ease-linear"
-              style={{ width: `${progressPercent}%` }}
-            />
+          <div className="w-full space-y-1 px-2">
+            <div className="flex justify-between text-xs text-slate-500">
+              <span>Total : {formatTime(elapsedSeconds)}</span>
+              <span>{formatTime(totalSeconds)}</span>
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-full bg-purple-500/50 transition-all duration-1000 ease-linear"
+                style={{ width: `${totalProgress}%` }}
+              />
+            </div>
           </div>
 
-          {/* Contrôles */}
-          <div className="flex gap-2">
+          {/* Boutons de contrôle */}
+          <div className="flex gap-3 lg:gap-4 justify-center">
             <button
               onClick={handleStart}
-              disabled={elapsedSeconds >= totalSeconds}
-              className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-muted disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              disabled={isComplete}
+              className="w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-purple-500 hover:bg-purple-600 transition-all shadow-lg shadow-purple-500/30 flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isRunning ? (
-                <>
-                  <Pause className="w-5 h-5" />
-                  Pause
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5" />
-                  {elapsedSeconds > 0 && elapsedSeconds < totalSeconds ? 'Reprendre' : 'Démarrer'}
-                </>
-              )}
+              <span className="text-lg lg:text-xl font-bold">
+                {isRunning ? '⏸' : '▶'}
+              </span>
             </button>
+
             {isRunning && currentRound < totalRounds && (
               <button
                 onClick={skipToNextRound}
-                className="px-4 py-3 border-2 border-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
+                className="w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-slate-800 hover:bg-slate-700 transition-all flex items-center justify-center border border-slate-700 active:scale-95"
                 title="Round suivant"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" />
               </button>
             )}
+
             <button
               onClick={reset}
-              className="px-4 py-3 border-2 border-border hover:bg-accent rounded-lg transition-colors"
+              className="w-14 h-14 lg:w-16 lg:h-16 rounded-full bg-slate-800 hover:bg-slate-700 transition-all flex items-center justify-center border border-slate-700 active:scale-95"
               title="Recommencer"
             >
-              <RotateCcw className="w-5 h-5" />
+              <span className="text-lg lg:text-xl">↺</span>
             </button>
           </div>
 
-          {elapsedSeconds >= totalSeconds && (
-            <div className="bg-green-100 dark:bg-green-950 border border-green-300 dark:border-green-800 rounded-lg p-3 text-center">
-              <p className="font-semibold text-green-900 dark:text-green-100">
-                🎉 EMOM Terminé ! {totalRounds} rounds complétés
+          {/* Statut */}
+          {isComplete && (
+            <div className="px-4 lg:px-6 py-2 lg:py-3 bg-green-500/20 border border-green-500/30 rounded-xl">
+              <p className="font-semibold text-green-400 text-sm lg:text-base">
+                🎉 {label} Terminé ! {totalRounds} rounds complétés
               </p>
+            </div>
+          )}
+
+          {!isRunning && elapsedSeconds === 0 && (
+            <div className="text-slate-500 text-xs lg:text-sm">
+              Appuyez sur play pour démarrer
             </div>
           )}
         </>
