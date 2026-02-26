@@ -152,9 +152,9 @@ export function WorkoutProgressComparison({ progressData, loading }: WorkoutProg
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
         <h2 className="text-2xl font-bold text-white mb-6">Comparaison WOD</h2>
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 animate-pulse mb-4" />
-          <p className="text-slate-400">Chargement des progressions...</p>
+        <div className="flex items-center gap-3 py-3">
+          <div className="w-5 h-5 rounded bg-gradient-to-br from-orange-500 to-red-600 animate-pulse shrink-0" />
+          <p className="text-slate-400 text-sm">Chargement des progressions...</p>
         </div>
       </div>
     )
@@ -174,14 +174,12 @@ export function WorkoutProgressComparison({ progressData, loading }: WorkoutProg
       </div>
 
       {progressData.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mb-4">
-            <span className="text-2xl">📊</span>
+        <div className="flex items-center gap-4 py-4 px-5 bg-slate-800/30 border border-slate-700/30 rounded-xl text-left">
+          <span className="text-2xl shrink-0">📊</span>
+          <div>
+            <p className="text-slate-300 font-medium text-sm">Pas encore de comparaison disponible</p>
+            <p className="text-xs text-slate-500 mt-0.5">Fais le même WOD au moins 2 fois pour voir ta progression</p>
           </div>
-          <p className="text-slate-400 mb-1">Pas encore de comparaison disponible</p>
-          <p className="text-sm text-slate-500">
-            Fais le même WOD au moins 2 fois pour voir ta progression
-          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

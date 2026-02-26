@@ -40,7 +40,7 @@ export function useWorkoutStats() {
       }, 0)
 
     // Calculer les workouts par jour (30 derniers jours)
-    const workoutsByDay = []
+    const workoutsByDay: { date: string; count: number; duration: number }[] = []
     for (let i = 29; i >= 0; i--) {
       const date = new Date(now)
       date.setDate(date.getDate() - i)
@@ -234,6 +234,7 @@ export function useWorkoutStats() {
   return {
     workoutStats,
     loading,
-    formatDuration
+    formatDuration,
+    workoutSessions,
   }
 }

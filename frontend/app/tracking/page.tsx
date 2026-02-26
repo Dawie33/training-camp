@@ -13,7 +13,7 @@ import { useWorkoutProgress } from './hooks/useWorkoutProgress'
 import { useWorkoutStats } from './hooks/useWorkoutStats'
 
 function TrackingContent() {
-  const { workoutStats, formatDuration } = useWorkoutStats()
+  const { workoutStats, formatDuration, workoutSessions } = useWorkoutStats()
   const { progressData, loading: progressLoading } = useWorkoutProgress()
 
   return (
@@ -74,20 +74,22 @@ function TrackingContent() {
           />
         </motion.div>
 
-        {/* Comparaison WOD */}
-        <motion.div variants={fadeInUp}>
-          <WorkoutProgressComparison progressData={progressData} loading={progressLoading} />
-        </motion.div>
+        {/* Comparaison WOD — visible uniquement si des données existent */}
+        {(progressLoading || progressData.length > 0) && (
+          <motion.div variants={fadeInUp}>
+            <WorkoutProgressComparison progressData={progressData} loading={progressLoading} />
+          </motion.div>
+        )}
 
         {/* Graphique de progression */}
         <motion.div variants={fadeInUp}>
           <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
             <div className="flex items-center gap-2 mb-6">
               <span className="text-lg">📈</span>
-              <h2 className="text-2xl font-bold text-white">Progression (30 derniers jours)</h2>
+              <h2 className="text-2xl font-bold text-white">Activité & Progression</h2>
             </div>
-            {workoutStats && workoutStats.workoutsByDay.length > 0 ? (
-              <ProgressChart data={workoutStats.workoutsByDay} />
+            {workoutSessions.length > 0 ? (
+              <ProgressChart sessions={workoutSessions} />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-12 h-12 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mb-4">

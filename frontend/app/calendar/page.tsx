@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
 import { ParseBoxWodModal } from '@/components/calendar/ParseBoxWodModal'
 import { WeeklyPlannerModal } from '@/components/calendar/WeeklyPlannerModal'
+import { LogWorkoutModal } from '@/components/calendar/LogWorkoutModal'
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { motion } from 'framer-motion'
-import { Brain, Calendar, Check, Dumbbell, ExternalLink, SkipForward, Trash2 } from 'lucide-react'
+import { Brain, Calendar, Check, Dumbbell, ExternalLink, SkipForward, Trash2, Trophy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { useWorkoutSchedule } from './hooks/useWorkoutSchedule'
@@ -62,6 +63,7 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
   const onComplete = calendarEvent._onComplete as (() => void) | undefined
   const onSkip = calendarEvent._onSkip as (() => void) | undefined
   const onDelete = calendarEvent._onDelete as (() => void) | undefined
+  const onLog = calendarEvent._onLog as (() => void) | undefined
 
   return (
     <div className="p-4 min-w-[280px]">
@@ -108,11 +110,19 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
           <>
             <Button
               size="sm"
+              onClick={onLog}
+              className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
+            >
+              <Trophy className="w-3.5 h-3.5 mr-1" />
+              Logger le WOD
+            </Button>
+            <Button
+              size="sm"
               onClick={onComplete}
               className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
             >
               <Check className="w-3.5 h-3.5 mr-1" />
-              Complété
+              Terminer sans résultat
             </Button>
             <Button
               size="sm"
@@ -155,6 +165,13 @@ function CalendarContent() {
   const [dateActionOpen, setDateActionOpen] = useState(false)
   const [parseBoxWodOpen, setParseBoxWodOpen] = useState(false)
   const [weeklyPlannerOpen, setWeeklyPlannerOpen] = useState(false)
+  const [logModalOpen, setLogModalOpen] = useState(false)
+  const [logModalData, setLogModalData] = useState<{
+    scheduleId: string
+    workoutId: string
+    workoutName: string
+    workoutType?: string
+  } | null>(null)
 
   const { schedules, loading, createSchedule, refetch, updateSchedule, deleteSchedule, markAsCompleted, markAsSkipped } = useWorkoutSchedule()
 
@@ -189,6 +206,16 @@ function CalendarContent() {
             deleteSchedule(schedule.id)
             eventModalPlugin.close()
           }
+        },
+        _onLog: () => {
+          setLogModalData({
+            scheduleId: schedule.id,
+            workoutId: schedule.workout_id,
+            workoutName: schedule.workout_name ?? 'WOD',
+            workoutType: schedule.workout_type,
+          })
+          setLogModalOpen(true)
+          eventModalPlugin.close()
         },
       }
     })
@@ -364,6 +391,18 @@ function CalendarContent() {
         weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })}
         onPlanned={() => refetch()}
       />
+
+      {logModalData && (
+        <LogWorkoutModal
+          open={logModalOpen}
+          onOpenChange={setLogModalOpen}
+          scheduleId={logModalData.scheduleId}
+          workoutId={logModalData.workoutId}
+          workoutName={logModalData.workoutName}
+          workoutType={logModalData.workoutType}
+          onLogged={() => { refetch(); setLogModalOpen(false) }}
+        />
+      )}
     </motion.div>
   )
 }

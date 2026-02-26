@@ -1,122 +1,196 @@
 'use client'
 
-import { ProgressData } from '@/domain/entities/workout-history'
+import { WorkoutSession } from '@/domain/entities/workout'
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 
 interface ProgressChartProps {
-  data: ProgressData[]
+  sessions: WorkoutSession[]
 }
 
-export function ProgressChart({ data }: ProgressChartProps) {
-  const maxCount = useMemo(() => {
-    return Math.max(...data.map(d => d.count), 1)
-  }, [data])
+export function ProgressChart({ sessions }: ProgressChartProps) {
+  const completed = useMemo(() => sessions.filter(s => s.completed_at), [sessions])
 
-  const maxDuration = useMemo(() => {
-    return Math.max(...data.map(d => d.duration), 1)
-  }, [data])
+  // === 1. HEATMAP (12 semaines, lundi → dimanche) ===
+  const heatmapWeeks = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const dow = today.getDay()
+    const toMonday = dow === 0 ? 6 : dow - 1
+    const thisMonday = new Date(today)
+    thisMonday.setDate(today.getDate() - toMonday)
+    const startMonday = new Date(thisMonday)
+    startMonday.setDate(thisMonday.getDate() - 11 * 7)
+
+    const map: Record<string, number> = {}
+    for (const s of completed) {
+      const d = new Date(s.started_at)
+      const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+      map[k] = (map[k] || 0) + 1
+    }
+
+    const weeks: { date: Date; count: number }[][] = Array.from({ length: 12 }, () => [])
+    for (let i = 0; i < 84; i++) {
+      const d = new Date(startMonday)
+      d.setDate(startMonday.getDate() + i)
+      const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+      weeks[Math.floor(i / 7)].push({ date: new Date(d), count: map[k] || 0 })
+    }
+    return weeks
+  }, [completed])
+
+  // === 2. RÉPARTITION PAR JOUR DE SEMAINE ===
+  const dowData = useMemo(() => {
+    const counts = [0, 0, 0, 0, 0, 0, 0] // Lun=0 … Dim=6
+    for (const s of completed) {
+      const dow = new Date(s.started_at).getDay()
+      counts[dow === 0 ? 6 : dow - 1]++
+    }
+    return ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((label, i) => ({
+      label,
+      count: counts[i],
+    }))
+  }, [completed])
+
+  // === 3. VOLUME HEBDOMADAIRE (8 semaines) ===
+  const weeklyVolume = useMemo(() => {
+    const now = new Date()
+    const dow = now.getDay()
+    const toMonday = dow === 0 ? 6 : dow - 1
+    const thisMonday = new Date(now)
+    thisMonday.setDate(now.getDate() - toMonday)
+    thisMonday.setHours(0, 0, 0, 0)
+
+    return Array.from({ length: 8 }, (_, i) => {
+      const offset = 7 - i
+      const wStart = new Date(thisMonday)
+      wStart.setDate(thisMonday.getDate() - offset * 7)
+      const wEnd = new Date(wStart)
+      wEnd.setDate(wStart.getDate() + 6)
+      wEnd.setHours(23, 59, 59, 999)
+
+      const wSessions = completed.filter(s => {
+        const d = new Date(s.started_at)
+        return d >= wStart && d <= wEnd
+      })
+
+      const secs = wSessions.reduce((acc, s) => {
+        if (!s.completed_at) return acc
+        return acc + (new Date(s.completed_at).getTime() - new Date(s.started_at).getTime()) / 1000
+      }, 0)
+
+      const day = wStart.getDate()
+      const month = wStart.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')
+      const label = offset === 0 ? 'Actuelle' : `${day} ${month}`
+
+      return { label, minutes: Math.round(secs / 60), count: wSessions.length }
+    })
+  }, [completed])
+
+  const maxDow = Math.max(...dowData.map(d => d.count), 1)
+  const maxWeekly = Math.max(...weeklyVolume.map(w => w.minutes), 1)
+
+  const cellColor = (n: number) => {
+    if (n === 0) return 'bg-slate-800/80 border-slate-700/40'
+    if (n === 1) return 'bg-orange-900/80 border-orange-700/60'
+    if (n === 2) return 'bg-orange-600 border-orange-500'
+    return 'bg-orange-400 border-orange-300'
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Graphique de fréquence des workouts */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-slate-400">Nombre de workouts par jour</h3>
-        <div className="flex items-end justify-between gap-1 h-48">
-          {data.map((item, index) => {
-            const heightPercent = (item.count / maxCount) * 100
-            const date = new Date(item.date)
-            const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' })
-            const dayNumber = date.getDate()
-
-            return (
-              <motion.div
-                key={item.date}
-                className="flex-1 flex flex-col items-center gap-2"
-                initial={{ height: 0 }}
-                animate={{ height: 'auto' }}
-                transition={{ delay: index * 0.02 }}
-              >
-                <div className="relative flex-1 w-full flex items-end justify-center group">
-                  <motion.div
-                    className="w-full bg-orange-500 rounded-t-md cursor-pointer transition-colors hover:bg-orange-400"
-                    initial={{ height: 0 }}
-                    animate={{ height: `${heightPercent}%` }}
-                    transition={{ delay: index * 0.02, duration: 0.3 }}
-                    style={{ minHeight: item.count > 0 ? '4px' : '0' }}
-                  >
-                    {/* Tooltip */}
-                    {item.count > 0 && (
-                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-lg p-2 text-xs whitespace-nowrap">
-                          <p className="font-medium text-white">{item.count} workout{item.count > 1 ? 's' : ''}</p>
-                          <p className="text-slate-400">
-                            {Math.floor(item.duration / 60)}m {item.duration % 60}s
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs font-medium capitalize text-slate-300">{dayName}</p>
-                  <p className="text-xs text-slate-500">{dayNumber}</p>
-                </div>
-              </motion.div>
-            )
-          })}
+    <div className="space-y-8">
+      {/* HEATMAP */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-slate-400">Consistance des entraînements (12 semaines)</h3>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span>Moins</span>
+            {(['bg-slate-800/80', 'bg-orange-900/80', 'bg-orange-600', 'bg-orange-400'] as const).map((c, i) => (
+              <div key={i} className={`w-3 h-3 rounded-sm ${c}`} />
+            ))}
+            <span>Plus</span>
+          </div>
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto">
+          {/* Étiquettes jours */}
+          <div className="flex flex-col gap-1 mr-1 shrink-0">
+            {['Lun', '', 'Mer', '', 'Ven', '', 'Dim'].map((label, i) => (
+              <div key={i} className="h-4 flex items-center text-xs text-slate-500 w-7">
+                {label}
+              </div>
+            ))}
+          </div>
+          {/* Grille */}
+          <div className="flex gap-1">
+            {heatmapWeeks.map((week, wi) => (
+              <div key={wi} className="flex flex-col gap-1">
+                {week.map((day, di) => (
+                  <div
+                    key={di}
+                    className={`w-4 h-4 rounded-sm border transition-transform hover:scale-125 cursor-default ${cellColor(day.count)}`}
+                    title={`${day.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} : ${day.count} session${day.count > 1 ? 's' : ''}`}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Graphique de durée */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-slate-400">Durée totale par jour (minutes)</h3>
-        <div className="flex items-end justify-between gap-1 h-32">
-          {data.map((item, index) => {
-            const heightPercent = (item.duration / maxDuration) * 100
-            const durationMinutes = Math.floor(item.duration / 60)
-
-            return (
-              <motion.div
-                key={`duration-${item.date}`}
-                className="flex-1 flex flex-col items-center gap-2"
-                initial={{ height: 0 }}
-                animate={{ height: 'auto' }}
-                transition={{ delay: index * 0.02 }}
-              >
-                <div className="relative flex-1 w-full flex items-end justify-center group">
+      {/* LIGNE DU BAS : Jours de semaine + Volume hebdomadaire */}
+      <div className="grid grid-cols-2 gap-8">
+        {/* Répartition par jour */}
+        <div>
+          <h3 className="text-sm font-medium text-slate-400 mb-3">Sessions par jour de semaine</h3>
+          <div className="space-y-2.5">
+            {dowData.map(({ label, count }) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="text-xs font-medium text-slate-400 w-8 shrink-0">{label}</span>
+                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
                   <motion.div
-                    className="w-full bg-gradient-to-t from-orange-500 to-orange-500/50 rounded-t-md cursor-pointer transition-opacity hover:opacity-80"
-                    initial={{ height: 0 }}
-                    animate={{ height: `${heightPercent}%` }}
-                    transition={{ delay: index * 0.02, duration: 0.3 }}
-                    style={{ minHeight: item.duration > 0 ? '4px' : '0' }}
-                  >
-                    {/* Tooltip */}
-                    {item.duration > 0 && (
-                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-lg p-2 text-xs whitespace-nowrap">
-                          <p className="font-medium text-white">{durationMinutes} min</p>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
+                    className="h-full bg-gradient-to-r from-orange-500 to-rose-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(count / maxDow) * 100}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  />
                 </div>
-              </motion.div>
-            )
-          })}
+                <span className="text-xs text-slate-400 w-5 text-right shrink-0">{count}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Légende */}
-      <div className="flex items-center justify-center gap-6 text-xs text-slate-400">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-orange-500 rounded" />
-          <span>Workouts</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-gradient-to-t from-orange-500 to-orange-500/50 rounded" />
-          <span>Durée</span>
+        {/* Volume hebdomadaire */}
+        <div>
+          <h3 className="text-sm font-medium text-slate-400 mb-3">Volume par semaine (minutes)</h3>
+          <div className="flex items-end gap-1.5 h-28">
+            {weeklyVolume.map((week, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative h-full">
+                <div className="w-full flex-1 flex items-end">
+                  <motion.div
+                    className="w-full bg-gradient-to-t from-orange-500 to-rose-500 rounded-t-sm hover:opacity-80 cursor-pointer"
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(week.minutes / maxWeekly) * 100}%` }}
+                    transition={{ delay: i * 0.05, duration: 0.4 }}
+                    style={{ minHeight: week.minutes > 0 ? '3px' : '0' }}
+                  />
+                </div>
+                {week.minutes > 0 && (
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <div className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs whitespace-nowrap">
+                      <p className="font-semibold text-white">{week.minutes} min</p>
+                      <p className="text-slate-400">{week.count} session{week.count > 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="text-center leading-tight" style={{ fontSize: '8px', color: '#64748b' }}>
+                  {week.label.split(' ').map((part, pi) => (
+                    <span key={pi} className="block">{part}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
