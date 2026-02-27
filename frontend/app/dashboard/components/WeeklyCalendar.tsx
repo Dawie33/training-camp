@@ -25,12 +25,12 @@ export function WeeklyCalendar() {
 
       // Ajouter les IDs des sessions
       if (workoutSessions && workoutSessions.length > 0) {
-        workoutSessions.forEach(s => allWorkoutIds.add(s.workout_id))
+        workoutSessions.forEach(s => { if (s.workout_id) allWorkoutIds.add(s.workout_id) })
       }
 
       // Ajouter les IDs des workouts planifiés
       if (schedules && schedules.length > 0) {
-        schedules.forEach(s => allWorkoutIds.add(s.workout_id))
+        schedules.forEach(s => { if (s.workout_id) allWorkoutIds.add(s.workout_id) })
       }
 
       if (allWorkoutIds.size === 0) return

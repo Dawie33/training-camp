@@ -20,4 +20,10 @@ export const envValidationSchema = Joi.object({
 
   // JWT
   JWT_SECRET: Joi.string().required(),
+
+  // Google Calendar
+  GOOGLE_CLIENT_ID: Joi.string().optional(),
+  GOOGLE_CLIENT_SECRET: Joi.string().optional(),
+  GOOGLE_REDIRECT_URI: Joi.string().optional(),
+  FRONTEND_URL: Joi.string().default('http://localhost:3000'),
 }).or('DATABASE_URL', 'DATABASE_HOST') // Au moins l'un des deux doit être présent

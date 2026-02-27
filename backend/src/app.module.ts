@@ -12,6 +12,7 @@ import { WorkoutsModule } from './workouts/workouts.module'
 import { OneRepMaxesModule } from './one-rep-maxes/one-rep-maxes.module'
 import { SkillsModule } from './skills/skills.module'
 import { WorkoutSessionsModule } from './workout_sessions/workout_sessions.module'
+import { GoogleCalendarModule } from './google-calendar/google-calendar.module'
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { WorkoutSessionsModule } from './workout_sessions/workout_sessions.modul
     ExercisesModule,
     UsersModule,
     SkillsModule,
-    OneRepMaxesModule
+    OneRepMaxesModule,
+    GoogleCalendarModule,
   ],
 })
 export class AppModule { }

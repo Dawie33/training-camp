@@ -1,12 +1,14 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 
 @Injectable()
 export class WorkoutScheduleService {
   constructor(
-    @InjectModel() private readonly knex: Knex
+    @InjectModel() private readonly knex: Knex,
+    private readonly googleCalendarService: GoogleCalendarService,
   ) { }
 
   /**
@@ -164,6 +166,18 @@ export class WorkoutScheduleService {
         status: 'scheduled',
       })
       .returning('*')
+
+    // Sync vers Google Calendar (sans bloquer si non connecté ou en cas d'erreur)
+    try {
+      await this.googleCalendarService.syncWorkout(userId, {
+        name: workout.name,
+        scheduledDate: data.scheduled_date,
+        duration: workout.estimated_duration,
+        type: workout.workout_type,
+      })
+    } catch {
+      // Google Calendar non connecté ou erreur silencieuse
+    }
 
     return schedule
   }
