@@ -11,10 +11,10 @@ export const EQUIPMENT = [
   'bodyweight', 'mat', 'band',
 
   // Free weights
-  'barbell', 'plates', 'rack', 'bench', 'dumbbell', 'kettlebell', 'trap-bar',
+  'barbell', 'plates', 'bumper-plates', 'rack', 'bench', 'dumbbell', 'kettlebell', 'trap-bar',
 
   // CrossFit/Functional
-  'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'ski-erg', 'sled', 'wall-ball',
+  'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'bike-erg', 'ski-erg', 'sled', 'wall-ball',
   'rings', 'parallettes', 'ghd', 'medicine-ball', 'battle-ropes', 'slam-ball', 'sandbag',
   'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles', 'yoke', 'atlas-stone',
 
@@ -45,8 +45,8 @@ export type Equipment = typeof EQUIPMENT[number]
 export const EQUIPMENT_PRESETS = {
   minimal: ['bodyweight', 'mat'],
   home: ['bodyweight', 'mat', 'band', 'dumbbell', 'kettlebell', 'pull-up-bar', 'jump-rope'],
-  crossfit: ['bodyweight', 'mat', 'band', 'barbell', 'plates', 'rack', 'bench', 'dumbbell', 'kettlebell',
-    'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'ski-erg', 'sled', 'wall-ball',
+  crossfit: ['bodyweight', 'mat', 'band', 'barbell', 'bumper-plates', 'rack', 'bench', 'dumbbell', 'kettlebell',
+    'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'bike-erg', 'ski-erg', 'sled', 'wall-ball',
     'rings', 'parallettes', 'ghd', 'medicine-ball', 'battle-ropes', 'slam-ball', 'sandbag',
     'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles'],
   gym: EQUIPMENT.filter(e => !['rings', 'parallettes', 'ghd', 'ski-erg', 'assault-bike', 'wall-ball'].includes(e)),

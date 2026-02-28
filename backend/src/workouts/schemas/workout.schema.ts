@@ -50,16 +50,16 @@ function normalizeEquipmentName(name: string): string {
 }
 
 /**
- * Schéma de validation pour l'équipement avec normalisation automatique
+ * Schéma de validation pour l'équipement avec normalisation automatique.
+ * Les équipements inconnus sont ignorés silencieusement (null filtré en aval).
  */
 export const EquipmentSchema = z.string().transform((val) => {
   const normalized = normalizeEquipmentName(val)
-  // Vérifier que l'équipement normalisé existe dans la liste
   if (!EQUIPMENT.includes(normalized as any)) {
-    throw new Error(`Equipment "${val}" (normalized: "${normalized}") is not in the allowed list`)
+    return null
   }
   return normalized
-})
+}).nullable()
 
 /**
  * Schéma de validation pour un exercice
@@ -82,7 +82,7 @@ export const ExerciseSchema = z.object({
   cadence: z.string().nullable().optional(),
   power: z.string().nullable().optional(),
   heart_rate: z.string().nullable().optional(),
-  equipment: z.array(EquipmentSchema).nullable().optional(),
+  equipment: z.array(EquipmentSchema).transform(arr => arr.filter((e): e is string => e !== null)).nullable().optional(),
   easier_option: z.string().nullable().optional(),
   harder_option: z.string().nullable().optional(),
   target_rpe: z.string().nullable().optional(),
@@ -122,7 +122,7 @@ export const GeneratedWorkoutSchema = z.object({
   difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
   intensity: z.enum(['low', 'moderate', 'high', 'very_high']),
   blocks: WorkoutBlocksSchema,
-  equipment_required: z.array(EquipmentSchema).nullable().optional(),
+  equipment_required: z.array(EquipmentSchema).transform(arr => arr.filter((e): e is string => e !== null)).nullable().optional(),
   focus_areas: z.array(z.string()).nullable().optional(),
   tags: z.array(z.string()).nullable().optional(),
   coach_notes: z.string().nullable().optional(),

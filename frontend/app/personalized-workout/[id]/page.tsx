@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
 import { RichSectionDisplay } from '@/components/workout/display/RichSectionDisplay'
 import { WorkoutResultsModal } from '@/components/workout/WorkoutResultsModal'
+import { WorkoutPrintView, printWorkout } from '@/components/workout/WorkoutPrintView'
 import { PersonalizedWorkout } from '@/domain/entities/workout'
 import { WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
 import { useTimerVibration } from '@/hooks/useTimerVibration'
@@ -241,6 +242,14 @@ function PersonalizedWorkoutDetailContent() {
               >
                 <span className="text-xs lg:text-sm font-semibold">{soundEnabled ? 'ON' : 'OFF'}</span>
               </button>
+              <button
+                onClick={printWorkout}
+                className="flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-xs lg:text-sm font-medium text-slate-300"
+                title="Exporter en PDF"
+              >
+                <span>📄</span>
+                <span className="hidden sm:inline">PDF</span>
+              </button>
             </div>
           </div>
 
@@ -371,6 +380,7 @@ function PersonalizedWorkoutDetailContent() {
           version="RX"
         />
       )}
+      <WorkoutPrintView workout={workout.plan_json} />
     </div>
   )
 }

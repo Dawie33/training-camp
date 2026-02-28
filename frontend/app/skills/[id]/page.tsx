@@ -100,6 +100,8 @@ function SkillDetailContent() {
   const [allEquipments, setAllEquipments] = useState<Equipment[]>([])
   const [wodSelectedEquipment, setWodSelectedEquipment] = useState<string[]>([])
   const [equipmentsLoaded, setEquipmentsLoaded] = useState(false)
+  const [boxMode, setBoxMode] = useState(false)
+  const [userProfileEquipment, setUserProfileEquipment] = useState<string[]>([])
 
   const fetchProgram = useCallback(async () => {
     try {
@@ -250,6 +252,7 @@ function SkillDetailContent() {
     setWodStepContext(step)
     setGeneratedWod(null)
     setWodIncludeWarmup(true)
+    setBoxMode(false)
     setWodModalOpen(true)
 
     // Charger les équipements de la DB et pré-remplir depuis le profil user en parallèle
@@ -264,6 +267,7 @@ function SkillDetailContent() {
     }
 
     if (userProfile.status === 'fulfilled' && userProfile.value.equipment_available?.length) {
+      setUserProfileEquipment(userProfile.value.equipment_available)
       setWodSelectedEquipment(userProfile.value.equipment_available)
     }
   }
@@ -295,12 +299,14 @@ function SkillDetailContent() {
           : null,
         `${wodIncludeWarmup ? '2' : '1'}. Section type "skill_work" : reprend les exercices de progression du skill (${exercisesList || program.skill_name}). IMPORTANT : specifier le champ "rounds" avec le nombre de tours et "rest_between_rounds" avec le repos en secondes.`,
         `${wodIncludeWarmup ? '3' : '2'}. Section metcon/amrap/for_time/emom : WOD complementaire qui ne surcharge pas les memes groupes musculaires, ou qui integre le skill ${program.skill_name} dans le metcon. IMPORTANT : toujours specifier le champ "rounds" quand il y a plusieurs tours.`,
-        wodSelectedEquipment.length > 0
-          ? `CONTRAINTE EQUIPEMENT : L'athlete dispose UNIQUEMENT de : ${wodSelectedEquipment.map(slug => {
-            const eq = allEquipments.find(e => e.slug === slug)
-            return eq ? eq.label : slug
-          }).join(', ')}. N'utilise AUCUN autre equipement.`
-          : null,
+        boxMode
+          ? `L'athlete s'entraine dans une box CrossFit avec tout l'equipement standard disponible (barre, disques, kettlebell, rameur, airbike, corde, anneaux, etc.).`
+          : wodSelectedEquipment.length > 0
+            ? `CONTRAINTE EQUIPEMENT : L'athlete dispose UNIQUEMENT de : ${wodSelectedEquipment.map(slug => {
+              const eq = allEquipments.find(e => e.slug === slug)
+              return eq ? eq.label : slug
+            }).join(', ')}. N'utilise AUCUN autre equipement.`
+            : null,
         `Le nom du WOD doit mentionner "${program.skill_name}".`,
         `RAPPEL TECHNIQUE : chaque section doit avoir un champ "rounds" (nombre entier) quand il y a des tours, et "rest_between_rounds" (nombre entier en secondes) quand il y a du repos entre les tours.`,
       ].filter(Boolean).join(' ')
@@ -309,7 +315,7 @@ function SkillDetailContent() {
         workoutType: 'metcon',
         difficulty: 'intermediate',
         duration: 30,
-        equipment: wodSelectedEquipment.length > 0 ? wodSelectedEquipment : undefined,
+        equipment: boxMode ? undefined : (wodSelectedEquipment.length > 0 ? wodSelectedEquipment : undefined),
         additionalInstructions,
       })
       setGeneratedWod(wod)
@@ -790,7 +796,7 @@ function SkillDetailContent() {
           ) : generatedWod ? (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-bold text-white">{generatedWod.name}</h3>
+                <h3 className="text-lg font-bold">{generatedWod.name}</h3>
                 {generatedWod.description && (
                   <p className="text-slate-400 text-sm mt-1">{generatedWod.description}</p>
                 )}
@@ -882,44 +888,49 @@ function SkillDetailContent() {
 
               {/* Equipment selection */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-white">Equipement disponible</Label>
-                  {wodSelectedEquipment.length > 0 && (
-                    <span className="text-xs text-orange-400">
-                      {wodSelectedEquipment.length} depuis votre profil
-                    </span>
-                  )}
+                <Label className="text-white">Lieu d&apos;entrainement</Label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBoxMode(false)
+                      setWodSelectedEquipment(userProfileEquipment)
+                    }}
+                    className={`text-left rounded-lg p-3 border transition-all ${!boxMode
+                      ? 'bg-orange-500/10 border-orange-500/30'
+                      : 'bg-white/5 border-white/10'
+                      }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-white">Mon equipement</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{userProfileEquipment.length} piece(s)</p>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 transition-all ${!boxMode ? 'bg-orange-500 border-orange-500' : 'border-slate-500'}`} />
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBoxMode(true)
+                      setWodSelectedEquipment(allEquipments.map(e => e.slug))
+                    }}
+                    className={`text-left rounded-lg p-3 border transition-all ${boxMode
+                      ? 'bg-blue-500/10 border-blue-500/30'
+                      : 'bg-white/5 border-white/10'
+                      }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-white">Box CrossFit</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Tout l&apos;equipement</p>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 transition-all ${boxMode ? 'bg-blue-500 border-blue-500' : 'border-slate-500'}`} />
+                    </div>
+                  </button>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Pre-rempli depuis votre profil. Modifiez si besoin.
-                </p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {allEquipments.map((eq) => {
-                    const isSelected = wodSelectedEquipment.includes(eq.slug)
-                    return (
-                      <button
-                        key={eq.id}
-                        type="button"
-                        onClick={() => {
-                          setWodSelectedEquipment(prev =>
-                            isSelected ? prev.filter(e => e !== eq.slug) : [...prev, eq.slug]
-                          )
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${isSelected
-                          ? 'bg-orange-500/20 border-orange-500/50 text-orange-300'
-                          : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-                          }`}
-                      >
-                        {eq.label}
-                      </button>
-                    )
-                  })}
-                </div>
-                {wodSelectedEquipment.length > 0 && (
-                  <p className="text-xs text-orange-400 mt-1">
-                    {wodSelectedEquipment.length} equipement(s) selectionne(s)
-                  </p>
-                )}
               </div>
 
               <Button

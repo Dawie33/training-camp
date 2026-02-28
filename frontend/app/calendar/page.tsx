@@ -4,31 +4,34 @@ import 'temporal-polyfill/global'
 import './calendar-theme.css'
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
-import { Button } from '@/components/ui/button'
-import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
-import { ParseBoxWodModal } from '@/components/calendar/ParseBoxWodModal'
-import { WeeklyPlannerModal } from '@/components/calendar/WeeklyPlannerModal'
 import { LogWorkoutModal } from '@/components/calendar/LogWorkoutModal'
+import { ParseBoxWodModal } from '@/components/calendar/ParseBoxWodModal'
+import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
+import { WeeklyPlannerModal } from '@/components/calendar/WeeklyPlannerModal'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { motion } from 'framer-motion'
-import { Brain, Calendar, Check, Dumbbell, ExternalLink, SkipForward, Trash2, Trophy, Unlink } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { toast } from 'sonner'
-import { googleCalendarApi } from '@/services/google-calendar'
+import { WorkoutPrintView, printWorkout } from '@/components/workout/WorkoutPrintView'
+import type { Workouts } from '@/domain/entities/workout'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { useWorkoutSchedule } from './hooks/useWorkoutSchedule'
-import { format, startOfWeek } from 'date-fns'
-import { useCalendarApp, ScheduleXCalendar } from '@schedule-x/react'
-import { createViewDay, createViewWeek, createViewMonthGrid } from '@schedule-x/calendar'
-import { createEventsServicePlugin } from '@schedule-x/events-service'
+import { workoutsService } from '@/services'
+import { googleCalendarApi } from '@/services/google-calendar'
+import type { WorkoutSchedule } from '@/services/schedule'
+import { createViewDay, createViewMonthGrid, createViewWeek } from '@schedule-x/calendar'
 import { createDragAndDropPlugin } from '@schedule-x/drag-and-drop'
 import { createEventModalPlugin } from '@schedule-x/event-modal'
-import type { WorkoutSchedule } from '@/services/schedule'
+import { createEventsServicePlugin } from '@schedule-x/events-service'
+import { ScheduleXCalendar, useCalendarApp } from '@schedule-x/react'
+import { format, startOfWeek } from 'date-fns'
+import { motion } from 'framer-motion'
+import { Brain, Calendar, Check, Dumbbell, ExternalLink, FileDown, SkipForward, Trash2, Trophy, Unlink } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import { useWorkoutSchedule } from './hooks/useWorkoutSchedule'
 
 // Status color mapping
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
@@ -66,6 +69,7 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
   const onSkip = calendarEvent._onSkip as (() => void) | undefined
   const onDelete = calendarEvent._onDelete as (() => void) | undefined
   const onLog = calendarEvent._onLog as (() => void) | undefined
+  const onPrint = calendarEvent._onPrint as (() => void) | undefined
 
   return (
     <div className="p-4 min-w-[280px]">
@@ -148,6 +152,16 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
             </a>
           </Button>
         )}
+        {calendarEvent.workout_id && onPrint && (
+          <Button
+            size="sm"
+            onClick={onPrint}
+            className="bg-slate-500/20 text-slate-300 border border-slate-500/30 hover:bg-slate-500/30"
+          >
+            <FileDown className="w-3.5 h-3.5 mr-1" />
+            PDF
+          </Button>
+        )}
         <Button
           size="sm"
           onClick={onDelete}
@@ -177,12 +191,13 @@ function CalendarContent() {
 
   const [googleConnected, setGoogleConnected] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [printWorkoutData, setPrintWorkoutData] = useState<Workouts | null>(null)
 
   const { schedules, loading, createSchedule, refetch, updateSchedule, deleteSchedule, markAsCompleted, markAsSkipped } = useWorkoutSchedule()
 
   // Vérifier le statut Google Calendar au chargement + détecter le retour OAuth
   useEffect(() => {
-    googleCalendarApi.getStatus().then(setGoogleConnected).catch(() => {})
+    googleCalendarApi.getStatus().then(setGoogleConnected).catch(() => { })
 
     const params = new URLSearchParams(window.location.search)
     if (params.get('google_connected') === 'true') {
@@ -257,6 +272,13 @@ function CalendarContent() {
           })
           setLogModalOpen(true)
           eventModalPlugin.close()
+        },
+        _onPrint: () => {
+          eventModalPlugin.close()
+          workoutsService.getById(schedule.workout_id).then((w) => {
+            setPrintWorkoutData(w)
+            setTimeout(printWorkout, 100)
+          }).catch(() => toast.error('Impossible de charger le workout'))
         },
       }
     })
@@ -349,10 +371,10 @@ function CalendarContent() {
                 className="bg-white/10 text-white border border-white/20 hover:bg-white/20"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
                 {googleLoading ? 'Connexion...' : 'Sync Google Agenda'}
               </Button>
@@ -470,6 +492,8 @@ function CalendarContent() {
           onLogged={() => { refetch(); setLogModalOpen(false) }}
         />
       )}
+
+      {printWorkoutData && <WorkoutPrintView workout={printWorkoutData} />}
     </motion.div>
   )
 }

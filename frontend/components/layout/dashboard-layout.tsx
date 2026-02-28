@@ -15,7 +15,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const noNavRoutes = ['/login', '/signup', '/']
 
   // Pages en fullscreen (pas de bottom nav ni sidebar)
-  const fullscreenRoutes = ['/workout/']
+  const fullscreenRoutes = ['/workout/', '/personalized-workout/']
 
   const shouldShowNav = !noNavRoutes.includes(pathname)
   const isFullscreen = fullscreenRoutes.some(route => pathname.includes(route))

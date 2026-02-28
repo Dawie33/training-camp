@@ -1,4 +1,4 @@
-import { Exercise, WorkoutSection } from '@/domain/entities/workout-structure'
+import { Exercise, WorkoutSection } from '@/domain/entities/workout-structure';
 
 const FORMAT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   amrap: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500' },
@@ -46,11 +46,11 @@ function RichExerciseDisplay({ exercise, idx, colors }: { exercise: Exercise; id
           {idx + 1}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold">{exercise.name}</div>
+          <div className="font-semibold text-white">{exercise.name}</div>
 
           <div className="flex flex-wrap gap-1.5 mt-1">
             {exercise.duration && (
-              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">{exercise.duration}</span>
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-whrite text-xs text-slate-300">{exercise.duration}</span>
             )}
             {exercise.distance && (
               <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">{exercise.distance}</span>
@@ -85,7 +85,7 @@ function RichExerciseDisplay({ exercise, idx, colors }: { exercise: Exercise; id
         </div>
       </div>
       {exercise.reps && (
-        <div>
+        <div className='text-white'>
           {exercise.reps} reps
         </div>
       )}
@@ -96,14 +96,14 @@ function RichExerciseDisplay({ exercise, idx, colors }: { exercise: Exercise; id
 export function RichSectionDisplay({ section }: { section: WorkoutSection }) {
   const colors = getSectionColors(section)
   const formatLabel = getFormatLabel(section)
-
+  console.log('section', colors)
   return (
     <div className="space-y-4">
       <div className="rounded-xl lg:rounded-2xl overflow-hidden">
         <div className="bg-slate-800/50 p-4 lg:p-6 border border-slate-700/50 border-l-0 rounded-r-xl lg:rounded-r-2xl">
           {/* Section Header */}
           <div className="flex items-center gap-2 lg:gap-3 mb-3">
-            <h3 className="text-lg lg:text-xl font-semibold">
+            <h3 className="text-lg lg:text-xl font-semibold text-white">
               {section.title || section.format || section.type}
             </h3>
             {formatLabel && (
