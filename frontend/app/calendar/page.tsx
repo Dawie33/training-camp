@@ -52,7 +52,7 @@ function CustomEventContent({ calendarEvent }: { calendarEvent: Record<string, u
       <span className={`text-xs font-medium truncate ${colors.text}`}>
         {calendarEvent.title as string}
       </span>
-      {calendarEvent.workout_type && (
+      {!!calendarEvent.workout_type && (
         <span className="text-[10px] text-slate-500 truncate hidden sm:inline">
           {(calendarEvent.workout_type as string).replace(/_/g, ' ')}
         </span>
@@ -90,19 +90,19 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
 
       {/* Details */}
       <div className="space-y-2 mb-4">
-        {calendarEvent.workout_type && (
+        {!!calendarEvent.workout_type && (
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-500">Type:</span>
             <span className="text-slate-300 capitalize">{(calendarEvent.workout_type as string).replace(/_/g, ' ')}</span>
           </div>
         )}
-        {calendarEvent.difficulty && (
+        {!!calendarEvent.difficulty && (
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-500">Difficulté:</span>
             <span className="text-slate-300 capitalize">{calendarEvent.difficulty as string}</span>
           </div>
         )}
-        {calendarEvent.duration && (
+        {!!calendarEvent.duration && (
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-500">Durée:</span>
             <span className="text-slate-300">{calendarEvent.duration as number} min</span>
@@ -114,14 +114,16 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
       <div className="flex flex-wrap gap-2 pt-3 border-t border-white/10">
         {status === 'scheduled' && (
           <>
-            <Button
-              size="sm"
-              onClick={onLog}
-              className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
-            >
-              <Trophy className="w-3.5 h-3.5 mr-1" />
-              Logger le WOD
-            </Button>
+            {onLog && (
+              <Button
+                size="sm"
+                onClick={onLog}
+                className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
+              >
+                <Trophy className="w-3.5 h-3.5 mr-1" />
+                Logger le WOD
+              </Button>
+            )}
             <Button
               size="sm"
               onClick={onComplete}
@@ -140,19 +142,19 @@ function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unk
             </Button>
           </>
         )}
-        {calendarEvent.workout_id && (
+        {!!(calendarEvent.workout_id || calendarEvent.personalized_workout_id) && (
           <Button
             size="sm"
             asChild
             className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
           >
-            <a href={`/workout/${calendarEvent.workout_id}`}>
+            <a href={calendarEvent.workout_id ? `/workout/${calendarEvent.workout_id as string}` : `/personalized-workout/${calendarEvent.personalized_workout_id as string}`}>
               <ExternalLink className="w-3.5 h-3.5 mr-1" />
               Voir
             </a>
           </Button>
         )}
-        {calendarEvent.workout_id && onPrint && (
+        {!!calendarEvent.workout_id && onPrint && (
           <Button
             size="sm"
             onClick={onPrint}
@@ -254,6 +256,7 @@ function CalendarContent() {
         difficulty: schedule.difficulty,
         duration: schedule.estimated_duration,
         workout_id: schedule.workout_id,
+        personalized_workout_id: schedule.personalized_workout_id,
         // Action callbacks
         _onComplete: () => markAsCompleted(schedule.id),
         _onSkip: () => markAsSkipped(schedule.id),
@@ -263,23 +266,23 @@ function CalendarContent() {
             eventModalPlugin.close()
           }
         },
-        _onLog: () => {
+        _onLog: schedule.workout_id ? () => {
           setLogModalData({
             scheduleId: schedule.id,
-            workoutId: schedule.workout_id,
+            workoutId: schedule.workout_id!,
             workoutName: schedule.workout_name ?? 'WOD',
             workoutType: schedule.workout_type,
           })
           setLogModalOpen(true)
           eventModalPlugin.close()
-        },
-        _onPrint: () => {
+        } : undefined,
+        _onPrint: schedule.workout_id ? () => {
           eventModalPlugin.close()
-          workoutsService.getById(schedule.workout_id).then((w) => {
+          workoutsService.getById(schedule.workout_id!).then((w) => {
             setPrintWorkoutData(w)
             setTimeout(printWorkout, 100)
           }).catch(() => toast.error('Impossible de charger le workout'))
-        },
+        } : undefined,
       }
     })
   }, [markAsCompleted, markAsSkipped, deleteSchedule, eventModalPlugin])
@@ -323,9 +326,12 @@ function CalendarContent() {
     }
   }, [schedules, loading, mapSchedulesToEvents, eventsService])
 
-  const handleScheduleWorkout = async (workoutId: string, notes?: string) => {
+  const handleScheduleWorkout = async (
+    payload: { workout_id?: string; personalized_workout_id?: string },
+    notes?: string
+  ) => {
     await createSchedule({
-      workout_id: workoutId,
+      ...payload,
       scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
       notes,
     })

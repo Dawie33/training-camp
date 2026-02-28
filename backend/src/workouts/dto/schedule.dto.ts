@@ -2,9 +2,13 @@ import { Type } from 'class-transformer'
 import { IsDateString, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator'
 
 export class CreateScheduleDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  workout_id!: string
+  workout_id?: string
+
+  @IsOptional()
+  @IsUUID()
+  personalized_workout_id?: string
 
   @IsNotEmpty()
   @IsDateString()

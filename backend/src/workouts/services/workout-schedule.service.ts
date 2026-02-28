@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
@@ -23,13 +23,14 @@ export class WorkoutScheduleService {
     let queryBuilder = this.knex('user_workout_schedule')
       .select(
         'user_workout_schedule.*',
-        'workouts.name as workout_name',
-        'workouts.workout_type',
-        'workouts.difficulty',
-        'workouts.intensity',
-        'workouts.estimated_duration'
+        this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
+        this.knex.raw(`COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`),
+        this.knex.raw(`COALESCE(workouts.difficulty, personalized_workouts.plan_json->>'difficulty') as difficulty`),
+        this.knex.raw(`COALESCE(workouts.intensity, personalized_workouts.plan_json->>'intensity') as intensity`),
+        this.knex.raw(`COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`),
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
+      .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
       .where('user_workout_schedule.user_id', userId)
 
     if (start_date) {
@@ -92,13 +93,14 @@ export class WorkoutScheduleService {
     const schedule = await this.knex('user_workout_schedule')
       .select(
         'user_workout_schedule.*',
-        'workouts.name as workout_name',
-        'workouts.workout_type',
-        'workouts.difficulty',
-        'workouts.intensity',
-        'workouts.estimated_duration'
+        this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
+        this.knex.raw(`COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`),
+        this.knex.raw(`COALESCE(workouts.difficulty, personalized_workouts.plan_json->>'difficulty') as difficulty`),
+        this.knex.raw(`COALESCE(workouts.intensity, personalized_workouts.plan_json->>'intensity') as intensity`),
+        this.knex.raw(`COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`),
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
+      .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
       .where('user_workout_schedule.id', id)
       .where('user_workout_schedule.user_id', userId)
       .first()
@@ -120,13 +122,14 @@ export class WorkoutScheduleService {
     const schedule = await this.knex('user_workout_schedule')
       .select(
         'user_workout_schedule.*',
-        'workouts.name as workout_name',
-        'workouts.workout_type',
-        'workouts.difficulty',
-        'workouts.intensity',
-        'workouts.estimated_duration'
+        this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
+        this.knex.raw(`COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`),
+        this.knex.raw(`COALESCE(workouts.difficulty, personalized_workouts.plan_json->>'difficulty') as difficulty`),
+        this.knex.raw(`COALESCE(workouts.intensity, personalized_workouts.plan_json->>'intensity') as intensity`),
+        this.knex.raw(`COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`),
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
+      .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
       .where('user_workout_schedule.user_id', userId)
       .where('user_workout_schedule.scheduled_date', date)
       .first()
@@ -141,10 +144,35 @@ export class WorkoutScheduleService {
    * @returns La planification créée
    */
   async create(userId: string, data: CreateScheduleDto) {
-    // Vérifier si le workout existe
-    const workout = await this.knex('workouts').where('id', data.workout_id).first()
-    if (!workout) {
-      throw new NotFoundException('Workout non trouvé')
+    if (!data.workout_id && !data.personalized_workout_id) {
+      throw new BadRequestException('workout_id ou personalized_workout_id est requis')
+    }
+
+    let workoutName = 'Workout'
+    let workoutType: string | undefined
+    let workoutDuration: number | undefined
+
+    if (data.workout_id) {
+      // Vérifier si le workout standard existe
+      const workout = await this.knex('workouts').where('id', data.workout_id).first()
+      if (!workout) {
+        throw new NotFoundException('Workout non trouvé')
+      }
+      workoutName = workout.name
+      workoutType = workout.workout_type
+      workoutDuration = workout.estimated_duration
+    } else {
+      // Vérifier si le workout personnalisé existe et appartient à l'utilisateur
+      const pw = await this.knex('personalized_workouts')
+        .where('id', data.personalized_workout_id)
+        .where('user_id', userId)
+        .first()
+      if (!pw) {
+        throw new NotFoundException('Workout personnalisé non trouvé')
+      }
+      workoutName = pw.plan_json?.name || 'Workout Personnalisé'
+      workoutType = pw.plan_json?.workout_type
+      workoutDuration = pw.plan_json?.estimated_duration
     }
 
     // Vérifier qu'il n'y a pas déjà une planification pour cette date
@@ -160,7 +188,8 @@ export class WorkoutScheduleService {
     const [schedule] = await this.knex('user_workout_schedule')
       .insert({
         user_id: userId,
-        workout_id: data.workout_id,
+        workout_id: data.workout_id || null,
+        personalized_workout_id: data.personalized_workout_id || null,
         scheduled_date: data.scheduled_date,
         notes: data.notes || null,
         status: 'scheduled',
@@ -170,10 +199,10 @@ export class WorkoutScheduleService {
     // Sync vers Google Calendar (sans bloquer si non connecté ou en cas d'erreur)
     try {
       await this.googleCalendarService.syncWorkout(userId, {
-        name: workout.name,
+        name: workoutName,
         scheduledDate: data.scheduled_date,
-        duration: workout.estimated_duration,
-        type: workout.workout_type,
+        duration: workoutDuration,
+        type: workoutType,
       })
     } catch {
       // Google Calendar non connecté ou erreur silencieuse

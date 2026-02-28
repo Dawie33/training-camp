@@ -3,7 +3,8 @@ import { apiClient } from './index'
 export interface WorkoutSchedule {
   id: string
   user_id: string
-  workout_id: string
+  workout_id?: string
+  personalized_workout_id?: string
   scheduled_date: string
   status: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
   completed_session_id?: string
@@ -19,7 +20,8 @@ export interface WorkoutSchedule {
 }
 
 export interface CreateScheduleDto {
-  workout_id: string
+  workout_id?: string
+  personalized_workout_id?: string
   scheduled_date: string
   notes?: string
 }

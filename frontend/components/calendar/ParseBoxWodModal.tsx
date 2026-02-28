@@ -22,7 +22,7 @@ interface ParseBoxWodModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedDate: Date
-  onSchedule: (workoutId: string, notes?: string) => Promise<void>
+  onSchedule: (payload: { workout_id?: string; personalized_workout_id?: string }, notes?: string) => Promise<void>
 }
 
 type Phase = 'input' | 'preview' | 'saving'
@@ -79,7 +79,7 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, onSchedule 
         ...({ ai_generated: true } as object),
       } as Parameters<typeof workoutsApi.create>[0])
 
-      await onSchedule(saved.id)
+      await onSchedule({ workout_id: saved.id })
       toast.success(`"${parsedWorkout.name}" planifié pour le ${format(selectedDate, 'dd MMMM', { locale: fr })}`)
       handleClose()
     } catch {
