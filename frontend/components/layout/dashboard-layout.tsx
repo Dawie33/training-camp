@@ -34,7 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
 
       {/* Main content */}
-      <main className={`flex-1 overflow-y-auto w-full ${!isFullscreen ? 'lg:ml-64' : ''} ${!isFullscreen ? 'pb-20 lg:pb-0' : ''}`}>
+      <main className={`flex-1 overflow-y-auto w-full ${!isFullscreen ? 'lg:ml-56' : ''} ${!isFullscreen ? 'pb-20 lg:pb-0' : ''}`}>
         {children}
       </main>
 

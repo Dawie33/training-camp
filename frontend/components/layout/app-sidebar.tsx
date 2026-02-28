@@ -60,7 +60,7 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
   ]
 
   return (
-    <aside className="w-72 min-h-screen p-6 flex flex-col">
+    <aside className="w-56 min-h-screen p-4 flex flex-col">
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-10">
