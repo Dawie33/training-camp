@@ -23,7 +23,6 @@ import { googleCalendarApi } from '@/services/google-calendar'
 import type { WorkoutSchedule } from '@/services/schedule'
 import { createViewDay, createViewMonthGrid, createViewWeek } from '@schedule-x/calendar'
 import { createDragAndDropPlugin } from '@schedule-x/drag-and-drop'
-import { createEventModalPlugin } from '@schedule-x/event-modal'
 import { createEventsServicePlugin } from '@schedule-x/events-service'
 import { ScheduleXCalendar, useCalendarApp } from '@schedule-x/react'
 import { format, startOfWeek } from 'date-fns'
@@ -234,7 +233,7 @@ function CalendarContent() {
   }
 
   const [eventsService] = useState(() => createEventsServicePlugin())
-  const [eventModalPlugin] = useState(() => createEventModalPlugin())
+  const [selectedEvent, setSelectedEvent] = useState<Record<string, unknown> | null>(null)
 
   // Map schedules to schedule-x events
   const mapSchedulesToEvents = useCallback((scheduleList: WorkoutSchedule[]) => {
@@ -258,12 +257,12 @@ function CalendarContent() {
         workout_id: schedule.workout_id,
         personalized_workout_id: schedule.personalized_workout_id,
         // Action callbacks
-        _onComplete: () => markAsCompleted(schedule.id),
-        _onSkip: () => markAsSkipped(schedule.id),
+        _onComplete: () => { markAsCompleted(schedule.id); setSelectedEvent(null) },
+        _onSkip: () => { markAsSkipped(schedule.id); setSelectedEvent(null) },
         _onDelete: () => {
           if (confirm('Voulez-vous vraiment supprimer cette planification ?')) {
             deleteSchedule(schedule.id)
-            eventModalPlugin.close()
+            setSelectedEvent(null)
           }
         },
         _onLog: schedule.workout_id ? () => {
@@ -273,11 +272,11 @@ function CalendarContent() {
             workoutName: schedule.workout_name ?? 'WOD',
             workoutType: schedule.workout_type,
           })
+          setSelectedEvent(null)
           setLogModalOpen(true)
-          eventModalPlugin.close()
         } : undefined,
         _onPrint: schedule.workout_id ? () => {
-          eventModalPlugin.close()
+          setSelectedEvent(null)
           workoutsService.getById(schedule.workout_id!).then((w) => {
             setPrintWorkoutData(w)
             setTimeout(printWorkout, 100)
@@ -285,7 +284,7 @@ function CalendarContent() {
         } : undefined,
       }
     })
-  }, [markAsCompleted, markAsSkipped, deleteSchedule, eventModalPlugin])
+  }, [markAsCompleted, markAsSkipped, deleteSchedule])
 
   const calendar = useCalendarApp({
     locale: 'fr-FR',
@@ -293,8 +292,11 @@ function CalendarContent() {
     defaultView: createViewMonthGrid().name,
     views: [createViewDay(), createViewWeek(), createViewMonthGrid()],
     events: [],
-    plugins: [eventsService, createDragAndDropPlugin(), eventModalPlugin],
+    plugins: [eventsService, createDragAndDropPlugin()],
     callbacks: {
+      onEventClick: (calendarEvent: Record<string, unknown>) => {
+        setSelectedEvent(calendarEvent)
+      },
       onClickDate: (date: Temporal.PlainDate) => {
         const d = new Date(date.year, date.month - 1, date.day)
         setSelectedDate(d)
@@ -341,7 +343,6 @@ function CalendarContent() {
     monthGridEvent: CustomEventContent,
     dateGridEvent: CustomEventContent,
     timeGridEvent: CustomEventContent,
-    eventModal: CustomEventModal,
   }), [])
 
   return (
@@ -498,6 +499,13 @@ function CalendarContent() {
           onLogged={() => { refetch(); setLogModalOpen(false) }}
         />
       )}
+
+      {/* Event detail modal - centered */}
+      <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null) }}>
+        <DialogContent className="sm:max-w-[420px] bg-slate-900 border-white/10 text-white p-0 overflow-hidden">
+          {selectedEvent && <CustomEventModal calendarEvent={selectedEvent} />}
+        </DialogContent>
+      </Dialog>
 
       {printWorkoutData && <WorkoutPrintView workout={printWorkoutData} />}
     </motion.div>
