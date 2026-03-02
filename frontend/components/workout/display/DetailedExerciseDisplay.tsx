@@ -1,8 +1,8 @@
 'use client'
 
-import { Exercise as ExerciseEntity } from '@/domain/entities/exercice'
+import { Exercise as ExerciseEntity } from '@/domain/entities/exercise'
 import { Exercise as WorkoutExercise } from '@/domain/entities/workout-structure'
-import { getExerciseByName } from '@/services/exercices'
+import { getExerciseByName } from '@/services/exercises'
 import { AlertCircle, Loader2, Play, Flame, Timer, Coffee, ArrowLeftRight, Info, FileText, Dumbbell, Wrench } from 'lucide-react'
 import { useEffect, useState } from 'react'
 

@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
@@ -62,9 +61,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <DashboardLayout>
-              {children}
-            </DashboardLayout>
+            {children}
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

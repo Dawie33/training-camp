@@ -1,7 +1,7 @@
 'use client'
 
 import { workoutsService } from "@/services"
-import { Exercise as ExerciseType } from "@/domain/entities/exercice"
+import { Exercise as ExerciseType } from "@/domain/entities/exercise"
 import { Workouts } from "@/domain/entities/workout"
 import { GripVertical, Plus, Trash2, X } from "lucide-react"
 import { useRouter } from "next/navigation"

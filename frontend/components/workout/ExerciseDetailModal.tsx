@@ -1,9 +1,9 @@
 'use client'
 
 import { Equipment } from '@/domain/entities/equipment'
-import { Exercise } from '@/domain/entities/exercice'
+import { Exercise } from '@/domain/entities/exercise'
 import { getEquipment } from '@/services/equipments'
-import { getExercises } from '@/services/exercices'
+import { getExercises } from '@/services/exercises'
 import { motion } from 'framer-motion'
 import { AlertCircle, Dumbbell, ExternalLink, Info, X } from 'lucide-react'
 import { useEffect, useState } from 'react'

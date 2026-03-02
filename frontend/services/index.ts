@@ -19,7 +19,7 @@ export * from './sessions'
 export * from './schedule'
 
 // Exercises
-export * from './exercices'
+export * from './exercises'
 
 // Equipments
 export * from './equipments'
