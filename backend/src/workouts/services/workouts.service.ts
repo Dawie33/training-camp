@@ -363,20 +363,22 @@ export class WorkoutsService {
       baseId = workout.id
     }
 
+    const wodDate = new Date().toISOString().split('T')[0]
+    const workoutWithDate = {
+      ...workout,
+      name: workout.name ? `${workout.name} — ${wodDate}` : wodDate,
+    }
+
     const record = {
       user_id: userId,
       base_id: baseId, // Peut être null pour les workouts générés par IA
-      plan_json: JSON.stringify(workout),
-      wod_date: new Date().toISOString().split('T')[0], // Format YYYY-MM-DD
+      plan_json: JSON.stringify(workoutWithDate),
+      wod_date: wodDate,
       params_json: JSON.stringify({}), // Objet vide par défaut
     }
 
     try {
-      const newWorkout = await this.knex('personalized_workouts')
-        .insert(record)
-        .onConflict(['user_id', 'wod_date'])
-        .merge()
-        .returning('*')
+      const newWorkout = await this.knex('personalized_workouts').insert(record).returning('*')
       return newWorkout[0]
     } catch (error) {
       throw new Error('Failed to create personalized workout: ' + error.message)
