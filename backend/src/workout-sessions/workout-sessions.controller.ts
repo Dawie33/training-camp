@@ -14,7 +14,7 @@ import {
 import { Request } from 'express'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from './dto/session.dto'
-import { WorkoutSessionsService } from './workout_sessions.service'
+import { WorkoutSessionsService } from './workout-sessions.service'
 
 interface AuthenticatedRequest extends Request {
     user: {

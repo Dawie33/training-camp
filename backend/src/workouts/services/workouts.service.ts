@@ -5,7 +5,7 @@ import { InjectModel } from 'nest-knexjs'
 import { safeJsonStringify } from 'src/common/utils/utils'
 import { SaveBenchmarkResultDto } from 'src/workouts/dto/workout.dto'
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
-import { calculateLevelFromBenchmarks } from '../utils'
+import { calculateLevelFromBenchmarks } from '../workout.utils'
 
 
 @Injectable()

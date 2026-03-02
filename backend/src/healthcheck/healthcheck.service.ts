@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import * as fs from 'fs'
 import * as path from 'path'
-import { InfoResponseDTO } from './healthcheck.dto'
+import { InfoResponseDTO } from './dto/healthcheck.dto'
 
 @Injectable()
 export class HealthcheckService {
