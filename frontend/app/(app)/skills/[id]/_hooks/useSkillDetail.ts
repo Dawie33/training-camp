@@ -212,42 +212,66 @@ export function useSkillDetail() {
     try {
       setWodModal(prev => prev.isOpen ? { ...prev, generating: true, generated: null } : prev)
 
-      const exercisesList = step.recommended_exercises?.map(ex => {
-        const details = [ex.sets && `${ex.sets}x`, ex.reps && `${ex.reps} reps`].filter(Boolean).join(' ')
-        return details ? `${ex.name} (${details})` : ex.name
-      }).join(', ') || ''
+      const exercisesDetailed = step.recommended_exercises?.map(ex => {
+        const parts = [ex.name]
+        if (ex.sets) parts.push(`${ex.sets} séries`)
+        if (ex.reps) parts.push(`${ex.reps} reps`)
+        if (ex.rest) parts.push(`repos: ${ex.rest}s`)
+        if (ex.intensity) parts.push(`intensité: ${ex.intensity}`)
+        if (ex.notes) parts.push(`(${ex.notes})`)
+        return parts.join(' — ')
+      }).join('\n  - ') || ''
 
-      const progressInfo = program.steps
-        ? `Progression : ${program.steps.filter(s => s.status === 'completed').length}/${program.steps.length} etapes completees.`
+      const validationDesc = step.validation_criteria
+        ? `${step.validation_criteria.description || ''} (objectif: ${step.validation_criteria.target} ${step.validation_criteria.unit})`
         : ''
 
+      const equipmentConstraint = boxMode
+        ? `ÉQUIPEMENT : Box CrossFit complète (barbell, anneaux, rameur, airbike, kettlebell, corde, gymnastic rings, etc.)`
+        : wodSelectedEquipment.length > 0
+          ? `CONTRAINTE ÉQUIPEMENT : Uniquement ${wodSelectedEquipment.map(slug => allEquipments.find(e => e.slug === slug)?.label || slug).join(', ')}. N'utilise AUCUN autre équipement.`
+          : null
+
       const additionalInstructions = [
-        `L'athlete travaille actuellement sur le skill "${program.skill_name}" (categorie: ${program.skill_category}).`,
-        `Etape en cours : "${step.title}" - ${step.description}`,
-        exercisesList && `Exercices de skill work realises : ${exercisesList}.`,
-        progressInfo,
-        `STRUCTURE OBLIGATOIRE DU WOD (sections dans cet ordre) :`,
+        `L'athlète travaille sur le skill "${program.skill_name}" (catégorie: ${program.skill_category}).`,
+        `Étape en cours : "${step.title}"`,
+        step.description && `Objectif de l'étape : ${step.description}`,
+        validationDesc && `Critère de validation : ${validationDesc}`,
+        step.coaching_tips && `Tips techniques : ${step.coaching_tips}`,
+        ``,
+        `GÉNÈRE UNE SÉANCE EN 2 PARTIES DISTINCTES :`,
+        ``,
+        `═══ PARTIE 1 — PROGRESSION ═══`,
+        `Section type "skill_work". Durée : 20-25 min.`,
+        `Intègre OBLIGATOIREMENT ces exercices dans cet ordre avec leur programmation exacte :`,
+        exercisesDetailed && `  - ${exercisesDetailed}`,
+        `Chaque exercice doit avoir : nombre de sets précis, reps, temps de repos entre sets, intensité/charge cible, notes techniques.`,
+        `La progression doit être dense et structurée — pas légère. C'est le cœur de la séance.`,
+        step.frequency && `Fréquence recommandée : ${step.frequency}`,
+        step.when_to_train && `Moment idéal : ${step.when_to_train}`,
+        ``,
+        `═══ PARTIE 2 — WOD DE MISE EN PRATIQUE ═══`,
+        `Section type "metcon", "amrap", "for_time" ou "emom". Durée : 12-20 min.`,
+        `WOD intense et challengeant qui intègre "${program.skill_name}" ou ses mouvements préparatoires dans un contexte fonctionnel.`,
+        `Le WOD doit être suffisamment chargé en volume et intensité — ne sois pas conservateur.`,
+        `Combine le skill avec des mouvements complémentaires (cardio, haltérophilie ou gymnastics) pour créer un vrai stimulus.`,
+        ``,
+        `STRUCTURE OBLIGATOIRE DES SECTIONS (dans cet ordre) :`,
         wodIncludeWarmup
-          ? `1. Section type "warmup" : echauffement specifique pour le skill ${program.skill_name}.${step.warmup ? ` Base sur : ${step.warmup}.` : ''} Inclure mobilite articulaire et activation musculaire adaptees.`
+          ? `1. "warmup" (8-10 min) : échauffement spécifique pour ${program.skill_name}${step.warmup ? ` — base : ${step.warmup}` : ''}, mobilité articulaire et activation musculaire ciblées.`
           : null,
-        `${wodIncludeWarmup ? '2' : '1'}. Section type "skill_work" : reprend les exercices de progression du skill (${exercisesList || program.skill_name}). IMPORTANT : specifier le champ "rounds" avec le nombre de tours et "rest_between_rounds" avec le repos en secondes.`,
-        `${wodIncludeWarmup ? '3' : '2'}. Section metcon/amrap/for_time/emom : WOD complementaire qui ne surcharge pas les memes groupes musculaires, ou qui integre le skill ${program.skill_name} dans le metcon. IMPORTANT : toujours specifier le champ "rounds" quand il y a plusieurs tours.`,
-        boxMode
-          ? `L'athlete s'entraine dans une box CrossFit avec tout l'equipement standard disponible (barre, disques, kettlebell, rameur, airbike, corde, anneaux, etc.).`
-          : wodSelectedEquipment.length > 0
-            ? `CONTRAINTE EQUIPEMENT : L'athlete dispose UNIQUEMENT de : ${wodSelectedEquipment.map(slug => {
-              const eq = allEquipments.find(e => e.slug === slug)
-              return eq ? eq.label : slug
-            }).join(', ')}. N'utilise AUCUN autre equipement.`
-            : null,
-        `Le nom du WOD doit mentionner "${program.skill_name}".`,
-        `RAPPEL TECHNIQUE : chaque section doit avoir un champ "rounds" (nombre entier) quand il y a des tours, et "rest_between_rounds" (nombre entier en secondes) quand il y a du repos entre les tours.`,
-      ].filter(Boolean).join(' ')
+        `${wodIncludeWarmup ? '2' : '1'}. "skill_work" (20-25 min) : PROGRESSION — les exercices de l'étape avec leur programmation complète.`,
+        `${wodIncludeWarmup ? '3' : '2'}. "metcon"/"amrap"/"for_time"/"emom" (12-20 min) : WOD de mise en pratique du skill.`,
+        ``,
+        equipmentConstraint,
+        `Le nom de la séance doit mentionner "${program.skill_name}".`,
+        `RAPPEL TECHNIQUE : spécifie "rounds" (entier) et "rest_between_rounds" (secondes) pour chaque section avec tours multiples.`,
+      ].filter(Boolean).join('\n')
 
       const wod = await workoutsService.generateWorkoutWithAI({
-        workoutType: 'metcon',
+        workoutType: 'technique_metcon',
         difficulty: 'intermediate',
-        duration: 30,
+        duration: 45,
         equipment: boxMode ? undefined : (wodSelectedEquipment.length > 0 ? wodSelectedEquipment : undefined),
         additionalInstructions,
       })

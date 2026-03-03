@@ -38,7 +38,6 @@ export function WodGenerationModal({
   boxMode,
   setBoxMode,
   allEquipments,
-  wodSelectedEquipment,
   setWodSelectedEquipment,
   userProfileEquipment,
   onGenerate,
@@ -50,23 +49,28 @@ export function WodGenerationModal({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Dumbbell className="w-5 h-5 text-blue-400" />
-            WOD complementaire
+            Séance Progression + WOD
           </DialogTitle>
         </DialogHeader>
 
         {/* Skill context banner */}
         {program && wodModal.isOpen && (
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 space-y-1.5">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-orange-300 font-medium">{program.skill_name}</span>
-              <span className="text-slate-500">-</span>
+              <span className="text-slate-500">—</span>
               <span className="text-orange-200/80">{wodModal.stepContext.title}</span>
             </div>
-            {wodModal.stepContext.recommended_exercises && wodModal.stepContext.recommended_exercises.length > 0 && (
-              <p className="text-xs text-slate-400 mt-1">
-                Exercices integres : {wodModal.stepContext.recommended_exercises.map(ex => ex.name).join(', ')}
-              </p>
-            )}
+            <div className="flex gap-3 text-xs text-slate-400">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
+                Progression : {wodModal.stepContext.recommended_exercises?.length ?? 0} exercice(s)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 inline-block" />
+                WOD de mise en pratique
+              </span>
+            </div>
           </div>
         )}
 
@@ -74,10 +78,11 @@ export function WodGenerationModal({
         {wodModal.isOpen && wodModal.generating ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-            <p className="text-slate-400 text-sm">Generation du WOD en cours...</p>
+            <p className="text-slate-400 text-sm">Génération de la séance en cours...</p>
+            <p className="text-slate-500 text-xs">Progression + WOD de mise en pratique</p>
           </div>
 
-        /* Generated preview */
+          /* Generated preview */
         ) : wodModal.isOpen && wodModal.generated ? (
           <div className="space-y-4">
             <div>
@@ -133,28 +138,43 @@ export function WodGenerationModal({
             </div>
           </div>
 
-        /* Config phase */
+          /* Config phase */
         ) : (
           <div className="space-y-4">
+            {/* Structure info */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-1.5">
+              <p className="text-xs font-medium text-slate-300">Structure générée</p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                  <span className="font-medium text-blue-300">Progression</span>
+                  <span>— exercices de l&apos;étape, 20-25 min, sets/reps/repos détaillés</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" />
+                  <span className="font-medium text-orange-300">WOD</span>
+                  <span>— mise en pratique du skill, 12-20 min, haute intensité</span>
+                </div>
+              </div>
+            </div>
+
             {/* Warmup toggle */}
             <div className="space-y-2">
               <button
                 type="button"
                 onClick={() => setWodIncludeWarmup(!wodIncludeWarmup)}
-                className={`w-full text-left rounded-lg p-3 border transition-all ${
-                  wodIncludeWarmup ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-white/5 border-white/10'
-                }`}
+                className={`w-full text-left rounded-lg p-3 border transition-all ${wodIncludeWarmup ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-white/5 border-white/10'
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-white">Inclure l&apos;echauffement</p>
+                    <p className="text-sm font-medium text-white">Inclure l&apos;échauffement</p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {(wodModal.isOpen ? wodModal.stepContext.warmup : null) || `Echauffement adapte au ${program?.skill_name || 'skill'}`}
+                      {(wodModal.isOpen ? wodModal.stepContext.warmup : null) || `Échauffement spécifique ${program?.skill_name || 'skill'}`}
                     </p>
                   </div>
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                    wodIncludeWarmup ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'
-                  }`}>
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${wodIncludeWarmup ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'
+                    }`}>
                     {wodIncludeWarmup && <CheckCircle className="w-3 h-3 text-white" />}
                   </div>
                 </div>
@@ -168,9 +188,8 @@ export function WodGenerationModal({
                 <button
                   type="button"
                   onClick={() => { setBoxMode(false); setWodSelectedEquipment(userProfileEquipment) }}
-                  className={`text-left rounded-lg p-3 border transition-all ${
-                    !boxMode ? 'bg-orange-500/10 border-orange-500/30' : 'bg-white/5 border-white/10'
-                  }`}
+                  className={`text-left rounded-lg p-3 border transition-all ${!boxMode ? 'bg-orange-500/10 border-orange-500/30' : 'bg-white/5 border-white/10'
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -184,9 +203,8 @@ export function WodGenerationModal({
                 <button
                   type="button"
                   onClick={() => { setBoxMode(true); setWodSelectedEquipment(allEquipments.map(e => e.slug)) }}
-                  className={`text-left rounded-lg p-3 border transition-all ${
-                    boxMode ? 'bg-blue-500/10 border-blue-500/30' : 'bg-white/5 border-white/10'
-                  }`}
+                  className={`text-left rounded-lg p-3 border transition-all ${boxMode ? 'bg-blue-500/10 border-blue-500/30' : 'bg-white/5 border-white/10'
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -205,7 +223,7 @@ export function WodGenerationModal({
               className="w-full bg-gradient-to-r from-blue-500 to-indigo-500"
             >
               <Dumbbell className="w-4 h-4 mr-2" />
-              Generer le WOD
+              Générer la séance
             </Button>
           </div>
         )}
