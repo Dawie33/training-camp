@@ -3,7 +3,7 @@
 import { authService } from '@/services'
 import type { LoginDto, SignupDto, User } from '@/domain/entities/auth'
 import { AuthContext } from '@/hooks/useAuth'
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useState } from 'react'
 
 /**
 * Contexte qui fournit l'état et les fonctions liés à l'authentification.
@@ -67,10 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Déconnecte l'utilisateur en supprimant le token JWT et les données de l'utilisateur stockées localement.
    * @returns {void}
    */
-  const logout = () => {
+  const logout = useCallback(() => {
     authService.logout()
     setUser(null)
-  }
+  }, [])
 
   return (
     <AuthContext.Provider

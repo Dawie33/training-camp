@@ -1,7 +1,7 @@
 'use client'
 
-import { useWorkoutSchedule } from '@/app/calendar/hooks/useWorkoutSchedule'
-import { useWorkoutSession } from '@/app/tracking/hooks/useWorkoutSession'
+import { useWorkoutSchedule } from '@/app/(app)/calendar/_hooks/useWorkoutSchedule'
+import { useWorkoutSession } from '@/app/(app)/tracking/_hooks/useWorkoutSession'
 import { Workouts } from '@/domain/entities/workout'
 import { workoutsService } from '@/services/workouts'
 import { motion } from 'framer-motion'
@@ -89,7 +89,7 @@ export function WeeklyCalendar() {
               : undefined
 
             // Récupérer le nom du workout depuis les détails
-            const workoutDetail = workoutsDetails.get(session.workout_id)
+            const workoutDetail = session.workout_id ? workoutsDetails.get(session.workout_id) : undefined
             const workoutName = workoutDetail?.name || `Workout ${(session.workout_id ?? session.id).substring(0, 8)}`
 
             // Récupérer l'intensité du workout
@@ -137,7 +137,7 @@ export function WeeklyCalendar() {
             // Si le schedule est marqué comme "completed" ou s'il a déjà une session, ne pas l'afficher
             if (!hasSession && schedule.status === 'scheduled') {
               // Utiliser les données du schedule qui incluent déjà workout_name
-              const workoutName = schedule.workout_name || `Workout ${schedule.workout_id.substring(0, 8)}`
+              const workoutName = schedule.workout_name || `Workout ${schedule.workout_id?.substring(0, 8) ?? 'unknown'}`
 
               // Récupérer l'intensité du workout
               let intensity: 'low' | 'medium' | 'high' | undefined

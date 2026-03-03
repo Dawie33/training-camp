@@ -1,24 +1,12 @@
 'use client'
 
+import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
 import { useWorkoutForm } from './_hooks/useWorkoutForm'
 import { WorkoutAIGenerationModal } from './components/WorkoutAIGenerationModal'
 import { WorkoutForm } from './components/WorkoutForm'
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-}
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-}
 
 export default function WorkoutEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)

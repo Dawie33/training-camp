@@ -1,15 +1,17 @@
 'use client'
 
-import { AMRAPTimer } from '@/app/timer/timers/AMRAPTimer'
-import { EMOMTimer } from '@/app/timer/timers/EMOMTimer'
-import { ForTimeTimer } from '@/app/timer/timers/ForTimeTimer'
-import { TabataTimer } from '@/app/timer/timers/TabataTimer'
-import { ActiveWorkoutSession } from '@/components/workout/ActiveWorkoutSession'
+import dynamic from 'next/dynamic'
 import { RichSectionDisplay } from '@/components/workout/display/RichSectionDisplay'
-import { WorkoutResultsModal } from '@/components/workout/WorkoutResultsModal'
 import { WorkoutPrintView, printWorkout } from '@/components/workout/WorkoutPrintView'
+
+const AMRAPTimer = dynamic(() => import('@/app/(app)/timer/timers/AMRAPTimer').then(m => ({ default: m.AMRAPTimer })), { ssr: false })
+const EMOMTimer = dynamic(() => import('@/app/(app)/timer/timers/EMOMTimer').then(m => ({ default: m.EMOMTimer })), { ssr: false })
+const ForTimeTimer = dynamic(() => import('@/app/(app)/timer/timers/ForTimeTimer').then(m => ({ default: m.ForTimeTimer })), { ssr: false })
+const TabataTimer = dynamic(() => import('@/app/(app)/timer/timers/TabataTimer').then(m => ({ default: m.TabataTimer })), { ssr: false })
+const ActiveWorkoutSession = dynamic(() => import('@/components/workout/ActiveWorkoutSession').then(m => ({ default: m.ActiveWorkoutSession })), { ssr: false })
+const WorkoutResultsModal = dynamic(() => import('@/components/workout/WorkoutResultsModal').then(m => ({ default: m.WorkoutResultsModal })), { ssr: false })
 import { PersonalizedWorkout } from '@/domain/entities/workout'
-import { WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
+import { WorkoutBlocks } from '@/domain/entities/workout-structure'
 import { useTimerVibration } from '@/hooks/useTimerVibration'
 import { workoutsService, sessionService } from '@/services'
 import { motion } from 'framer-motion'
@@ -293,6 +295,17 @@ function PersonalizedWorkoutDetailContent() {
                 {w.coach_notes}
               </div>
             )}
+
+            {/* Save WOD button */}
+            <div className="pt-4 border-t border-slate-700/50">
+              <button
+                onClick={() => setShowResultsModal(true)}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2"
+              >
+                <span>✓</span>
+                Enregistrer le WOD
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>

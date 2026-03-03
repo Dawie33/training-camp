@@ -1,7 +1,7 @@
 'use client'
 
-import { StatsCard } from '@/app/tracking/components/StatsCard'
-import { useWorkoutStats } from '@/app/tracking/hooks/useWorkoutStats'
+import { StatsCard } from '@/app/(app)/tracking/components/StatsCard'
+import { useWorkoutStats } from '@/app/(app)/tracking/_hooks/useWorkoutStats'
 import { fadeInUp } from '@/lib/animations'
 import { motion } from 'framer-motion'
 

@@ -13,7 +13,7 @@ import { motion } from 'framer-motion'
 import { ArrowUpDown, Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
 import Link from 'next/link'
 import * as React from "react"
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -47,6 +47,18 @@ import { workoutsApi } from '@/services/workouts'
 import { toast } from 'sonner'
 
 const ITEMS_PER_PAGE = 10
+
+const DIFFICULTY_COLORS = {
+  beginner: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
+  intermediate: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
+  advanced: 'text-red-400 bg-red-500/20 border-red-500/30',
+} as const
+
+const STATUS_COLORS = {
+  draft: 'text-slate-400 bg-slate-500/20 border-slate-500/30',
+  published: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
+  archived: 'text-orange-400 bg-orange-500/20 border-orange-500/30',
+} as const
 
 export default function WorkoutsPage() {
   const [workouts, setWorkouts] = useState<Workouts[]>([])
@@ -117,7 +129,7 @@ export default function WorkoutsPage() {
     }
   }, [sorting])
 
-  const handleDelete = async (id: string, name?: string) => {
+  const handleDelete = useCallback(async (id: string, name?: string) => {
     if (!confirm(`Supprimer l'entraînement "${name}" ?`)) return
 
     try {
@@ -128,10 +140,25 @@ export default function WorkoutsPage() {
       console.error(error)
       toast.error('Erreur lors de la suppression du workout')
     }
-  }
+  }, [fetchWorkouts])
+
+  const handleStatusChange = useCallback((value: string) => {
+    setStatus(value === 'all' ? '' : value)
+    setPageIndex(0)
+  }, [])
+
+  const handleDifficultyChange = useCallback((value: string) => {
+    setDifficulty(value === 'all' ? '' : value)
+    setPageIndex(0)
+  }, [])
+
+  const handleWorkoutTypeChange = useCallback((value: string) => {
+    setWorkoutType(value === 'all' ? '' : value)
+    setPageIndex(0)
+  }, [])
 
   // Define columns
-  const columns: ColumnDef<Workouts>[] = [
+  const columns = useMemo<ColumnDef<Workouts>[]>(() => [
     {
       accessorKey: "name",
       header: ({ column }) => {
@@ -180,13 +207,8 @@ export default function WorkoutsPage() {
       },
       cell: ({ row }) => {
         const difficulty = row.getValue("difficulty") as string
-        const colors = {
-          beginner: "text-emerald-400 bg-emerald-500/20 border-emerald-500/30",
-          intermediate: "text-yellow-400 bg-yellow-500/20 border-yellow-500/30",
-          advanced: "text-red-400 bg-red-500/20 border-red-500/30",
-        }
         return (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colors[difficulty as keyof typeof colors] || ''}`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${DIFFICULTY_COLORS[difficulty as keyof typeof DIFFICULTY_COLORS] || ''}`}>
             {difficulty}
           </span>
         )
@@ -205,13 +227,8 @@ export default function WorkoutsPage() {
       header: "Status",
       cell: ({ row }) => {
         const status = row.getValue("status") as string
-        const colors = {
-          draft: "text-slate-400 bg-slate-500/20 border-slate-500/30",
-          published: "text-emerald-400 bg-emerald-500/20 border-emerald-500/30",
-          archived: "text-orange-400 bg-orange-500/20 border-orange-500/30",
-        }
         return (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colors[status as keyof typeof colors] || ''}`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_COLORS[status as keyof typeof STATUS_COLORS] || ''}`}>
             {status}
           </span>
         )
@@ -275,7 +292,7 @@ export default function WorkoutsPage() {
         )
       },
     },
-  ]
+  ], [handleDelete])
 
   // Calculate page count
   const pageCount = Math.ceil(total / pageSize)
@@ -345,7 +362,7 @@ export default function WorkoutsPage() {
               />
             </div>
 
-            <Select value={status} onValueChange={(value: string) => { setStatus(value === 'all' ? '' : value); setPageIndex(0) }}>
+            <Select value={status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -357,7 +374,7 @@ export default function WorkoutsPage() {
               </SelectContent>
             </Select>
 
-            <Select value={difficulty} onValueChange={(value: string) => { setDifficulty(value === 'all' ? '' : value); setPageIndex(0) }}>
+            <Select value={difficulty} onValueChange={handleDifficultyChange}>
               <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Difficulté" />
               </SelectTrigger>
@@ -369,7 +386,7 @@ export default function WorkoutsPage() {
               </SelectContent>
             </Select>
 
-            <Select value={workoutType} onValueChange={(value: string) => { setWorkoutType(value === 'all' ? '' : value); setPageIndex(0) }}>
+            <Select value={workoutType} onValueChange={handleWorkoutTypeChange}>
               <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
@@ -499,17 +516,6 @@ export default function WorkoutsPage() {
             </div>
           ) : (
             workouts.map((workout) => {
-              const difficultyColors = {
-                beginner: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-                intermediate: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-                advanced: "bg-red-500/20 text-red-400 border-red-500/30",
-              }
-              const statusColors = {
-                draft: "bg-slate-500/20 text-slate-400 border-slate-500/30",
-                published: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-                archived: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-              }
-
               return (
                 <motion.div
                   key={workout.id}
@@ -556,7 +562,7 @@ export default function WorkoutsPage() {
                       <p className="text-xs text-slate-500">Difficulté</p>
                       <Badge
                         variant="outline"
-                        className={`text-xs ${difficultyColors[workout.difficulty as keyof typeof difficultyColors] || 'bg-slate-500/20 text-slate-400'}`}
+                        className={`text-xs ${DIFFICULTY_COLORS[workout.difficulty as keyof typeof DIFFICULTY_COLORS] || 'bg-slate-500/20 text-slate-400'}`}
                       >
                         {workout.difficulty}
                       </Badge>
@@ -569,7 +575,7 @@ export default function WorkoutsPage() {
                       <p className="text-xs text-slate-500">Statut</p>
                       <Badge
                         variant="outline"
-                        className={`text-xs ${statusColors[workout.status as keyof typeof statusColors] || ''}`}
+                        className={`text-xs ${STATUS_COLORS[workout.status as keyof typeof STATUS_COLORS] || ''}`}
                       >
                         {workout.status}
                       </Badge>

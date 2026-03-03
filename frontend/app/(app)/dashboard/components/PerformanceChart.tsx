@@ -1,6 +1,6 @@
 'use client'
 
-import { useWorkoutStats } from '@/app/tracking/hooks/useWorkoutStats'
+import { useWorkoutStats } from '@/app/(app)/tracking/_hooks/useWorkoutStats'
 import { useMemo, useState } from 'react'
 import { MetricType, PeriodType } from './types'
 

@@ -3,6 +3,7 @@
 import { Workouts } from '@/domain/entities/workout'
 import { motion } from 'framer-motion'
 import { Award, Clock, Flame, Zap } from 'lucide-react'
+import { memo } from 'react'
 
 interface WorkoutCardProps {
   workout: Workouts
@@ -26,7 +27,7 @@ const intensityLabels = {
   high: 'Élevée',
 }
 
-export function WorkoutCard({ workout }: WorkoutCardProps) {
+export const WorkoutCard = memo(function WorkoutCard({ workout }: WorkoutCardProps) {
   return (
     <motion.div
       className="relative h-[280px] sm:h-[320px] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black shadow-2xl"
@@ -130,4 +131,4 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
       <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 pointer-events-none" />
     </motion.div>
   )
-}
+})
