@@ -13,6 +13,7 @@ import { OneRepMaxesModule } from './one-rep-maxes/one-rep-maxes.module'
 import { SkillsModule } from './skills/skills.module'
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module'
 import { GoogleCalendarModule } from './google-calendar/google-calendar.module'
+import { TrainingProgramsModule } from './training-programs/training-programs.module'
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GoogleCalendarModule } from './google-calendar/google-calendar.module'
     SkillsModule,
     OneRepMaxesModule,
     GoogleCalendarModule,
+    TrainingProgramsModule,
   ],
 })
 export class AppModule { }

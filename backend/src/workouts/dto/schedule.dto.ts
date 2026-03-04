@@ -15,6 +15,14 @@ export class CreateScheduleDto {
   scheduled_date!: string // Format YYYY-MM-DD
 
   @IsOptional()
+  @IsEnum(['workout', 'box_session', 'program_session'])
+  session_type?: 'workout' | 'box_session' | 'program_session'
+
+  @IsOptional()
+  @IsUUID()
+  program_enrollment_id?: string
+
+  @IsOptional()
   @IsString()
   notes?: string
 }
@@ -63,4 +71,8 @@ export class ScheduleQueryDto {
   @IsOptional()
   @IsUUID()
   workout_id?: string
+
+  @IsOptional()
+  @IsEnum(['workout', 'box_session', 'program_session'])
+  session_type?: 'workout' | 'box_session' | 'program_session'
 }

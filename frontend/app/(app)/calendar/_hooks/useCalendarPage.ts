@@ -2,6 +2,7 @@
 
 import { workoutsService } from '@/services'
 import { googleCalendarApi } from '@/services/google-calendar'
+import { scheduleApi } from '@/services/schedule'
 import type { WorkoutSchedule } from '@/services/schedule'
 import { createViewDay, createViewMonthGrid, createViewWeek } from '@schedule-x/calendar'
 import { createDragAndDropPlugin } from '@schedule-x/drag-and-drop'
@@ -13,7 +14,6 @@ import { format } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { CustomEventContent } from '../_components/CalendarEventContent'
-import { CustomEventModal } from '../_components/CalendarEventModal'
 import { useWorkoutSchedule } from './useWorkoutSchedule'
 
 export function useCalendarPage() {
@@ -80,17 +80,29 @@ export function useCalendarPage() {
         .toISOString()
         .split('T')[0]
 
+      const isBoxSession = schedule.session_type === 'box_session'
+      const isProgramSession = schedule.session_type === 'program_session'
+
+      let title = schedule.workout_name || 'Workout'
+      if (isBoxSession) title = 'Jour Box'
+      else if (isProgramSession) {
+        const sessionData = schedule.session_data as { title?: string } | undefined
+        title = sessionData?.title ? `[Programme] ${sessionData.title}` : '[Programme]'
+      }
+
       return {
         id: schedule.id,
-        title: schedule.workout_name || 'Workout',
+        title,
         start: Temporal.PlainDate.from(dateStr),
         end: Temporal.PlainDate.from(dateStr),
         status: schedule.status,
+        session_type: schedule.session_type,
         workout_type: schedule.workout_type,
         difficulty: schedule.difficulty,
         duration: schedule.estimated_duration,
         workout_id: schedule.workout_id,
         personalized_workout_id: schedule.personalized_workout_id,
+        session_data: schedule.session_data,
         _onComplete: () => { markAsCompleted(schedule.id); setSelectedEvent(null) },
         _onSkip: () => { markAsSkipped(schedule.id); setSelectedEvent(null) },
         _onDelete: () => {
@@ -172,6 +184,19 @@ export function useCalendarPage() {
     })
   }
 
+  const handleMarkBoxDay = async () => {
+    const date = format(selectedDate, 'yyyy-MM-dd')
+    try {
+      const schedule = await scheduleApi.createBoxSession(date)
+      // Ajouter manuellement dans la liste locale
+      refetch()
+      toast.success(`Jour Box marqué pour le ${format(selectedDate, 'dd/MM/yyyy')}`)
+      return schedule
+    } catch {
+      toast.error('Impossible de marquer ce jour box (déjà occupé ?)')
+    }
+  }
+
   const customComponents = useMemo(() => ({
     monthGridEvent: CustomEventContent,
     dateGridEvent: CustomEventContent,
@@ -198,6 +223,7 @@ export function useCalendarPage() {
     selectedEvent, setSelectedEvent,
     // Actions
     handleScheduleWorkout,
+    handleMarkBoxDay,
     refetch,
   }
 }

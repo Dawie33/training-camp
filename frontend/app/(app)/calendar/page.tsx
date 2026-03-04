@@ -35,6 +35,7 @@ function CalendarContent() {
     calendar, customComponents,
     selectedEvent, setSelectedEvent,
     handleScheduleWorkout,
+    handleMarkBoxDay,
     refetch,
   } = useCalendarPage()
 
@@ -106,6 +107,7 @@ function CalendarContent() {
               { color: 'green', label: 'Complété' },
               { color: 'gray', label: 'Sauté' },
               { color: 'orange', label: 'Replanifié' },
+              { color: 'violet', label: 'Jour Box' },
             ].map(({ color, label }) => (
               <div key={label} className="flex items-center gap-1.5 text-xs">
                 <div className={`w-3 h-3 rounded bg-${color}-500/20 border border-${color}-500/50`} />
@@ -122,6 +124,7 @@ function CalendarContent() {
         selectedDate={selectedDate}
         onScheduleWorkout={() => setModalOpen(true)}
         onParseBoxWod={() => setParseBoxWodOpen(true)}
+        onMarkBoxDay={handleMarkBoxDay}
       />
 
       <ScheduleWorkoutModal

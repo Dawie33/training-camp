@@ -12,6 +12,6 @@ import { WorkoutsService } from './services/workouts.service'
   imports: [UsersModule, GoogleCalendarModule],
   controllers: [WorkoutsController, WorkoutScheduleController],
   providers: [WorkoutsService, AIWorkoutGeneratorService, WorkoutScheduleService, UserContextService],
-  exports: [WorkoutsService, WorkoutScheduleService],
+  exports: [WorkoutsService, WorkoutScheduleService, UserContextService],
 })
 export class WorkoutsModule { }

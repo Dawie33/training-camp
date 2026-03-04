@@ -144,11 +144,14 @@ export class WorkoutScheduleService {
    * @returns La planification créée
    */
   async create(userId: string, data: CreateScheduleDto) {
-    if (!data.workout_id && !data.personalized_workout_id) {
+    const isBoxSession = data.session_type === 'box_session'
+    const isProgramSession = data.session_type === 'program_session'
+
+    if (!isBoxSession && !isProgramSession && !data.workout_id && !data.personalized_workout_id) {
       throw new BadRequestException('workout_id ou personalized_workout_id est requis')
     }
 
-    let workoutName = 'Workout'
+    let workoutName = isBoxSession ? 'Jour Box CrossFit' : 'Workout'
     let workoutType: string | undefined
     let workoutDuration: number | undefined
 
@@ -161,7 +164,7 @@ export class WorkoutScheduleService {
       workoutName = workout.name
       workoutType = workout.workout_type
       workoutDuration = workout.estimated_duration
-    } else {
+    } else if (data.personalized_workout_id) {
       // Vérifier si le workout personnalisé existe et appartient à l'utilisateur
       const pw = await this.knex('personalized_workouts')
         .where('id', data.personalized_workout_id)
@@ -191,6 +194,8 @@ export class WorkoutScheduleService {
         workout_id: data.workout_id || null,
         personalized_workout_id: data.personalized_workout_id || null,
         scheduled_date: data.scheduled_date,
+        session_type: data.session_type || 'workout',
+        program_enrollment_id: data.program_enrollment_id || null,
         notes: data.notes || null,
         status: 'scheduled',
       })

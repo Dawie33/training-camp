@@ -1,14 +1,19 @@
 import { apiClient } from './index'
 
+export type SessionType = 'workout' | 'box_session' | 'program_session'
+
 export interface WorkoutSchedule {
   id: string
   user_id: string
   workout_id?: string
   personalized_workout_id?: string
+  program_enrollment_id?: string
   scheduled_date: string
+  session_type?: SessionType
   status: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
   completed_session_id?: string
   notes?: string
+  session_data?: Record<string, unknown>
   created_at: string
   updated_at: string
   // Joined data
@@ -22,7 +27,9 @@ export interface WorkoutSchedule {
 export interface CreateScheduleDto {
   workout_id?: string
   personalized_workout_id?: string
+  program_enrollment_id?: string
   scheduled_date: string
+  session_type?: SessionType
   notes?: string
 }
 
@@ -108,6 +115,18 @@ export const scheduleApi = {
    */
   async markAsSkipped(id: string) {
     const response = await apiClient.patch<WorkoutSchedule>(`/workout-schedule/${id}/skip`)
+    return response
+  },
+
+  /**
+   * Crée un marqueur "Jour Box CrossFit" pour une date
+   */
+  async createBoxSession(date: string, notes?: string) {
+    const response = await apiClient.post<WorkoutSchedule>('/workout-schedule', {
+      scheduled_date: date,
+      session_type: 'box_session',
+      notes: notes || null,
+    })
     return response
   },
 }
