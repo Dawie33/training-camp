@@ -233,6 +233,10 @@ export class WorkoutsService {
     return apiClient.post<GeneratedWorkout>('/workouts/parse-text', { text })
   }
 
+  async lookupWorkout(name: string): Promise<GeneratedWorkout> {
+    return apiClient.post<GeneratedWorkout>('/workouts/lookup', { name })
+  }
+
   /**
    * Génère un plan hebdomadaire : les jours Perso sont générés par l'IA et planifiés
    * @param days Tableau des 7 jours avec leur type (perso/box/rest) et focus optionnel

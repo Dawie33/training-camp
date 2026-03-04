@@ -15,7 +15,7 @@ import { ScheduleXCalendar } from '@schedule-x/react'
 import { startOfWeek } from 'date-fns'
 import { motion } from 'framer-motion'
 import { Calendar, Unlink } from 'lucide-react'
-import { CalendarEventModal } from './_components/CalendarEventModal'
+import { CustomEventModal } from './_components/CalendarEventModal'
 import { DateActionDialog } from './_components/DateActionDialog'
 import { useCalendarPage } from './_hooks/useCalendarPage'
 
@@ -24,7 +24,7 @@ function CalendarContent() {
     modalOpen, setModalOpen,
     selectedDate,
     dateActionOpen, setDateActionOpen,
-    parseBoxWodOpen, setParseBoxWodOpen,
+    parseBoxWodOpen, setParseBoxWodOpen, parseBoxWodMode, setParseBoxWodMode,
     weeklyPlannerOpen, setWeeklyPlannerOpen,
     logModalOpen, setLogModalOpen,
     logModalData,
@@ -123,7 +123,8 @@ function CalendarContent() {
         onOpenChange={setDateActionOpen}
         selectedDate={selectedDate}
         onScheduleWorkout={() => setModalOpen(true)}
-        onParseBoxWod={() => setParseBoxWodOpen(true)}
+        onParseBoxWod={() => { setParseBoxWodMode('instagram'); setParseBoxWodOpen(true) }}
+        onLookupWod={() => { setParseBoxWodMode('search'); setParseBoxWodOpen(true) }}
         onMarkBoxDay={handleMarkBoxDay}
       />
 
@@ -138,6 +139,7 @@ function CalendarContent() {
         open={parseBoxWodOpen}
         onOpenChange={setParseBoxWodOpen}
         selectedDate={selectedDate}
+        initialMode={parseBoxWodMode}
         onSchedule={handleScheduleWorkout}
       />
 
@@ -162,7 +164,7 @@ function CalendarContent() {
 
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null) }}>
         <DialogContent className="sm:max-w-[420px] bg-slate-900 border-white/10 text-white p-0 overflow-hidden">
-          {selectedEvent && <CalendarEventModal calendarEvent={selectedEvent} />}
+          {selectedEvent && <CustomEventModal calendarEvent={selectedEvent} />}
         </DialogContent>
       </Dialog>
 

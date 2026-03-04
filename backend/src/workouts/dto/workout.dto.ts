@@ -399,6 +399,12 @@ export class ParseWorkoutTextDto {
   text!: string
 }
 
+export class LookupWorkoutDto {
+  @IsString()
+  @MinLength(2)
+  name!: string
+}
+
 export class WeeklyPlanDayDto {
   @IsString()
   date!: string // 'YYYY-MM-DD'

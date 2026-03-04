@@ -21,6 +21,7 @@ export function useCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [dateActionOpen, setDateActionOpen] = useState(false)
   const [parseBoxWodOpen, setParseBoxWodOpen] = useState(false)
+  const [parseBoxWodMode, setParseBoxWodMode] = useState<'instagram' | 'search'>('instagram')
   const [weeklyPlannerOpen, setWeeklyPlannerOpen] = useState(false)
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [logModalData, setLogModalData] = useState<{
@@ -208,7 +209,7 @@ export function useCalendarPage() {
     modalOpen, setModalOpen,
     selectedDate, setSelectedDate,
     dateActionOpen, setDateActionOpen,
-    parseBoxWodOpen, setParseBoxWodOpen,
+    parseBoxWodOpen, setParseBoxWodOpen, parseBoxWodMode, setParseBoxWodMode,
     weeklyPlannerOpen, setWeeklyPlannerOpen,
     logModalOpen, setLogModalOpen,
     logModalData,

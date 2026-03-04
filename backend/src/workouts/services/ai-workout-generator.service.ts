@@ -129,6 +129,37 @@ IMPORTANT :
   }
 
   /**
+   * Retrouve un WOD de référence connu (benchmark, Open, Hero WOD) par son nom
+   * @param name Nom du WOD (ex: "Open 18.1", "Murph", "Fran")
+   * @returns Le workout structuré au format JSON
+   */
+  async lookupWorkoutByName(name: string): Promise<GeneratedWorkout> {
+    const systemPrompt = `Tu es un expert CrossFit avec une connaissance exhaustive des WODs officiels.
+Ta mission est de retrouver et structurer avec précision un WOD de référence connu.
+${buildCrossFitSystemPrompt()}`
+
+    const userPrompt = `Retrouve le WOD officiel connu sous le nom : "${name}"
+
+Il peut s'agir de :
+- Un WOD CrossFit Open (ex: 18.1, 24.3, 11.4...)
+- Un benchmark officiel (Fran, Helen, Cindy, Diane, Murph, DT, Grace, Isabel, Karen...)
+- Un Hero WOD (Murph, DT, Badger, JT, Lumberjack 20...)
+- Un WOD de compétition connu
+
+Retrouve les détails EXACTS et OFFICIELS : mouvements, répétitions, charges (hommes/femmes si applicable), structure (AMRAP/For Time/EMOM...), time cap si applicable, scoring.
+Si le nom ne correspond à aucun WOD officiel connu, crée une structure cohérente basée sur le nom.
+
+IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
+
+    try {
+      return await this.callOpenAI(systemPrompt, userPrompt)
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error
+      throw new BadRequestException(`Impossible de trouver le WOD "${name}"`)
+    }
+  }
+
+  /**
    * Génère un plan d'entraînement hebdomadaire pour les jours Perso et retourne le résumé
    * @param userId ID de l'utilisateur
    * @param days Tableau des jours avec leur type (perso/box/rest)
