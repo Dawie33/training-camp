@@ -1,4 +1,6 @@
-# Training Camp — CLAUDE.md
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Application full-stack de cross-training multi-sport avec génération de workouts par IA.
 
@@ -15,18 +17,18 @@ Monorepo avec deux workspaces :
 - TailwindCSS 3.4, Radix UI, Lucide React
 - TanStack Table, Recharts, Framer Motion
 - Sonner (toasts), @schedule-x (calendar), next-pwa
-- Path alias : `@/*` → `frontend/src/*`
+- Path alias : `@/*` → `frontend/*` (pas de `src/`)
 
 ### Backend
 - NestJS 11, TypeScript 5.7
 - PostgreSQL 15 via Knex.js (query builder + migrations)
 - JWT (Passport.js), class-validator/class-transformer (DTOs)
-- OpenAI API (génération de workouts), Zod/Joi
+- OpenAI API (`gpt-4o`, `json_object`, Zod validation), Zod/Joi
 - Préfixe API : `/api`
 
 ### Base de données
 - PostgreSQL 15 (Docker, port 5434)
-- Migrations Knex.js versionnées dans `backend/database/migrations/`
+- Migrations Knex.js dans `backend/database/migrations/`
 - Seeds dans `backend/database/seeds/`
 - UUID via pgcrypto, snake_case pour les colonnes
 
@@ -34,28 +36,31 @@ Monorepo avec deux workspaces :
 
 ```bash
 # Développement
-npm run dev              # Frontend + backend en parallèle
-npm --workspace frontend run dev   # Frontend seul (Turbopack)
-npm --workspace backend run start:dev  # Backend seul (watch)
+npm run dev                                              # Frontend + backend en parallèle
+npm --workspace frontend run dev                         # Frontend seul (Turbopack)
+npm --workspace backend run start:dev                    # Backend seul (watch)
 
 # Base de données
-npm run db:up            # Démarrer PostgreSQL Docker
-npm run db:down          # Arrêter Docker
-npm run db:reset         # Reset Docker volumes
-npm --workspace backend run db:migrate   # Appliquer migrations
-npm --workspace backend run db:rollback  # Rollback migrations
-npm --workspace backend run db:seed      # Seeder les données
-npm --workspace backend run db:reset     # Rollback + migrate + seed
+npm run db:up                                            # Démarrer PostgreSQL Docker
+npm run db:down                                          # Arrêter Docker
+npm run db:reset                                         # Reset Docker volumes
+npm --workspace backend run db:migrate                   # Appliquer migrations
+npm --workspace backend run db:rollback                  # Rollback migrations
+npm --workspace backend run db:seed                      # Seeder les données
+npm --workspace backend run db:reset                     # Rollback + migrate + seed
+npm --workspace backend run db:migrate:make -- <name>    # Créer une nouvelle migration
 
 # Tests
-npm --workspace backend run test         # Jest (backend)
-npm --workspace backend run test:watch   # Jest watch
-npm --workspace backend run test:cov     # Couverture
+npm --workspace backend run test                         # Jest (backend)
+npm --workspace backend run test:watch                   # Jest watch
+npm --workspace backend run test:cov                     # Couverture
+npm --workspace backend run test:e2e                     # Tests e2e
 
 # Qualité
-npm --workspace frontend run lint        # ESLint frontend
-npm --workspace frontend run lint:fix    # ESLint fix
-npm --workspace backend run format       # Prettier backend
+npm --workspace frontend run lint                        # ESLint frontend
+npm --workspace frontend run lint:fix                    # ESLint fix
+npm --workspace backend run format                       # Prettier backend
+npm --workspace backend run build                        # Vérifier TS backend
 ```
 
 ## Conventions de code
@@ -82,39 +87,51 @@ npm --workspace backend run format       # Prettier backend
 
 ## Architecture backend (NestJS)
 
-Structure standard par module :
+Structure par module — les modules simples sont plats, les modules complexes utilisent des sous-dossiers :
+
 ```
 module/
 ├── {module}.module.ts
-├── {module}.controller.ts
-├── {module}.service.ts
-├── dto/           # Validation avec class-validator
-├── schemas/       # Zod schemas
-└── types/         # Interfaces TypeScript
+├── {module}.controller.ts   # ou controllers/ si plusieurs
+├── {module}.service.ts      # ou services/ si plusieurs
+├── dto/                     # Validation avec class-validator
+├── schemas/                 # Zod schemas
+├── prompts/                 # Prompts IA (si applicable)
+└── types/                   # Interfaces TypeScript
 ```
 
-Modules existants : `auth`, `users`, `workouts`, `workout-sessions`, `skills`, `exercises`, `equipments`, `healthcheck`, `database-config`
+Modules existants : `auth`, `users`, `workouts`, `workout-sessions`, `skills`, `exercises`, `equipments`, `google-calendar`, `one-rep-maxes`, `training-programs`, `healthcheck`, `database-config`
 
 Guards : `@UseGuards(JwtAuthGuard)` sur les routes protégées.
+
+`UserContextService` (exporté depuis `WorkoutsModule`) — fournit le contexte utilisateur (1RMs, équipements, sessions récentes) aux services IA.
 
 ## Architecture frontend (Next.js App Router)
 
 ```
-app/              # Pages (App Router)
-components/       # Composants réutilisables
-  auth/           # Auth components
-  ui/             # Wrappers Radix UI
-  guards/         # Route guards
-  workout/        # Workout-specific
-  calendar/       # Calendar
-  layout/         # Layout components
-services/         # Clients API (un fichier par domaine)
-hooks/            # Custom hooks (useAuth, etc.)
+frontend/
+├── app/
+│   ├── (app)/          # Routes protégées (layout avec nav)
+│   │   ├── calendar/
+│   │   ├── dashboard/
+│   │   ├── workouts/
+│   │   ├── training-programs/
+│   │   ├── skills/
+│   │   └── ...
+│   └── (public)/       # Routes publiques (login, register)
+├── components/         # Composants réutilisables (ui/, auth/, workout/, calendar/, layout/)
+├── services/           # Clients API (un fichier par domaine)
+├── hooks/              # Custom hooks globaux (useAuth, useWorkoutTimer...)
+├── contexts/           # React contexts (AuthContext, WorkoutTimerContext)
+├── domain/             # Entités / types partagés
+└── lib/                # Utilitaires (animations.ts, utils.ts...)
 ```
 
 - `'use client'` pour les composants interactifs
 - Server Components pour les layouts/pages statiques
-- Appels API directs au backend (pas de routes Next.js API)
+- Appels API directs au backend via `apiClient` (pas de routes Next.js API)
+- Pattern page : `page.tsx` → `_hooks/` → `_components/` (co-localisation dans le dossier de la page)
+- Le token JWT est stocké dans `localStorage` (`access_token`) et injecté automatiquement par `apiClient`
 
 ## Base de données — tables principales
 
@@ -135,10 +152,16 @@ PORT=3001
 NODE_ENV=development
 ```
 
+**Frontend `.env.local`** :
+```
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+```
+En production, le backend est déployé sur Render (`https://training-camp-backend.onrender.com/api`).
+
 ## Workflow recommandé
 
 1. `npm run db:up` → démarrer la DB
 2. `npm run dev` → démarrer l'application
-3. Après modification du schéma : créer une migration Knex (`db:migrate:make`)
+3. Après modification du schéma : `npm --workspace backend run db:migrate:make -- <nom>` puis éditer la migration
 4. Lancer les tests après chaque changement backend
-5. Vérifier le lint avant de commiter
+5. Vérifier le lint avant de commiter (`npm --workspace frontend run lint` + `npm --workspace backend run build`)
