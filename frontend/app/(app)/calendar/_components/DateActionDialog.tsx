@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { format } from 'date-fns'
-import { Brain, Building2, Dumbbell, Instagram, Search } from 'lucide-react'
+import { Building2, Dumbbell, Instagram, Search } from 'lucide-react'
 
 interface DateActionDialogProps {
   open: boolean
