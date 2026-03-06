@@ -47,6 +47,7 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
   const [phase, setPhase] = useState<Phase>('input')
   const [text, setText] = useState('')
   const [searchName, setSearchName] = useState('')
+  const [referenceData, setReferenceData] = useState('')
   const [parsedWorkout, setParsedWorkout] = useState<GeneratedWorkout | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
 
@@ -76,11 +77,11 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
     if (!searchName.trim() || searchName.trim().length < 2) return
     try {
       setAnalyzing(true)
-      const result = await workoutsService.lookupWorkout(searchName.trim())
+      const result = await workoutsService.lookupWorkout(searchName.trim(), referenceData.trim() || undefined)
       setParsedWorkout(result)
       setPhase('preview')
     } catch {
-      toast.error(`Impossible de trouver le WOD "${searchName}". Vérifie le nom et réessaie.`)
+      toast.error(`WOD "${searchName}" non trouvé. S'il est récent, colle ses détails dans le champ ci-dessous.`)
     } finally {
       setAnalyzing(false)
     }
@@ -118,6 +119,7 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
     setPhase('input')
     setText('')
     setSearchName('')
+    setReferenceData('')
     setParsedWorkout(null)
     setAnalyzing(false)
     onOpenChange(false)
@@ -209,6 +211,17 @@ AMRAP 20 minutes :
                     {name}
                   </button>
                 ))}
+              </div>
+              <div className="space-y-1.5 pt-1">
+                <p className="text-xs text-slate-500">
+                  WOD récent ou inconnu de l&apos;IA ? Colle ses détails ici (optionnel) :
+                </p>
+                <textarea
+                  className="w-full min-h-[100px] rounded-xl border border-white/10 bg-slate-800/50 p-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 resize-none"
+                  placeholder={`Exemple :\n3 rounds for time:\n24m DB overhead walking lunge (22.5/15 kg)\n20 DB alternating snatches\n20 pull-ups`}
+                  value={referenceData}
+                  onChange={(e) => setReferenceData(e.target.value)}
+                />
               </div>
             </div>
 

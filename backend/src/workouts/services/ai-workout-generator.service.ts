@@ -133,12 +133,23 @@ IMPORTANT :
    * @param name Nom du WOD (ex: "Open 18.1", "Murph", "Fran")
    * @returns Le workout structuré au format JSON
    */
-  async lookupWorkoutByName(name: string): Promise<GeneratedWorkout> {
+  async lookupWorkoutByName(name: string, referenceData?: string): Promise<GeneratedWorkout> {
     const systemPrompt = `Tu es un expert CrossFit avec une connaissance exhaustive des WODs officiels.
 Ta mission est de retrouver et structurer avec précision un WOD de référence connu.
 ${buildCrossFitSystemPrompt()}`
 
-    const userPrompt = `Retrouve le WOD officiel connu sous le nom : "${name}"
+    let userPrompt: string
+
+    if (referenceData) {
+      userPrompt = `Voici les détails officiels du WOD "${name}" fournis par l'utilisateur :
+
+${referenceData}
+
+Structure ce WOD exactement tel que décrit ci-dessus. Respecte SCRUPULEUSEMENT les mouvements, répétitions et charges indiqués.
+
+IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
+    } else {
+      userPrompt = `Retrouve le WOD officiel connu sous le nom : "${name}"
 
 Il peut s'agir de :
 - Un WOD CrossFit Open (ex: 18.1, 24.3, 11.4...)
@@ -147,15 +158,17 @@ Il peut s'agir de :
 - Un WOD de compétition connu
 
 Retrouve les détails EXACTS et OFFICIELS : mouvements, répétitions, charges (hommes/femmes si applicable), structure (AMRAP/For Time/EMOM...), time cap si applicable, scoring.
-Si le nom ne correspond à aucun WOD officiel connu, crée une structure cohérente basée sur le nom.
+IMPORTANT : Si tu n'es pas certain à 100% du contenu exact et officiel de ce WOD, ne l'invente pas. Retourne une erreur JSON : {"error": "UNKNOWN_WOD"}
+Note : ta connaissance s'arrête à début 2025, les Open récents (26.x) ne sont pas dans tes données.
 
 IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
+    }
 
     try {
       return await this.callOpenAI(systemPrompt, userPrompt)
     } catch (error) {
       if (error instanceof BadRequestException) throw error
-      throw new BadRequestException(`Impossible de trouver le WOD "${name}"`)
+      throw new BadRequestException(`Impossible de trouver le WOD "${name}". S'il s'agit d'un WOD récent, colle ses détails dans le champ prévu.`)
     }
   }
 
@@ -244,6 +257,11 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
       }
 
       const workoutData = JSON.parse(content)
+
+      if (workoutData.error === 'UNKNOWN_WOD') {
+        throw new BadRequestException('UNKNOWN_WOD')
+      }
+
       return GeneratedWorkoutSchema.parse(workoutData)
     } catch (error) {
       console.error('Error generating workout with AI:', error)

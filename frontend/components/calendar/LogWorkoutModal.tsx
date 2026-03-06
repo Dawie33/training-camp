@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { sessionService } from '@/services/sessions'
@@ -41,11 +41,30 @@ export function LogWorkoutModal({
   const [scoreType, setScoreType] = useState<ScoreType>(() => detectScoreType(workoutType))
   const [mins, setMins] = useState('')
   const [secs, setSecs] = useState('')
+  const [capAtteint, setCapAtteint] = useState(false)
+  const [capScore, setCapScore] = useState('')
+  const [capDescription, setCapDescription] = useState('')
   const [rounds, setRounds] = useState('')
   const [bonusReps, setBonusReps] = useState('')
   const [isRx, setIsRx] = useState(true)
   const [notes, setNotes] = useState('')
   const [rating, setRating] = useState(0)
+
+  useEffect(() => {
+    if (open) {
+      setScoreType(detectScoreType(workoutType))
+      setMins('')
+      setSecs('')
+      setCapAtteint(false)
+      setCapScore('')
+      setCapDescription('')
+      setRounds('')
+      setBonusReps('')
+      setIsRx(true)
+      setNotes('')
+      setRating(0)
+    }
+  }, [open, workoutType])
 
   const handleSave = async () => {
     setSaving(true)
@@ -57,8 +76,14 @@ export function LogWorkoutModal({
 
       const results: Record<string, unknown> = { rx: isRx }
       if (scoreType === 'for_time') {
-        const totalSecs = (parseInt(mins || '0', 10) * 60) + parseInt(secs || '0', 10)
-        if (totalSecs > 0) results.elapsed_time_seconds = totalSecs
+        if (capAtteint) {
+          results.cap_reached = true
+          if (capScore) results.reps_at_cap = parseInt(capScore, 10)
+          if (capDescription) results.cap_description = capDescription
+        } else {
+          const totalSecs = (parseInt(mins || '0', 10) * 60) + parseInt(secs || '0', 10)
+          if (totalSecs > 0) results.elapsed_time_seconds = totalSecs
+        }
       } else if (scoreType === 'amrap') {
         if (rounds) results.rounds = parseInt(rounds, 10)
         if (bonusReps) results.reps = parseInt(bonusReps, 10)
@@ -120,35 +145,70 @@ export function LogWorkoutModal({
 
           {/* Score inputs */}
           {scoreType === 'for_time' && (
-            <div>
-              <label className="text-xs text-slate-400 mb-2 block">Temps</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="99"
-                    value={mins}
-                    onChange={(e) => setMins(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
-                  />
-                  <span className="text-slate-400 text-sm">min</span>
-                </div>
-                <span className="text-slate-400 text-lg font-bold">:</span>
-                <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="59"
-                    value={secs}
-                    onChange={(e) => setSecs(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
-                  />
-                  <span className="text-slate-400 text-sm">s</span>
-                </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-slate-400">Temps</label>
+                <button
+                  onClick={() => setCapAtteint(!capAtteint)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
+                    capAtteint
+                      ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Cap atteint
+                </button>
               </div>
+              {!capAtteint ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="99"
+                      value={mins}
+                      onChange={(e) => setMins(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
+                    />
+                    <span className="text-slate-400 text-sm">min</span>
+                  </div>
+                  <span className="text-slate-400 text-lg font-bold">:</span>
+                  <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={secs}
+                      onChange={(e) => setSecs(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
+                    />
+                    <span className="text-slate-400 text-sm">s</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={capScore}
+                      onChange={(e) => setCapScore(e.target.value)}
+                      placeholder="0"
+                      className="w-24 bg-transparent text-white text-center text-lg font-mono outline-none"
+                    />
+                    <span className="text-red-400 text-sm">reps total (score officiel)</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={capDescription}
+                    onChange={(e) => setCapDescription(e.target.value)}
+                    placeholder="Ex: Round 2 + 24m lunges + 15 chest-to-bar"
+                    className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-red-500/50"
+                  />
+                </div>
+              )}
             </div>
           )}
 

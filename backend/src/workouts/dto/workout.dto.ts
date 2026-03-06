@@ -403,6 +403,10 @@ export class LookupWorkoutDto {
   @IsString()
   @MinLength(2)
   name!: string
+
+  @IsOptional()
+  @IsString()
+  referenceData?: string
 }
 
 export class WeeklyPlanDayDto {

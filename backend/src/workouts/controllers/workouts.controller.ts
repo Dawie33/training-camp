@@ -106,7 +106,7 @@ export class WorkoutsController {
   @Post('lookup')
   @UseGuards(JwtAuthGuard)
   async lookupWorkout(@Body() dto: LookupWorkoutDto): Promise<GeneratedWorkout> {
-    return this.aiGenerator.lookupWorkoutByName(dto.name)
+    return this.aiGenerator.lookupWorkoutByName(dto.name, dto.referenceData)
   }
 
   @Post('weekly-plan')

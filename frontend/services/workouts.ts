@@ -233,8 +233,8 @@ export class WorkoutsService {
     return apiClient.post<GeneratedWorkout>('/workouts/parse-text', { text })
   }
 
-  async lookupWorkout(name: string): Promise<GeneratedWorkout> {
-    return apiClient.post<GeneratedWorkout>('/workouts/lookup', { name })
+  async lookupWorkout(name: string, referenceData?: string): Promise<GeneratedWorkout> {
+    return apiClient.post<GeneratedWorkout>('/workouts/lookup', { name, referenceData })
   }
 
   /**

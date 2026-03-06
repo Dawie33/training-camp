@@ -5,9 +5,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  turbopack: {
-    root: '../', // Définit la racine du monorepo
-  },
 }
 
 export default withPWA({
