@@ -3,6 +3,15 @@ import apiClient from './apiClient'
 import ResourceApi from './resourceApi'
 import type { QueryParams } from './types'
 
+export interface WodAnalysis {
+  summary: string
+  performance_level: 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
+  comparison: string | null
+  strengths: string[]
+  improvements: string[]
+  next_steps: string
+}
+
 export const sessionApi = new ResourceApi<WorkoutSession>('/workout-sessions')
 
 export class SessionService {
@@ -62,6 +71,10 @@ export class SessionService {
    */
   async deleteSession(sessionId: string): Promise<void> {
     return sessionApi.delete(sessionId)
+  }
+
+  async analyzeSession(sessionId: string): Promise<WodAnalysis> {
+    return apiClient.post<WodAnalysis>(`/workout-sessions/${sessionId}/analyze`, {})
   }
 }
 

@@ -17,9 +17,10 @@ export class WorkoutSessionsService {
     async findAll(userId: string, limit = 50, offset = 0): Promise<{ rows: WorkoutSession[], count: number }> {
 
         const rows = await this.knex('workout_sessions')
-            .select('*')
-            .where({ user_id: userId })
-            .orderBy('started_at', 'desc')
+            .select('workout_sessions.*', 'workouts.name as workout_name')
+            .leftJoin('workouts', 'workout_sessions.workout_id', 'workouts.id')
+            .where({ 'workout_sessions.user_id': userId })
+            .orderBy('workout_sessions.started_at', 'desc')
             .limit(Number(limit))
             .offset(Number(offset))
 

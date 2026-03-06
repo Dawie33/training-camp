@@ -14,6 +14,7 @@ import {
 import { Request } from 'express'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from './dto/session.dto'
+import { WorkoutAnalysisService } from './workout-analysis.service'
 import { WorkoutSessionsService } from './workout-sessions.service'
 
 interface AuthenticatedRequest extends Request {
@@ -26,7 +27,10 @@ interface AuthenticatedRequest extends Request {
 @Controller('workout-sessions')
 @UseGuards(JwtAuthGuard)
 export class WorkoutSessionsController {
-    constructor(private readonly sessionsService: WorkoutSessionsService) { }
+    constructor(
+        private readonly sessionsService: WorkoutSessionsService,
+        private readonly analysisService: WorkoutAnalysisService,
+    ) { }
 
     @Get()
     async findAll(
@@ -76,6 +80,12 @@ export class WorkoutSessionsController {
         }
 
         return session
+    }
+
+    @Post(':id/analyze')
+    async analyze(@Req() req: AuthenticatedRequest, @Param('id') sessionId: string) {
+        const userId = req.user.id
+        return this.analysisService.analyzeSession(sessionId, userId)
     }
 
     @Delete(':id')

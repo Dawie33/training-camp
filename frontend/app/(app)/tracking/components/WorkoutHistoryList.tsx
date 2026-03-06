@@ -4,7 +4,9 @@ import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { WorkoutSession } from '@/domain/entities/workout'
-import { sessionService } from '@/services/sessions'
+import { sessionService, type WodAnalysis } from '@/services/sessions'
+import { PostWodAnalysisModal } from '@/components/workout/PostWodAnalysisModal'
+import { Brain } from 'lucide-react'
 
 interface WorkoutHistoryListProps {
   limit?: number
@@ -17,6 +19,10 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [page, setPage] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
+  const [analysisOpen, setAnalysisOpen] = useState(false)
+  const [analysis, setAnalysis] = useState<WodAnalysis | null>(null)
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [analysisWorkoutName, setAnalysisWorkoutName] = useState('')
 
   const totalPages = Math.ceil(totalCount / limit)
 
@@ -53,6 +59,21 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
       console.error(error)
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleAnalyze = async (session: WorkoutSession) => {
+    setAnalysisWorkoutName(session.workout_name ?? 'WOD')
+    setAnalysis(null)
+    setAnalysisOpen(true)
+    setAnalysisLoading(true)
+    try {
+      const result = await sessionService.analyzeSession(session.id)
+      setAnalysis(result)
+    } catch {
+      toast.error("Impossible de générer l'analyse")
+    } finally {
+      setAnalysisLoading(false)
     }
   }
 
@@ -148,8 +169,9 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
 
                 return (
                   <tr key={session.id} className="border-b border-slate-700/30 hover:bg-slate-800/30 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-white">
-                      {formatDate(session.started_at)}
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-white">{session.workout_name ?? '—'}</p>
+                      <p className="text-xs text-slate-500">{formatDate(session.started_at)}</p>
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn(
@@ -190,6 +212,15 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                         >
                           Voir
                         </button>
+                        {isCompleted && (
+                          <button
+                            className="px-2 py-1 rounded-lg text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors flex items-center gap-1"
+                            onClick={() => handleAnalyze(session)}
+                          >
+                            <Brain className="w-3 h-3" />
+                            IA
+                          </button>
+                        )}
                         <button
                           className="px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                           onClick={() => handleDelete(session.id)}
@@ -248,8 +279,9 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                       </span>
                     </div>
                     <p className="text-sm font-medium mt-1 text-white">
-                      {formatDate(session.started_at)}
+                      {session.workout_name ?? '—'}
                     </p>
+                    <p className="text-xs text-slate-500">{formatDate(session.started_at)}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
@@ -258,6 +290,15 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                     >
                       Voir
                     </button>
+                    {isCompleted && (
+                      <button
+                        className="px-2 py-1 rounded-lg text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors flex items-center gap-1"
+                        onClick={() => handleAnalyze(session)}
+                      >
+                        <Brain className="w-3 h-3" />
+                        IA
+                      </button>
+                    )}
                     <button
                       className="px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       onClick={() => handleDelete(session.id)}
@@ -330,6 +371,14 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
           </div>
         )}
       </div>
+
+      <PostWodAnalysisModal
+        open={analysisOpen}
+        onOpenChange={setAnalysisOpen}
+        analysis={analysis}
+        loading={analysisLoading}
+        workoutName={analysisWorkoutName}
+      />
 
       {/* Dialog détails */}
       {selectedSession && (
