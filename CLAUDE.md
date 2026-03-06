@@ -28,8 +28,8 @@ Monorepo avec deux workspaces :
 
 ### Base de données
 - PostgreSQL 15 (Docker, port 5434)
-- Migrations Knex.js dans `backend/database/migrations/`
-- Seeds dans `backend/database/seeds/`
+- Migrations Knex.js dans `backend/src/database/migrations/`
+- Seeds dans `backend/src/database/seeds/`
 - UUID via pgcrypto, snake_case pour les colonnes
 
 ## Commandes
@@ -106,6 +106,10 @@ Guards : `@UseGuards(JwtAuthGuard)` sur les routes protégées.
 
 `UserContextService` (exporté depuis `WorkoutsModule`) — fournit le contexte utilisateur (1RMs, équipements, sessions récentes) aux services IA.
 
+### Pattern génération IA
+
+Toutes les interactions OpenAI passent par `callOpenAI()` dans `backend/src/workouts/services/ai-workout-generator.service.ts`. La réponse est validée par Zod (`GeneratedWorkoutSchema`). Pour les lookups de WOD par nom, si l'IA retourne `{"error": "UNKNOWN_WOD"}`, une `BadRequestException` est levée — ne pas halluciner un workout inconnu.
+
 ## Architecture frontend (Next.js App Router)
 
 ```
@@ -133,6 +137,11 @@ frontend/
 - Pattern page : `page.tsx` → `_hooks/` → `_components/` (co-localisation dans le dossier de la page)
 - Le token JWT est stocké dans `localStorage` (`access_token`) et injecté automatiquement par `apiClient`
 
+### Deux flux de log de workout distincts
+
+- **`LogWorkoutModal`** (`components/calendar/`) — log depuis le calendrier, appelle l'API backend (`sessionService` + `scheduleApi`). Supporte for_time (avec cap atteint), amrap, libre.
+- **`WorkoutResultModal`** (`components/workout/`) — log depuis le timer intégré, utilise `WorkoutHistoryService` (localStorage). Flow séparé, non connecté à l'API sessions.
+
 ## Base de données — tables principales
 
 `users`, `exercises`, `equipments`, `user_equipments`, `workouts`, `workout_exercises`, `user_workouts`, `personalized_workouts`, `workout_logs`, `workout_sessions`, `training_programs`, `user_program_enrollments`, `user_workout_schedule`, `one_rep_maxes`, `skill_programs`, `skill_program_steps`, `skill_progress_logs`
@@ -157,6 +166,13 @@ NODE_ENV=development
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 En production, le backend est déployé sur Render (`https://training-camp-backend.onrender.com/api`).
+
+## Pièges connus
+
+- `npm run dev` lance frontend + backend via `concurrently`. Ne pas laisser tourner un backend séparé en parallèle (conflit port 3001).
+- `turbopack: { root: '../' }` dans `next.config.ts` provoque des redémarrages intempestifs du backend en watch mode — ne pas le remettre.
+- Les migrations Knex sont dans `backend/src/database/migrations/` (pas `backend/database/`).
+- GPT-4o ne connaît pas les workouts CrossFit Open postérieurs à début 2025. Utiliser le champ `referenceData` du endpoint `POST /workouts/lookup` pour injecter les détails exacts.
 
 ## Workflow recommandé
 
