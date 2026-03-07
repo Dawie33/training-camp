@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation'
 import { LogSessionModal } from './_components/LogSessionModal'
 import { SkillHeader } from './_components/SkillHeader'
 import { SkillStepCard } from './_components/SkillStepCard'
-import { WodGenerationModal } from './_components/WodGenerationModal'
 import { useSkillDetail } from './_hooks/useSkillDetail'
 
 function SkillDetailContent() {
@@ -21,16 +20,6 @@ function SkillDetailContent() {
     chartDataByStep,
     logModal,
     setLogModal,
-    wodModal,
-    setWodModal,
-    wodIncludeWarmup,
-    setWodIncludeWarmup,
-    allEquipments,
-    wodSelectedEquipment,
-    setWodSelectedEquipment,
-    boxMode,
-    setBoxMode,
-    userProfileEquipment,
     handleToggleStep,
     handleCompleteStep,
     handleSkipStep,
@@ -40,9 +29,6 @@ function SkillDetailContent() {
     openLogModal,
     handleSaveLog,
     handleDeleteLog,
-    openWodModal,
-    handleGenerateWod,
-    handleSaveWod,
     getProgressPercent,
   } = useSkillDetail()
 
@@ -113,7 +99,6 @@ function SkillDetailContent() {
                 chartData={chartDataByStep[step.id] ?? []}
                 onToggle={() => handleToggleStep(step.id)}
                 onLogSession={() => openLogModal(step.id)}
-                onGenerateWod={() => openWodModal(step)}
                 onComplete={() => handleCompleteStep(step.id)}
                 onSkip={() => handleSkipStep(step.id)}
                 onDeleteLog={(logId) => handleDeleteLog(logId, step.id)}
@@ -129,21 +114,6 @@ function SkillDetailContent() {
         setLogModal={setLogModal}
         handleSaveLog={handleSaveLog}
         program={program}
-      />
-      <WodGenerationModal
-        wodModal={wodModal}
-        setWodModal={setWodModal}
-        program={program}
-        wodIncludeWarmup={wodIncludeWarmup}
-        setWodIncludeWarmup={setWodIncludeWarmup}
-        boxMode={boxMode}
-        setBoxMode={setBoxMode}
-        allEquipments={allEquipments}
-        wodSelectedEquipment={wodSelectedEquipment}
-        setWodSelectedEquipment={setWodSelectedEquipment}
-        userProfileEquipment={userProfileEquipment}
-        onGenerate={handleGenerateWod}
-        onSave={handleSaveWod}
       />
     </motion.div>
   )

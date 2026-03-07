@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  Dumbbell,
   FastForward,
   Lock,
   Play,
@@ -46,7 +45,6 @@ interface SkillStepCardProps {
   chartData: { date: string; value: number }[]
   onToggle: () => void
   onLogSession: () => void
-  onGenerateWod: () => void
   onComplete: () => void
   onSkip: () => void
   onDeleteLog: (logId: string) => void
@@ -60,7 +58,6 @@ export function SkillStepCard({
   chartData,
   onToggle,
   onLogSession,
-  onGenerateWod,
   onComplete,
   onSkip,
   onDeleteLog,
@@ -166,10 +163,6 @@ export function SkillStepCard({
                 <Button size="sm" onClick={onLogSession} className="bg-gradient-to-r from-orange-500 to-rose-500">
                   <Plus className="w-3 h-3 mr-1" />
                   Logger session
-                </Button>
-                <Button size="sm" variant="outline" onClick={onGenerateWod} className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
-                  <Dumbbell className="w-3 h-3 mr-1" />
-                  Generer un WOD
                 </Button>
                 <Button size="sm" variant="outline" onClick={onComplete} className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
                   <CheckCircle className="w-3 h-3 mr-1" />
