@@ -73,8 +73,11 @@ export class SessionService {
     return sessionApi.delete(sessionId)
   }
 
-  async analyzeSession(sessionId: string): Promise<WodAnalysis> {
-    return apiClient.post<WodAnalysis>(`/workout-sessions/${sessionId}/analyze`, {})
+  async analyzeSession(sessionId: string, force = false): Promise<WodAnalysis> {
+    const url = force
+      ? `/workout-sessions/${sessionId}/analyze?force=true`
+      : `/workout-sessions/${sessionId}/analyze`
+    return apiClient.post<WodAnalysis>(url, {})
   }
 }
 

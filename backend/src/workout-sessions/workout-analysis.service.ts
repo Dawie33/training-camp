@@ -22,13 +22,21 @@ export class WorkoutAnalysisService {
     this.openai = new OpenAI({ apiKey })
   }
 
-  async analyzeSession(sessionId: string, userId: string): Promise<WodAnalysis> {
+  async analyzeSession(sessionId: string, userId: string, force = false): Promise<WodAnalysis> {
     // 1. Récupérer la session
     const session = await this.knex('workout_sessions')
       .where({ id: sessionId, user_id: userId })
       .first()
 
     if (!session) throw new Error('Session not found')
+
+    // Retourner l'analyse déjà stockée en DB si elle existe et qu'on ne force pas la régénération
+    if (!force && session.ai_analysis) {
+      const stored = typeof session.ai_analysis === 'string'
+        ? JSON.parse(session.ai_analysis)
+        : session.ai_analysis
+      return stored as WodAnalysis
+    }
 
     // 2. Récupérer le workout associé
     let workout: Record<string, unknown> | null = null
@@ -93,7 +101,13 @@ Réponds en JSON avec exactement cette structure :
     const content = completion.choices[0]?.message?.content
     if (!content) throw new Error('No response from AI')
 
-    return JSON.parse(content) as WodAnalysis
+    const analysis = JSON.parse(content) as WodAnalysis
+
+    await this.knex('workout_sessions')
+      .where({ id: sessionId })
+      .update({ ai_analysis: JSON.stringify(analysis) })
+
+    return analysis
   }
 
   private buildScoreDescription(results: Record<string, unknown>, workoutType: string): string {

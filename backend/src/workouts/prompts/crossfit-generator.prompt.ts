@@ -88,6 +88,21 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     }
   }
 
+  if (context.recentAnalyses.length > 0) {
+    const levelLabel: Record<string, string> = {
+      pr: 'PR', above_average: 'au-dessus de la moyenne', average: 'dans la moyenne',
+      below_average: 'en dessous de la moyenne', first_time: 'première fois',
+    }
+    lines.push('')
+    lines.push('**Analyses IA récentes (points forts / axes à travailler)** :')
+    for (const a of context.recentAnalyses) {
+      lines.push(`- ${a.date} — ${a.workout_name} (${levelLabel[a.performance_level] ?? a.performance_level})`)
+      if (a.strengths.length > 0) lines.push(`  Points forts : ${a.strengths.join(', ')}`)
+      if (a.improvements.length > 0) lines.push(`  À travailler : ${a.improvements.join(', ')}`)
+    }
+    lines.push('→ Tiens compte de ces axes dans la programmation du WOD.')
+  }
+
   lines.push('')
   lines.push(
     '**Directives** : Adapte le workout à ce profil. Respecte les limitations physiques.' +

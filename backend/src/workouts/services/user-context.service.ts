@@ -2,6 +2,15 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 
+export interface RecentAnalysis {
+  date: string
+  workout_name: string
+  performance_level: 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
+  strengths: string[]
+  improvements: string[]
+  next_steps: string
+}
+
 export interface UserAIContext {
   sport_level: string
   height?: number
@@ -19,6 +28,7 @@ export interface UserAIContext {
     duration_minutes: number
     perceived_effort?: number
   }[]
+  recentAnalyses: RecentAnalysis[]
 }
 
 @Injectable()
@@ -26,7 +36,7 @@ export class UserContextService {
   constructor(@InjectModel() private readonly knex: Knex) {}
 
   async getUserAIContext(userId: string): Promise<UserAIContext> {
-    const [profile, oneRepMaxes, recentSessions] = await Promise.all([
+    const [profile, oneRepMaxes, recentSessions, recentAnalysesRaw] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -59,6 +69,14 @@ export class UserContextService {
         .whereRaw("ws.started_at >= NOW() - INTERVAL '7 days'")
         .orderBy('ws.started_at', 'desc')
         .limit(10),
+
+      this.knex('workout_sessions as ws')
+        .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
+        .select('ws.started_at', 'ws.ai_analysis', 'w.name as workout_name')
+        .where('ws.user_id', userId)
+        .whereNotNull('ws.ai_analysis')
+        .orderBy('ws.started_at', 'desc')
+        .limit(5),
     ])
 
     const recentSessionsMapped = recentSessions.map(
@@ -80,6 +98,21 @@ export class UserContextService {
       },
     )
 
+    const recentAnalyses: RecentAnalysis[] = (recentAnalysesRaw ?? [])
+      .map((row: { started_at: string; ai_analysis: unknown; workout_name?: string }) => {
+        const a = typeof row.ai_analysis === 'string' ? JSON.parse(row.ai_analysis) : row.ai_analysis
+        if (!a) return null
+        return {
+          date: new Date(row.started_at).toISOString().split('T')[0],
+          workout_name: row.workout_name ?? 'Workout inconnu',
+          performance_level: a.performance_level,
+          strengths: a.strengths ?? [],
+          improvements: a.improvements ?? [],
+          next_steps: a.next_steps ?? '',
+        }
+      })
+      .filter(Boolean) as RecentAnalysis[]
+
     return {
       sport_level: profile?.sport_level ?? 'intermediate',
       height: profile?.height ?? undefined,
@@ -92,6 +125,7 @@ export class UserContextService {
       equipment_available: profile?.equipment_available ?? [],
       training_preferences: profile?.training_preferences ?? {},
       recentSessions: recentSessionsMapped,
+      recentAnalyses,
     }
   }
 }

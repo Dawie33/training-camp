@@ -83,9 +83,13 @@ export class WorkoutSessionsController {
     }
 
     @Post(':id/analyze')
-    async analyze(@Req() req: AuthenticatedRequest, @Param('id') sessionId: string) {
+    async analyze(
+        @Req() req: AuthenticatedRequest,
+        @Param('id') sessionId: string,
+        @Query('force') force?: string,
+    ) {
         const userId = req.user.id
-        return this.analysisService.analyzeSession(sessionId, userId)
+        return this.analysisService.analyzeSession(sessionId, userId, force === 'true')
     }
 
     @Delete(':id')

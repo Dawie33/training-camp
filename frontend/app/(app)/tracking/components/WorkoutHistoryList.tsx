@@ -23,6 +23,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
   const [analysis, setAnalysis] = useState<WodAnalysis | null>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisWorkoutName, setAnalysisWorkoutName] = useState('')
+  const [analysisSessionId, setAnalysisSessionId] = useState<string | null>(null)
 
   const totalPages = Math.ceil(totalCount / limit)
 
@@ -64,6 +65,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
 
   const handleAnalyze = async (session: WorkoutSession) => {
     setAnalysisWorkoutName(session.workout_name ?? 'WOD')
+    setAnalysisSessionId(session.id)
     setAnalysis(null)
     setAnalysisOpen(true)
     setAnalysisLoading(true)
@@ -72,6 +74,20 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
       setAnalysis(result)
     } catch {
       toast.error("Impossible de générer l'analyse")
+    } finally {
+      setAnalysisLoading(false)
+    }
+  }
+
+  const handleRegenerate = async () => {
+    if (!analysisSessionId) return
+    setAnalysis(null)
+    setAnalysisLoading(true)
+    try {
+      const result = await sessionService.analyzeSession(analysisSessionId, true)
+      setAnalysis(result)
+    } catch {
+      toast.error("Impossible de régénérer l'analyse")
     } finally {
       setAnalysisLoading(false)
     }
@@ -378,6 +394,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
         analysis={analysis}
         loading={analysisLoading}
         workoutName={analysisWorkoutName}
+        onRegenerate={handleRegenerate}
       />
 
       {/* Dialog détails */}

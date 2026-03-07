@@ -65,6 +65,19 @@ function buildAthleteContextSection(context: UserAIContext): string {
     })
   }
 
+  if (context.recentAnalyses.length > 0) {
+    const levelLabel: Record<string, string> = {
+      pr: 'PR', above_average: 'au-dessus de la moyenne', average: 'dans la moyenne',
+      below_average: 'en dessous de la moyenne', first_time: 'première fois',
+    }
+    lines.push('- Analyses IA récentes (performances + feedback coach) :')
+    context.recentAnalyses.forEach((a) => {
+      lines.push(`  - ${a.date} — ${a.workout_name} (${levelLabel[a.performance_level] ?? a.performance_level})`)
+      if (a.improvements.length > 0) lines.push(`    → À travailler : ${a.improvements.join(', ')}`)
+      if (a.next_steps) lines.push(`    → Prochaine étape : ${a.next_steps}`)
+    })
+  }
+
   return lines.join('\n')
 }
 

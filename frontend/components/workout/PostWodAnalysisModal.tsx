@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { type WodAnalysis } from '@/services/sessions'
-import { ArrowRight, Brain, CheckCircle, Loader2, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
+import { ArrowRight, Brain, CheckCircle, Loader2, RefreshCw, TrendingDown, TrendingUp, XCircle } from 'lucide-react'
 
 interface PostWodAnalysisModalProps {
   open: boolean
@@ -10,6 +10,7 @@ interface PostWodAnalysisModalProps {
   analysis: WodAnalysis | null
   loading: boolean
   workoutName: string
+  onRegenerate?: () => void
 }
 
 const performanceBadge: Record<WodAnalysis['performance_level'], { label: string; className: string }> = {
@@ -20,17 +21,29 @@ const performanceBadge: Record<WodAnalysis['performance_level'], { label: string
   first_time: { label: 'Première fois', className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
 }
 
-export function PostWodAnalysisModal({ open, onOpenChange, analysis, loading, workoutName }: PostWodAnalysisModalProps) {
+export function PostWodAnalysisModal({ open, onOpenChange, analysis, loading, workoutName, onRegenerate }: PostWodAnalysisModalProps) {
   const badge = analysis ? performanceBadge[analysis.performance_level] : null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto bg-slate-900 border-white/10 text-white">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
-            <Brain className="w-5 h-5 text-purple-400" />
-            Analyse IA — {workoutName}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Brain className="w-5 h-5 text-purple-400" />
+              Analyse IA — {workoutName}
+            </DialogTitle>
+            {onRegenerate && !loading && (
+              <button
+                onClick={onRegenerate}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-slate-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors border border-white/5"
+                title="Régénérer l'analyse"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Régénérer
+              </button>
+            )}
+          </div>
         </DialogHeader>
 
         {loading && (
