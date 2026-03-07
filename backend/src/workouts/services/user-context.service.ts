@@ -11,6 +11,18 @@ export interface RecentAnalysis {
   next_steps: string
 }
 
+export interface ActiveSkillContext {
+  program_id: string
+  skill_name: string
+  skill_category: string
+  step_id: string
+  step_title: string
+  step_description?: string
+  recommended_exercises: Array<{ name: string; sets?: number; reps?: string | number; rest?: string; intensity?: string; notes?: string }>
+  coaching_tips?: string
+  last_trained: string | null // ISO date ou null si jamais travaillé
+}
+
 export interface UserAIContext {
   sport_level: string
   height?: number
@@ -29,6 +41,7 @@ export interface UserAIContext {
     perceived_effort?: number
   }[]
   recentAnalyses: RecentAnalysis[]
+  activeSkills: ActiveSkillContext[]
 }
 
 @Injectable()
@@ -36,7 +49,7 @@ export class UserContextService {
   constructor(@InjectModel() private readonly knex: Knex) {}
 
   async getUserAIContext(userId: string): Promise<UserAIContext> {
-    const [profile, oneRepMaxes, recentSessions, recentAnalysesRaw] = await Promise.all([
+    const [profile, oneRepMaxes, recentSessions, recentAnalysesRaw, activeSkillsRaw] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -77,6 +90,26 @@ export class UserContextService {
         .whereNotNull('ws.ai_analysis')
         .orderBy('ws.started_at', 'desc')
         .limit(5),
+
+      this.knex('skill_programs as sp')
+        .join('skill_program_steps as sps', function () {
+          this.on('sps.program_id', '=', 'sp.id').andOnVal('sps.status', 'in_progress')
+        })
+        .leftJoin('skill_progress_logs as spl', 'spl.step_id', 'sps.id')
+        .where('sp.user_id', userId)
+        .where('sp.status', 'active')
+        .select(
+          'sp.id as program_id',
+          'sp.skill_name',
+          'sp.skill_category',
+          'sps.id as step_id',
+          'sps.title as step_title',
+          'sps.description as step_description',
+          'sps.recommended_exercises',
+          'sps.coaching_tips',
+          this.knex.raw('MAX(spl.session_date) as last_trained'),
+        )
+        .groupBy('sp.id', 'sp.skill_name', 'sp.skill_category', 'sps.id', 'sps.title', 'sps.description', 'sps.recommended_exercises', 'sps.coaching_tips'),
     ])
 
     const recentSessionsMapped = recentSessions.map(
@@ -113,6 +146,34 @@ export class UserContextService {
       })
       .filter(Boolean) as RecentAnalysis[]
 
+    const activeSkills: ActiveSkillContext[] = (activeSkillsRaw ?? []).map(
+      (row: {
+        program_id: string
+        skill_name: string
+        skill_category: string
+        step_id: string
+        step_title: string
+        step_description?: string
+        recommended_exercises: unknown
+        coaching_tips?: string
+        last_trained: string | null
+      }) => ({
+        program_id: row.program_id,
+        skill_name: row.skill_name,
+        skill_category: row.skill_category,
+        step_id: row.step_id,
+        step_title: row.step_title,
+        step_description: row.step_description ?? undefined,
+        recommended_exercises: Array.isArray(row.recommended_exercises)
+          ? row.recommended_exercises
+          : typeof row.recommended_exercises === 'string'
+            ? JSON.parse(row.recommended_exercises)
+            : [],
+        coaching_tips: row.coaching_tips ?? undefined,
+        last_trained: row.last_trained ?? null,
+      }),
+    )
+
     return {
       sport_level: profile?.sport_level ?? 'intermediate',
       height: profile?.height ?? undefined,
@@ -126,6 +187,7 @@ export class UserContextService {
       training_preferences: profile?.training_preferences ?? {},
       recentSessions: recentSessionsMapped,
       recentAnalyses,
+      activeSkills,
     }
   }
 }

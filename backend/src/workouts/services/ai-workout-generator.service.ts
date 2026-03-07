@@ -6,7 +6,7 @@ import {
 } from '../prompts/crossfit-generator.prompt'
 import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../schemas/workout.schema'
 import { ZodError } from 'zod'
-import { UserContextService } from './user-context.service'
+import { UserContextService, ActiveSkillContext } from './user-context.service'
 import { WorkoutsService } from './workouts.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
 
@@ -85,6 +85,12 @@ export class AIWorkoutGeneratorService {
       ? params.equipment
       : context.equipment_available.length > 0 ? context.equipment_available : undefined
 
+    const skillInstruction = this.buildSkillInstruction(context.activeSkills)
+
+    const additionalInstructions = [skillInstruction, params.additionalInstructions]
+      .filter(Boolean)
+      .join('\n\n') || undefined
+
     const systemPrompt = buildCrossFitSystemPrompt(equipment, context)
     const userPrompt = buildCrossFitWorkoutPrompt({
       workoutType: params.workoutType || 'mixed',
@@ -92,9 +98,56 @@ export class AIWorkoutGeneratorService {
       difficulty,
       equipment,
       focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
-      additionalInstructions: params.additionalInstructions
+      additionalInstructions,
     })
     return this.callOpenAI(systemPrompt, userPrompt)
+  }
+
+  /**
+   * Sélectionne le skill le moins récemment travaillé parmi les skills actifs
+   * et construit l'instruction à injecter dans le prompt de génération.
+   */
+  private buildSkillInstruction(activeSkills: ActiveSkillContext[]): string | null {
+    if (!activeSkills.length) return null
+
+    // Trier par last_trained ASC (null = jamais travaillé → priorité maximale)
+    const sorted = [...activeSkills].sort((a, b) => {
+      if (!a.last_trained && !b.last_trained) return 0
+      if (!a.last_trained) return -1
+      if (!b.last_trained) return 1
+      return new Date(a.last_trained).getTime() - new Date(b.last_trained).getTime()
+    })
+
+    const skill = sorted[0]
+
+    const exercisesText = (skill.recommended_exercises ?? [])
+      .map((ex) => {
+        const parts = [ex.name]
+        if (ex.sets) parts.push(`${ex.sets} séries`)
+        if (ex.reps) parts.push(`${ex.reps} reps`)
+        if (ex.rest) parts.push(`repos ${ex.rest}`)
+        if (ex.intensity) parts.push(ex.intensity)
+        if (ex.notes) parts.push(`(${ex.notes})`)
+        return `  - ${parts.join(' — ')}`
+      })
+      .join('\n')
+
+    const lastTrainedNote = skill.last_trained
+      ? `(dernière séance : ${new Date(skill.last_trained).toLocaleDateString('fr-FR')})`
+      : '(jamais travaillé)'
+
+    return [
+      `**TRAVAIL TECHNIQUE À INTÉGRER OBLIGATOIREMENT** ${lastTrainedNote} :`,
+      `Skill : "${skill.skill_name}" (${skill.skill_category})`,
+      `Étape : "${skill.step_title}"`,
+      skill.step_description ? `Objectif : ${skill.step_description}` : null,
+      exercisesText ? `Exercices de progression :\n${exercisesText}` : null,
+      skill.coaching_tips ? `Tips : ${skill.coaching_tips}` : null,
+      `→ Inclus une section "skill_work" de 15-20 min AVANT le MetCon avec ces exercices.`,
+      `→ Si pertinent, intègre "${skill.skill_name}" ou ses variantes progressives dans le MetCon.`,
+    ]
+      .filter(Boolean)
+      .join('\n')
   }
 
   /**
