@@ -141,7 +141,9 @@ export class TrainingProgramsService {
       session_in_week: number
       type: string
       replacement: Record<string, unknown>
-    }> = JSON.parse(enrollment.customizations_applied || '[]')
+    }> = Array.isArray(enrollment.customizations_applied)
+      ? enrollment.customizations_applied
+      : JSON.parse(enrollment.customizations_applied || '[]')
 
     const sessions = phase.sessions.map((session: ProgramSession) => {
       const swap = customizations.find(
@@ -246,7 +248,9 @@ export class TrainingProgramsService {
       throw new NotFoundException('Enrollment non trouvé')
     }
 
-    const customizations: unknown[] = JSON.parse(enrollment.customizations_applied || '[]')
+    const customizations: unknown[] = Array.isArray(enrollment.customizations_applied)
+      ? enrollment.customizations_applied
+      : JSON.parse(enrollment.customizations_applied || '[]')
 
     // Supprimer un éventuel swap existant pour cette session
     const filtered = (
