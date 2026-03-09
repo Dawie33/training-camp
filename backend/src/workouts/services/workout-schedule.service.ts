@@ -303,4 +303,70 @@ export class WorkoutScheduleService {
       status: 'skipped',
     })
   }
+
+  /**
+   * Suggère une configuration de semaine basée sur l'historique des 3 dernières semaines
+   */
+  async suggestWeek(userId: string, weekStart: string): Promise<{ days: { date: string; type: string }[]; weeks_analyzed: number }> {
+    const weekStartDate = new Date(weekStart + 'T00:00:00Z')
+    const historyStartDate = new Date(weekStartDate)
+    historyStartDate.setUTCDate(historyStartDate.getUTCDate() - 21)
+    const historyStart = historyStartDate.toISOString().split('T')[0]
+
+    const rows = await this.knex('user_workout_schedule')
+      .select('scheduled_date', 'session_type')
+      .where('user_id', userId)
+      .where('scheduled_date', '>=', historyStart)
+      .where('scheduled_date', '<', weekStart)
+      .orderBy('scheduled_date', 'asc')
+
+    const makeDays = (typeByIndex: (i: number) => string) =>
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStartDate)
+        d.setUTCDate(d.getUTCDate() + i)
+        return { date: d.toISOString().split('T')[0], type: typeByIndex(i) }
+      })
+
+    if (rows.length === 0) {
+      return { days: makeDays(() => 'rest'), weeks_analyzed: 0 }
+    }
+
+    const sessionTypeToDay = (sessionType: string): string => {
+      if (sessionType === 'box_session') return 'box'
+      if (sessionType === 'program_session') return 'program'
+      return 'perso'
+    }
+
+    // Group by weekday (0=Monday, 6=Sunday)
+    const weekdayTypes: Record<number, string[]> = {}
+    for (let i = 0; i < 7; i++) weekdayTypes[i] = []
+    const distinctWeeks = new Set<string>()
+
+    for (const row of rows as { scheduled_date: string | Date; session_type: string }[]) {
+      // pg may return date columns as Date objects or 'YYYY-MM-DD' strings
+      const dateStr =
+        typeof row.scheduled_date === 'string'
+          ? row.scheduled_date.slice(0, 10)
+          : new Date(row.scheduled_date).toISOString().slice(0, 10)
+      const d = new Date(dateStr + 'T00:00:00Z')
+      const dow = (d.getUTCDay() + 6) % 7 // 0=Monday
+      weekdayTypes[dow].push(sessionTypeToDay(row.session_type))
+      // Track distinct weeks
+      const monday = new Date(d)
+      monday.setUTCDate(d.getUTCDate() - dow)
+      distinctWeeks.add(monday.toISOString().split('T')[0])
+    }
+
+    const getMode = (types: string[]): string => {
+      if (types.length === 0) return 'rest'
+      const counts: Record<string, number> = {}
+      for (const t of types) counts[t] = (counts[t] || 0) + 1
+      return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
+    }
+
+    return {
+      days: makeDays((i) => getMode(weekdayTypes[i])),
+      weeks_analyzed: distinctWeeks.size,
+    }
+  }
 }

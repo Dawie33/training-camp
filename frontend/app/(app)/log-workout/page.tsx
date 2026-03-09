@@ -46,6 +46,7 @@ function LogWorkoutContent() {
   const [timeMinutes, setTimeMinutes] = useState('')
   const [timeSeconds, setTimeSeconds] = useState('')
   const [rounds, setRounds] = useState('')
+  const [bonusReps, setBonusReps] = useState('')
   const [rating, setRating] = useState<number>(0)
   const [notes, setNotes] = useState('')
   const [wodDate, setWodDate] = useState(() => {
@@ -118,8 +119,8 @@ function LogWorkoutContent() {
   const handleSave = async () => {
 
     const totalSeconds = (parseInt(timeMinutes || '0') * 60) + parseInt(timeSeconds || '0')
-    if (totalSeconds === 0 && !rounds) {
-      toast.error('Saisis un temps ou un nombre de rounds')
+    if (totalSeconds === 0 && !rounds && !bonusReps) {
+      toast.error('Saisis un temps ou un score AMRAP')
       return
     }
 
@@ -153,8 +154,9 @@ function LogWorkoutContent() {
         completed_at: completedAt.toISOString(),
         notes: notes || undefined,
         results: {
-          elapsed_time_seconds: totalSeconds,
+          elapsed_time_seconds: totalSeconds || undefined,
           rounds: rounds ? parseInt(rounds) : undefined,
+          reps: bonusReps ? parseInt(bonusReps) : undefined,
           rating: rating > 0 ? rating : undefined,
           exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
         }
@@ -389,15 +391,27 @@ function LogWorkoutContent() {
           {/* Rounds (if AMRAP) */}
           {isAmrap && (
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Rounds complétés</label>
-              <input
-                type="number"
-                value={rounds}
-                onChange={(e) => setRounds(e.target.value)}
-                placeholder="0"
-                min="0"
-                className="w-32 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
-              />
+              <label className="block text-sm text-slate-400 mb-2">Score AMRAP</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  value={rounds}
+                  onChange={(e) => setRounds(e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  className="w-28 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
+                />
+                <span className="text-slate-400 font-semibold">rounds +</span>
+                <input
+                  type="number"
+                  value={bonusReps}
+                  onChange={(e) => setBonusReps(e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  className="w-28 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
+                />
+                <span className="text-slate-400">reps</span>
+              </div>
             </div>
           )}
 

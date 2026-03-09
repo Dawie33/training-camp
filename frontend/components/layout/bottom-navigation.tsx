@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
 const moreItems: NavItem[] = [
   { href: '/timer', label: 'Timer', icon: Clock },
   { href: '/benchmarks', label: 'Benchmarks', icon: Target },
-  { href: '/log-workout', label: 'Log WOD', icon: PenLine },
+  { href: '/log-workout', label: 'Enregistrer WOD', icon: PenLine },
   { href: '/training-programs', label: 'Programme', icon: LayoutList },
 ]
 

@@ -7,19 +7,21 @@ import { PostWodAnalysisModal } from '@/components/workout/PostWodAnalysisModal'
 import { sessionService, type WodAnalysis } from '@/services/sessions'
 import { scheduleApi } from '@/services/schedule'
 import { toast } from 'sonner'
-import { Star, Trophy } from 'lucide-react'
+import { Home, Star, Trophy } from 'lucide-react'
 
 interface LogWorkoutModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   scheduleId: string
-  workoutId: string
+  workoutId?: string
   workoutName: string
   workoutType?: string
+  defaultLocation?: 'box' | 'maison'
   onLogged: () => void
 }
 
 type ScoreType = 'for_time' | 'amrap' | 'libre'
+type Location = 'box' | 'maison'
 
 function detectScoreType(workoutType?: string): ScoreType {
   if (!workoutType) return 'for_time'
@@ -36,10 +38,12 @@ export function LogWorkoutModal({
   workoutId,
   workoutName,
   workoutType,
+  defaultLocation = 'maison',
   onLogged,
 }: LogWorkoutModalProps) {
   const [saving, setSaving] = useState(false)
   const [scoreType, setScoreType] = useState<ScoreType>(() => detectScoreType(workoutType))
+  const [location, setLocation] = useState<Location>(defaultLocation)
   const [mins, setMins] = useState('')
   const [secs, setSecs] = useState('')
   const [capAtteint, setCapAtteint] = useState(false)
@@ -58,6 +62,7 @@ export function LogWorkoutModal({
   useEffect(() => {
     if (open) {
       setScoreType(detectScoreType(workoutType))
+      setLocation(defaultLocation)
       setMins('')
       setSecs('')
       setCapAtteint(false)
@@ -70,7 +75,7 @@ export function LogWorkoutModal({
       setRating(0)
       setAnalysis(null)
     }
-  }, [open, workoutType])
+  }, [open, workoutType, defaultLocation])
 
   const handleSave = async () => {
     setSaving(true)
@@ -80,7 +85,7 @@ export function LogWorkoutModal({
         started_at: new Date().toISOString(),
       })
 
-      const results: Record<string, unknown> = { rx: isRx }
+      const results: Record<string, unknown> = { rx: isRx, location }
       if (scoreType === 'for_time') {
         if (capAtteint) {
           results.cap_reached = true
@@ -107,7 +112,7 @@ export function LogWorkoutModal({
       toast.success('WOD enregistré !')
       onLogged()
       onOpenChange(false)
-      handleAnalyze(session.id)
+      if (workoutId) handleAnalyze(session.id)
     } catch {
       toast.error("Erreur lors de l'enregistrement")
     } finally {
@@ -148,6 +153,33 @@ export function LogWorkoutModal({
           </DialogHeader>
 
           <div className="space-y-5 pt-1">
+            {/* Lieu */}
+            <div>
+              <label className="text-xs text-slate-400 mb-2 block">Lieu</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setLocation('box')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+                    location === 'box'
+                      ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🏋️ Box
+                </button>
+                <button
+                  onClick={() => setLocation('maison')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+                    location === 'maison'
+                      ? 'bg-orange-500/20 border-orange-500/50 text-orange-400'
+                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Home className="w-4 h-4" /> Maison
+                </button>
+              </div>
+            </div>
+
             {/* Score type tabs */}
             <div className="flex gap-1 p-1 bg-slate-800 rounded-lg">
               {tabs.map((tab) => (

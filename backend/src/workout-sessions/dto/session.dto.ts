@@ -1,11 +1,11 @@
-import { IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator'
+import { IsOptional, IsString, IsUUID } from 'class-validator'
 
 export class CreateWorkoutSessionDto {
-    @ValidateIf(o => !o.personalized_workout_id)
+    @IsOptional()
     @IsUUID()
     workout_id?: string
 
-    @ValidateIf(o => !o.workout_id)
+    @IsOptional()
     @IsUUID()
     personalized_workout_id?: string
 

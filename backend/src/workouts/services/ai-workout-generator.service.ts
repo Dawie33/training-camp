@@ -35,6 +35,8 @@ export interface WorkoutGenerationParams {
   equipment?: string[]
   focus?: string | string[]
   additionalInstructions?: string
+  skipSkillBlock?: boolean
+  techniqueFocus?: string // 'skills' | 'altero' | 'force' | '' (auto)
 }
 
 @Injectable()
@@ -85,9 +87,13 @@ export class AIWorkoutGeneratorService {
       ? params.equipment
       : context.equipment_available.length > 0 ? context.equipment_available : undefined
 
-    const skillInstruction = this.buildSkillInstruction(context.activeSkills)
+    const skillInstruction = params.skipSkillBlock ? null : this.buildSkillInstruction(context.activeSkills)
 
-    const additionalInstructions = [skillInstruction, params.additionalInstructions]
+    const techniqueInstruction = params.techniqueFocus !== undefined
+      ? this.buildTechniqueInstruction(params.techniqueFocus, { equipment: equipment ?? [], level: difficulty })
+      : null
+
+    const additionalInstructions = [techniqueInstruction, skillInstruction, params.additionalInstructions]
       .filter(Boolean)
       .join('\n\n') || undefined
 
@@ -148,6 +154,46 @@ export class AIWorkoutGeneratorService {
     ]
       .filter(Boolean)
       .join('\n')
+  }
+
+  private buildTechniqueInstruction(focus: string, ctx: { equipment: string[]; level: string }): string | null {
+    const equipNote = ctx.equipment.length
+      ? `Équipement disponible UNIQUEMENT : ${ctx.equipment.join(', ')}. N'utilise QUE cet équipement, rien d'autre.`
+      : `Pas d'équipement spécifique — mouvements au poids du corps uniquement.`
+    const levelNote = `Niveau athlète : ${ctx.level}.`
+    const header = `CONTRAINTES ABSOLUES :\n- ${equipNote}\n- ${levelNote}\n- Adapte les mouvements et les charges à ces contraintes.\n`
+    const core = `4) CORE / GAINAGE (5-10 min) — abdos et gainage : planches, hollow body, hollow rocks, toes-to-bar lent, sit-ups. PAS de conditioning.`
+
+    const map: Record<string, string> = {
+      skills: `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance technique gymnastics pure :
+${header}
+1) WARMUP (10 min) — mobilité, activation spécifique gymnastics
+2) TECHNIQUE GYMNASTICS (25-30 min) — choisis UN mouvement adapté au niveau ET à l'équipement disponible (ex: si pas d'anneaux → barre uniquement). Propose des progressions adaptées au niveau : si débutant sur ce mouvement, commence par les prérequis (ex: strict pull-ups, dips, banded MU). Plusieurs séries avec temps de repos suffisant.
+3) RENFORCEMENT SPÉCIFIQUE (10 min) — force auxiliaire liée au mouvement travaillé (ex: dips, ring rows, hollow holds, pike push-ups)
+${core}`,
+      altero: `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance haltérophilie pure :
+${header}
+1) WARMUP (10 min) — échauffement haltérophilie, mobilité épaules/hanches/chevilles
+2) TECHNIQUE HALTÉROPHILIE (25-30 min) — snatch ou clean & jerk selon l'équipement. Complexes techniques progressifs ou travail de force spécifique (ex: 6x2 à 70%, puis 4x1 à 80%). Temps de repos complet entre les séries (2-3 min). Adapte les charges au niveau.
+3) RENFORCEMENT COMPLÉMENTAIRE (10 min) — overhead squat, RDL, press derrière la nuque, ou autre exercice spécifique haltérophilie adapté à l'équipement
+${core}`,
+      force: `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance force pure :
+${header}
+1) WARMUP (10 min) — mobilité et activation musculaire ciblée
+2) FORCE PRINCIPALE (25-30 min) — un grand mouvement adapté à l'équipement : back squat, deadlift, bench press ou overhead press. 5 séries progressives (ex: 5x5 ou 5/3/1). Temps de repos complet (2-3 min). Adapte les charges au niveau.
+3) ACCESSOIRE (10 min) — 2-3 exercices complémentaires ciblant les muscles synergistes, adaptés à l'équipement disponible
+${core}`,
+    }
+
+    if (map[focus]) return map[focus]
+
+    // Auto — l'IA choisit la dominante, toujours sans MetCon et avec le contexte utilisateur
+    return `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance technique/force pure :
+${header}
+1) WARMUP (10 min) — mobilité et activation adaptés à la séance
+2) TRAVAIL PRINCIPAL (25-30 min) — choisis UNE dominante adaptée à l'équipement disponible et au niveau : gymnastics technique, haltérophilie, ou force. Plusieurs séries qualitatives avec temps de repos complet. Si un mouvement n'est pas réalisable avec l'équipement, propose une alternative adaptée.
+3) RENFORCEMENT COMPLÉMENTAIRE (10 min) — exercices spécifiques à la dominante choisie, adaptés à l'équipement
+${core}`
   }
 
   /**
@@ -233,18 +279,20 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
    */
   async generateWeeklyPlan(userId: string, days: WeeklyPlanDayInput[]): Promise<WeeklyPlanResult> {
     const persoDays = days.filter((d) => d.type === 'perso')
-    const boxDays = days.filter((d) => d.type === 'box').map((d) => d.date)
+    const boxDayDates = days.filter((d) => d.type === 'box').map((d) => d.date)
 
     const scheduled: WeeklyPlanResult['scheduled'] = []
     const skipped: string[] = []
+    const savedBoxDays: string[] = []
 
-    await Promise.all(
-      persoDays.map(async (day) => {
+    await Promise.all([
+      ...persoDays.map(async (day) => {
         try {
           const wod = await this.generatePersonalizedWorkout(userId, {
             workoutType: 'mixed',
             duration: 45,
-            additionalInstructions: day.focus,
+            techniqueFocus: day.focus ?? '',
+            skipSkillBlock: true,
           })
 
           const saved = await this.workoutsService.create({
@@ -286,9 +334,21 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
           }
         }
       }),
-    )
+      ...boxDayDates.map(async (date) => {
+        try {
+          await this.workoutScheduleService.create(userId, {
+            scheduled_date: date,
+            session_type: 'box_session',
+          })
+          savedBoxDays.push(date)
+        } catch (err) {
+          if (!(err instanceof ConflictException)) throw err
+          // Already scheduled — silently skip
+        }
+      }),
+    ])
 
-    return { scheduled, skipped, box_days: boxDays }
+    return { scheduled, skipped, box_days: savedBoxDays }
   }
 
   private async callOpenAI(systemPrompt: string, userPrompt: string): Promise<GeneratedWorkout> {

@@ -119,6 +119,13 @@ export const scheduleApi = {
   },
 
   /**
+   * Suggère une configuration de semaine basée sur l'historique
+   */
+  async getWeekSuggestion(weekStart: string): Promise<{ days: { date: string; type: string }[]; weeks_analyzed: number }> {
+    return apiClient.get('/workout-schedule/week-suggestion', { params: { weekStart } })
+  },
+
+  /**
    * Crée un marqueur "Jour Box CrossFit" pour une date
    */
   async createBoxSession(date: string, notes?: string) {

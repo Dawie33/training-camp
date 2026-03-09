@@ -158,6 +158,7 @@ function CalendarContent() {
           workoutId={logModalData.workoutId}
           workoutName={logModalData.workoutName}
           workoutType={logModalData.workoutType}
+          defaultLocation={logModalData.defaultLocation}
           onLogged={() => { refetch(); setLogModalOpen(false) }}
         />
       )}

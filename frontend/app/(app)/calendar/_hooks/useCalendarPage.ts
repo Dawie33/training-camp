@@ -26,9 +26,10 @@ export function useCalendarPage() {
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [logModalData, setLogModalData] = useState<{
     scheduleId: string
-    workoutId: string
+    workoutId?: string
     workoutName: string
     workoutType?: string
+    defaultLocation?: 'box' | 'maison'
   } | null>(null)
   const [googleConnected, setGoogleConnected] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -112,12 +113,13 @@ export function useCalendarPage() {
             setSelectedEvent(null)
           }
         },
-        _onLog: schedule.workout_id ? () => {
+        _onLog: (schedule.workout_id || isBoxSession) ? () => {
           setLogModalData({
             scheduleId: schedule.id,
-            workoutId: schedule.workout_id!,
-            workoutName: schedule.workout_name ?? 'WOD',
+            workoutId: schedule.workout_id ?? undefined,
+            workoutName: isBoxSession ? 'Séance Box' : (schedule.workout_name ?? 'WOD'),
             workoutType: schedule.workout_type,
+            defaultLocation: isBoxSession ? 'box' : 'maison',
           })
           setSelectedEvent(null)
           setLogModalOpen(true)

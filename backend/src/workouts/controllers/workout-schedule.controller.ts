@@ -24,6 +24,18 @@ export class WorkoutScheduleController {
   }
 
   /**
+   * Suggère une configuration de semaine basée sur l'historique
+   */
+  @Get('week-suggestion')
+  @UseGuards(JwtAuthGuard)
+  async getWeekSuggestion(
+    @Request() req: { user: { id: string } },
+    @Query('weekStart') weekStart: string,
+  ) {
+    return this.scheduleService.suggestWeek(req.user.id, weekStart)
+  }
+
+  /**
    * Récupère une planification spécifique
    */
   @Get(':id')
