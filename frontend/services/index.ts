@@ -30,8 +30,5 @@ export * from './users'
 // One Rep Maxes
 export * from './one-rep-maxes'
 
-// Training Programs
-export * from './training-programs'
-
 // Types
 export * from './types'

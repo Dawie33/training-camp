@@ -17,7 +17,6 @@ import {
   Flame,
   Home,
   PenLine,
-  Settings,
   Target,
   TrendingUp
 } from 'lucide-react'
@@ -133,12 +132,6 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
                 <DropdownMenuItem asChild>
                   <Link className="cursor-pointer" href="/profile">
                     <span>Profil</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link className="cursor-pointer flex items-center gap-2" href="/settings">
-                    <Settings className="w-4 h-4" />
-                    <span>Paramètres</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
