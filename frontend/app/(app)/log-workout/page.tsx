@@ -2,6 +2,8 @@
 
 import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise } from '@/domain/entities/workout-structure'
+import { StarRating } from '@/components/ui/star-rating'
+import { TimeInput } from '@/components/ui/time-input'
 import { sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -362,28 +364,12 @@ function LogWorkoutContent() {
           {!isAmrap && (
             <div>
               <label className="block text-sm text-slate-400 mb-2">Temps réalisé</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={timeMinutes}
-                  onChange={(e) => setTimeMinutes(e.target.value)}
-                  placeholder="00"
-                  min="0"
-                  max="999"
-                  className="w-24 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
-                />
-                <span className="text-2xl font-bold text-slate-500">:</span>
-                <input
-                  type="number"
-                  value={timeSeconds}
-                  onChange={(e) => setTimeSeconds(e.target.value)}
-                  placeholder="00"
-                  min="0"
-                  max="59"
-                  className="w-24 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
-                />
-                <span className="text-sm text-slate-500 ml-2">min : sec</span>
-              </div>
+              <TimeInput
+                minutes={timeMinutes}
+                seconds={timeSeconds}
+                onMinutesChange={setTimeMinutes}
+                onSecondsChange={setTimeSeconds}
+              />
             </div>
           )}
 
@@ -418,20 +404,7 @@ function LogWorkoutContent() {
           {/* Rating */}
           <div>
             <label className="block text-sm text-slate-400 mb-2">Comment tu t'es senti ?</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onClick={() => setRating(star === rating ? 0 : star)}
-                  className={`text-3xl transition-all ${star <= rating
-                    ? 'text-yellow-500 scale-110'
-                    : 'text-slate-600 hover:text-yellow-400 hover:scale-105'
-                    }`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
+            <StarRating rating={rating} onChange={setRating} />
           </div>
 
           {/* Notes */}

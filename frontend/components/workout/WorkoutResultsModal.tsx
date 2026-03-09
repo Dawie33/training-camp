@@ -1,5 +1,6 @@
 'use client'
 
+import { StarRating } from '@/components/ui/star-rating'
 import { WorkoutSession } from '@/domain/entities/workout'
 import { sessionService } from '@/services'
 import { useState } from 'react'
@@ -108,21 +109,7 @@ export function WorkoutResultsModal({
             <label className="block text-sm font-medium mb-2">
               Comment vous êtes-vous senti ?
             </label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onClick={() => setRating(star)}
-                  className={`text-3xl transition-all ${
-                    rating && star <= rating
-                      ? 'text-yellow-500 scale-110'
-                      : 'text-gray-300 hover:text-yellow-400 hover:scale-105'
-                  }`}
-                >
-                  ⭐
-                </button>
-              ))}
-            </div>
+            <StarRating rating={rating ?? 0} onChange={setRating} allowDeselect={false} />
           </div>
 
           {/* Notes */}

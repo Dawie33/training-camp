@@ -7,7 +7,9 @@ import { PostWodAnalysisModal } from '@/components/workout/PostWodAnalysisModal'
 import { sessionService, type WodAnalysis } from '@/services/sessions'
 import { scheduleApi } from '@/services/schedule'
 import { toast } from 'sonner'
-import { Home, Star, Trophy } from 'lucide-react'
+import { StarRating } from '@/components/ui/star-rating'
+import { TimeInput } from '@/components/ui/time-input'
+import { Home, Trophy } from 'lucide-react'
 
 interface LogWorkoutModalProps {
   open: boolean
@@ -214,33 +216,12 @@ export function LogWorkoutModal({
                   </button>
                 </div>
                 {!capAtteint ? (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
-                      <input
-                        type="number"
-                        min="0"
-                        max="99"
-                        value={mins}
-                        onChange={(e) => setMins(e.target.value)}
-                        placeholder="0"
-                        className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
-                      />
-                      <span className="text-slate-400 text-sm">min</span>
-                    </div>
-                    <span className="text-slate-400 text-lg font-bold">:</span>
-                    <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
-                      <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        value={secs}
-                        onChange={(e) => setSecs(e.target.value)}
-                        placeholder="0"
-                        className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
-                      />
-                      <span className="text-slate-400 text-sm">s</span>
-                    </div>
-                  </div>
+                  <TimeInput
+                    minutes={mins}
+                    seconds={secs}
+                    onMinutesChange={setMins}
+                    onSecondsChange={setSecs}
+                  />
                 ) : (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
@@ -327,17 +308,7 @@ export function LogWorkoutModal({
             {/* Star rating */}
             <div>
               <label className="text-xs text-slate-400 mb-2 block">Note (optionnel)</label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setRating(star === rating ? 0 : star)}>
-                    <Star
-                      className={`w-6 h-6 transition-colors ${
-                        star <= rating ? 'text-orange-400 fill-orange-400' : 'text-slate-600'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
+              <StarRating rating={rating} onChange={setRating} />
             </div>
 
             {/* Notes */}
