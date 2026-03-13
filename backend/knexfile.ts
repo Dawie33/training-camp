@@ -32,6 +32,7 @@ const config: { [key: string]: Knex.Config } = {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
     },
+    searchPath: ['public'],
     migrations: {
       directory: './src/database/migrations',
     },

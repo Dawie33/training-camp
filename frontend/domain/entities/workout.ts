@@ -158,7 +158,7 @@ export interface GeneratedWorkout {
     description: string
     workout_type: string
     estimated_duration: number
-    difficulty: 'beginner' | 'intermediate' | 'advanced'
+    difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
     intensity: 'low' | 'moderate' | 'high' | 'very_high'
     blocks: WorkoutBlocks
     equipment_required?: string[]

@@ -41,12 +41,14 @@ function LogWorkoutContent() {
   const [selectedWorkout, setSelectedWorkout] = useState<(Workouts & { personalized_id?: string }) | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
 
-  // Exercise weights
-  const [exerciseNotes, setWeightsUsed] = useState<Record<string, string>>({})
+  // Exercise weights (keyed by index to handle duplicate exercise names across rounds)
+  const [exerciseNotes, setWeightsUsed] = useState<Record<number, string>>({})
 
   // Results
   const [timeMinutes, setTimeMinutes] = useState('')
   const [timeSeconds, setTimeSeconds] = useState('')
+  const [capAtteint, setCapAtteint] = useState(false)
+  const [capScore, setCapScore] = useState('')
   const [rounds, setRounds] = useState('')
   const [bonusReps, setBonusReps] = useState('')
   const [rating, setRating] = useState<number>(0)
@@ -112,17 +114,23 @@ function LogWorkoutContent() {
     setSearch(workout.name || '')
     setShowDropdown(false)
     setWeightsUsed({})
+    setCapAtteint(false)
+    setCapScore('')
   }, [])
 
-  const handleExerciseNoteChange = useCallback((exerciseName: string, value: string) => {
-    setWeightsUsed(prev => ({ ...prev, [exerciseName]: value }))
+  const handleExerciseNoteChange = useCallback((idx: number, value: string) => {
+    setWeightsUsed(prev => ({ ...prev, [idx]: value }))
   }, [])
 
   const handleSave = async () => {
 
     const totalSeconds = (parseInt(timeMinutes || '0') * 60) + parseInt(timeSeconds || '0')
-    if (totalSeconds === 0 && !rounds && !bonusReps) {
-      toast.error('Saisis un temps ou un score AMRAP')
+    if (!isAmrap && !capAtteint && totalSeconds === 0) {
+      toast.error('Saisis un temps ou coche "Cap atteint"')
+      return
+    }
+    if (isAmrap && !rounds && !bonusReps) {
+      toast.error('Saisis un score AMRAP')
       return
     }
 
@@ -143,25 +151,37 @@ function LogWorkoutContent() {
       }
       const session = await sessionService.startSession(sessionData)
 
-      // Clean exercise notes (remove empty values)
+      // Clean exercise notes (remove empty values, label by exercise name + position)
       const cleanNotes: Record<string, string> = {}
-      for (const [name, note] of Object.entries(exerciseNotes)) {
+      for (const [idxStr, note] of Object.entries(exerciseNotes)) {
         if (note.trim()) {
-          cleanNotes[name] = note.trim()
+          const exercise = exercises[parseInt(idxStr)]
+          const label = exercises.filter((e, i) => e.name === exercise.name && i < parseInt(idxStr)).length > 0
+            ? `${exercise.name} (${parseInt(idxStr) + 1})`
+            : exercise.name
+          cleanNotes[label] = note.trim()
         }
       }
 
       // Update with results
+      const resultPayload: Record<string, unknown> = {
+        rounds: rounds ? parseInt(rounds) : undefined,
+        reps: bonusReps ? parseInt(bonusReps) : undefined,
+        rating: rating > 0 ? rating : undefined,
+        exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
+      }
+      if (!isAmrap) {
+        if (capAtteint) {
+          resultPayload.cap_reached = true
+          if (capScore) resultPayload.reps_at_cap = parseInt(capScore, 10)
+        } else if (totalSeconds > 0) {
+          resultPayload.elapsed_time_seconds = totalSeconds
+        }
+      }
       await sessionService.updateSession(session.id, {
         completed_at: completedAt.toISOString(),
         notes: notes || undefined,
-        results: {
-          elapsed_time_seconds: totalSeconds || undefined,
-          rounds: rounds ? parseInt(rounds) : undefined,
-          reps: bonusReps ? parseInt(bonusReps) : undefined,
-          rating: rating > 0 ? rating : undefined,
-          exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
-        }
+        results: resultPayload,
       })
 
       toast.success('WOD enregistré !')
@@ -331,8 +351,8 @@ function LogWorkoutContent() {
                         </div>
                         <input
                           type="text"
-                          value={exerciseNotes[exercise.name] || ''}
-                          onChange={(e) => handleExerciseNoteChange(exercise.name, e.target.value)}
+                          value={exerciseNotes[idx] || ''}
+                          onChange={(e) => handleExerciseNoteChange(idx, e.target.value)}
                           placeholder={placeholder}
                           className="w-full mt-1.5 px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-all"
                         />
@@ -362,14 +382,40 @@ function LogWorkoutContent() {
 
           {/* Time */}
           {!isAmrap && (
-            <div>
-              <label className="block text-sm text-slate-400 mb-2">Temps réalisé</label>
-              <TimeInput
-                minutes={timeMinutes}
-                seconds={timeSeconds}
-                onMinutesChange={setTimeMinutes}
-                onSecondsChange={setTimeSeconds}
-              />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm text-slate-400">Temps réalisé</label>
+                <button
+                  onClick={() => setCapAtteint(!capAtteint)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
+                    capAtteint
+                      ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Cap atteint
+                </button>
+              </div>
+              {!capAtteint ? (
+                <TimeInput
+                  minutes={timeMinutes}
+                  seconds={timeSeconds}
+                  onMinutesChange={setTimeMinutes}
+                  onSecondsChange={setTimeSeconds}
+                />
+              ) : (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                  <input
+                    type="number"
+                    min="0"
+                    value={capScore}
+                    onChange={(e) => setCapScore(e.target.value)}
+                    placeholder="0"
+                    className="w-24 bg-transparent text-white text-center text-xl font-mono outline-none"
+                  />
+                  <span className="text-red-400 text-sm">reps au cap (score officiel)</span>
+                </div>
+              )}
             </div>
           )}
 

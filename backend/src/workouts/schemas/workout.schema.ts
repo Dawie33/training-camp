@@ -119,7 +119,7 @@ export const GeneratedWorkoutSchema = z.object({
   description: z.string().min(1),
   workout_type: z.string().min(1),
   estimated_duration: z.number().positive().max(180), // Max 3 heures
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
+  difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'elite']),
   intensity: z.enum(['low', 'moderate', 'high', 'very_high']),
   blocks: WorkoutBlocksSchema,
   equipment_required: z.array(EquipmentSchema).transform(arr => arr.filter((e): e is string => e !== null)).nullable().optional(),

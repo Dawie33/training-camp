@@ -13,12 +13,14 @@ const difficultyLabels = {
   beginner: 'Débutant',
   intermediate: 'Intermédiaire',
   advanced: 'Avancé',
+  elite: 'Élite',
 }
 
 const difficultyColors = {
   beginner: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   intermediate: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   advanced: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+  elite: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
 }
 
 const intensityLabels = {
