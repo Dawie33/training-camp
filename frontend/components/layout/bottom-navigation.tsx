@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Calendar, Dumbbell, Home, MoreHorizontal, PenLine, Target, TrendingUp, Trophy, X } from 'lucide-react'
+import { Calendar, Dumbbell, Flame, Home, MoreHorizontal, PenLine, Target, TrendingUp, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -17,10 +17,10 @@ const navItems: NavItem[] = [
   { href: '/workouts', label: 'Workouts', icon: Dumbbell },
   { href: '/calendar', label: 'Calendrier', icon: Calendar },
   { href: '/tracking', label: 'Suivi', icon: TrendingUp },
+  { href: '/skills', label: 'Progression', icon: Flame },
 ]
 
 const moreItems: NavItem[] = [
-  { href: '/skills', label: 'Progression', icon: Trophy },
   { href: '/benchmarks', label: 'Benchmarks', icon: Target },
   { href: '/log-workout', label: 'Enregistrer WOD', icon: PenLine },
 ]
