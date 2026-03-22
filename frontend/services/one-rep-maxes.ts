@@ -27,6 +27,12 @@ export const CROSSFIT_LIFTS: { value: string; label: string }[] = [
   { value: 'thruster', label: 'Thruster' },
 ]
 
+export interface OneRepMaxHistoryEntry {
+  value: number
+  source: 'real' | 'estimated'
+  measured_at: string
+}
+
 class OneRepMaxesService {
   async getMyOneRepMaxes(): Promise<OneRepMax[]> {
     return apiClient.get<OneRepMax[]>('/one-rep-maxes')
@@ -34,6 +40,10 @@ class OneRepMaxesService {
 
   async upsertOneRepMax(lift: string, dto: UpsertOneRepMaxDto): Promise<OneRepMax> {
     return apiClient.put<OneRepMax>(`/one-rep-maxes/${lift}`, dto)
+  }
+
+  async getHistory(): Promise<Record<string, OneRepMaxHistoryEntry[]>> {
+    return apiClient.get<Record<string, OneRepMaxHistoryEntry[]>>('/one-rep-maxes/history')
   }
 }
 

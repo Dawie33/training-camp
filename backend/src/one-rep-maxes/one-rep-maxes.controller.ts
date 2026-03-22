@@ -13,6 +13,11 @@ export class OneRepMaxesController {
     return this.service.findAllByUser(req.user.id)
   }
 
+  @Get('history')
+  async findHistory(@Request() req: { user: { id: string } }) {
+    return this.service.findHistoryByUser(req.user.id)
+  }
+
   @Put(':lift')
   async upsert(
     @Param('lift') lift: string,

@@ -8,12 +8,15 @@ import { ProgressChart } from './components/ProgressChart'
 import { StatsCard } from './components/StatsCard'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
+import { OneRepMaxChart } from './components/OneRepMaxChart'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
+import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 
 function TrackingContent() {
   const { workoutStats, formatDuration, workoutSessions } = useWorkoutStats()
   const { progressData, loading: progressLoading } = useWorkoutProgress()
+  const { liftsWithHistory, loading: ormsLoading } = useOneRepMaxHistory()
 
   return (
     <motion.div
@@ -101,6 +104,25 @@ function TrackingContent() {
             )}
           </div>
         </motion.div>
+
+        {/* Évolution des 1RMs */}
+        {(ormsLoading || liftsWithHistory.length > 0) && (
+          <motion.div variants={fadeInUp}>
+            <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+              <div className="flex items-center gap-2 mb-6">
+                <span className="text-lg">🏋️</span>
+                <h2 className="text-2xl font-bold text-white">Évolution des 1RMs</h2>
+              </div>
+              {ormsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
+                </div>
+              ) : (
+                <OneRepMaxChart liftsWithHistory={liftsWithHistory} />
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Statistiques détaillées */}
         <motion.div

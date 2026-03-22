@@ -16,6 +16,30 @@ export class OneRepMaxesService {
       .onConflict(['user_id', 'lift'])
       .merge(['value', 'source', 'measured_at'])
       .returning('*')
+
+    await this.knex('one_rep_max_history').insert({
+      user_id: userId,
+      lift,
+      value,
+      source,
+      measured_at: this.knex.fn.now(),
+    })
+
     return row
+  }
+
+  async findHistoryByUser(userId: string) {
+    const rows = await this.knex('one_rep_max_history')
+      .where({ user_id: userId })
+      .orderBy('measured_at', 'asc')
+      .select('lift', 'value', 'source', 'measured_at')
+
+    // Grouper par lift : { back_squat: [{ value, measured_at }, ...], ... }
+    const grouped: Record<string, { value: number; source: string; measured_at: string }[]> = {}
+    for (const row of rows) {
+      if (!grouped[row.lift]) grouped[row.lift] = []
+      grouped[row.lift].push({ value: Number(row.value), source: row.source, measured_at: row.measured_at })
+    }
+    return grouped
   }
 }
