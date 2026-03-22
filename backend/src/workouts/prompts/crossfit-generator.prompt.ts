@@ -501,6 +501,12 @@ export interface CrossFitWorkoutParams {
   additionalInstructions?: string
 }
 
+const METCON_FORMATS = ['AMRAP', 'EMOM', 'For Time', 'Tabata', 'Chipper', 'E2MOM'] as const
+
+function pickRandomFormat(): string {
+  return METCON_FORMATS[Math.floor(Math.random() * METCON_FORMATS.length)]
+}
+
 export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): string {
   const {
     workoutType,
@@ -535,11 +541,17 @@ ${additionalInstructions ? `\n**Instructions additionnelles** : ${additionalInst
   if (workoutType === 'benchmark' && benchmarkName) {
     prompt += `\nCrée une version du benchmark "${benchmarkName}" en respectant EXACTEMENT le format officiel. Fournis les options RX et Scaled.`
   } else if (workoutType === 'technique_metcon') {
+    const format = pickRandomFormat()
     prompt += `\nStructure : 10min warmup → 12-15min skill work technique → 15-20min MetCon incluant les mouvements travaillés → 5min cooldown`
+    prompt += `\n**Format MetCon imposé : ${format}** — utilise ce format pour la section MetCon principale (ne pas choisir AMRAP par défaut).`
   } else if (workoutType === 'strength_max') {
     prompt += `\nStructure : 10min warmup → 30-35min strength (build to heavy OU multiple sets) → 10min accessory work → 5min cooldown`
   } else if (workoutType === 'conditioning') {
-    prompt += `\nFocus sur haute intensité métabolique. Format AMRAP, EMOM ou For Time. Multi-modal (combiner M-G-W).`
+    const format = pickRandomFormat()
+    prompt += `\nFocus sur haute intensité métabolique. **Format MetCon imposé : ${format}** — utilise CE format, pas un autre. Multi-modal (combiner M-G-W).`
+  } else if (workoutType === 'mixed') {
+    const format = pickRandomFormat()
+    prompt += `\n**Format MetCon imposé : ${format}** — utilise ce format pour le MetCon principal. Varie les modalités (M-G-W).`
   }
 
   prompt += `\n\nCrée un workout CrossFit structuré, équilibré et adapté à ce niveau.
