@@ -127,12 +127,7 @@ export function useWorkoutStats() {
 
     // Enrichir async avec les données par type et records
     const fetchWorkoutTypes = async () => {
-      const workoutsByType: Record<string, number> = {
-        FOR_TIME: 0,
-        AMRAP: 0,
-        EMOM: 0,
-        TABATA: 0
-      }
+      const workoutsByType: Record<string, number> = {}
 
       const personalRecords: { type: string; value: number; unit: string; date: string }[] = []
 
@@ -150,11 +145,9 @@ export function useWorkoutStats() {
       for (const workoutId of Object.keys(grouped)) {
         try {
           const workout = await workoutsService.getById(workoutId)
-          const type = (workout.workout_type || '').toUpperCase().replace(/\s+/g, '_')
+          const type = workout.workout_type || 'autre'
           workoutCache[workoutId] = { name: workout.name, type }
-          if (type in workoutsByType) {
-            workoutsByType[type] += grouped[workoutId].length
-          }
+          workoutsByType[type] = (workoutsByType[type] || 0) + grouped[workoutId].length
         } catch {
           // Workout supprimé
         }
@@ -165,7 +158,7 @@ export function useWorkoutStats() {
         const info = workoutCache[workoutId]
         if (!info) continue
 
-        const isAmrap = info.type === 'AMRAP'
+        const isAmrap = info.type === 'amrap'
 
         if (isAmrap) {
           const rounds = sessions
@@ -201,7 +194,7 @@ export function useWorkoutStats() {
       }
 
       const sortedTypes = Object.entries(workoutsByType).sort((a, b) => b[1] - a[1])
-      const favoriteTimerType = sortedTypes[0]?.[1] > 0 ? sortedTypes[0][0] as 'FOR_TIME' | 'AMRAP' | 'EMOM' | 'TABATA' : 'FOR_TIME'
+      const favoriteTimerType = sortedTypes[0]?.[0] as 'FOR_TIME' | 'AMRAP' | 'EMOM' | 'TABATA' ?? 'FOR_TIME'
 
       setWorkoutStats({
         totalWorkouts,

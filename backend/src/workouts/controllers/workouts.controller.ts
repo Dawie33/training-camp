@@ -12,8 +12,9 @@ export class WorkoutsController {
   ) { }
 
   @Get()
-  async findAll(@Query() query: WorkoutQueryDto) {
-    return await this.service.findAll(query)
+  @UseGuards(JwtAuthGuard)
+  async findAll(@Query() query: WorkoutQueryDto, @Request() req: { user: { id: string } }) {
+    return await this.service.findAll(query, req.user.id)
   }
 
   @Get('daily')

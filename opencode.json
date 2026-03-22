@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/schemas/opencode.json",
+  "commands": {
+    "dev": "npm run dev",
+    "db:up": "npm run db:up",
+    "db:down": "npm run db:down",
+    "db:reset": "npm run db:reset",
+    "db:migrate": "cd backend && npm run db:migrate",
+    "db:rollback": "cd backend && npm run db:rollback",
+    "db:seed": "cd backend && npm run db:seed",
+    "test": "cd backend && npm run test",
+    "test:watch": "cd backend && npm run test:watch",
+    "test:file": "cd backend && npm run test -- --testPathPattern=",
+    "lint": "cd backend && npm run lint",
+    "lint:fix": "cd backend && npm run lint:fix",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:frontend:fix": "cd frontend && npm run lint:fix",
+    "build": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "backend": "cd backend && npm run start:dev",
+    "frontend": "cd frontend && npm run dev",
+    "db:migrate:make": "cd backend && npm run db:migrate:make --"
+  }
+}

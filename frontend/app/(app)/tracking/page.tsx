@@ -106,23 +106,30 @@ function TrackingContent() {
         </motion.div>
 
         {/* Évolution des 1RMs */}
-        {(ormsLoading || liftsWithHistory.length > 0) && (
-          <motion.div variants={fadeInUp}>
-            <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-lg">🏋️</span>
-                <h2 className="text-2xl font-bold text-white">Évolution des 1RMs</h2>
-              </div>
-              {ormsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
-                </div>
-              ) : (
-                <OneRepMaxChart liftsWithHistory={liftsWithHistory} />
-              )}
+        <motion.div variants={fadeInUp}>
+          <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-lg">🏋️</span>
+              <h2 className="text-2xl font-bold text-white">Évolution des 1RMs</h2>
             </div>
-          </motion.div>
-        )}
+            {ormsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
+              </div>
+            ) : liftsWithHistory.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-12 h-12 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mb-4">
+                  <span className="text-xl">🏋️</span>
+                </div>
+                <p className="text-slate-400">
+                  Enregistre tes 1RMs dans ton profil pour suivre ta progression
+                </p>
+              </div>
+            ) : (
+              <OneRepMaxChart liftsWithHistory={liftsWithHistory} />
+            )}
+          </div>
+        </motion.div>
 
         {/* Statistiques détaillées */}
         <motion.div

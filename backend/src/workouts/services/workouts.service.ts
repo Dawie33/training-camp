@@ -18,57 +18,31 @@ export class WorkoutsService {
    * Recherche tous les workouts.
    * @returns Tous les workouts.
    */
-  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, difficulty, workout_type }: WorkoutQueryDto) {
+  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, difficulty, workout_type }: WorkoutQueryDto, userId?: string) {
 
-    let query = this.knex('workouts').select('*')
-
-    if (search) {
-      query = query.where('workouts.name', 'ilike', `%${search}%`)
+    const applyFilters = (q: Knex.QueryBuilder) => {
+      // Visibilité : public OU appartient à l'utilisateur connecté
+      if (userId) {
+        q = q.where((builder) => {
+          builder.where('isPublic', true).orWhere('created_by_user_id', userId)
+        })
+      } else {
+        q = q.where('isPublic', true)
+      }
+      if (search) q = q.where('workouts.name', 'ilike', `%${search}%`)
+      if (status) q = q.where('workouts.status', status)
+      if (scheduled_date) q = q.where('workouts.scheduled_date', scheduled_date)
+      if (difficulty) q = q.where('workouts.difficulty', difficulty)
+      if (workout_type) q = q.where('workouts.workout_type', workout_type)
+      return q
     }
 
-    if (status) {
-      query = query.where('workouts.status', status)
-    }
-
-    if (scheduled_date) {
-      query = query.where('workouts.scheduled_date', scheduled_date)
-    }
-
-    if (difficulty) {
-      query = query.where('workouts.difficulty', difficulty)
-    }
-
-    if (workout_type) {
-      query = query.where('workouts.workout_type', workout_type)
-    }
-
-    const rows = await query
+    const rows = await applyFilters(this.knex('workouts').select('*'))
       .limit(Number(limit))
       .offset(Number(offset))
       .orderBy(orderBy, orderDir)
 
-    const countQuery = this.knex('workouts').count('* as count')
-
-    if (search) {
-      countQuery.where('name', 'ilike', `%${search}%`)
-    }
-    if (status) {
-      countQuery.where('status', status)
-    }
-
-    if (scheduled_date) {
-      countQuery.where('scheduled_date', scheduled_date)
-    }
-
-    if (difficulty) {
-      countQuery.where('difficulty', difficulty)
-    }
-
-    if (workout_type) {
-      countQuery.where('workout_type', workout_type)
-    }
-
-    const countResult = await countQuery.first()
+    const countResult = await applyFilters(this.knex('workouts').count('* as count')).first()
 
     return {
       rows,
