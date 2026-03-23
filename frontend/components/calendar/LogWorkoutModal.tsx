@@ -8,8 +8,12 @@ import { sessionService, type WodAnalysis } from '@/services/sessions'
 import { scheduleApi } from '@/services/schedule'
 import { toast } from 'sonner'
 import { StarRating } from '@/components/ui/star-rating'
-import { TimeInput } from '@/components/ui/time-input'
-import { Home, Trophy } from 'lucide-react'
+import { Trophy } from 'lucide-react'
+import { LocationToggle } from './LogWorkoutModal/LocationToggle'
+import { ScoreTypeTabs } from './LogWorkoutModal/ScoreTypeTabs'
+import { ForTimeScoreInput } from './LogWorkoutModal/ForTimeScoreInput'
+import { AMRAPScoreInput } from './LogWorkoutModal/AMRAPScoreInput'
+import { RxToggle } from './LogWorkoutModal/RxToggle'
 
 interface LogWorkoutModalProps {
   open: boolean
@@ -94,7 +98,7 @@ export function LogWorkoutModal({
           if (capScore) results.reps_at_cap = parseInt(capScore, 10)
           if (capDescription) results.cap_description = capDescription
         } else {
-          const totalSecs = (parseInt(mins || '0', 10) * 60) + parseInt(secs || '0', 10)
+          const totalSecs = parseInt(mins || '0', 10) * 60 + parseInt(secs || '0', 10)
           if (totalSecs > 0) results.elapsed_time_seconds = totalSecs
         }
       } else if (scoreType === 'amrap') {
@@ -136,12 +140,6 @@ export function LogWorkoutModal({
     }
   }
 
-  const tabs: { key: ScoreType; label: string }[] = [
-    { key: 'for_time', label: 'For Time' },
-    { key: 'amrap', label: 'AMRAP' },
-    { key: 'libre', label: 'Libre' },
-  ]
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,175 +153,51 @@ export function LogWorkoutModal({
           </DialogHeader>
 
           <div className="space-y-5 pt-1">
-            {/* Lieu */}
-            <div>
-              <label className="text-xs text-slate-400 mb-2 block">Lieu</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLocation('box')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg border transition-colors ${
-                    location === 'box'
-                      ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  🏋️ Box
-                </button>
-                <button
-                  onClick={() => setLocation('maison')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg border transition-colors ${
-                    location === 'maison'
-                      ? 'bg-orange-500/20 border-orange-500/50 text-orange-400'
-                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Home className="w-4 h-4" /> Maison
-                </button>
-              </div>
-            </div>
+            <LocationToggle location={location} onLocationChange={setLocation} />
+            <ScoreTypeTabs scoreType={scoreType} onScoreTypeChange={setScoreType} />
 
-            {/* Score type tabs */}
-            <div className="flex gap-1 p-1 bg-slate-800 rounded-lg">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setScoreType(tab.key)}
-                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                    scoreType === tab.key
-                      ? 'bg-orange-500 text-white'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Score inputs */}
             {scoreType === 'for_time' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs text-slate-400">Temps</label>
-                  <button
-                    onClick={() => setCapAtteint(!capAtteint)}
-                    className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
-                      capAtteint
-                        ? 'bg-red-500/20 border-red-500/50 text-red-400'
-                        : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    Cap atteint
-                  </button>
-                </div>
-                {!capAtteint ? (
-                  <TimeInput
-                    minutes={mins}
-                    seconds={secs}
-                    onMinutesChange={setMins}
-                    onSecondsChange={setSecs}
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-                      <input
-                        type="number"
-                        min="0"
-                        value={capScore}
-                        onChange={(e) => setCapScore(e.target.value)}
-                        placeholder="0"
-                        className="w-24 bg-transparent text-white text-center text-lg font-mono outline-none"
-                      />
-                      <span className="text-red-400 text-sm">reps total (score officiel)</span>
-                    </div>
-                    <input
-                      type="text"
-                      value={capDescription}
-                      onChange={(e) => setCapDescription(e.target.value)}
-                      placeholder="Ex: Round 2 + 24m lunges + 15 chest-to-bar"
-                      className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-red-500/50"
-                    />
-                  </div>
-                )}
-              </div>
+              <ForTimeScoreInput
+                mins={mins}
+                secs={secs}
+                capAtteint={capAtteint}
+                capScore={capScore}
+                capDescription={capDescription}
+                onMinsChange={setMins}
+                onSecsChange={setSecs}
+                onCapAtteintChange={setCapAtteint}
+                onCapScoreChange={setCapScore}
+                onCapDescriptionChange={setCapDescription}
+              />
             )}
 
             {scoreType === 'amrap' && (
-              <div>
-                <label className="text-xs text-slate-400 mb-2 block">Score</label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={rounds}
-                      onChange={(e) => setRounds(e.target.value)}
-                      placeholder="0"
-                      className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
-                    />
-                    <span className="text-slate-400 text-sm">rounds</span>
-                  </div>
-                  <span className="text-slate-400">+</span>
-                  <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/10 rounded-lg px-3 py-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={bonusReps}
-                      onChange={(e) => setBonusReps(e.target.value)}
-                      placeholder="0"
-                      className="w-full bg-transparent text-white text-center text-lg font-mono outline-none"
-                    />
-                    <span className="text-slate-400 text-sm">reps</span>
-                  </div>
-                </div>
-              </div>
+              <AMRAPScoreInput
+                rounds={rounds}
+                bonusReps={bonusReps}
+                onRoundsChange={setRounds}
+                onBonusRepsChange={setBonusReps}
+              />
             )}
 
-            {/* Rx / Scaled toggle */}
-            <div>
-              <label className="text-xs text-slate-400 mb-2 block">Performance</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIsRx(true)}
-                  className={`flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors ${
-                    isRx
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  Rx
-                </button>
-                <button
-                  onClick={() => setIsRx(false)}
-                  className={`flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors ${
-                    !isRx
-                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
-                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  Scaled
-                </button>
-              </div>
-            </div>
+            <RxToggle isRx={isRx} onIsRxChange={setIsRx} />
 
-            {/* Star rating */}
             <div>
               <label className="text-xs text-slate-400 mb-2 block">Note (optionnel)</label>
               <StarRating rating={rating} onChange={setRating} />
             </div>
 
-            {/* Notes */}
             <div>
               <label className="text-xs text-slate-400 mb-2 block">Notes (optionnel)</label>
               <textarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={e => setNotes(e.target.value)}
                 rows={3}
                 placeholder="Ressenti, substitutions, PR..."
                 className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 resize-none outline-none focus:border-orange-500/50"
               />
             </div>
 
-            {/* Actions */}
             <div className="flex gap-2 pt-1">
               <Button
                 onClick={handleSave}
