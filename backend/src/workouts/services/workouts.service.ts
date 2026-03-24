@@ -21,13 +21,15 @@ export class WorkoutsService {
   async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, difficulty, workout_type }: WorkoutQueryDto, userId?: string) {
 
     const applyFilters = (q: Knex.QueryBuilder) => {
-      // Visibilité : public OU appartient à l'utilisateur connecté
+      // Visibilité : public OU publié OU appartient à l'utilisateur connecté
       if (userId) {
         q = q.where((builder) => {
-          builder.where('isPublic', true).orWhere('created_by_user_id', userId)
+          builder.where('isPublic', true).orWhereNull('isPublic').orWhere('workouts.status', 'published').orWhere('created_by_user_id', userId)
         })
       } else {
-        q = q.where('isPublic', true)
+        q = q.where((builder) => {
+          builder.where('isPublic', true).orWhereNull('isPublic').orWhere('workouts.status', 'published')
+        })
       }
       if (search) q = q.where('workouts.name', 'ilike', `%${search}%`)
       if (status) q = q.where('workouts.status', status)
