@@ -6,10 +6,9 @@ import { format } from 'date-fns'
 import { motion } from 'framer-motion'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
 import { GoalsWidget } from './components/GoalsWidget'
-import { PerformanceChart } from './components/PerformanceChart'
+import { TrainingOverview } from './components/TrainingOverview'
 import { QuickActions } from './components/QuickActions'
 import { QuickTips } from './components/QuickTips'
-import { StatsCards } from './components/StatsCards'
 import { WeeklyCalendar } from './components/WeeklyCalendar'
 
 function DashboardContent() {
@@ -46,15 +45,10 @@ function DashboardContent() {
           <DailyWorkoutCard />
         </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div variants={fadeInUp}>
-          <StatsCards />
-        </motion.div>
-
-        {/* Performance Chart & Quick Actions */}
+        {/* Training Overview & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
           <motion.div variants={fadeInUp} className="lg:col-span-2">
-            <PerformanceChart />
+            <TrainingOverview />
           </motion.div>
           <motion.div variants={fadeInUp}>
             <QuickActions />
@@ -79,5 +73,5 @@ function DashboardContent() {
 }
 
 export default function DashboardPage() {
-  return     <DashboardContent />
+  return <DashboardContent />
 }

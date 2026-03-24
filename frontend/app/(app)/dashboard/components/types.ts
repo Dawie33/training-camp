@@ -32,6 +32,7 @@ export type MetricType = 'count' | 'duration'
  */
 export interface DayWorkout {
   id: string
+  workoutId?: string
   name: string
   type: 'scheduled' | 'completed' | 'rest'
   intensity?: 'low' | 'medium' | 'high'

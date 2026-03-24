@@ -3,18 +3,17 @@
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { PersonalRecords } from './components/PersonalRecords'
-import { ProgressChart } from './components/ProgressChart'
-import { StatsCard } from './components/StatsCard'
-import { WorkoutHistoryList } from './components/WorkoutHistoryList'
-import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
-import { OneRepMaxChart } from './components/OneRepMaxChart'
+import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
-import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
+import { OneRepMaxChart } from './components/OneRepMaxChart'
+import { PersonalRecords } from './components/PersonalRecords'
+import { ProgressChart } from './components/ProgressChart'
+import { WorkoutHistoryList } from './components/WorkoutHistoryList'
+import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
 function TrackingContent() {
-  const { workoutStats, formatDuration, workoutSessions } = useWorkoutStats()
+  const { workoutStats, workoutSessions } = useWorkoutStats()
   const { progressData, loading: progressLoading } = useWorkoutProgress()
   const { liftsWithHistory, loading: ormsLoading } = useOneRepMaxHistory()
 
@@ -44,37 +43,6 @@ function TrackingContent() {
           </Link>
         </motion.section>
 
-        {/* Stats Cards */}
-        <motion.div
-          variants={fadeInUp}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          <StatsCard
-            title="Total Workouts"
-            value={workoutStats?.totalWorkouts ?? 0}
-            emoji="💪"
-            color="blue"
-          />
-          <StatsCard
-            title="Temps Total"
-            value={workoutStats ? formatDuration(workoutStats.totalDuration) : '0m'}
-            emoji="⏱"
-            color="green"
-          />
-          <StatsCard
-            title="Série Actuelle"
-            value={workoutStats ? `${workoutStats.currentStreak} jours` : '0 jours'}
-            emoji="🔥"
-            color="orange"
-            subtitle={workoutStats ? `Record: ${workoutStats.longestStreak} jours` : undefined}
-          />
-          <StatsCard
-            title="Cette Semaine"
-            value={workoutStats ? formatDuration(workoutStats.totalDurationThisWeek) : '0m'}
-            emoji="📅"
-            color="purple"
-          />
-        </motion.div>
 
         {/* Comparaison WOD — visible uniquement si des données existent */}
         {(progressLoading || progressData.length > 0) && (
@@ -209,5 +177,5 @@ function TrackingContent() {
 }
 
 export default function TrackingPage() {
-  return     <TrackingContent />
+  return <TrackingContent />
 }
