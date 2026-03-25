@@ -1,24 +1,73 @@
 {
   "$schema": "https://opencode.ai/schemas/opencode.json",
   "commands": {
-    "dev": "npm run dev",
-    "db:up": "npm run db:up",
-    "db:down": "npm run db:down",
-    "db:reset": "npm run db:reset",
-    "db:migrate": "cd backend && npm run db:migrate",
-    "db:rollback": "cd backend && npm run db:rollback",
-    "db:seed": "cd backend && npm run db:seed",
-    "test": "cd backend && npm run test",
-    "test:watch": "cd backend && npm run test:watch",
-    "test:file": "cd backend && npm run test -- --testPathPattern=",
-    "lint": "cd backend && npm run lint",
-    "lint:fix": "cd backend && npm run lint:fix",
-    "lint:frontend": "cd frontend && npm run lint",
-    "lint:frontend:fix": "cd frontend && npm run lint:fix",
-    "build": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "backend": "cd backend && npm run start:dev",
-    "frontend": "cd frontend && npm run dev",
-    "db:migrate:make": "cd backend && npm run db:migrate:make --"
+    "dev": {
+      "description": "Start full dev stack (frontend + backend)",
+      "template": "Start the development servers for both frontend and backend using npm run dev from the project root."
+    },
+    "db-up": {
+      "description": "Start PostgreSQL database",
+      "template": "Start the PostgreSQL database using Docker with npm run db:up. The database runs on port 5434."
+    },
+    "db-down": {
+      "description": "Stop PostgreSQL database",
+      "template": "Stop the PostgreSQL database with npm run db:down."
+    },
+    "db-logs": {
+      "description": "View PostgreSQL logs",
+      "template": "View PostgreSQL logs using npm run db:logs."
+    },
+    "db-reset": {
+      "description": "Reset database (delete + recreate)",
+      "template": "Reset the database by deleting volumes and recreating with npm run db:reset."
+    },
+    "db-migrate": {
+      "description": "Run database migrations",
+      "template": "Run database migrations from the backend directory using npm run db:migrate."
+    },
+    "db-rollback": {
+      "description": "Rollback last database migration",
+      "template": "Rollback the last database migration from the backend directory using npm run db:rollback."
+    },
+    "db-seed": {
+      "description": "Seed database with sample data",
+      "template": "Run database seeds from the backend directory using npm run db:seed."
+    },
+    "test": {
+      "description": "Run all tests",
+      "template": "Run tests for the project. Check the AGENTS.md for specific test commands per workspace."
+    },
+    "test-backend": {
+      "description": "Run backend tests",
+      "template": "Run tests from the backend workspace. Use npm run test from the backend/ directory."
+    },
+    "test-cov": {
+      "description": "Run backend tests with coverage",
+      "template": "Run tests with coverage report from the backend directory using npm run test:cov."
+    },
+    "lint": {
+      "description": "Lint backend code",
+      "template": "Run linting on the backend workspace using npm --workspace backend run lint."
+    },
+    "lint-frontend": {
+      "description": "Lint frontend code",
+      "template": "Run linting on the frontend workspace using npm --workspace frontend run lint."
+    },
+    "build-backend": {
+      "description": "Build backend for production",
+      "template": "Build the backend for production from the backend/ directory using npm run build."
+    },
+    "backend-dev": {
+      "description": "Start backend in watch mode",
+      "template": "Start the backend in development watch mode from the backend/ directory using npm run start:dev."
+    },
+    "precommit": {
+      "description": "Lint and typecheck before commit",
+      "template": "Run lint commands for both backend and frontend, then build backend:\nnpm --workspace backend run lint\nnpm --workspace frontend run lint\nnpm --workspace backend run build"
+    },
+    "migrate-make": {
+      "description": "Create database migration",
+      "template": "Create a new database migration. Run: npm run db:migrate:make -- name from the backend/ directory. Creates migration file in backend/src/database/migrations/."
+    }
   }
 }
