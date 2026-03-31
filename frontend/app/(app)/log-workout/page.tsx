@@ -7,7 +7,7 @@ import { TimeInput } from '@/components/ui/time-input'
 import { sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -32,6 +32,7 @@ function getAllExercises(workout: Workouts): Exercise[] {
 
 function LogWorkoutContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Workout selection
   const [workouts, setWorkouts] = useState<Workouts[]>([])
@@ -81,6 +82,42 @@ function LogWorkoutContent() {
     }
     fetchWorkouts()
   }, [])
+
+  // Pré-sélection depuis les params URL (redirection depuis le timer)
+  useEffect(() => {
+    const presetWorkoutId = searchParams.get('workoutId')
+    const presetPersonalizedId = searchParams.get('personalizedWorkoutId')
+    const presetTime = searchParams.get('time')
+
+    // Pré-remplir le temps (format "MM:SS")
+    if (presetTime) {
+      const parts = presetTime.split(':')
+      if (parts.length === 2) {
+        setTimeMinutes(parts[0])
+        setTimeSeconds(parts[1])
+      } else if (parts.length === 3) {
+        const totalMin = parseInt(parts[0]) * 60 + parseInt(parts[1])
+        setTimeMinutes(String(totalMin))
+        setTimeSeconds(parts[2])
+      }
+    }
+
+    // Pré-sélectionner le workout normal — fetch direct par ID
+    if (presetWorkoutId) {
+      workoutsService.getById(presetWorkoutId).then((found) => {
+        setSelectedWorkout({ ...found, personalized_id: undefined })
+        setSearch(found.name || '')
+      }).catch(() => {/* workout introuvable, pas grave */})
+    }
+
+    // Pré-sélectionner le workout personnalisé — fetch direct par ID
+    if (presetPersonalizedId) {
+      workoutsService.getPersonalizedWorkout(presetPersonalizedId).then((found) => {
+        setSelectedWorkout({ ...found.plan_json, personalized_id: found.id })
+        setSearch(found.plan_json.name || '')
+      }).catch(() => {/* workout introuvable, pas grave */})
+    }
+  }, [searchParams])
 
   // Combined workout list for search, with personalized_workout_id tracked
   const allWorkoutsList = useMemo(() => {

@@ -138,32 +138,34 @@ export function TrainingOverview() {
       <div className="mt-auto">
         {activeSkills.length > 0 ? (
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Flame className="h-4 w-4 text-slate-400" />
-                <p className="text-sm text-slate-400">Progressions actives</p>
+                <Flame className="h-4 w-4 text-orange-400" />
+                <p className="text-sm font-medium text-slate-300">Progressions actives</p>
               </div>
               <Link href="/skills" className="text-xs text-orange-400 hover:text-orange-300 transition-colors">
                 Voir tout →
               </Link>
             </div>
-            <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-              <div className="flex items-center gap-2">
+            <div className="rounded-xl bg-white/5 border border-white/10 p-5">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSkillIndex((i) => (i - 1 + activeSkills.length) % activeSkills.length)}
                   disabled={activeSkills.length <= 1}
                   className="text-slate-400 hover:text-white disabled:opacity-20 transition-colors shrink-0"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-5 w-5" />
                 </button>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-semibold truncate">{activeSkills[skillIndex].skill_name}</p>
-                    <span className="text-xs text-slate-400 shrink-0 ml-2">
-                      {activeSkills[skillIndex].completed_steps ?? 0}/{activeSkills[skillIndex].total_steps ?? 0} étapes
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-base font-semibold truncate">{activeSkills[skillIndex].skill_name}</p>
+                    <span className="text-sm font-bold text-orange-400 shrink-0 ml-2">
+                      {activeSkills[skillIndex].total_steps
+                        ? Math.round(((activeSkills[skillIndex].completed_steps ?? 0) / activeSkills[skillIndex].total_steps) * 100)
+                        : 0}%
                     </span>
                   </div>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-orange-500 to-rose-500 transition-all duration-700"
                       style={{
@@ -173,22 +175,25 @@ export function TrainingOverview() {
                       }}
                     />
                   </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    {activeSkills[skillIndex].completed_steps ?? 0} / {activeSkills[skillIndex].total_steps ?? 0} étapes complétées
+                  </p>
                 </div>
                 <button
                   onClick={() => setSkillIndex((i) => (i + 1) % activeSkills.length)}
                   disabled={activeSkills.length <= 1}
                   className="text-slate-400 hover:text-white disabled:opacity-20 transition-colors shrink-0"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-5 w-5" />
                 </button>
               </div>
               {activeSkills.length > 1 && (
-                <div className="flex justify-center gap-1 mt-2">
+                <div className="flex justify-center gap-1.5 mt-3">
                   {activeSkills.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setSkillIndex(i)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${i === skillIndex ? 'w-4 bg-orange-400' : 'w-1.5 bg-white/20'}`}
+                      className={`h-2 rounded-full transition-all duration-300 ${i === skillIndex ? 'w-5 bg-orange-400' : 'w-2 bg-white/20'}`}
                     />
                   ))}
                 </div>

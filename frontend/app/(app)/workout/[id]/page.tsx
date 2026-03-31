@@ -9,7 +9,6 @@ const EMOMTimer = dynamic(() => import('@/app/(app)/timer/timers/EMOMTimer').the
 const ForTimeTimer = dynamic(() => import('@/app/(app)/timer/timers/ForTimeTimer').then(m => ({ default: m.ForTimeTimer })), { ssr: false })
 const TabataTimer = dynamic(() => import('@/app/(app)/timer/timers/TabataTimer').then(m => ({ default: m.TabataTimer })), { ssr: false })
 const WorkoutEditModal = dynamic(() => import('@/components/workout/WorkoutEditModal'), { ssr: false })
-const WorkoutResultsModal = dynamic(() => import('@/components/workout/WorkoutResultsModal').then(m => ({ default: m.WorkoutResultsModal })), { ssr: false })
 import { Workouts } from '@/domain/entities/workout'
 import { WorkoutBlocks } from '@/domain/entities/workout-structure'
 import { useTimerVibration } from '@/hooks/useTimerVibration'
@@ -124,7 +123,6 @@ function WorkoutDetailContent() {
   const [error, setError] = useState<string | null>(null)
   const [showEditWorkoutModal, setShowEditWorkoutModal] = useState(false)
   const [workoutVersion, setWorkoutVersion] = useState<'RX' | 'SCALED'>('RX')
-  const [showResultsModal, setShowResultsModal] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [timerElapsed, setTimerElapsed] = useState('0:00')
   const [amrapRounds, setAmrapRounds] = useState(0)
@@ -135,7 +133,7 @@ function WorkoutDetailContent() {
 
   const handleFinishWorkout = () => {
     vibration.vibrateFinish()
-    setShowResultsModal(true)
+    router.push(`/log-workout?workoutId=${workout?.id}&time=${timerElapsed}&version=${workoutVersion}`)
   }
 
   const renderTimer = (config: TimerConfig) => {
@@ -340,7 +338,7 @@ function WorkoutDetailContent() {
             {/* Save WOD button */}
             <div className="pt-4 border-t border-slate-700/50">
               <button
-                onClick={() => setShowResultsModal(true)}
+                onClick={() => router.push(`/log-workout?workoutId=${workout?.id}&time=${timerElapsed}&version=${workoutVersion}`)}
                 className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2"
               >
                 <span>✓</span>
@@ -410,18 +408,6 @@ function WorkoutDetailContent() {
           workout={workout}
           isOpen={showEditWorkoutModal}
           onClose={() => setShowEditWorkoutModal(false)}
-        />
-      )}
-
-      {showResultsModal && (
-        <WorkoutResultsModal
-          isOpen={showResultsModal}
-          onClose={() => setShowResultsModal(false)}
-          workoutId={workout.id}
-          workoutName={workout.name}
-          timeElapsed={timerElapsed}
-          rounds={activeConfig?.type === 'amrap' ? amrapRounds : undefined}
-          version={workoutVersion}
         />
       )}
 
