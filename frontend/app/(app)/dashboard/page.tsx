@@ -5,10 +5,8 @@ import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
-import { GoalsWidget } from './components/GoalsWidget'
 import { TrainingOverview } from './components/TrainingOverview'
 import { QuickActions } from './components/QuickActions'
-import { QuickTips } from './components/QuickTips'
 import { WeeklyCalendar } from './components/WeeklyCalendar'
 
 function DashboardContent() {
@@ -55,17 +53,9 @@ function DashboardContent() {
           </motion.div>
         </div>
 
-        {/* Weekly Calendar & Goals */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-          <motion.div variants={fadeInUp} className="lg:col-span-2">
-            <WeeklyCalendar />
-          </motion.div>
-          <motion.div variants={fadeInUp}>
-            <GoalsWidget />
-          </motion.div>
-        </div>
+        {/* Weekly Calendar */}
         <motion.div variants={fadeInUp}>
-          <QuickTips />
+          <WeeklyCalendar />
         </motion.div>
       </div>
     </motion.div >
