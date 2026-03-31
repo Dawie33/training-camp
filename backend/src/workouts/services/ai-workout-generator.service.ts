@@ -354,7 +354,7 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
   private async callOpenAI(systemPrompt: string, userPrompt: string): Promise<GeneratedWorkout> {
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
