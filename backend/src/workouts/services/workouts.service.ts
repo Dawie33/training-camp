@@ -18,7 +18,7 @@ export class WorkoutsService {
    * Recherche tous les workouts.
    * @returns Tous les workouts.
    */
-  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, difficulty, workout_type }: WorkoutQueryDto, userId?: string) {
+  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, difficulty, workout_type, is_benchmark }: WorkoutQueryDto, userId?: string) {
 
     const applyFilters = (q: Knex.QueryBuilder) => {
       // Visibilité : public OU publié OU appartient à l'utilisateur connecté
@@ -36,6 +36,7 @@ export class WorkoutsService {
       if (scheduled_date) q = q.where('workouts.scheduled_date', scheduled_date)
       if (difficulty) q = q.where('workouts.difficulty', difficulty)
       if (workout_type) q = q.where('workouts.workout_type', workout_type)
+      if (is_benchmark !== undefined) q = q.where('workouts.is_benchmark', is_benchmark)
       return q
     }
 

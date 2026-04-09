@@ -217,7 +217,12 @@ IMPORTANT :
 - Extrait fidèlement les informations présentes dans le texte
 - Si une information manque (durée estimée, difficulté), infère-la de manière cohérente avec le contenu
 - Structure les exercices en sections (warmup si mentionné, metcon, etc.) selon la logique CrossFit
-- Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
+- Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après
+
+RÈGLE CRITIQUE — ROUNDS MULTIPLES AVEC CHARGES DIFFÉRENTES :
+Si le workout comporte plusieurs groupes de rounds avec des charges différentes (ex: "3 rounds de X kg, puis 2 rounds de Y kg, puis 1 round de Z kg"), tu dois créer UNE section séparée par groupe, chacune avec son propre champ "rounds" et ses propres charges dans le champ "weight" de chaque exercice. Ne fusionne JAMAIS plusieurs groupes de rounds en une seule section.
+
+Exemple : "3 rounds de 50 DU + 10 Deadlifts (100kg), 2 rounds de 50 DU + 10 Deadlifts (120kg), 1 round de 50 DU + 10 Deadlifts (140kg)" → 3 sections distinctes avec rounds: 3, rounds: 2, rounds: 1`
 
     try {
       return await this.callOpenAI(systemPrompt, userPrompt)

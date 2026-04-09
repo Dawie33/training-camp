@@ -1,4 +1,4 @@
-import { Type } from "class-transformer"
+import { Transform, Type } from "class-transformer"
 import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MinLength, ValidateNested } from "class-validator"
 
 export class CreateWorkoutDto {
@@ -270,6 +270,11 @@ export class WorkoutQueryDto {
   @IsOptional()
   @Type(() => String)
   workout_type?: string
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' ? true : value === 'false' ? false : undefined)
+  @IsBoolean()
+  is_benchmark?: boolean
 }
 
 export class WorkoutDto {
