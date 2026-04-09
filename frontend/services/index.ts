@@ -30,5 +30,17 @@ export * from './users'
 // One Rep Maxes
 export * from './one-rep-maxes'
 
+// Running
+export * from './running'
+
+// ATHX
+export * from './athx'
+
+// HYROX
+export * from './hyrox'
+
+// Activities (unified multi-module calendar)
+export * from './activities'
+
 // Types
 export * from './types'
