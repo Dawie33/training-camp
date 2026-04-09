@@ -26,4 +26,9 @@ export const envValidationSchema = Joi.object({
   GOOGLE_CLIENT_SECRET: Joi.string().optional(),
   GOOGLE_REDIRECT_URI: Joi.string().optional(),
   FRONTEND_URL: Joi.string().default('http://localhost:3000'),
+
+  // Strava
+  STRAVA_CLIENT_ID: Joi.string().allow('').optional(),
+  STRAVA_CLIENT_SECRET: Joi.string().allow('').optional(),
+  STRAVA_REDIRECT_URI: Joi.string().allow('').optional(),
 }).or('DATABASE_URL', 'DATABASE_HOST') // Au moins l'un des deux doit être présent
