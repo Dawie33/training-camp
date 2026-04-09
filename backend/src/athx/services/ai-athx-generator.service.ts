@@ -30,7 +30,7 @@ export class AIAthxGeneratorService {
               ...params,
               userLevel: ctx.sport_level,
               oneRepMaxes: ctx.oneRepMaxes,
-              equipmentAvailable: ctx.equipment_available,
+              equipmentAvailable: params.equipment_available ?? ctx.equipment_available,
               injuries: ctx.injuries,
             }),
           },

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator'
+import { IsArray, IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator'
 
 export type AthxSessionType = 'full_competition' | 'strength_prep' | 'endurance_prep' | 'metcon_prep' | 'mixed'
 
@@ -102,4 +102,9 @@ export class GenerateAthxSessionDto {
   @IsOptional()
   @IsString()
   additional_instructions?: string
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  equipment_available?: string[]
 }

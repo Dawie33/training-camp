@@ -1,7 +1,8 @@
 'use client'
 
 import { AthxSession, ATHX_SESSION_TYPE_COLORS, ATHX_SESSION_TYPE_LABELS } from '@/services/athx'
-import { Clock, Trash2, X, Zap } from 'lucide-react'
+import { Clock, Eye, Trash2, X, Zap } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 
 const ZONE_COLORS: Record<string, string> = {
@@ -81,31 +82,42 @@ export function AthxSessionCard({ session, onDelete }: AthxSessionCardProps) {
           )}
         </div>
 
-        {confirming ? (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={() => onDelete(session.id)}
-              className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
-            >
-              Supprimer
-            </button>
-            <button
-              onClick={() => setConfirming(false)}
-              className="text-slate-500 hover:text-slate-300 transition-colors p-1"
-              aria-label="Annuler"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setConfirming(true)}
-            className="text-slate-600 hover:text-red-400 transition-colors p-1 flex-shrink-0"
-            aria-label="Supprimer la séance"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {confirming ? (
+            <>
+              <button
+                onClick={() => onDelete(session.id)}
+                className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+              >
+                Supprimer
+              </button>
+              <button
+                onClick={() => setConfirming(false)}
+                className="text-slate-500 hover:text-slate-300 transition-colors p-1"
+                aria-label="Annuler"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href={`/athx/${session.id}`}
+                className="text-slate-500 hover:text-purple-400 transition-colors p-1"
+                aria-label="Voir la séance"
+              >
+                <Eye className="w-4 h-4" />
+              </Link>
+              <button
+                onClick={() => setConfirming(true)}
+                className="text-slate-600 hover:text-red-400 transition-colors p-1"
+                aria-label="Supprimer la séance"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

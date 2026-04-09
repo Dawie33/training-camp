@@ -78,6 +78,7 @@ export interface GenerateAthxDto {
   target_zones?: string
   competition_date?: string
   additional_instructions?: string
+  equipment_available?: string[]
 }
 
 export const athxService = {
@@ -103,5 +104,9 @@ export const athxService = {
 
   async generateAndSave(data: GenerateAthxDto) {
     return apiClient.post<AthxSession>('/athx/generate/save', data)
+  },
+
+  async update(id: string, data: Partial<{ duration_minutes: number; perceived_effort: number; notes: string; zone_results: Record<string, unknown> }>) {
+    return apiClient.patch<AthxSession>(`/athx/sessions/${id}`, data)
   },
 }
