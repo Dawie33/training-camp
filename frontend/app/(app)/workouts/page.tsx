@@ -10,8 +10,9 @@ import {
   useReactTable
 } from "@tanstack/react-table"
 import { motion } from 'framer-motion'
-import { ArrowUpDown, Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
+import { ArrowUpDown, Edit, Eye, MoreHorizontal, Plus, Search, Trash2, Trophy } from "lucide-react"
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import * as React from "react"
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -61,6 +62,7 @@ const STATUS_COLORS = {
 } as const
 
 export default function WorkoutsPage() {
+  const searchParams = useSearchParams()
   const [workouts, setWorkouts] = useState<Workouts[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -73,6 +75,9 @@ export default function WorkoutsPage() {
   const [status, setStatus] = useState<string>('')
   const [difficulty, setDifficulty] = useState<string>('')
   const [workoutType, setWorkoutType] = useState<string>('')
+  const [isBenchmark, setIsBenchmark] = useState<boolean | undefined>(
+    searchParams.get('benchmark') === 'true' ? true : undefined
+  )
   const [orderBy, setOrderBy] = useState<string>("created_at")
   const [orderDir, setOrderDir] = useState<"asc" | "desc">("desc")
 
@@ -100,6 +105,7 @@ export default function WorkoutsPage() {
         status: status || undefined,
         difficulty: difficulty || undefined,
         workout_type: workoutType || undefined,
+        is_benchmark: isBenchmark,
         orderBy: orderBy,
         orderDir: orderDir
       }
@@ -118,6 +124,11 @@ export default function WorkoutsPage() {
   useEffect(() => {
     fetchWorkouts()
   }, [fetchWorkouts])
+
+  const handleBenchmarkToggle = useCallback(() => {
+    setIsBenchmark(prev => prev === true ? undefined : true)
+    setPageIndex(0)
+  }, [])
 
   // Sync sorting state with server
   useEffect(() => {
@@ -172,7 +183,17 @@ export default function WorkoutsPage() {
           </Button>
         )
       },
-      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{row.getValue("name")}</span>
+          {row.original.is_benchmark && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border border-yellow-500/50 bg-yellow-500/10 text-yellow-400">
+              <Trophy className="w-2.5 h-2.5" />
+              Benchmark
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       accessorKey: "workout_type",
@@ -399,6 +420,18 @@ export default function WorkoutsPage() {
                 <SelectItem value="chipper">Chipper</SelectItem>
               </SelectContent>
             </Select>
+
+            <button
+              onClick={handleBenchmarkToggle}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
+                isBenchmark
+                  ? 'border-yellow-500 bg-yellow-500/20 text-yellow-300'
+                  : 'border-white/10 bg-white/5 text-slate-400 hover:border-yellow-500/40 hover:text-yellow-400'
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              Benchmarks
+            </button>
           </div>
 
           {/* Pagination */}
@@ -529,7 +562,14 @@ export default function WorkoutsPage() {
                   {/* Header avec nom et actions */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm line-clamp-1 text-white">{workout.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm line-clamp-1 text-white">{workout.name}</h3>
+                        {workout.is_benchmark && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border border-yellow-500/50 bg-yellow-500/10 text-yellow-400 flex-shrink-0">
+                            <Trophy className="w-2.5 h-2.5" />
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <Badge className="text-xs bg-white/10 text-slate-300 border-white/20">
                           {workout.workout_type?.replace(/_/g, ' ') || 'N/A'}

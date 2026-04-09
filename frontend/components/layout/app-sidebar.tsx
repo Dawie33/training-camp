@@ -10,18 +10,22 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/useAuth'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
+  Activity,
   Calendar,
+  ChevronDown,
   Dumbbell,
-  Flame,
+  Footprints,
   Home,
   PenLine,
-  Target,
-  TrendingUp
+  TrendingUp,
+  Trophy,
+  Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 
 interface NavItem {
   href: string
@@ -37,6 +41,11 @@ interface isSidebarOpen {
 export function AppSidebar({ isOpen }: isSidebarOpen) {
   const { user, logout } = useAuth()
   const pathname = usePathname()
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups(prev => ({ ...prev, [label]: !prev[label] }))
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -46,23 +55,37 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
       .toUpperCase()
   }
 
-  const mainNavItems: NavItem[] = [
-    { href: '/dashboard', label: 'Tableau de bord', icon: <Home className="w-5 h-5" /> },
-
-    { href: '/calendar', label: 'Calendrier', icon: <Calendar className="w-5 h-5" /> },
-    { href: '/tracking', label: 'Suivi', icon: <TrendingUp className="w-5 h-5" /> },
-    { href: '/benchmarks', label: 'Benchmarks', icon: <Target className="w-5 h-5" /> },
-    { href: '/workouts', label: 'Workouts', icon: <Dumbbell className="w-5 h-5" /> },
-    { href: '/personalized-workout', label: 'Mes Workouts', icon: <Dumbbell className="w-5 h-5" /> },
-    { href: '/log-workout', label: 'Enregistrer WOD', icon: <PenLine className="w-5 h-5" /> },
-    { href: '/skills', label: 'Progressions', icon: <Flame className="w-5 h-5" /> },
+  const navGroups: { label: string; items: NavItem[] }[] = [
+    {
+      label: 'Principal',
+      items: [
+        { href: '/dashboard', label: 'Tableau de bord', icon: <Home className="w-5 h-5" /> },
+        { href: '/calendar', label: 'Calendrier', icon: <Calendar className="w-5 h-5" /> },
+        { href: '/tracking', label: 'Suivi', icon: <TrendingUp className="w-5 h-5" /> },
+      ],
+    },
+    {
+      label: 'Entraînements',
+      items: [
+        { href: '/training-programs', label: 'Programmes', icon: <PenLine className="w-5 h-5" /> },
+      ],
+    },
+    {
+      label: 'Sports',
+      items: [
+        { href: '/crossfit', label: 'CrossFit', icon: <Activity className="w-5 h-5" /> },
+        { href: '/running', label: 'Running', icon: <Footprints className="w-5 h-5" /> },
+        { href: '/hyrox', label: 'HYROX', icon: <Trophy className="w-5 h-5" /> },
+        { href: '/athx', label: 'ATHX', icon: <Zap className="w-5 h-5" /> },
+      ],
+    },
   ]
 
   return (
-    <aside className="w-56 min-h-screen p-4 flex flex-col">
+    <aside className="w-56 h-screen p-4 flex flex-col">
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-10">
+        <div className="flex items-center gap-3 mb-6">
           <Link href="/dashboard" className="flex items-center gap-2 group">
             <motion.div
               whileHover={{ rotate: 180 }}
@@ -79,28 +102,64 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
 
         {/* Navigation */}
         {isOpen && (
-          <nav className="flex-1 space-y-1">
-            {mainNavItems.map((item) => {
-              const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+          <nav className="flex-1 space-y-4 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+            {navGroups.map((group, groupIndex) => {
+              const isCollapsed = collapsedGroups[group.label] ?? false
               return (
-                <Link
-                  href={item.href}
-                  key={item.href}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group
-                    ${isActive
-                      ? 'bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg'
-                      : 'hover:bg-white/5'}`}
-                >
-                  <span className={`text-lg transition-all duration-300 ${isActive ? 'text-orange-400' : 'text-slate-400 group-hover:text-orange-300'}`}>
-                    {item.icon}
-                  </span>
-                  <span className={`font-medium ${isActive ? 'text-white' : 'text-slate-300'}`}>
-                    {item.label}
-                  </span>
-                  {isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-400 shadow-lg shadow-orange-400/50" />
-                  )}
-                </Link>
+                <div key={group.label}>
+                  {groupIndex > 0 && <div className="border-t border-white/10 mb-3" />}
+                  <button
+                    onClick={() => toggleGroup(group.label)}
+                    className="w-full flex items-center justify-between px-4 mb-1 group/header"
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-widest text-slate-500 group-hover/header:text-slate-400 transition-colors">
+                      {group.label}
+                    </span>
+                    <motion.span
+                      animate={{ rotate: isCollapsed ? -90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="w-3 h-3 text-slate-600 group-hover/header:text-slate-400 transition-colors" />
+                    </motion.span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {!isCollapsed && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-1">
+                          {group.items.map((item) => {
+                            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                            return (
+                              <Link
+                                href={item.href}
+                                key={item.href}
+                                className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group
+                                  ${isActive
+                                    ? 'bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg'
+                                    : 'hover:bg-white/5'}`}
+                              >
+                                <span className={`text-lg transition-all duration-300 ${isActive ? 'text-orange-400' : 'text-slate-400 group-hover:text-orange-300'}`}>
+                                  {item.icon}
+                                </span>
+                                <span className={`font-medium ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                                  {item.label}
+                                </span>
+                                {isActive && (
+                                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-400 shadow-lg shadow-orange-400/50" />
+                                )}
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )
             })}
           </nav>
