@@ -3,7 +3,7 @@
 import { workoutsService } from '@/services'
 import { googleCalendarApi } from '@/services/google-calendar'
 import { scheduleApi } from '@/services/schedule'
-import type { WorkoutSchedule } from '@/services/schedule'
+import type { UnifiedActivity } from '@/services/activities'
 import { createViewDay, createViewMonthGrid, createViewWeek } from '@schedule-x/calendar'
 import { createDragAndDropPlugin } from '@schedule-x/drag-and-drop'
 import { createEventsServicePlugin } from '@schedule-x/events-service'
@@ -75,7 +75,15 @@ export function useCalendarPage() {
     }
   }
 
-  const mapSchedulesToEvents = useCallback((scheduleList: WorkoutSchedule[]) => {
+  // Couleurs par module pour différencier visuellement les activités dans le calendrier
+  const MODULE_COLORS: Record<string, string> = {
+    crossfit: '',       // couleur par défaut (status-based)
+    hyrox: 'hyrox',
+    running: 'running',
+    athx: 'athx',
+  }
+
+  const mapSchedulesToEvents = useCallback((scheduleList: UnifiedActivity[]) => {
     return scheduleList.map((schedule) => {
       const scheduleDateObj = new Date(schedule.scheduled_date)
       const dateStr = new Date(scheduleDateObj.getTime() - scheduleDateObj.getTimezoneOffset() * 60000)
@@ -83,28 +91,25 @@ export function useCalendarPage() {
         .split('T')[0]
 
       const isBoxSession = schedule.session_type === 'box_session'
-      const isProgramSession = schedule.session_type === 'program_session'
-
-      let title = schedule.workout_name || 'Workout'
-      if (isBoxSession) title = 'Jour Box'
-      else if (isProgramSession) {
-        const sessionData = schedule.session_data as { title?: string } | undefined
-        title = sessionData?.title ? `[Programme] ${sessionData.title}` : '[Programme]'
-      }
 
       return {
         id: schedule.id,
-        title,
+        title: schedule.title,
         start: Temporal.PlainDate.from(dateStr),
         end: Temporal.PlainDate.from(dateStr),
         status: schedule.status,
+        module: schedule.module,
+        moduleColor: MODULE_COLORS[schedule.module] || '',
         session_type: schedule.session_type,
         workout_type: schedule.workout_type,
         difficulty: schedule.difficulty,
         duration: schedule.estimated_duration,
         workout_id: schedule.workout_id,
         personalized_workout_id: schedule.personalized_workout_id,
+        activity_type: schedule.activity_type,
+        activity_id: schedule.activity_id,
         session_data: schedule.session_data,
+        _source: schedule._source,
         _onComplete: () => { markAsCompleted(schedule.id); setSelectedEvent(null) },
         _onSkip: () => { markAsSkipped(schedule.id); setSelectedEvent(null) },
         _onDelete: () => {
@@ -117,7 +122,7 @@ export function useCalendarPage() {
           setLogModalData({
             scheduleId: schedule.id,
             workoutId: schedule.workout_id ?? undefined,
-            workoutName: isBoxSession ? 'Séance Box' : (schedule.workout_name ?? 'WOD'),
+            workoutName: isBoxSession ? 'Séance Box' : schedule.title,
             workoutType: schedule.workout_type,
             defaultLocation: isBoxSession ? 'box' : 'maison',
           })

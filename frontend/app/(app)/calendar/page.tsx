@@ -101,19 +101,34 @@ function CalendarContent() {
           )}
 
           {/* Legend */}
-          <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap gap-4">
-            {[
-              { color: 'blue', label: 'Programmé' },
-              { color: 'green', label: 'Complété' },
-              { color: 'gray', label: 'Sauté' },
-              { color: 'orange', label: 'Replanifié' },
-              { color: 'violet', label: 'Jour Box' },
-            ].map(({ color, label }) => (
-              <div key={label} className="flex items-center gap-1.5 text-xs">
-                <div className={`w-3 h-3 rounded bg-${color}-500/20 border border-${color}-500/50`} />
-                <span className="text-slate-400">{label}</span>
-              </div>
-            ))}
+          <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap gap-x-6 gap-y-3">
+            <div className="flex flex-wrap gap-4">
+              {[
+                { color: 'blue', label: 'Programmé' },
+                { color: 'green', label: 'Complété' },
+                { color: 'gray', label: 'Sauté' },
+                { color: 'orange', label: 'Replanifié' },
+                { color: 'violet', label: 'Jour Box' },
+              ].map(({ color, label }) => (
+                <div key={label} className="flex items-center gap-1.5 text-xs">
+                  <div className={`w-3 h-3 rounded bg-${color}-500/20 border border-${color}-500/50`} />
+                  <span className="text-slate-400">{label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="w-px bg-white/10 hidden sm:block" />
+            <div className="flex flex-wrap gap-4">
+              {[
+                { label: 'CrossFit', color: 'bg-orange-500/20 border-orange-500/50 text-orange-400' },
+                { label: 'HYROX', color: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400' },
+                { label: 'RUN', color: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' },
+                { label: 'ATHX', color: 'bg-purple-500/20 border-purple-500/50 text-purple-400' },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5 text-xs">
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${color}`}>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>
@@ -133,6 +148,7 @@ function CalendarContent() {
         onOpenChange={setModalOpen}
         selectedDate={selectedDate}
         onSchedule={handleScheduleWorkout}
+        onActivityScheduled={refetch}
       />
 
       <ParseBoxWodModal
