@@ -130,10 +130,10 @@ export const GeneratedWorkoutSchema = z.object({
   (workout) => {
     // Vérifier que estimated_duration correspond à blocks.duration_min
     const diff = Math.abs(workout.estimated_duration - workout.blocks.duration_min)
-    return diff <= 5 // Tolérance de 5 minutes
+    return diff <= 15 // Tolérance de 15 minutes (les WODs courts type "For Time" ont souvent un écart entre le time cap et le temps réel estimé)
   },
   {
-    message: 'La durée estimée doit correspondre à la durée totale des blocs (± 5 minutes)',
+    message: 'La durée estimée doit correspondre à la durée totale des blocs (± 15 minutes)',
     path: ['estimated_duration'],
   }
 )
