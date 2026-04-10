@@ -73,16 +73,28 @@ export class AthxService {
 
   async generateAndSave(userId: string, params: GenerateAthxSessionDto) {
     const plan = await this.aiGenerator.generateAthxSession(userId, params)
+    const scheduledDate = params.scheduled_date ?? new Date().toISOString().slice(0, 10)
+
     const [session] = await this.knex('athx_sessions')
       .insert({
         user_id: userId,
-        session_date: new Date().toISOString().slice(0, 10),
+        session_date: scheduledDate,
         session_type: plan.session_type,
         source: 'ai_generated',
         duration_minutes: plan.duration_minutes,
         ai_plan: JSON.stringify(plan),
       })
       .returning('*')
+
+    // Planifier dans le calendrier
+    await this.knex('scheduled_activities').insert({
+      user_id: userId,
+      scheduled_date: scheduledDate,
+      activity_type: 'athx',
+      activity_id: session.id,
+      status: 'scheduled',
+    })
+
     return session
   }
 

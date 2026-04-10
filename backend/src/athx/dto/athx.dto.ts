@@ -107,4 +107,8 @@ export class GenerateAthxSessionDto {
   @IsArray()
   @IsString({ each: true })
   equipment_available?: string[]
+
+  @IsOptional()
+  @IsDateString()
+  scheduled_date?: string  // Date de planification dans le calendrier (défaut : aujourd'hui)
 }
