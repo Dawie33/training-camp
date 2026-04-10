@@ -6,9 +6,35 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import knex from 'knex';
 import { resolve } from 'path';
+import { readdirSync } from 'fs';
+
+/**
+ * Custom migration source : lit les fichiers .js compilés dans dist/
+ * mais les nomme en .ts pour correspondre aux entrées déjà enregistrées
+ * dans la table knex_migrations (créées depuis l'environnement de dev avec ts-node).
+ */
+const migrationSource = {
+  getMigrations(): Promise<string[]> {
+    const dir = resolve(__dirname, 'database/migrations')
+    const files = readdirSync(dir)
+      .filter((f) => f.endsWith('.js'))
+      .sort()
+    return Promise.resolve(files)
+  },
+
+  getMigrationName(migration: string): string {
+    // Renomme "xxxx_foo.js" → "xxxx_foo.ts" pour correspondre à la table knex_migrations
+    return migration.replace(/\.js$/, '.ts')
+  },
+
+  getMigration(migration: string): Promise<{ up: (knex: unknown) => Promise<void>; down: (knex: unknown) => Promise<void> }> {
+    const filePath = resolve(__dirname, 'database/migrations', migration)
+    return import(filePath)
+  },
+}
 
 async function runMigrations() {
-  const logger = new Logger('Migrations');
+  const logger = new Logger('Migrations')
   const db = knex({
     client: 'pg',
     connection: process.env.DATABASE_URL
@@ -20,9 +46,7 @@ async function runMigrations() {
           password: process.env.DATABASE_PASSWORD,
           database: process.env.DATABASE_NAME,
         },
-    migrations: {
-      directory: resolve(__dirname, 'database/migrations'),
-    },
+    migrations: { migrationSource },
   })
   try {
     const [batch, migrations] = await db.migrate.latest()
@@ -37,35 +61,31 @@ async function runMigrations() {
 }
 
 async function bootstrap() {
-  await runMigrations();
-  const app = await NestFactory.create(AppModule);
+  await runMigrations()
+  const app = await NestFactory.create(AppModule)
 
-  // Sécurité basique
-
-  // Préfixe global (optionnel) : http://localhost:3001/api/...
-  app.setGlobalPrefix('api');
-  app.enableCors();
-  // Validation DTO
+  app.setGlobalPrefix('api')
+  app.enableCors()
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: false, // Permet les propriétés non listées
+      forbidNonWhitelisted: false,
       transform: true,
-      skipMissingProperties: false, // Valide même les propriétés manquantes
+      skipMissingProperties: false,
       transformOptions: {
-        enableImplicitConversion: true, // Conversion automatique des types
+        enableImplicitConversion: true,
       },
     }),
-  );
+  )
 
-  app.use(helmet());
-  const port = parseInt(process.env.PORT ?? '3001', 10);
-  await app.listen(port);
-  const logger = new Logger('Bootstrap');
-  logger.log(`🚀 Training Camp API running at http://localhost:${port}`);
+  app.use(helmet())
+  const port = parseInt(process.env.PORT ?? '3001', 10)
+  await app.listen(port)
+  const logger = new Logger('Bootstrap')
+  logger.log(`Training Camp API running at http://localhost:${port}`)
 }
 
 bootstrap().catch((err) => {
-  console.error('Failed to start Nest application:', err);
-  process.exit(1);
-});
+  console.error('Failed to start Nest application:', err)
+  process.exit(1)
+})
