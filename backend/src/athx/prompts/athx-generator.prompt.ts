@@ -83,6 +83,8 @@ ${equipmentConstraintSection}
 - ${enduranceRule.replace('- ', '')}
 - ${metconRule.replace('- ', '')}
 - Adapter le volume et l'intensité au niveau de l'athlète
+- Le champ "duration_minutes" de chaque bloc doit correspondre au temps réel des exercices : sets × (durée par set + repos). Exemple : 3 séries de 5min avec 2min de repos = 3×5 + 2×2 = 19min → arrondi à 20min. Ne pas inventer une durée arbitraire.
+- La somme des "duration_minutes" de tous les blocs doit être égale à la durée totale demandée.
 - Retourner UNIQUEMENT le JSON, sans texte avant ou après`
 }
 

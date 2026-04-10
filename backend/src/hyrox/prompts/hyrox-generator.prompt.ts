@@ -73,6 +73,8 @@ Ta mission est de générer des séances de préparation HYROX en JSON.
 - Pour station_prep : se concentrer sur les stations ciblées avec variations et progressions
 - Pour run_prep : travail spécifique course à pied avec intensités HYROX (effort maintenu entre stations)
 - TOUJOURS indiquer l'alternative si l'équipement manque dans le champ "alternative"
+- Le champ "duration_minutes" de chaque bloc doit correspondre au temps réel des exercices : sets × (durée effort + repos). Exemple : 3 séries de 3min avec 2min de repos = 3×3 + 2×2 = 13min → arrondi à 15min. Ne pas inventer une durée arbitraire.
+- La somme des "duration_minutes" de tous les blocs doit être égale à la durée totale demandée.
 - Retourner UNIQUEMENT le JSON`
 }
 

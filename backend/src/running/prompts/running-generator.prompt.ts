@@ -63,6 +63,7 @@ Ta mission est de générer des plans de séance de course à pied personnalisé
 - Pour \`easy\`, \`long_run\`, \`recovery\` : pas d'intervals, allures conversationnelles
 - Pour \`tempo\` : bloc principal continu à allure seuil, sans intervals
 - La somme des \`distance_km\` des phases doit égaler \`total_distance_km\`
+- La somme des \`duration_minutes\` des phases doit égaler \`estimated_duration_minutes\`. Calcule chaque phase depuis les exercices réels : répétitions × (durée effort + récupération). Ne pas inventer une durée arbitraire.
 - Les zones cardio : zone_1 (<60%), zone_1_2 (60-70%), zone_2 (65-75%), zone_3 (75-82%), zone_4 (82-89%), zone_5 (>90% FCmax)
 - Adapter l'allure au niveau de l'athlète (débutant = plus lent, plus de récupération)
 - Retourner UNIQUEMENT le JSON, sans texte avant ou après`
