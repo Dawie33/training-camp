@@ -38,7 +38,10 @@ async function runMigrations() {
   const db = knex({
     client: 'pg',
     connection: process.env.DATABASE_URL
-      ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+      ? {
+          connectionString: process.env.DATABASE_URL,
+          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        }
       : {
           host: process.env.DATABASE_HOST,
           port: Number(process.env.DATABASE_PORT ?? 5434),
