@@ -4,8 +4,40 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import knex from 'knex';
+import { resolve } from 'path';
+
+async function runMigrations() {
+  const logger = new Logger('Migrations');
+  const db = knex({
+    client: 'pg',
+    connection: process.env.DATABASE_URL
+      ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+      : {
+          host: process.env.DATABASE_HOST,
+          port: Number(process.env.DATABASE_PORT ?? 5434),
+          user: process.env.DATABASE_USER,
+          password: process.env.DATABASE_PASSWORD,
+          database: process.env.DATABASE_NAME,
+        },
+    migrations: {
+      directory: resolve(__dirname, 'database/migrations'),
+    },
+  })
+  try {
+    const [batch, migrations] = await db.migrate.latest()
+    if (migrations.length === 0) {
+      logger.log('Database already up to date')
+    } else {
+      logger.log(`Batch ${batch} — applied ${migrations.length} migration(s): ${migrations.join(', ')}`)
+    }
+  } finally {
+    await db.destroy()
+  }
+}
 
 async function bootstrap() {
+  await runMigrations();
   const app = await NestFactory.create(AppModule);
 
   // Sécurité basique
