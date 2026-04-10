@@ -8,7 +8,30 @@ const SESSION_TYPE_DESCRIPTIONS: Record<string, string> = {
   mixed: 'Séance mixte — travail multi-zones, préparation globale ATHX',
 }
 
-export function buildAthxSystemPrompt(): string {
+export function buildAthxSystemPrompt(equipmentAvailable?: string[]): string {
+  const hasEquipmentConstraint = equipmentAvailable && equipmentAvailable.length > 0
+
+  const equipmentConstraintSection = hasEquipmentConstraint
+    ? `
+# CONTRAINTE ÉQUIPEMENT — ABSOLUE ET NON NÉGOCIABLE
+L'athlète dispose UNIQUEMENT de l'équipement suivant : ${equipmentAvailable.join(', ')}
+Tu NE DOIS PAS proposer d'exercices nécessitant du matériel absent de cette liste.
+En particulier : si "rower" n'est pas dans la liste → pas de rowing. Si "assault-bike" n'est pas dans la liste → pas d'assault bike. Si "barbell" n'est pas dans la liste → pas de barbell.
+Adapte chaque zone avec des alternatives utilisant UNIQUEMENT l'équipement disponible.`
+    : ''
+
+  const enduranceRule = hasEquipmentConstraint
+    ? `- Zone Endurance : cardio soutenu adapté à l'équipement disponible — si rower disponible : rowing intervals ; si assault-bike disponible : bike sprints ; sinon : corde à sauter (double-unders, single-unders), burpees, running en place, step-ups, saut de box`
+    : `- Zone Endurance : rowing, assault bike, barbell complexes, EMOM cardio`
+
+  const forceRule = hasEquipmentConstraint
+    ? `- Zone Force : mouvements de force adaptés à l'équipement — si barbell disponible : squat, deadlift, press, clean & jerk ; si kettlebell/dumbbells disponibles : swings lourds, goblet squat, press ; sinon poids du corps : pistols, pike push-ups, dips`
+    : `- Zone Force : priorité aux soulevés de terre, squat, développé couché, presse, clean & jerk`
+
+  const metconRule = hasEquipmentConstraint
+    ? `- Zone MetCon X : WODs fonctionnels avec UNIQUEMENT l'équipement disponible — si pull-up-bar : pull-ups, toes-to-bar ; si kettlebell : swings, goblet squat, turkish get-up ; si jump-rope : double-unders, single-unders ; poids du corps toujours autorisé : burpees, push-ups, air squat, lunges`
+    : `- Zone MetCon X : WODs fonctionnels, mouvements gymnastics, kettlebell, combinaisons`
+
   return `Tu es un coach fitness expert en compétition ATHX (Athletic Fitness), spécialisé dans la préparation aux événements hybrides.
 
 ATHX est une compétition de fitness hybride de 2h30 organisée en 6 zones successives :
@@ -20,7 +43,7 @@ ATHX est une compétition de fitness hybride de 2h30 organisée en 6 zones succe
 6. Zone MetCon X (30 min) — fitness fonctionnel, mouvements variés à haute intensité
 
 Ta mission est de générer des séances de préparation ATHX structurées en JSON.
-
+${equipmentConstraintSection}
 # STRUCTURE JSON REQUISE
 
 \`\`\`json
@@ -56,9 +79,9 @@ Ta mission est de générer des séances de préparation ATHX structurées en JS
 
 # RÈGLES
 - Toujours commencer par un bloc "warmup" et finir par "cooldown"
-- Zone Force : priorité aux soulevés de terre, squat, développé couché, presse, clean & jerk
-- Zone Endurance : rowing, assault bike, barbell complexes, EMOM cardio
-- Zone MetCon X : WODs fonctionnels, mouvements gymnastics, kettlebell, combinaisons
+- ${forceRule.replace('- ', '')}
+- ${enduranceRule.replace('- ', '')}
+- ${metconRule.replace('- ', '')}
 - Adapter le volume et l'intensité au niveau de l'athlète
 - Retourner UNIQUEMENT le JSON, sans texte avant ou après`
 }
@@ -90,7 +113,7 @@ export function buildAthxUserPrompt(params: AthxUserPromptParams): string {
   }
 
   if (params.equipmentAvailable && params.equipmentAvailable.length > 0) {
-    prompt += `\n- Équipement disponible : ${params.equipmentAvailable.join(', ')}`
+    prompt += `\n- Équipement disponible (UNIQUEMENT ce matériel — ne rien utiliser d'autre) : ${params.equipmentAvailable.join(', ')}`
   }
 
   const injuryEntries = params.injuries ? Object.entries(params.injuries).filter(([, v]) => v) : []

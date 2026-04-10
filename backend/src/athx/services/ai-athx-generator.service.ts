@@ -20,17 +20,18 @@ export class AIAthxGeneratorService {
     const ctx = await this.userContextService.getUserAIContext(userId)
 
     try {
+      const equipmentAvailable = params.equipment_available ?? ctx.equipment_available
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: buildAthxSystemPrompt() },
+          { role: 'system', content: buildAthxSystemPrompt(equipmentAvailable) },
           {
             role: 'user',
             content: buildAthxUserPrompt({
               ...params,
               userLevel: ctx.sport_level,
               oneRepMaxes: ctx.oneRepMaxes,
-              equipmentAvailable: params.equipment_available ?? ctx.equipment_available,
+              equipmentAvailable,
               injuries: ctx.injuries,
             }),
           },
