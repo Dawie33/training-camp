@@ -21,8 +21,8 @@ Adapte chaque zone avec des alternatives utilisant UNIQUEMENT l'équipement disp
     : ''
 
   const enduranceRule = hasEquipmentConstraint
-    ? `- Zone Endurance : cardio soutenu adapté à l'équipement disponible — si rower disponible : rowing intervals ; si assault-bike disponible : bike sprints ; sinon : corde à sauter (double-unders, single-unders), burpees, running en place, step-ups, saut de box`
-    : `- Zone Endurance : rowing, assault bike, barbell complexes, EMOM cardio`
+    ? `- Zone Endurance : cardio soutenu zone 3-4 (FC élevée maintenue), PAS de mouvements MetCon explosifs — si rower disponible : rowing intervals ; si assault-bike disponible : bike sprints ; sinon : course à pied (outdoor ou tapis), vélo (si disponible), corde à sauter en continu (séries longues 2-5min) ; les burpees, box jumps et mouvements explosifs sont INTERDITS dans cette zone car ils appartiennent au MetCon`
+    : `- Zone Endurance : rowing, assault bike, ski erg, run — cardio soutenu zone 3-4, pas de mouvements MetCon`
 
   const forceRule = hasEquipmentConstraint
     ? `- Zone Force : mouvements de force adaptés à l'équipement — si barbell disponible : squat, deadlift, press, clean & jerk ; si kettlebell/dumbbells disponibles : swings lourds, goblet squat, press ; sinon poids du corps : pistols, pike push-ups, dips`
