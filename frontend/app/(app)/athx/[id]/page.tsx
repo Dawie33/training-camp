@@ -26,18 +26,28 @@ function BlockCard({ block }: { block: AthxBlock }) {
         <span className="text-xs text-slate-400">{block.duration_minutes} min</span>
       </div>
       <div className="space-y-2">
-        {block.exercises.map((ex, i) => (
-          <div key={i} className="bg-white/5 rounded-lg p-2.5">
-            <p className="text-sm font-semibold text-white mb-1">{ex.name}</p>
-            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-400">
-              {ex.sets && ex.reps && <span>{ex.sets}×{ex.reps}</span>}
-              {ex.duration && <span>{ex.duration}</span>}
-              {ex.rest && <span>Repos : {ex.rest}</span>}
-              {ex.intensity && <span className="text-purple-400">{ex.intensity}</span>}
+        {block.exercises.map((ex, i) => {
+          // Déterminer si reps est une durée (ex: "10min") ou un nombre de répétitions
+          const repsIsTime = typeof ex.reps === 'string' && /min|sec|s$/.test(ex.reps)
+          return (
+            <div key={i} className="bg-white/5 rounded-lg p-2.5">
+              <p className="text-sm font-semibold text-white mb-1">{ex.name}</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-400">
+                {ex.sets && ex.reps && !repsIsTime && <span>{ex.sets}×{ex.reps}</span>}
+                {ex.sets && repsIsTime && <span>{ex.sets} série{ex.sets > 1 ? 's' : ''} de {ex.reps}</span>}
+                {!ex.sets && ex.reps && <span>{ex.reps}</span>}
+                {ex.duration && <span>{ex.duration}</span>}
+                {ex.rest && <span>Repos : {ex.rest}</span>}
+                {ex.intensity && <span className="text-purple-400">{ex.intensity}</span>}
+              </div>
+              {ex.notes && (
+                <p className="text-xs text-slate-300 mt-2 bg-white/5 rounded px-2 py-1.5 leading-relaxed">
+                  {ex.notes}
+                </p>
+              )}
             </div>
-            {ex.notes && <p className="text-xs text-slate-500 mt-1 italic">{ex.notes}</p>}
-          </div>
-        ))}
+          )
+        })}
       </div>
       {block.notes && (
         <p className="text-xs text-slate-500 mt-2 italic">{block.notes}</p>

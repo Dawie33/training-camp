@@ -1,12 +1,18 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { GoogleCalendarService } from '../google-calendar/google-calendar.service'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
 import { UnifiedActivity } from './types/unified-activity.type'
 
+const ACTIVITY_LABELS: Record<string, string> = { hyrox: 'HYROX', running: 'Running', athx: 'ATHX' }
+
 @Injectable()
 export class ScheduledActivitiesService {
-  constructor(@InjectModel() private readonly knex: Knex) {}
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly googleCalendarService: GoogleCalendarService,
+  ) {}
 
   /**
    * Retourne la liste unifiée de toutes les activités planifiées d'un utilisateur
@@ -142,7 +148,11 @@ export class ScheduledActivitiesService {
       })
       .returning('*')
 
-    const typeLabels: Record<string, string> = { hyrox: 'HYROX', running: 'Running', athx: 'ATHX' }
+    // Sync Google Calendar en arrière-plan (silencieux si non connecté)
+    this.googleCalendarService.syncWorkout(userId, {
+      name: ACTIVITY_LABELS[data.activity_type] || data.activity_type,
+      scheduledDate: data.scheduled_date,
+    }).catch(() => undefined)
 
     return {
       id: row.id,
@@ -152,7 +162,7 @@ export class ScheduledActivitiesService {
         : new Date(row.scheduled_date).toISOString().slice(0, 10),
       module: row.activity_type,
       status: row.status,
-      title: typeLabels[row.activity_type] || row.activity_type,
+      title: ACTIVITY_LABELS[row.activity_type] || row.activity_type,
       notes: row.notes,
       created_at: row.created_at,
       updated_at: row.updated_at,
