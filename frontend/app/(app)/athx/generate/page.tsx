@@ -6,8 +6,24 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, BookOpen, CheckCircle, Dumbbell, Loader2, Sparkles, Timer } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+
+// Durées de référence de la compétition ATHX par zone
+const ZONE_DURATIONS: Record<AthxSessionType, number> = {
+  strength_prep: 20,
+  endurance_prep: 30,
+  metcon_prep: 30,
+  full_competition: 150,
+  mixed: 60,
+}
+const WARMUP_COOLDOWN_MINUTES = 15 // toujours inclus
+
+function calcSuggestedDuration(zones: AthxSessionType[], isFullComp: boolean): number {
+  if (isFullComp) return 150
+  const zoneTime = zones.reduce((sum, z) => sum + (ZONE_DURATIONS[z] ?? 30), 0)
+  return Math.min(WARMUP_COOLDOWN_MINUTES + zoneTime, 150)
+}
 
 // Zones combinables (la compétition complète est exclusive)
 const COMBINABLE_ZONES: { value: AthxSessionType; description: string; color: string; activeColor: string }[] = [
@@ -57,7 +73,8 @@ export default function GenerateAthxPage() {
   const router = useRouter()
   const [selectedZones, setSelectedZones] = useState<AthxSessionType[]>(['metcon_prep'])
   const [fullCompetition, setFullCompetition] = useState(false)
-  const [durationMinutes, setDurationMinutes] = useState(60)
+  const [durationMinutes, setDurationMinutes] = useState(() => calcSuggestedDuration(['metcon_prep'], false))
+  const [durationManuallyChanged, setDurationManuallyChanged] = useState(false)
   const [competitionDate, setCompetitionDate] = useState('')
   const [additionalInstructions, setAdditionalInstructions] = useState('')
   const [equipmentPreset, setEquipmentPreset] = useState<number>(0) // index dans EQUIPMENT_PRESETS
@@ -67,22 +84,32 @@ export default function GenerateAthxPage() {
 
   const toggleZone = (zone: AthxSessionType) => {
     if (fullCompetition) {
-      // Quitter le mode compétition complète et sélectionner la zone cliquée
       setFullCompetition(false)
       setSelectedZones([zone])
+      setDurationManuallyChanged(false)
       return
     }
-    setSelectedZones((prev) =>
-      prev.includes(zone)
-        ? prev.length > 1 ? prev.filter((z) => z !== zone) : prev // garder au moins 1
+    setSelectedZones((prev) => {
+      const next = prev.includes(zone)
+        ? prev.length > 1 ? prev.filter((z) => z !== zone) : prev
         : [...prev, zone]
-    )
+      if (!durationManuallyChanged) setDurationMinutes(calcSuggestedDuration(next, false))
+      return next
+    })
   }
 
   const toggleFullCompetition = () => {
     setFullCompetition(true)
     setSelectedZones([])
+    if (!durationManuallyChanged) setDurationMinutes(150)
   }
+
+  // Recalcule la suggestion si la durée n'a pas été changée manuellement
+  useEffect(() => {
+    if (!durationManuallyChanged) {
+      setDurationMinutes(calcSuggestedDuration(selectedZones, fullCompetition))
+    }
+  }, [selectedZones, fullCompetition, durationManuallyChanged])
 
   // Dériver session_type et target_zones depuis la sélection
   const sessionType: AthxSessionType = fullCompetition
@@ -187,11 +214,32 @@ export default function GenerateAthxPage() {
 
             {/* Durée */}
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
-                Durée — <span className="text-purple-400">{durationMinutes} min</span>
+              <label className="block text-sm font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                Durée —{' '}
+                <span className="text-purple-400">{durationMinutes} min</span>
+                {!durationManuallyChanged && (
+                  <span className="text-xs font-normal text-slate-500">(suggérée selon les zones)</span>
+                )}
+                {durationManuallyChanged && (
+                  <button
+                    onClick={() => {
+                      setDurationManuallyChanged(false)
+                      setDurationMinutes(calcSuggestedDuration(selectedZones, fullCompetition))
+                    }}
+                    className="text-xs font-normal text-purple-400 hover:text-purple-300 underline"
+                  >
+                    Réinitialiser
+                  </button>
+                )}
               </label>
-              <input type="range" min={20} max={150} step={5} value={durationMinutes}
-                onChange={(e) => setDurationMinutes(Number(e.target.value))} className="w-full accent-purple-400" />
+              <input
+                type="range" min={20} max={150} step={5} value={durationMinutes}
+                onChange={(e) => {
+                  setDurationMinutes(Number(e.target.value))
+                  setDurationManuallyChanged(true)
+                }}
+                className="w-full accent-purple-400"
+              />
               <div className="flex justify-between text-xs text-slate-500 mt-1"><span>20 min</span><span>1h15</span><span>2h30</span></div>
             </div>
 
