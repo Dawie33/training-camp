@@ -6,7 +6,7 @@ export interface AuthContextType {
   loading: boolean
   login: (data: LoginDto) => Promise<void>
   signup: (data: SignupDto) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   isAuthenticated: boolean
 }
 

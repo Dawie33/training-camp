@@ -134,28 +134,13 @@ class ApiClient {
   }
 
   /**
-   * Récupère le token d'authentification depuis le localStorage
-   * @returns Le token JWT ou null s'il n'existe pas
-   */
-  private getAuthToken(): string | null {
-    if (typeof window === 'undefined') {
-      return null
-    }
-    return localStorage.getItem('access_token')
-  }
-
-  /**
-   * Crée les en-têtes avec le token d'authentification si disponible
+   * Crée les en-têtes de la requête
+   * Le token JWT est transmis automatiquement via le cookie httpOnly (géré par le navigateur)
    * @param customHeaders En-têtes personnalisés optionnels
-   * @returns En-têtes complets avec token
+   * @returns En-têtes complets
    */
   private getHeaders(customHeaders?: Record<string, string>): Record<string, string> {
-    const headers = { ...this.defaultHeaders, ...customHeaders }
-    const token = this.getAuthToken()
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-    return headers
+    return { ...this.defaultHeaders, ...customHeaders }
   }
 
   /**
@@ -183,6 +168,7 @@ class ApiClient {
     const response = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(options?.headers),
+      credentials: 'include',
     })
     return this.handleResponse<T>(response)
   }
@@ -212,6 +198,7 @@ class ApiClient {
       method: 'POST',
       headers: this.getHeaders(options?.headers),
       body: data ? JSON.stringify(data) : undefined,
+      credentials: 'include',
     })
     return this.handleResponse<T>(response)
   }
@@ -240,6 +227,7 @@ class ApiClient {
       method: 'PATCH',
       headers: this.getHeaders(options?.headers),
       body: data ? JSON.stringify(data) : undefined,
+      credentials: 'include',
     })
     return this.handleResponse<T>(response)
   }
@@ -270,6 +258,7 @@ class ApiClient {
       method: 'PUT',
       headers: this.getHeaders(options?.headers),
       body: data ? JSON.stringify(data) : undefined,
+      credentials: 'include',
     })
     return this.handleResponse<T>(response)
   }
@@ -294,6 +283,7 @@ class ApiClient {
     const response = await fetch(url, {
       method: 'DELETE',
       headers: this.getHeaders(options?.headers),
+      credentials: 'include',
     })
     return this.handleResponse<T>(response)
   }

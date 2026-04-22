@@ -5,36 +5,21 @@ import type { LoginDto, SignupDto, User } from '@/domain/entities/auth'
 import { AuthContext } from '@/hooks/useAuth'
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 
-/**
-* Contexte qui fournit l'état et les fonctions liés à l'authentification.
-*
-* Il utilise `authService` pour vérifier si l'utilisateur est authentifié au montage, et
-* pour se connecter, s'inscrire et se déconnecter.
-*
-* Il expose les propriétés suivantes à ses enfants :
-* - `user` : L'utilisateur actuellement authentifié.
-* - `loading` : Un booléen indiquant si la vérification d'authentification est en cours.
-* - `login` : Une fonction qui connecte l'utilisateur.
-* - `signup` : Une fonction qui inscrit l'utilisateur.
-* - `logout` : Une fonction qui déconnecte l'utilisateur.
-* - `isAuthenticated` : Un booléen indiquant si l'utilisateur est authentifié.
-*/
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est connecté au chargement
     const checkAuth = async () => {
       try {
-        const token = authService.getToken()
-        if (token) {
-          const currentUser = await authService.getMe()
-          setUser(currentUser)
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error)
-        authService.logout()
+        // Le cookie httpOnly est envoyé automatiquement — pas besoin de lire localStorage
+        const currentUser = await authService.getMe()
+        setUser(currentUser)
+        localStorage.setItem('user', JSON.stringify(currentUser))
+      } catch {
+        // 401 = pas connecté, on nettoie juste le localStorage
+        localStorage.removeItem('user')
+        setUser(null)
       } finally {
         setLoading(false)
       }
@@ -43,32 +28,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth()
   }, [])
 
-  /**
-   * Connecte l'utilisateur.
-   * @param {LoginDto} data - les données de connexion de l'utilisateur.
-   * @returns {Promise<void>} - La promesse qui se résout quand l'utilisateur est connecté.
-   */
   const login = async (data: LoginDto) => {
     const response = await authService.login(data)
     setUser(response.user)
   }
 
-  /**
-   * Inscrire un nouvel utilisateur.
-   * @param {SignupDto} data - les données de l'utilisateur.
-   * @returns {Promise<void>} - La promesse qui se résout quand l'utilisateur est inscrit.
-   */
   const signup = async (data: SignupDto) => {
     const response = await authService.signup(data)
     setUser(response.user)
   }
 
-  /**
-   * Déconnecte l'utilisateur en supprimant le token JWT et les données de l'utilisateur stockées localement.
-   * @returns {void}
-   */
-  const logout = useCallback(() => {
-    authService.logout()
+  const logout = useCallback(async () => {
+    await authService.logout()
     setUser(null)
   }, [])
 

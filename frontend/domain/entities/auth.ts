@@ -11,7 +11,7 @@ export interface LoginDto {
 }
 
 export interface AuthResponse {
-  access_token: string
+  access_token?: string  // plus envoyé dans le body, token stocké en cookie httpOnly
   user: User
 }
 

@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import knex from 'knex';
 import { resolve } from 'path';
 import { readdirSync } from 'fs';
@@ -87,6 +88,7 @@ async function bootstrap() {
   )
 
   app.use(helmet())
+  app.use(cookieParser())
   const port = parseInt(process.env.PORT ?? '3001', 10)
   await app.listen(port)
   const logger = new Logger('Bootstrap')
