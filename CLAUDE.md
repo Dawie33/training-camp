@@ -24,6 +24,7 @@ Monorepo npm workspaces :
 - PostgreSQL 15 via Knex.js (query builder + migrations)
 - JWT (Passport.js), class-validator/class-transformer (DTOs)
 - OpenAI API (`gpt-4o`, `json_object`, Zod validation)
+- `@nestjs/throttler` — rate limiting global + par route
 - Préfixe API : `/api`
 
 ### Base de données
@@ -76,7 +77,14 @@ module/
 └── types/                   # Interfaces TypeScript
 ```
 
-Guards : `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées.
+Guards : `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées — **sans exception**, y compris les endpoints de génération IA.
+
+### Sécurité backend
+
+- **CORS** : restreint à `FRONTEND_URL` (env var), credentials activés — ne jamais remettre `app.enableCors()` sans options.
+- **Rate limiting** : global 60 req/min via `ThrottlerGuard` (APP_GUARD). Limites spécifiques : login 10/min, signup 5/min, routes IA 10/min via `@Throttle()`.
+- **Validation** : `forbidNonWhitelisted: true` — les champs inconnus dans les DTOs sont rejetés (HTTP 400).
+- **JWT_SECRET** : doit être défini dans `.env`, l'app refuse de démarrer sinon (Joi required, pas de fallback).
 
 ### Modules existants
 
@@ -131,7 +139,7 @@ frontend/
 - `'use client'` pour les composants interactifs, Server Components pour les layouts/pages statiques
 - Appels API directs au backend via `apiClient` (jamais de routes Next.js API)
 - Pattern page : `page.tsx` → `_hooks/` → `_components/` (co-localisation dans le dossier de la page)
-- Token JWT dans `localStorage` (`access_token`), injecté automatiquement par `apiClient`
+- Token JWT dans `localStorage` (`access_token`), injecté automatiquement par `apiClient` — ⚠️ vulnérable au XSS, migration vers httpOnly cookies à prévoir
 
 ### Services frontend
 
@@ -163,6 +171,7 @@ JWT_SECRET=...
 OPENAI_API_KEY=...
 PORT=3001
 NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
 ```
 
 **Frontend `.env.local`** :
@@ -171,6 +180,10 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
 En production, le backend est déployé sur Render (`https://training-camp-backend.onrender.com/api`).
+
+### Sécurité frontend
+
+- **Security headers** configurés dans `next.config.ts` (`X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`) — ne pas les supprimer.
 
 ## Pièges connus
 
