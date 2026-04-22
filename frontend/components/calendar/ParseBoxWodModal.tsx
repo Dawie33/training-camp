@@ -24,9 +24,9 @@ type Phase = 'input' | 'preview' | 'saving'
 interface ParseBoxWodModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  selectedDate: Date
+  selectedDate?: Date
   initialMode?: Mode
-  onSchedule: (payload: { workout_id?: string; personalized_workout_id?: string }, notes?: string) => Promise<void>
+  onSchedule?: (payload: { workout_id?: string; personalized_workout_id?: string }, notes?: string) => Promise<void>
 }
 
 const difficultyColors: Record<string, string> = {
@@ -107,8 +107,12 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
         ...({ ai_generated: true } as object),
       } as Parameters<typeof workoutsApi.create>[0])
 
-      await onSchedule({ workout_id: saved.id })
-      toast.success(`"${parsedWorkout.name}" planifié pour le ${format(selectedDate, 'dd MMMM', { locale: fr })}`)
+      if (onSchedule) {
+        await onSchedule({ workout_id: saved.id })
+        toast.success(`"${parsedWorkout.name}" planifié pour le ${format(selectedDate!, 'dd MMMM', { locale: fr })}`)
+      } else {
+        toast.success(`"${parsedWorkout.name}" ajouté à ta bibliothèque`)
+      }
       handleClose()
     } catch {
       toast.error('Erreur lors de la sauvegarde. Veuillez réessayer.')
@@ -126,7 +130,7 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
     onOpenChange(false)
   }
 
-  const dateLabel = format(selectedDate, 'EEEE dd MMMM', { locale: fr })
+  const dateLabel = selectedDate ? format(selectedDate, 'EEEE dd MMMM', { locale: fr }) : null
 
   const titleIcon = mode === 'search'
     ? <Search className="w-5 h-5 text-blue-400" />
@@ -143,7 +147,7 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
             {titleLabel}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Pour le {dateLabel}
+            {dateLabel ? `Pour le ${dateLabel}` : 'Sera ajouté à ta bibliothèque de workouts'}
           </DialogDescription>
         </DialogHeader>
 
@@ -280,7 +284,7 @@ AMRAP 20 minutes :
               </Button>
               <Button onClick={handleSaveAndSchedule} className="bg-orange-500 hover:bg-orange-600 text-white">
                 <Save className="w-4 h-4 mr-2" />
-                Sauvegarder & Planifier
+                {onSchedule ? 'Sauvegarder & Planifier' : 'Sauvegarder dans la bibliothèque'}
               </Button>
             </div>
           </div>

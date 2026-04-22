@@ -1,5 +1,6 @@
 'use client'
 
+import { ParseBoxWodModal } from '@/components/calendar/ParseBoxWodModal'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 import {
@@ -7,14 +8,19 @@ import {
   BookOpen,
   Dumbbell,
   Flame,
+  Instagram,
   PenLine,
   Plus,
+  Search,
   Sparkles,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
 import { formatResult, useCrossfitDashboard } from './_hooks/useCrossfitDashboard'
 
-const QUICK_ACTIONS: { href: string; label: string; description: string; icon: React.ElementType; color: string; shadow: string }[] = [
+type ParseMode = 'instagram' | 'search'
+
+const LINK_ACTIONS: { href: string; label: string; description: string; icon: React.ElementType; color: string; shadow: string }[] = [
   {
     href: '/crossfit/log-workout',
     label: 'Enregistrer un WOD',
@@ -57,9 +63,34 @@ const QUICK_ACTIONS: { href: string; label: string; description: string; icon: R
   },
 ]
 
+const IMPORT_ACTIONS: { mode: ParseMode; label: string; description: string; icon: React.ElementType; color: string; shadow: string }[] = [
+  {
+    mode: 'instagram',
+    label: 'Coller depuis Instagram',
+    description: 'Importer le WOD de ta box',
+    icon: Instagram,
+    color: 'from-cyan-500 to-sky-500',
+    shadow: 'shadow-cyan-500/20',
+  },
+  {
+    mode: 'search',
+    label: 'Rechercher un WOD',
+    description: 'Benchmark, Open, Hero WOD...',
+    icon: Search,
+    color: 'from-violet-500 to-purple-500',
+    shadow: 'shadow-violet-500/20',
+  },
+]
 
 export default function CrossFitPage() {
   const { sessions, loading } = useCrossfitDashboard()
+  const [parseModalOpen, setParseModalOpen] = useState(false)
+  const [parseModalMode, setParseModalMode] = useState<ParseMode>('instagram')
+
+  const openParseModal = (mode: ParseMode) => {
+    setParseModalMode(mode)
+    setParseModalOpen(true)
+  }
 
   return (
     <motion.div
@@ -87,7 +118,7 @@ export default function CrossFitPage() {
         <motion.div variants={fadeInUp}>
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-3">Actions</h2>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            {QUICK_ACTIONS.map((action) => {
+            {LINK_ACTIONS.map((action) => {
               const Icon = action.icon
               return (
                 <Link
@@ -101,6 +132,29 @@ export default function CrossFitPage() {
                   <p className="font-semibold text-white text-sm">{action.label}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{action.description}</p>
                 </Link>
+              )
+            })}
+          </div>
+        </motion.div>
+
+        {/* Importer un WOD */}
+        <motion.div variants={fadeInUp}>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-3">Importer un WOD</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {IMPORT_ACTIONS.map((action) => {
+              const Icon = action.icon
+              return (
+                <button
+                  key={action.mode}
+                  onClick={() => openParseModal(action.mode)}
+                  className={`group relative bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 hover:shadow-lg ${action.shadow} text-left`}
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="font-semibold text-white text-sm">{action.label}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{action.description}</p>
+                </button>
               )
             })}
           </div>
@@ -163,6 +217,12 @@ export default function CrossFitPage() {
         </motion.div>
 
       </div>
+
+      <ParseBoxWodModal
+        open={parseModalOpen}
+        onOpenChange={setParseModalOpen}
+        initialMode={parseModalMode}
+      />
     </motion.div>
   )
 }
