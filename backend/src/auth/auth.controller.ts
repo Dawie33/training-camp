@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Patch, Post, Req, Request, UseGuards } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { AuthService } from './auth.service'
 import { AuthResponseDto, LoginDto, SignupDto } from './dto/auth.dto'
 import { UpdateProfileDto } from './dto/update-profile.dto'
@@ -20,11 +21,13 @@ export class AuthController {
   constructor(private authService: AuthService) { }
 
   @Post('signup')
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async signup(@Body() signupDto: SignupDto): Promise<AuthResponseDto> {
     return this.authService.signup(signupDto)
   }
 
   @Post('login')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto)
   }

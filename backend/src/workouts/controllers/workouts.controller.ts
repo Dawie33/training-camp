@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { CreateWorkoutDto, GeneratePersonalizedWorkoutDto, GenerateWorkoutDto, LookupWorkoutDto, ParseWorkoutTextDto, SaveBenchmarkResultDto, WeeklyPlanDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { AIWorkoutGeneratorService, GeneratedWorkout, WeeklyPlanResult } from '../services/ai-workout-generator.service'
@@ -121,6 +122,7 @@ export class WorkoutsController {
 
   @Post('generate-ai-personalized')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async generatePersonalizedWithAI(
     @Body() dto: GeneratePersonalizedWorkoutDto,
     @Request() req: { user: { id: string } },
@@ -129,6 +131,8 @@ export class WorkoutsController {
   }
 
   @Post('generate-ai')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async generateWithAI(@Body() dto: GenerateWorkoutDto) {
     return this.aiGenerator.generateWorkout(dto)
   }
