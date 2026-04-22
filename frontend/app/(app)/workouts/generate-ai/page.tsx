@@ -1,5 +1,6 @@
 'use client'
 
+import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { GenerateForm } from './_components/GenerateForm'
 import { GeneratedWorkoutResult } from './_components/GeneratedWorkoutResult'
@@ -34,9 +35,9 @@ export default function GenerateWorkoutAIPage() {
         <div className="max-w-7xl mx-auto flex items-center gap-2 lg:gap-3">
           <button
             onClick={() => router.back()}
-            className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
           >
-            <span className="text-sm lg:text-base">&larr;</span>
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="w-1.5 lg:w-2 h-8 lg:h-12 bg-orange-500 rounded-full" />
           <div>

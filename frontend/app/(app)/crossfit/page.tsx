@@ -8,20 +8,28 @@ import {
   Dumbbell,
   Flame,
   PenLine,
+  Plus,
   Sparkles,
-  Trophy,
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatResult, useCrossfitDashboard } from './_hooks/useCrossfitDashboard'
 
 const QUICK_ACTIONS: { href: string; label: string; description: string; icon: React.ElementType; color: string; shadow: string }[] = [
   {
-    href: '/log-workout',
+    href: '/crossfit/log-workout',
     label: 'Enregistrer un WOD',
     description: 'Loguer une séance réalisée',
     icon: PenLine,
     color: 'from-orange-500 to-rose-500',
     shadow: 'shadow-orange-500/20',
+  },
+  {
+    href: '/workouts/new',
+    label: 'Créer un WOD',
+    description: 'Nouveau workout manuellement',
+    icon: Plus,
+    color: 'from-sky-500 to-blue-500',
+    shadow: 'shadow-sky-500/20',
   },
   {
     href: '/workouts/generate-ai',
@@ -32,7 +40,7 @@ const QUICK_ACTIONS: { href: string; label: string; description: string; icon: R
     shadow: 'shadow-emerald-500/20',
   },
   {
-    href: '/workouts',
+    href: '/crossfit/workouts',
     label: 'Bibliothèque',
     description: 'Parcourir les workouts',
     icon: BookOpen,
@@ -40,20 +48,12 @@ const QUICK_ACTIONS: { href: string; label: string; description: string; icon: R
     shadow: 'shadow-blue-500/20',
   },
   {
-    href: '/skills',
+    href: '/crossfit/skills',
     label: 'Progressions',
     description: 'Mouvements techniques',
     icon: Flame,
     color: 'from-purple-500 to-pink-500',
     shadow: 'shadow-purple-500/20',
-  },
-  {
-    href: '/workouts?benchmark=true',
-    label: 'Benchmarks',
-    description: 'Girls, Heroes, Open...',
-    icon: Trophy,
-    color: 'from-yellow-500 to-amber-500',
-    shadow: 'shadow-yellow-500/20',
   },
 ]
 
@@ -86,7 +86,7 @@ export default function CrossFitPage() {
         {/* Actions rapides */}
         <motion.div variants={fadeInUp}>
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-3">Actions</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             {QUICK_ACTIONS.map((action) => {
               const Icon = action.icon
               return (

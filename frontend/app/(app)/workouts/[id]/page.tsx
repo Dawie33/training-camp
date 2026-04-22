@@ -2,6 +2,7 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
 import { useWorkoutForm } from './_hooks/useWorkoutForm'
@@ -46,9 +47,9 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
         <motion.div variants={fadeInUp} className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
           >
-            <span className="text-lg">←</span>
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <h1 className="text-3xl font-black text-white">
