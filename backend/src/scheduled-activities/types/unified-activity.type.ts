@@ -1,9 +1,10 @@
-export type ActivityModule = 'crossfit' | 'hyrox' | 'running' | 'athx'
+export type ActivityModule = 'crossfit' | 'hyrox' | 'running' | 'athx' | 'strength'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**
  * Vue unifiée d'une activité planifiée, quelle que soit sa source
- * (user_workout_schedule pour CrossFit, scheduled_activities pour les autres modules)
+ * (user_workout_schedule pour CrossFit, scheduled_activities pour les autres modules,
+ * strength_sessions pour le module Force)
  */
 export interface UnifiedActivity {
   id: string
@@ -19,9 +20,7 @@ export interface UnifiedActivity {
   // Champs CrossFit (source: user_workout_schedule)
   workout_id?: string
   personalized_workout_id?: string
-  program_enrollment_id?: string
-  session_type?: 'workout' | 'box_session' | 'program_session'
-  session_data?: Record<string, unknown>
+  session_type?: 'workout' | 'box_session'
   workout_name?: string
   workout_type?: string
   difficulty?: string
@@ -30,9 +29,15 @@ export interface UnifiedActivity {
   completed_session_id?: string
 
   // Champs nouveaux modules (source: scheduled_activities)
-  activity_type?: 'hyrox' | 'running' | 'athx'
+  activity_type?: 'hyrox' | 'running' | 'athx' | 'strength'
   activity_id?: string
 
+  // Champs Force (source: strength_sessions)
+  target_muscles?: string[]
+  session_goal?: string
+  duration_minutes?: number
+  perceived_effort?: number
+
   // Identifie la table source pour les actions CRUD
-  _source: 'workout_schedule' | 'scheduled_activities'
+  _source: 'workout_schedule' | 'scheduled_activities' | 'strength_sessions'
 }

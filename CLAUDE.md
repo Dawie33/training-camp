@@ -28,7 +28,7 @@ Monorepo npm workspaces :
 - Préfixe API : `/api`
 
 ### Base de données
-- PostgreSQL 15 (Docker, port **5434**)
+- PostgreSQL 15 (Docker, port **5432**)
 - Migrations Knex.js dans `backend/src/database/migrations/`
 - Seeds dans `backend/src/database/seeds/`
 - UUID via pgcrypto, snake_case pour les colonnes
@@ -98,7 +98,6 @@ Guards : `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées — **sans
 | `exercises` | Référentiel d'exercices |
 | `equipments` | Équipements disponibles |
 | `one-rep-maxes` | Maxes et historique |
-| `training-programs` | Programmes structurés multi-semaines |
 | `google-calendar` | Sync agenda Google |
 
 ### Pattern génération IA
@@ -107,7 +106,6 @@ Trois services OpenAI distincts, chacun avec son fichier de prompt et son schém
 
 - `ai-workout-generator.service.ts` — génère les WODs (dans `WorkoutsModule`)
 - `ai-skill-generator.service.ts` — génère les programmes de compétences (dans `SkillsModule`)
-- `ai-program-generator.service.ts` — génère les programmes d'entraînement (dans `TrainingProgramsModule`)
 - `workout-analysis.service.ts` — analyse les sessions post-workout (dans `WorkoutSessionsModule`)
 
 Toutes les interactions OpenAI utilisent `model: 'gpt-4o'`, `response_format: json_object`, et valident la réponse avec Zod. Si l'IA retourne `{"error": "UNKNOWN_WOD"}` sur un lookup de WOD, lever une `BadRequestException`.
@@ -125,7 +123,6 @@ frontend/
 │   │   ├── calendar/
 │   │   ├── dashboard/
 │   │   ├── workouts/
-│   │   ├── training-programs/
 │   │   ├── skills/
 │   │   └── ...
 │   └── (public)/       # Routes publiques (login, signup)
@@ -156,14 +153,14 @@ Un fichier service par domaine : `workouts.ts`, `sessions.ts`, `skills.ts`, `sch
 
 ## Base de données — tables principales
 
-`users`, `exercises`, `equipments`, `user_equipments`, `workouts`, `workout_exercises`, `user_workouts`, `personalized_workouts`, `workout_logs`, `workout_sessions`, `training_programs`, `user_program_enrollments`, `user_workout_schedule`, `one_rep_maxes`, `one_rep_max_history`, `skill_programs`, `skill_program_steps`, `skill_progress_logs`
+`users`, `exercises`, `equipments`, `user_equipments`, `workouts`, `workout_exercises`, `user_workouts`, `personalized_workouts`, `workout_logs`, `workout_sessions`, `user_workout_schedule`, `one_rep_maxes`, `one_rep_max_history`, `skill_programs`, `skill_program_steps`, `skill_progress_logs`
 
 ## Environnement
 
 **Backend `.env`** :
 ```
 DATABASE_HOST=localhost
-DATABASE_PORT=5434
+DATABASE_PORT=5432
 DATABASE_NAME=training_camp
 DATABASE_USER=postgres
 DATABASE_PASSWORD=...
@@ -179,7 +176,7 @@ FRONTEND_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
-En production, le backend est déployé sur Render (`https://training-camp-backend.onrender.com/api`).
+En production, le backend est déployé sur Render (`https://training-camp.onrender.com/api`).
 
 ### Sécurité frontend
 
@@ -191,4 +188,4 @@ En production, le backend est déployé sur Render (`https://training-camp-backe
 - `turbopack: { root: '../' }` dans `next.config.ts` provoque des redémarrages intempestifs du backend en watch mode — ne pas le remettre.
 - Les migrations Knex sont dans `backend/src/database/migrations/` (pas `backend/database/`).
 - GPT-4o ne connaît pas les workouts CrossFit Open postérieurs à début 2025. Utiliser le champ `referenceData` du endpoint `POST /workouts/lookup` pour injecter les détails exacts.
-- La DB écoute sur le port **5434** (pas 5432 par défaut).
+- La DB écoute sur le port **5432** (standard PostgreSQL — dans le monorepo, utiliser le docker-compose racine).

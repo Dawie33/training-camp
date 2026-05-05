@@ -24,15 +24,33 @@ const securityHeaders = [
   },
 ]
 
+// URL réelle du backend — serveur uniquement, jamais exposée au client
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001/api'
+
 const nextConfig: NextConfig = {
+  output: "standalone",
   typescript: {
     ignoreBuildErrors: true,
+  },
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**' },
+      { protocol: 'http', hostname: '**' },
+    ],
   },
   async headers() {
     return [
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+    ]
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${BACKEND_URL}/:path*`,
       },
     ]
   },

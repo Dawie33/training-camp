@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config'
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
 import { APP_GUARD } from '@nestjs/core'
 import { KnexModule } from 'nest-knexjs'
-import knexConfig from '../knexfile'
+import knexConfig from './database/knexfile'
 import { AuthModule } from './auth/auth.module'
 import { envValidationSchema } from './common/config/env.validation'
 import { EquipmentsModule } from './equipments/equipments.module'
@@ -15,11 +15,11 @@ import { OneRepMaxesModule } from './one-rep-maxes/one-rep-maxes.module'
 import { SkillsModule } from './skills/skills.module'
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module'
 import { GoogleCalendarModule } from './google-calendar/google-calendar.module'
-import { TrainingProgramsModule } from './training-programs/training-programs.module'
 import { ScheduledActivitiesModule } from './scheduled-activities/scheduled-activities.module'
 import { RunningModule } from './running/running.module'
 import { AthxModule } from './athx/athx.module'
 import { HyroxModule } from './hyrox/hyrox.module'
+import { StrengthModule } from './strength/strength.module'
 
 @Module({
   imports: [
@@ -45,11 +45,11 @@ import { HyroxModule } from './hyrox/hyrox.module'
     SkillsModule,
     OneRepMaxesModule,
     GoogleCalendarModule,
-    TrainingProgramsModule,
     ScheduledActivitiesModule,
     RunningModule,
     AthxModule,
     HyroxModule,
+    StrengthModule,
   ],
   providers: [
     {

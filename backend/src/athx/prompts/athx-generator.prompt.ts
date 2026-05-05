@@ -8,7 +8,7 @@ const SESSION_TYPE_DESCRIPTIONS: Record<string, string> = {
   mixed: 'Séance mixte — travail multi-zones, préparation globale ATHX',
 }
 
-export function buildAthxSystemPrompt(equipmentAvailable?: string[]): string {
+export function buildAthxSystemPrompt(equipmentAvailable?: string[], isHomeMode?: boolean): string {
   const hasEquipmentConstraint = equipmentAvailable && equipmentAvailable.length > 0
 
   const equipmentConstraintSection = hasEquipmentConstraint
@@ -27,7 +27,7 @@ Adapte chaque zone avec des alternatives utilisant UNIQUEMENT l'équipement disp
 
   // Zone Endurance : UNIQUEMENT machines cardio ou course/vélo — jamais de mouvements fonctionnels
   const enduranceRule = hasEquipmentConstraint
-    ? `- Zone Endurance — HISTORIQUE ATHX : toujours du cardio pur, jamais de mouvements fonctionnels. Formats historiques : run 5km ou max distance 25min + ski-erg/row/bike en distances fixes (2023/2024) ; ou run 12min + bike 12min avec repos entre (2025) ; ou run + row en alternance (2026). RÈGLE ABSOLUE : UNIQUEMENT run, row, ski-erg, bike, corde à sauter longue durée. AIR SQUATS, PUSH-UPS, BURPEES et tout mouvement fonctionnel sont STRICTEMENT INTERDITS ici. Si pas de machines : course à pied (intervalles ou distance cible), vélo, corde à sauter séries longues 2-5min.`
+    ? `- Zone Endurance — HISTORIQUE ATHX : toujours du cardio pur, jamais de mouvements fonctionnels. RÈGLE ABSOLUE : UNIQUEMENT les équipements cardio présents dans la liste fournie (run, row, ski-erg, bike, corde à sauter longue durée). N'utilise PAS une machine qui n'est pas dans la liste. Si aucune machine cardio dans la liste : course à pied ou corde à sauter UNIQUEMENT. AIR SQUATS, PUSH-UPS, BURPEES et tout mouvement fonctionnel sont STRICTEMENT INTERDITS dans cette zone. VARIÉTÉ OBLIGATOIRE : si plusieurs options cardio sont disponibles, ne propose pas toujours la même — alterne entre run, bike, corde à sauter selon les séances. Ne commence pas chaque séance par le même exercice cardio.`
     : `- Zone Endurance — HISTORIQUE ATHX : toujours cardio pur. Formats historiques variés : 5km run + 1km ski-erg + 2km row + 5km bike (2023/2024) ; 12min run + 2min repos + 12min bike (2025) ; run + row en alternance (2026). Varie le format à chaque séance — ne propose pas toujours run+row. Alterne : parfois run seul avec distance cible, parfois intervals run/ski-erg, parfois bike + row. RÈGLE ABSOLUE : que du cardio (run, row, ski-erg, assault bike, vélo). INTERDITS : air squats, push-ups, burpees, lunges — appartiennent au MetCon X.`
 
   // Zone MetCon X : mouvements fonctionnels variés sur 4 ans
@@ -112,7 +112,8 @@ ${equipmentConstraintSection}
 - ${metconRule.replace('- ', '')}
 - Adapter le volume et l'intensité au niveau de l'athlète
 - Le champ "duration_minutes" de chaque bloc doit correspondre au temps réel des exercices : sets × (durée par set + repos). Exemple : 3 séries de 5min avec 2min de repos = 3×5 + 2×2 = 19min → arrondi à 20min. Ne pas inventer une durée arbitraire.
-- La somme des "duration_minutes" de tous les blocs doit être égale à la durée totale demandée.
+- Temps de référence par exercice — utilise ces valeurs pour calculer : run 1km → 5-7 min | run 400m → 2-3 min | row 500m → 2-3 min | row 1000m → 4-6 min | ski-erg 500m → 2-3 min | bike 1km → 2-3 min | AMRAP/chipper → durée = time cap exact | fenêtre force (1RM/5RM) avec 2-3 tentatives → 6-8 min par lift | DB thrusters 20 reps → 1.5 min | burpees 10 reps → 45s | KB swings 20 reps → 1 min | box jumps 20 reps → 1 min | sandbag carry 80m → 2-3 min | repos entre séries lourdes → 2-4 min
+- La somme des "duration_minutes" de tous les blocs doit être proche de la durée totale demandée (±5 min). Si l'écart est plus grand, ajuste le volume (sets/reps) — n'augmente pas artificiellement duration_minutes pour combler l'écart.
 - Retourner UNIQUEMENT le JSON, sans texte avant ou après`
 }
 
@@ -121,6 +122,10 @@ interface AthxUserPromptParams extends GenerateAthxSessionDto {
   oneRepMaxes?: { lift: string; value: number }[]
   equipmentAvailable?: string[]
   injuries?: Record<string, unknown>
+  recentSessionNames?: string[]
+  recentEnduranceExercises?: string[]
+  variationSeed?: string
+  trainingLocation?: string
 }
 
 export function buildAthxUserPrompt(params: AthxUserPromptParams): string {
@@ -157,6 +162,23 @@ export function buildAthxUserPrompt(params: AthxUserPromptParams): string {
 
   if (params.additional_instructions) {
     prompt += `\n- Instructions : ${params.additional_instructions}`
+  }
+
+  if (params.trainingLocation) {
+    prompt += `\n- Lieu d'entraînement : ${params.trainingLocation}`
+  }
+
+  if (params.recentSessionNames && params.recentSessionNames.length > 0) {
+    prompt += `\n\nSéances déjà générées récemment (à NE PAS reproduire) : ${params.recentSessionNames.join(' | ')}\nVarie les mouvements, zones ciblées, formats et exercices accessoires par rapport à ces séances.`
+  }
+
+  if (params.recentEnduranceExercises && params.recentEnduranceExercises.length > 0) {
+    const uniqueRecent = [...new Set(params.recentEnduranceExercises)]
+    prompt += `\n\nExercices cardio utilisés récemment en Zone Endurance : ${uniqueRecent.join(', ')}. IMPÉRATIF : propose un exercice cardio DIFFÉRENT pour cette séance — si le bike a été utilisé, utilise la course à pied ou la corde à sauter ; si la course a été utilisée, utilise le bike ou la corde à sauter. Varie obligatoirement.`
+  }
+
+  if (params.variationSeed) {
+    prompt += `\n\nDirective de variation — axe prioritaire pour cette séance : ${params.variationSeed}`
   }
 
   return prompt

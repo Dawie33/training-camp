@@ -9,3 +9,5 @@
 /.claude
 .opencode/
 opencode.json
+certbot/conf/
+certbot/www/
