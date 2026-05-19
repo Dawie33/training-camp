@@ -1,5 +1,5 @@
 // backend/src/main.ts
-import 'dotenv/config';
+import './env';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
@@ -38,10 +38,10 @@ async function runMigrations() {
   const logger = new Logger('Migrations')
   const db = knex({
     client: 'pg',
-    connection: process.env.DATABASE_URL
+    connection: process.env.DATABASE_URL && process.env.NODE_ENV === 'production'
       ? {
           connectionString: process.env.DATABASE_URL,
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+          ssl: { rejectUnauthorized: false },
         }
       : {
           host: process.env.DATABASE_HOST,
