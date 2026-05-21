@@ -4,12 +4,41 @@ import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise } from '@/domain/entities/workout-structure'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
+import { parseFitFile, ParsedFitData, HrZoneData } from '@/services/fit-import'
 import { sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+
+const ZONE_COLORS = ['#64748b', '#22c55e', '#3b82f6', '#f97316', '#ef4444']
+
+function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSeconds: number }) {
+  const total = totalSeconds || zones.reduce((s, z) => s + z.seconds, 0)
+  return (
+    <div className="space-y-2 pt-1">
+      <p className="text-xs text-slate-400 font-medium">Zones de fréquence cardiaque</p>
+      {zones.map((z, i) => {
+        const pct = total > 0 ? Math.round((z.seconds / total) * 100) : 0
+        const mm = Math.floor(z.seconds / 60)
+        const ss = String(Math.floor(z.seconds % 60)).padStart(2, '0')
+        return (
+          <div key={z.zone} className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 w-20 shrink-0">{z.label}</span>
+            <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${pct}%`, backgroundColor: ZONE_COLORS[i] }}
+              />
+            </div>
+            <span className="text-xs text-slate-400 w-16 text-right shrink-0">{mm}:{ss} ({pct}%)</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 function getAllExercises(workout: Workouts): Exercise[] {
   const exercises: Exercise[] = []
@@ -58,6 +87,11 @@ function LogWorkoutContent() {
     const now = new Date()
     return now.toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm format
   })
+
+  // FIT import
+  const [fitData, setFitData] = useState<ParsedFitData | null>(null)
+  const [isParsing, setIsParsing] = useState(false)
+  const fitInputRef = useRef<HTMLInputElement>(null)
 
   // Saving
   const [isSaving, setIsSaving] = useState(false)
@@ -155,6 +189,25 @@ function LogWorkoutContent() {
     setCapScore('')
   }, [])
 
+  const handleFitFile = async (file: File) => {
+    try {
+      setIsParsing(true)
+      const data = await parseFitFile(file)
+      setFitData(data)
+      if (data.duration_seconds) {
+        const totalMin = Math.floor(data.duration_seconds / 60)
+        const totalSec = Math.floor(data.duration_seconds % 60)
+        setTimeMinutes(String(totalMin))
+        setTimeSeconds(String(totalSec).padStart(2, '0'))
+      }
+      toast.success('Fichier .fit importé')
+    } catch {
+      toast.error('Impossible de lire le fichier .fit')
+    } finally {
+      setIsParsing(false)
+    }
+  }
+
   const handleExerciseNoteChange = useCallback((idx: number, value: string) => {
     setWeightsUsed(prev => ({ ...prev, [idx]: value }))
   }, [])
@@ -206,6 +259,18 @@ function LogWorkoutContent() {
         reps: bonusReps ? parseInt(bonusReps) : undefined,
         rating: rating > 0 ? rating : undefined,
         exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
+        ...(fitData && {
+          coros: {
+            avg_heart_rate: fitData.avg_heart_rate,
+            max_heart_rate: fitData.max_heart_rate,
+            min_heart_rate: fitData.min_heart_rate,
+            calories: fitData.calories,
+            distance_meters: fitData.distance_meters,
+            avg_cadence: fitData.avg_cadence,
+            avg_temperature: fitData.avg_temperature,
+            hr_zones: fitData.hr_zones,
+          },
+        }),
       }
       if (!isAmrap) {
         if (capAtteint) {
@@ -401,6 +466,106 @@ function LogWorkoutContent() {
             </div>
           )
         }
+
+        {/* Import Coros .fit */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Données Coros</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Optionnel — importe ton .fit pour enrichir le log</p>
+            </div>
+            {fitData && (
+              <button
+                onClick={() => {
+                  setFitData(null)
+                  setTimeMinutes('')
+                  setTimeSeconds('')
+                  if (fitInputRef.current) fitInputRef.current.value = ''
+                }}
+                className="text-slate-400 hover:text-white transition-colors text-xl leading-none"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+
+          {!fitData ? (
+            <button
+              onClick={() => fitInputRef.current?.click()}
+              disabled={isParsing}
+              className="w-full flex items-center justify-center gap-3 py-4 border border-dashed border-slate-600 hover:border-orange-500/50 hover:bg-white/5 rounded-xl transition-all text-slate-400 hover:text-white disabled:opacity-50"
+            >
+              <input
+                ref={fitInputRef}
+                type="file"
+                accept=".fit"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFitFile(f) }}
+              />
+              {isParsing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">Analyse en cours...</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">📁</span>
+                  <span className="text-sm font-medium">Importer un fichier .fit</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                {fitData.avg_heart_rate && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-rose-400">{fitData.avg_heart_rate} bpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">FC moyenne</p>
+                  </div>
+                )}
+                {fitData.max_heart_rate && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-rose-400">{fitData.max_heart_rate} bpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">FC max</p>
+                  </div>
+                )}
+                {fitData.calories && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-orange-400">{fitData.calories}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Calories</p>
+                  </div>
+                )}
+                {fitData.distance_meters && fitData.distance_meters > 0 && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-blue-400">{(fitData.distance_meters / 1000).toFixed(2)} km</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Distance</p>
+                  </div>
+                )}
+                {fitData.min_heart_rate && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-emerald-400">{fitData.min_heart_rate} bpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">FC min</p>
+                  </div>
+                )}
+                {fitData.avg_cadence && fitData.avg_cadence > 0 && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-violet-400">{fitData.avg_cadence} rpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Cadence moy.</p>
+                  </div>
+                )}
+                {fitData.avg_temperature && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-slate-300">{fitData.avg_temperature}°C</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Température</p>
+                  </div>
+                )}
+              </div>
+              {fitData.hr_zones && fitData.hr_zones.length > 0 && (
+                <HrZonesChart zones={fitData.hr_zones} totalSeconds={fitData.duration_seconds ?? 0} />
+              )}
+            </>
+          )}
+        </div>
 
         {/* Results */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-5">
