@@ -1,10 +1,9 @@
 'use client'
 
-import Link from 'next/link'
+import { WorkoutStats } from '@/domain/entities/workout-history'
 import { AthxStats } from '@/services/athx'
 import { HyroxStats } from '@/services/hyrox'
 import { RunningStats } from '@/services/running'
-import { WorkoutStats } from '@/domain/entities/workout-history'
 
 interface SportCardProps {
   href: string
@@ -17,7 +16,7 @@ interface SportCardProps {
   onTabChange: () => void
 }
 
-function SportCard({ href, color, icon, label, sessions, stat, statLabel, onTabChange }: SportCardProps) {
+function SportCard({ color, icon, label, sessions, stat, statLabel, onTabChange }: SportCardProps) {
   return (
     <button
       onClick={onTabChange}
@@ -104,13 +103,13 @@ export function GlobalOverview({
           sessions={hyroxStats?.total_sessions ?? 0}
           stat={hyroxStats?.best_time_seconds
             ? (() => {
-                const h = Math.floor(hyroxStats.best_time_seconds / 3600)
-                const m = Math.floor((hyroxStats.best_time_seconds % 3600) / 60)
-                const s = hyroxStats.best_time_seconds % 60
-                return h > 0
-                  ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-                  : `${m}:${s.toString().padStart(2, '0')}`
-              })()
+              const h = Math.floor(hyroxStats.best_time_seconds / 3600)
+              const m = Math.floor((hyroxStats.best_time_seconds % 3600) / 60)
+              const s = hyroxStats.best_time_seconds % 60
+              return h > 0
+                ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+                : `${m}:${s.toString().padStart(2, '0')}`
+            })()
             : '--'}
           statLabel="Meilleur temps"
           onTabChange={() => onTabChange('hyrox')}
@@ -125,13 +124,6 @@ export function GlobalOverview({
           statLabel="Temps total"
           onTabChange={() => onTabChange('athx')}
         />
-      </div>
-
-      {/* Lien vers log */}
-      <div className="flex justify-end gap-3">
-        <Link href="/log-workout" className="text-xs text-orange-400 hover:text-orange-300 transition-colors">
-          + Enregistrer un WOD CrossFit
-        </Link>
       </div>
     </div>
   )
