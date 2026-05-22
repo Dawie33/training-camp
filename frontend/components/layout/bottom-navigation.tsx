@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Activity, Calendar, Dumbbell, Footprints, Home, TrendingUp, Trophy, X, Zap } from 'lucide-react'
+import { Activity, Calendar, Dumbbell, Footprints, Home, PenLine, TrendingUp, Trophy, X, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -19,6 +19,7 @@ const mainItems: NavItem[] = [
 ]
 
 const sportItems: NavItem[] = [
+  { href: '/crossfit/log-workout', label: 'Log workout', icon: PenLine },
   { href: '/crossfit', label: 'CrossFit', icon: Activity },
   { href: '/running', label: 'Running', icon: Footprints },
   { href: '/hyrox', label: 'HYROX', icon: Trophy },

@@ -4,13 +4,41 @@ import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise } from '@/domain/entities/workout-structure'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
+import { parseFitFile, ParsedFitData, HrZoneData } from '@/services/fit-import'
 import { sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+
+const ZONE_COLORS = ['#64748b', '#22c55e', '#3b82f6', '#f97316', '#ef4444']
+
+function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSeconds: number }) {
+  const total = totalSeconds || zones.reduce((s, z) => s + z.seconds, 0)
+  return (
+    <div className="space-y-2 pt-1">
+      <p className="text-xs text-slate-400 font-medium">Zones de fréquence cardiaque</p>
+      {zones.map((z, i) => {
+        const pct = total > 0 ? Math.round((z.seconds / total) * 100) : 0
+        const mm = Math.floor(z.seconds / 60)
+        const ss = String(Math.floor(z.seconds % 60)).padStart(2, '0')
+        return (
+          <div key={z.zone} className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 w-20 shrink-0">{z.label}</span>
+            <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${pct}%`, backgroundColor: ZONE_COLORS[i] }}
+              />
+            </div>
+            <span className="text-xs text-slate-400 w-16 text-right shrink-0">{mm}:{ss} ({pct}%)</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 function getAllExercises(workout: Workouts): Exercise[] {
   const exercises: Exercise[] = []
@@ -41,7 +69,6 @@ function LogWorkoutContent() {
   const [search, setSearch] = useState('')
   const [selectedWorkout, setSelectedWorkout] = useState<(Workouts & { personalized_id?: string }) | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
-
   const [exerciseNotes, setWeightsUsed] = useState<Record<number, string>>({})
 
   const [timeMinutes, setTimeMinutes] = useState('')
@@ -52,10 +79,11 @@ function LogWorkoutContent() {
   const [bonusReps, setBonusReps] = useState('')
   const [rating, setRating] = useState<number>(0)
   const [notes, setNotes] = useState('')
-  const [wodDate, setWodDate] = useState(() => {
-    const now = new Date()
-    return now.toISOString().slice(0, 16)
-  })
+  const [wodDate, setWodDate] = useState(() => new Date().toISOString().slice(0, 16))
+
+  const [fitData, setFitData] = useState<ParsedFitData | null>(null)
+  const [isParsing, setIsParsing] = useState(false)
+  const fitInputRef = useRef<HTMLInputElement>(null)
 
   const [isSaving, setIsSaving] = useState(false)
 
@@ -69,8 +97,7 @@ function LogWorkoutContent() {
         ])
         setWorkouts(allWorkouts.rows)
         setPersonalizedWorkouts(personalizedResult.rows)
-      } catch (error) {
-        console.error('Error fetching workouts:', error)
+      } catch {
         toast.error('Erreur lors du chargement des workouts')
       } finally {
         setLoadingWorkouts(false)
@@ -118,9 +145,7 @@ function LogWorkoutContent() {
       personalized_id: pw.id,
       created_at: pw.created_at
     }))
-    const result = [...regular, ...fromPersonalized]
-    result.sort((a, b) => b.created_at.localeCompare(a.created_at))
-    return result
+    return [...regular, ...fromPersonalized].sort((a, b) => b.created_at.localeCompare(a.created_at))
   }, [workouts, personalizedWorkouts])
 
   const exercises = useMemo(() => {
@@ -144,6 +169,25 @@ function LogWorkoutContent() {
     setCapAtteint(false)
     setCapScore('')
   }, [])
+
+  const handleFitFile = async (file: File) => {
+    try {
+      setIsParsing(true)
+      const data = await parseFitFile(file)
+      setFitData(data)
+      if (data.duration_seconds) {
+        const totalMin = Math.floor(data.duration_seconds / 60)
+        const totalSec = Math.floor(data.duration_seconds % 60)
+        setTimeMinutes(String(totalMin))
+        setTimeSeconds(String(totalSec).padStart(2, '0'))
+      }
+      toast.success('Fichier .fit importé')
+    } catch {
+      toast.error('Impossible de lire le fichier .fit')
+    } finally {
+      setIsParsing(false)
+    }
+  }
 
   const handleExerciseNoteChange = useCallback((idx: number, value: string) => {
     setWeightsUsed(prev => ({ ...prev, [idx]: value }))
@@ -192,6 +236,18 @@ function LogWorkoutContent() {
         reps: bonusReps ? parseInt(bonusReps) : undefined,
         rating: rating > 0 ? rating : undefined,
         exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
+        ...(fitData && {
+          coros: {
+            avg_heart_rate: fitData.avg_heart_rate,
+            max_heart_rate: fitData.max_heart_rate,
+            min_heart_rate: fitData.min_heart_rate,
+            calories: fitData.calories,
+            distance_meters: fitData.distance_meters,
+            avg_cadence: fitData.avg_cadence,
+            avg_temperature: fitData.avg_temperature,
+            hr_zones: fitData.hr_zones,
+          },
+        }),
       }
       if (!isAmrap) {
         if (capAtteint) {
@@ -201,6 +257,7 @@ function LogWorkoutContent() {
           resultPayload.elapsed_time_seconds = totalSeconds
         }
       }
+
       await sessionService.updateSession(session.id, {
         completed_at: completedAt.toISOString(),
         notes: notes || undefined,
@@ -209,8 +266,7 @@ function LogWorkoutContent() {
 
       toast.success('WOD enregistré !')
       router.push('/crossfit')
-    } catch (error) {
-      console.error('Error saving workout:', error)
+    } catch {
       toast.error('Erreur lors de l\'enregistrement')
     } finally {
       setIsSaving(false)
@@ -228,23 +284,23 @@ function LogWorkoutContent() {
         <div className="flex items-center gap-3">
           <Link
             href="/crossfit"
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+            className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
           >
-            <ArrowLeft className="w-4 h-4" />
+            &larr;
           </Link>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Enregistrer un WOD</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">Log un workout réalisé manuellement</p>
+            <p className="text-slate-400 text-sm mt-1">Log un workout CrossFit réalisé</p>
           </div>
         </div>
 
         {/* Workout Selection */}
         <div className="relative z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4 overflow-visible">
-          <div className='flex justify-between items-center'>
+          <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-white">Quel WOD as-tu fait ?</h2>
-            <Link href="/workouts/new">
+            <Link href="/crossfit/workouts">
               <button className="p-3.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all">
                 Ajouter un wod
               </button>
@@ -266,7 +322,6 @@ function LogWorkoutContent() {
               placeholder="Rechercher un workout..."
               className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 transition-all"
             />
-
             {showDropdown && !selectedWorkout && (
               <div className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto bg-slate-800 border border-slate-700/50 rounded-xl shadow-2xl">
                 {loadingWorkouts ? (
@@ -287,12 +342,8 @@ function LogWorkoutContent() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        {w.workout_type && (
-                          <span className="text-xs text-orange-400">{w.workout_type.replace(/_/g, ' ')}</span>
-                        )}
-                        {w.estimated_duration && (
-                          <span className="text-xs text-slate-500">{w.estimated_duration} min</span>
-                        )}
+                        {w.workout_type && <span className="text-xs text-orange-400">{w.workout_type.replace(/_/g, ' ')}</span>}
+                        {w.estimated_duration && <span className="text-xs text-slate-500">{w.estimated_duration} min</span>}
                       </div>
                     </button>
                   ))
@@ -312,20 +363,12 @@ function LogWorkoutContent() {
                   )}
                 </div>
                 <div className="flex gap-2 mt-0.5">
-                  {selectedWorkout.workout_type && (
-                    <span className="text-xs text-orange-400">{selectedWorkout.workout_type.replace(/_/g, ' ')}</span>
-                  )}
-                  {selectedWorkout.difficulty && (
-                    <span className="text-xs text-slate-400">{selectedWorkout.difficulty}</span>
-                  )}
+                  {selectedWorkout.workout_type && <span className="text-xs text-orange-400">{selectedWorkout.workout_type.replace(/_/g, ' ')}</span>}
+                  {selectedWorkout.difficulty && <span className="text-xs text-slate-400">{selectedWorkout.difficulty}</span>}
                 </div>
               </div>
               <button
-                onClick={() => {
-                  setSelectedWorkout(null)
-                  setSearch('')
-                  setWeightsUsed({})
-                }}
+                onClick={() => { setSelectedWorkout(null); setSearch(''); setWeightsUsed({}) }}
                 className="text-slate-400 hover:text-white transition-colors text-lg"
               >
                 &times;
@@ -338,7 +381,7 @@ function LogWorkoutContent() {
         {selectedWorkout && exercises.length > 0 && (
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-white">Details des exercices</h2>
+              <h2 className="text-lg font-semibold text-white">Détails des exercices</h2>
               <p className="text-xs text-slate-500 mt-0.5">Poids, distance, scaling, variante...</p>
             </div>
             <div className="space-y-3">
@@ -351,7 +394,6 @@ function LogWorkoutContent() {
                   if (scaledMatch) hints.push(`Scaled: ${scaledMatch[1].trim()}`)
                 }
                 const placeholder = hints.length > 0 ? hints.join(' / ') : 'ex: 60kg, Scaled, 500m...'
-
                 return (
                   <div key={`${exercise.name}-${idx}`} className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center text-orange-400 font-bold text-sm flex-shrink-0 mt-0.5">
@@ -360,12 +402,8 @@ function LogWorkoutContent() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">{exercise.name}</p>
                       <div className="flex flex-wrap gap-1.5 mt-0.5">
-                        {exercise.reps && (
-                          <span className="text-xs text-slate-500">{exercise.reps} reps</span>
-                        )}
-                        {exercise.duration && (
-                          <span className="text-xs text-slate-500">{exercise.duration}</span>
-                        )}
+                        {exercise.reps && <span className="text-xs text-slate-500">{exercise.reps} reps</span>}
+                        {exercise.duration && <span className="text-xs text-slate-500">{exercise.duration}</span>}
                       </div>
                       <input
                         type="text"
@@ -381,6 +419,106 @@ function LogWorkoutContent() {
             </div>
           </div>
         )}
+
+        {/* Import Coros .fit */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Données Coros</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Optionnel — importe ton .fit pour enrichir le log</p>
+            </div>
+            {fitData && (
+              <button
+                onClick={() => {
+                  setFitData(null)
+                  setTimeMinutes('')
+                  setTimeSeconds('')
+                  if (fitInputRef.current) fitInputRef.current.value = ''
+                }}
+                className="text-slate-400 hover:text-white transition-colors text-xl leading-none"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+
+          {!fitData ? (
+            <button
+              onClick={() => fitInputRef.current?.click()}
+              disabled={isParsing}
+              className="w-full flex items-center justify-center gap-3 py-4 border border-dashed border-slate-600 hover:border-orange-500/50 hover:bg-white/5 rounded-xl transition-all text-slate-400 hover:text-white disabled:opacity-50"
+            >
+              <input
+                ref={fitInputRef}
+                type="file"
+                accept=".fit"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFitFile(f) }}
+              />
+              {isParsing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">Analyse en cours...</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">📁</span>
+                  <span className="text-sm font-medium">Importer un fichier .fit</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                {fitData.avg_heart_rate && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-rose-400">{fitData.avg_heart_rate} bpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">FC moyenne</p>
+                  </div>
+                )}
+                {fitData.max_heart_rate && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-rose-400">{fitData.max_heart_rate} bpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">FC max</p>
+                  </div>
+                )}
+                {fitData.calories && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-orange-400">{fitData.calories}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Calories</p>
+                  </div>
+                )}
+                {fitData.distance_meters && fitData.distance_meters > 0 && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-blue-400">{(fitData.distance_meters / 1000).toFixed(2)} km</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Distance</p>
+                  </div>
+                )}
+                {fitData.min_heart_rate && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-emerald-400">{fitData.min_heart_rate} bpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">FC min</p>
+                  </div>
+                )}
+                {fitData.avg_cadence && fitData.avg_cadence > 0 && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-violet-400">{fitData.avg_cadence} rpm</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Cadence moy.</p>
+                  </div>
+                )}
+                {fitData.avg_temperature && (
+                  <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-slate-300">{fitData.avg_temperature}°C</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Température</p>
+                  </div>
+                )}
+              </div>
+              {fitData.hr_zones && fitData.hr_zones.length > 0 && (
+                <HrZonesChart zones={fitData.hr_zones} totalSeconds={fitData.duration_seconds ?? 0} />
+              )}
+            </>
+          )}
+        </div>
 
         {/* Results */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-5">
@@ -461,7 +599,7 @@ function LogWorkoutContent() {
           )}
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Comment tu t'es senti ?</label>
+            <label className="block text-sm text-slate-400 mb-2">Comment tu t&apos;es senti ?</label>
             <StarRating rating={rating} onChange={setRating} />
           </div>
 
