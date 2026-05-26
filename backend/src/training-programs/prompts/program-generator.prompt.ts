@@ -78,6 +78,18 @@ function buildAthleteContextSection(context: UserAIContext): string {
     })
   }
 
+  if (context.progressionReports && context.progressionReports.length > 0) {
+    lines.push('- Bilans de progression IA multi-semaines :')
+    context.progressionReports.forEach((r) => {
+      const trendLabel = r.overall_trend === 'improving' ? '↑ progression' : r.overall_trend === 'declining' ? '↓ baisse' : '→ stable'
+      lines.push(`  - [${r.sport.toUpperCase()} — ${r.period_months} mois — ${trendLabel}]`)
+      if (r.weak_points.length > 0) lines.push(`    Points à travailler : ${r.weak_points.join(', ')}`)
+      if (r.recommendations.length > 0) lines.push(`    Recommandations : ${r.recommendations.slice(0, 2).join(' / ')}`)
+      if (r.overall_fitness_level) lines.push(`    Condition globale : ${r.overall_fitness_level}`)
+    })
+    lines.push('→ Prioritise dans le programme les lacunes identifiées par les bilans.')
+  }
+
   return lines.join('\n')
 }
 

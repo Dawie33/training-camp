@@ -50,11 +50,40 @@ export class TrackingService {
     const since = new Date()
     since.setMonth(since.getMonth() - months)
 
-    if (sport === 'global') return this.generateGlobalReport(userId, months, since)
-    if (sport === 'crossfit') return this.generateCrossfitReport(userId, months, since)
-    if (sport === 'running') return this.generateRunningReport(userId, months, since)
-    if (sport === 'hyrox') return this.generateHyroxReport(userId, months, since)
-    return this.generateAthxReport(userId, months, since)
+    let report: ProgressionReport
+    if (sport === 'global') report = await this.generateGlobalReport(userId, months, since)
+    else if (sport === 'crossfit') report = await this.generateCrossfitReport(userId, months, since)
+    else if (sport === 'running') report = await this.generateRunningReport(userId, months, since)
+    else if (sport === 'hyrox') report = await this.generateHyroxReport(userId, months, since)
+    else report = await this.generateAthxReport(userId, months, since)
+
+    await this.saveReport(userId, sport, months, report)
+    return report
+  }
+
+  private async saveReport(userId: string, sport: SportType, months: number, report: ProgressionReport): Promise<void> {
+    await this.knex('tracking_reports')
+      .insert({
+        user_id: userId,
+        sport,
+        period_months: months,
+        report: JSON.stringify(report),
+        generated_at: new Date().toISOString(),
+      })
+      .onConflict(['user_id', 'sport'])
+      .merge(['period_months', 'report', 'generated_at'])
+  }
+
+  async getLatestReports(userId: string): Promise<ProgressionReport[]> {
+    const rows = await this.knex('tracking_reports')
+      .where('user_id', userId)
+      .select('sport', 'period_months', 'report', 'generated_at')
+      .orderBy('generated_at', 'desc')
+
+    return rows.map((row: any) => {
+      const report = typeof row.report === 'string' ? JSON.parse(row.report) : row.report
+      return report as ProgressionReport
+    })
   }
 
   // ─── CrossFit ─────────────────────────────────────────────────────────────

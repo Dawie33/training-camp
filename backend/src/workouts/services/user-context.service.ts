@@ -23,6 +23,18 @@ export interface ActiveSkillContext {
   last_trained: string | null // ISO date ou null si jamais travaillé
 }
 
+export interface ProgressionReportSummary {
+  sport: string
+  period_months: number
+  overall_trend: 'improving' | 'stable' | 'declining'
+  period_summary: string
+  strengths: string[]
+  weak_points: string[]
+  recommendations: string[]
+  overall_fitness_level?: string
+  generated_at: string
+}
+
 export interface UserAIContext {
   sport_level: string
   height?: number
@@ -42,6 +54,7 @@ export interface UserAIContext {
   }[]
   recentAnalyses: RecentAnalysis[]
   activeSkills: ActiveSkillContext[]
+  progressionReports: ProgressionReportSummary[]
 }
 
 @Injectable()
@@ -60,7 +73,7 @@ export class UserContextService {
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data
     }
-    const [profile, oneRepMaxes, recentSessions, recentAnalysesRaw, activeSkillsRaw] = await Promise.all([
+    const [profile, oneRepMaxes, recentSessions, recentAnalysesRaw, activeSkillsRaw, progressionReportsRaw] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -121,6 +134,11 @@ export class UserContextService {
           this.knex.raw('MAX(spl.session_date) as last_trained'),
         )
         .groupBy('sp.id', 'sp.skill_name', 'sp.skill_category', 'sps.id', 'sps.title', 'sps.description', 'sps.recommended_exercises', 'sps.coaching_tips'),
+
+      this.knex('tracking_reports')
+        .where('user_id', userId)
+        .select('sport', 'period_months', 'report', 'generated_at')
+        .orderBy('generated_at', 'desc'),
     ])
 
     const recentSessionsMapped = recentSessions.map(
@@ -185,6 +203,23 @@ export class UserContextService {
       }),
     )
 
+    const progressionReports: ProgressionReportSummary[] = (progressionReportsRaw ?? []).map(
+      (row: { sport: string; period_months: number; report: unknown; generated_at: string }) => {
+        const r = typeof row.report === 'string' ? JSON.parse(row.report) : row.report as Record<string, unknown>
+        return {
+          sport: row.sport,
+          period_months: row.period_months,
+          overall_trend: r.overall_trend as 'improving' | 'stable' | 'declining',
+          period_summary: r.period_summary as string,
+          strengths: (r.strengths as string[]) ?? [],
+          weak_points: (r.weak_points as string[]) ?? [],
+          recommendations: (r.recommendations as string[]) ?? [],
+          overall_fitness_level: r.overall_fitness_level as string | undefined,
+          generated_at: row.generated_at,
+        }
+      },
+    )
+
     const result: UserAIContext = {
       sport_level: profile?.sport_level ?? 'intermediate',
       height: profile?.height ?? undefined,
@@ -199,6 +234,7 @@ export class UserContextService {
       recentSessions: recentSessionsMapped,
       recentAnalyses,
       activeSkills,
+      progressionReports,
     }
 
     this.cache.set(userId, { data: result, expiresAt: Date.now() + this.TTL_MS })

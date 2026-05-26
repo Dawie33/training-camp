@@ -103,10 +103,23 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     lines.push('→ Tiens compte de ces axes dans la programmation du WOD.')
   }
 
+  if (context.progressionReports && context.progressionReports.length > 0) {
+    lines.push('')
+    lines.push('**Bilans de progression IA (multi-semaines)** :')
+    for (const r of context.progressionReports) {
+      const trendLabel = r.overall_trend === 'improving' ? '↑ En progression' : r.overall_trend === 'declining' ? '↓ En baisse' : '→ Stable'
+      lines.push(`- Sport : ${r.sport} | Période : ${r.period_months} mois | Tendance : ${trendLabel}`)
+      if (r.weak_points.length > 0) lines.push(`  Points à travailler : ${r.weak_points.join(', ')}`)
+      if (r.recommendations.length > 0) lines.push(`  Recommandations coach : ${r.recommendations.slice(0, 2).join(' / ')}`)
+      if (r.overall_fitness_level) lines.push(`  Condition physique globale : ${r.overall_fitness_level}`)
+    }
+    lines.push('→ Utilise ces bilans pour orienter le type de workout (cardio si carence, force si stagnation des 1RMs, etc.).')
+  }
+
   lines.push('')
   lines.push(
     '**Directives** : Adapte le workout à ce profil. Respecte les limitations physiques.' +
-      ' Utilise l\'équipement disponible. Programme en cohérence avec l\'activité récente.',
+      ' Utilise l\'équipement disponible. Programme en cohérence avec l\'activité récente et les bilans de progression.',
   )
 
   return lines.join('\n')
