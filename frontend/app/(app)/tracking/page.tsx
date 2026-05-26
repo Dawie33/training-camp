@@ -14,6 +14,7 @@ import { HyroxStatsPanel } from './components/HyroxStatsPanel'
 import { OneRepMaxChart } from './components/OneRepMaxChart'
 import { PersonalRecords } from './components/PersonalRecords'
 import { ProgressChart } from './components/ProgressChart'
+import { ProgressionReportPanel } from './components/ProgressionReport'
 import { RunningStatsPanel } from './components/RunningStatsPanel'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
@@ -113,18 +114,23 @@ function TrackingContent() {
 
           {/* Vue globale */}
           {activeTab === 'global' && (
-            <GlobalOverview
-              workoutStats={workoutStats}
-              runningStats={multiStats.running}
-              hyroxStats={multiStats.hyrox}
-              athxStats={multiStats.athx}
-              onTabChange={(tab) => setActiveTab(tab as Tab)}
-            />
+            <div className="space-y-6">
+              <GlobalOverview
+                workoutStats={workoutStats}
+                runningStats={multiStats.running}
+                hyroxStats={multiStats.hyrox}
+                athxStats={multiStats.athx}
+                onTabChange={(tab) => setActiveTab(tab as Tab)}
+              />
+              <ProgressionReportPanel sport="global" />
+            </div>
           )}
 
           {/* CrossFit */}
           {activeTab === 'crossfit' && (
             <div className="space-y-6">
+              <ProgressionReportPanel sport="crossfit" />
+
               {(progressLoading || progressData.length > 0) && (
                 <WorkoutProgressComparison progressData={progressData} loading={progressLoading} />
               )}
@@ -213,34 +219,43 @@ function TrackingContent() {
 
           {/* Running */}
           {activeTab === 'running' && (
-            <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-lg">🏃</span>
-                <h2 className="text-2xl font-bold text-white">Running</h2>
+            <div className="space-y-6">
+              <ProgressionReportPanel sport="running" />
+              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-lg">🏃</span>
+                  <h2 className="text-2xl font-bold text-white">Statistiques Running</h2>
+                </div>
+                <RunningStatsPanel stats={multiStats.running} loading={multiLoading} />
               </div>
-              <RunningStatsPanel stats={multiStats.running} loading={multiLoading} />
             </div>
           )}
 
           {/* HYROX */}
           {activeTab === 'hyrox' && (
-            <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-lg">🏟️</span>
-                <h2 className="text-2xl font-bold text-white">HYROX</h2>
+            <div className="space-y-6">
+              <ProgressionReportPanel sport="hyrox" />
+              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-lg">🏟️</span>
+                  <h2 className="text-2xl font-bold text-white">Statistiques HYROX</h2>
+                </div>
+                <HyroxStatsPanel stats={multiStats.hyrox} loading={multiLoading} />
               </div>
-              <HyroxStatsPanel stats={multiStats.hyrox} loading={multiLoading} />
             </div>
           )}
 
           {/* ATHX */}
           {activeTab === 'athx' && (
-            <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-lg">⚡</span>
-                <h2 className="text-2xl font-bold text-white">ATHX</h2>
+            <div className="space-y-6">
+              <ProgressionReportPanel sport="athx" />
+              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-lg">⚡</span>
+                  <h2 className="text-2xl font-bold text-white">Statistiques ATHX</h2>
+                </div>
+                <AthxStatsPanel stats={multiStats.athx} loading={multiLoading} />
               </div>
-              <AthxStatsPanel stats={multiStats.athx} loading={multiLoading} />
             </div>
           )}
 

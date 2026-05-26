@@ -1,6 +1,6 @@
 'use client'
 
-import { formatDuration, formatPace, RunningStats, RUN_TYPE_LABELS } from '@/services/running'
+import { formatPace, RunningStats, RUN_TYPE_LABELS } from '@/services/running'
 import Link from 'next/link'
 
 interface RunningStatsPanelProps {

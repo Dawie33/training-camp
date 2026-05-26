@@ -14,6 +14,7 @@ import {
 import { Request } from 'express'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from './dto/session.dto'
+import { ProgressionAnalysisService } from './progression-analysis.service'
 import { WorkoutAnalysisService } from './workout-analysis.service'
 import { WorkoutSessionsService } from './workout-sessions.service'
 
@@ -30,6 +31,7 @@ export class WorkoutSessionsController {
     constructor(
         private readonly sessionsService: WorkoutSessionsService,
         private readonly analysisService: WorkoutAnalysisService,
+        private readonly progressionService: ProgressionAnalysisService,
     ) { }
 
     @Get()
@@ -40,6 +42,15 @@ export class WorkoutSessionsController {
     ) {
         const userId = req.user.id
         return this.sessionsService.findAll(userId, limit, offset)
+    }
+
+    @Get('progression-report')
+    async getProgressionReport(
+        @Req() req: AuthenticatedRequest,
+        @Query('months') months?: string,
+    ) {
+        const userId = req.user.id
+        return this.progressionService.generateReport(userId, months ? Number(months) : 3)
     }
 
     @Get(':id')
