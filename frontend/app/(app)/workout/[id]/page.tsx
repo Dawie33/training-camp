@@ -133,7 +133,7 @@ function WorkoutDetailContent() {
 
   const handleFinishWorkout = () => {
     vibration.vibrateFinish()
-    router.push(`/log-workout?workoutId=${workout?.id}&time=${timerElapsed}&version=${workoutVersion}`)
+    router.push(`/crossfit/log-workout?workoutId=${workout?.id}&time=${timerElapsed}&version=${workoutVersion}`)
   }
 
   const renderTimer = (config: TimerConfig) => {
@@ -338,7 +338,7 @@ function WorkoutDetailContent() {
             {/* Save WOD button */}
             <div className="pt-4 border-t border-slate-700/50">
               <button
-                onClick={() => router.push(`/log-workout?workoutId=${workout?.id}&time=${timerElapsed}&version=${workoutVersion}`)}
+                onClick={() => router.push(`/crossfit/log-workout?workoutId=${workout?.id}&time=${timerElapsed}&version=${workoutVersion}`)}
                 className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2"
               >
                 <span>✓</span>

@@ -178,7 +178,7 @@ export default function CrossFitPage() {
               <Dumbbell className="w-10 h-10 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-400 mb-4">Aucune séance enregistrée</p>
               <Link
-                href="/log-workout"
+                href="/crossfit/log-workout"
                 className="inline-flex px-4 py-2 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-lg hover:bg-orange-500/30 transition-colors text-sm"
               >
                 Enregistrer mon premier WOD

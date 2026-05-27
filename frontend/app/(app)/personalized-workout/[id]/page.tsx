@@ -107,7 +107,7 @@ function PersonalizedWorkoutDetailContent() {
 
   const handleFinishWorkout = () => {
     vibration.vibrateFinish()
-    router.push(`/log-workout?personalizedWorkoutId=${workout?.id}&time=${timerElapsed}`)
+    router.push(`/crossfit/log-workout?personalizedWorkoutId=${workout?.id}&time=${timerElapsed}`)
   }
 
   const renderTimer = (config: TimerConfig) => {
@@ -297,7 +297,7 @@ function PersonalizedWorkoutDetailContent() {
             {/* Save WOD button */}
             <div className="pt-4 border-t border-slate-700/50">
               <button
-                onClick={() => router.push(`/log-workout?personalizedWorkoutId=${workout?.id}&time=${timerElapsed}`)}
+                onClick={() => router.push(`/crossfit/log-workout?personalizedWorkoutId=${workout?.id}&time=${timerElapsed}`)}
                 className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2"
               >
                 <span>✓</span>
