@@ -17,6 +17,7 @@ import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from './dto/session.
 import { ProgressionAnalysisService } from './progression-analysis.service'
 import { WorkoutAnalysisService } from './workout-analysis.service'
 import { WorkoutSessionsService } from './workout-sessions.service'
+import { RunningSegment } from './workout-sessions.service'
 
 interface AuthenticatedRequest extends Request {
     user: {
@@ -42,6 +43,11 @@ export class WorkoutSessionsController {
     ) {
         const userId = req.user.id
         return this.sessionsService.findAll(userId, limit, offset)
+    }
+
+    @Get('running-segments')
+    async getRunningSegments(@Req() req: AuthenticatedRequest): Promise<RunningSegment[]> {
+        return this.sessionsService.findRunningSegments(req.user.id)
     }
 
     @Get('progression-report')

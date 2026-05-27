@@ -8,6 +8,7 @@ export interface HrZoneData {
   high_bpm: number
 }
 
+// Format renvoyé par l'endpoint /parse (fichier unique, rétrocompat)
 export interface ParsedFitData {
   duration_seconds: number | null
   calories: number | null
@@ -21,8 +22,33 @@ export interface ParsedFitData {
   hr_zones: HrZoneData[] | null
 }
 
+// Format enrichi par activité pour /parse-multiple
+export interface FitActivity {
+  sport: string | null
+  duration_seconds: number | null
+  calories: number | null
+  avg_heart_rate: number | null
+  max_heart_rate: number | null
+  min_heart_rate: number | null
+  distance_meters: number | null
+  avg_temperature: number | null
+  avg_cadence: number | null
+  avg_pace_min_km: number | null // uniquement pour le running
+  hr_zones: HrZoneData[] | null
+}
+
+export interface MultiActivityFitData {
+  activities: FitActivity[]
+  totals: {
+    duration_seconds: number
+    calories: number | null
+    distance_meters: number | null
+    hr_zones: HrZoneData[] | null
+  }
+}
+
 const ZONE_LABELS = ['Recovery', 'Easy', 'Aerobic', 'Threshold', 'VO2 Max']
-const ZONE_THRESHOLDS = [0.6, 0.7, 0.8, 0.9, 1.0] // % de FCmax (borne haute de chaque zone)
+const ZONE_THRESHOLDS = [0.6, 0.7, 0.8, 0.9, 1.0]
 
 function computeHrZones(records: { heart_rate?: number }[], maxHr: number): HrZoneData[] {
   const zoneCounts = [0, 0, 0, 0, 0]
@@ -40,55 +66,30 @@ function computeHrZones(records: { heart_rate?: number }[], maxHr: number): HrZo
   return zoneCounts.map((count, i) => ({
     zone: i + 1,
     label: ZONE_LABELS[i],
-    seconds: count, // 1 record ≈ 1 seconde
+    seconds: count,
     high_bpm: Math.round(maxHr * ZONE_THRESHOLDS[i]),
   }))
 }
 
-function mergeFitDataList(dataList: ParsedFitData[]): ParsedFitData {
-  const valid = dataList.filter(d => d !== null)
+function mergeHrZones(zonesList: (HrZoneData[] | null)[]): HrZoneData[] | null {
+  const valid = zonesList.filter((z): z is HrZoneData[] => z != null && z.length > 0)
+  if (!valid.length) return null
 
-  const totalDuration = valid.reduce((sum, d) => sum + (d.duration_seconds ?? 0), 0)
-
-  // FC moyenne pondérée par durée
-  let avg_heart_rate: number | null = null
-  const hrEntries = valid.filter(d => d.avg_heart_rate != null && d.duration_seconds != null)
-  if (hrEntries.length) {
-    const weightedSum = hrEntries.reduce((sum, d) => sum + d.avg_heart_rate! * d.duration_seconds!, 0)
-    const totalDur = hrEntries.reduce((sum, d) => sum + d.duration_seconds!, 0)
-    avg_heart_rate = Math.round(weightedSum / totalDur)
-  }
-
-  // Zones HR — cumul des secondes par zone (index 0-4)
-  let hr_zones: HrZoneData[] | null = null
-  const zonesData = valid.filter(d => d.hr_zones?.length)
-  if (zonesData.length) {
-    const merged: HrZoneData[] = (zonesData[0].hr_zones ?? []).map(z => ({ ...z, seconds: 0 }))
-    for (const d of zonesData) {
-      for (const zone of d.hr_zones ?? []) {
-        const target = merged.find(m => m.zone === zone.zone)
-        if (target) target.seconds += zone.seconds
-      }
+  const merged: HrZoneData[] = valid[0].map(z => ({ ...z, seconds: 0 }))
+  for (const zones of valid) {
+    for (const zone of zones) {
+      const target = merged.find(m => m.zone === zone.zone)
+      if (target) target.seconds += zone.seconds
     }
-    hr_zones = merged.filter(z => z.seconds > 0)
-    if (!hr_zones.length) hr_zones = null
   }
 
-  return {
-    duration_seconds: totalDuration || null,
-    calories: valid.reduce((sum, d) => sum + (d.calories ?? 0), 0) || null,
-    avg_heart_rate,
-    max_heart_rate: Math.max(...valid.map(d => d.max_heart_rate ?? 0)) || null,
-    min_heart_rate: Math.min(...valid.filter(d => d.min_heart_rate != null).map(d => d.min_heart_rate!)) || null,
-    distance_meters: valid.reduce((sum, d) => sum + (d.distance_meters ?? 0), 0) || null,
-    sport: null,
-    avg_temperature:
-      valid.filter(d => d.avg_temperature != null).length
-        ? Math.round(valid.filter(d => d.avg_temperature != null).reduce((s, d) => s + d.avg_temperature!, 0) / valid.filter(d => d.avg_temperature != null).length)
-        : null,
-    avg_cadence: null,
-    hr_zones,
-  }
+  const result = merged.filter(z => z.seconds > 0)
+  return result.length ? result : null
+}
+
+function toPaceMinKm(duration_seconds: number | null, distance_meters: number | null): number | null {
+  if (!duration_seconds || !distance_meters || distance_meters < 10) return null
+  return Math.round(((duration_seconds / 60) / (distance_meters / 1000)) * 100) / 100
 }
 
 @Injectable()
@@ -102,11 +103,9 @@ export class FitImportService {
       throw new BadRequestException('Aucune session trouvée dans le fichier FIT')
     }
 
-    // Zones FC — depuis le fichier si dispo, sinon calculées depuis les records
     let hr_zones: HrZoneData[] | null = null
 
     if (session.time_in_hr_zone?.length) {
-      // Zones natives exportées par la montre
       hr_zones = session.time_in_hr_zone.map((seconds, i) => ({
         zone: i + 1,
         label: ZONE_LABELS[i] ?? `Zone ${i + 1}`,
@@ -114,11 +113,9 @@ export class FitImportService {
         high_bpm: Math.round((session.max_heart_rate ?? 200) * ZONE_THRESHOLDS[i]),
       }))
     } else if (fitData.records?.length && session.max_heart_rate) {
-      // Calcul depuis les records seconde par seconde
       hr_zones = computeHrZones(fitData.records, session.max_heart_rate)
     }
 
-    // Filtrer les zones vides (aucun temps passé)
     if (hr_zones && hr_zones.every(z => z.seconds === 0)) {
       hr_zones = null
     }
@@ -137,8 +134,37 @@ export class FitImportService {
     }
   }
 
-  async parseMultipleFitFiles(buffers: Buffer[]): Promise<ParsedFitData> {
-    const results = await Promise.all(buffers.map(b => this.parseFitFile(b)))
-    return mergeFitDataList(results)
+  async parseMultipleFitFiles(buffers: Buffer[]): Promise<MultiActivityFitData> {
+    const parsed = await Promise.all(buffers.map(b => this.parseFitFile(b)))
+
+    const activities: FitActivity[] = parsed.map(d => ({
+      sport: d.sport,
+      duration_seconds: d.duration_seconds,
+      calories: d.calories,
+      avg_heart_rate: d.avg_heart_rate,
+      max_heart_rate: d.max_heart_rate,
+      min_heart_rate: d.min_heart_rate,
+      distance_meters: d.distance_meters,
+      avg_temperature: d.avg_temperature,
+      avg_cadence: d.avg_cadence,
+      avg_pace_min_km: d.sport?.toLowerCase().includes('run')
+        ? toPaceMinKm(d.duration_seconds, d.distance_meters)
+        : null,
+      hr_zones: d.hr_zones,
+    }))
+
+    const totalDuration = activities.reduce((s, a) => s + (a.duration_seconds ?? 0), 0)
+    const totalCalories = activities.reduce((s, a) => s + (a.calories ?? 0), 0)
+    const totalDistance = activities.reduce((s, a) => s + (a.distance_meters ?? 0), 0)
+
+    return {
+      activities,
+      totals: {
+        duration_seconds: totalDuration,
+        calories: totalCalories || null,
+        distance_meters: totalDistance || null,
+        hr_zones: mergeHrZones(activities.map(a => a.hr_zones)),
+      },
+    }
   }
 }

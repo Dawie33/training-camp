@@ -3,6 +3,18 @@ import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto, WorkoutSession } from './dto/session.dto'
 
+export interface RunningSegment {
+  session_id: string
+  workout_name: string | null
+  date: string
+  duration_seconds: number
+  distance_meters: number
+  avg_pace_min_km: number
+  avg_heart_rate: number | null
+  max_heart_rate: number | null
+  activity_index: number
+}
+
 
 @Injectable()
 export class WorkoutSessionsService {
@@ -120,6 +132,47 @@ export class WorkoutSessionsService {
             .delete()
 
         return deletedCount > 0
+    }
+
+    // Extrait tous les segments running des sessions qui ont des données FIT multi-activités
+    async findRunningSegments(userId: string): Promise<RunningSegment[]> {
+        const sessions = await this.knex('workout_sessions')
+            .select(
+                'workout_sessions.id',
+                'workout_sessions.completed_at',
+                'workout_sessions.results',
+                'workouts.name as workout_name',
+            )
+            .leftJoin('workouts', 'workout_sessions.workout_id', 'workouts.id')
+            .where('workout_sessions.user_id', userId)
+            .whereNotNull('workout_sessions.completed_at')
+            .whereRaw("jsonb_typeof(workout_sessions.results -> 'coros' -> 'activities') = 'array'")
+            .orderBy('workout_sessions.completed_at', 'desc')
+
+        const segments: RunningSegment[] = []
+
+        for (const session of sessions) {
+            const activities: Record<string, unknown>[] = session.results?.coros?.activities ?? []
+            activities.forEach((activity, idx) => {
+                const sport = String(activity.sport ?? '')
+                const pace = activity.avg_pace_min_km as number | null
+                if (sport.toLowerCase().includes('run') && pace) {
+                    segments.push({
+                        session_id: session.id,
+                        workout_name: session.workout_name ?? null,
+                        date: session.completed_at,
+                        duration_seconds: (activity.duration_seconds as number) ?? 0,
+                        distance_meters: (activity.distance_meters as number) ?? 0,
+                        avg_pace_min_km: pace,
+                        avg_heart_rate: (activity.avg_heart_rate as number | null) ?? null,
+                        max_heart_rate: (activity.max_heart_rate as number | null) ?? null,
+                        activity_index: idx,
+                    })
+                }
+            })
+        }
+
+        return segments
     }
 
 }

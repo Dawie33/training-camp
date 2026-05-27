@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common'
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { FitImportService } from './fit-import.service'
+import { FitImportService, MultiActivityFitData } from './fit-import.service'
 
 const fitFileFilter = (_req: unknown, file: Express.Multer.File, cb: (err: Error | null, accept: boolean) => void) => {
   if (!file.originalname.toLowerCase().endsWith('.fit')) {
@@ -34,7 +34,7 @@ export class FitImportController {
 
   @Post('parse-multiple')
   @UseInterceptors(FilesInterceptor('files', 10, { limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: fitFileFilter }))
-  async parseMultipleFit(@UploadedFiles() files: Express.Multer.File[]) {
+  async parseMultipleFit(@UploadedFiles() files: Express.Multer.File[]): Promise<MultiActivityFitData> {
     if (!files?.length) {
       throw new BadRequestException('Aucun fichier fourni')
     }

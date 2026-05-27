@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Activity, Footprints, LayoutDashboard, Trophy, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useMultiSportStats } from './_hooks/useMultiSportStats'
+import { useWodRunningSegments } from './_hooks/useWodRunningSegments'
 import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
@@ -66,6 +67,7 @@ function TrackingContent() {
   const { progressData, loading: progressLoading } = useWorkoutProgress()
   const { liftsWithHistory, loading: ormsLoading } = useOneRepMaxHistory()
   const { stats: multiStats, loading: multiLoading } = useMultiSportStats()
+  const { segments: wodRunSegments, loading: wodRunLoading } = useWodRunningSegments()
 
   return (
     <motion.div
@@ -226,7 +228,12 @@ function TrackingContent() {
                   <span className="text-lg">🏃</span>
                   <h2 className="text-2xl font-bold text-white">Statistiques Running</h2>
                 </div>
-                <RunningStatsPanel stats={multiStats.running} loading={multiLoading} />
+                <RunningStatsPanel
+                  stats={multiStats.running}
+                  loading={multiLoading}
+                  wodSegments={wodRunSegments}
+                  wodSegmentsLoading={wodRunLoading}
+                />
               </div>
             </div>
           )}

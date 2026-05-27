@@ -4,7 +4,7 @@ import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise } from '@/domain/entities/workout-structure'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
-import { parseFitFiles, ParsedFitData, HrZoneData } from '@/services/fit-import'
+import { parseFitFiles, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
 import { sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -81,8 +81,7 @@ function LogWorkoutContent() {
   const [notes, setNotes] = useState('')
   const [wodDate, setWodDate] = useState(() => new Date().toISOString().slice(0, 16))
 
-  const [fitData, setFitData] = useState<ParsedFitData | null>(null)
-  const [fitFileCount, setFitFileCount] = useState(0)
+  const [fitData, setFitData] = useState<MultiActivityFitData | null>(null)
   const [isParsing, setIsParsing] = useState(false)
   const fitInputRef = useRef<HTMLInputElement>(null)
 
@@ -177,14 +176,17 @@ function LogWorkoutContent() {
       setIsParsing(true)
       const data = await parseFitFiles(fileArray)
       setFitData(data)
-      setFitFileCount(fileArray.length)
-      if (data.duration_seconds) {
-        const totalMin = Math.floor(data.duration_seconds / 60)
-        const totalSec = Math.floor(data.duration_seconds % 60)
+      if (data.totals.duration_seconds) {
+        const totalMin = Math.floor(data.totals.duration_seconds / 60)
+        const totalSec = Math.floor(data.totals.duration_seconds % 60)
         setTimeMinutes(String(totalMin))
         setTimeSeconds(String(totalSec).padStart(2, '0'))
       }
-      toast.success(fileArray.length > 1 ? `${fileArray.length} fichiers .fit fusionnés` : 'Fichier .fit importé')
+      const runCount = data.activities.filter(a => a.sport?.toLowerCase().includes('run')).length
+      const label = fileArray.length > 1
+        ? `${fileArray.length} activités importées (${runCount} course${runCount > 1 ? 's' : ''})`
+        : 'Activité .fit importée'
+      toast.success(label)
     } catch {
       toast.error('Impossible de lire le(s) fichier(s) .fit')
     } finally {
@@ -241,14 +243,8 @@ function LogWorkoutContent() {
         exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
         ...(fitData && {
           coros: {
-            avg_heart_rate: fitData.avg_heart_rate,
-            max_heart_rate: fitData.max_heart_rate,
-            min_heart_rate: fitData.min_heart_rate,
-            calories: fitData.calories,
-            distance_meters: fitData.distance_meters,
-            avg_cadence: fitData.avg_cadence,
-            avg_temperature: fitData.avg_temperature,
-            hr_zones: fitData.hr_zones,
+            activities: fitData.activities,
+            totals: fitData.totals,
           },
         }),
       }
@@ -434,7 +430,6 @@ function LogWorkoutContent() {
               <button
                 onClick={() => {
                   setFitData(null)
-                  setFitFileCount(0)
                   setTimeMinutes('')
                   setTimeSeconds('')
                   if (fitInputRef.current) fitInputRef.current.value = ''
@@ -466,68 +461,91 @@ function LogWorkoutContent() {
                   <span className="text-sm">Analyse en cours...</span>
                 </>
               ) : (
-                <>
-                  <span className="text-lg">📁</span>
-                  <div className="text-left">
-                    <p className="text-sm font-medium">Importer des fichiers .fit</p>
-                    <p className="text-xs text-slate-500">1 fichier ou plusieurs (ex: Murph = course + muscu + course)</p>
-                  </div>
-                </>
+                <div className="text-left">
+                  <p className="text-sm font-medium">Importer des fichiers .fit</p>
+                  <p className="text-xs text-slate-500">1 fichier ou plusieurs (ex: Murph = course + muscu + course)</p>
+                </div>
               )}
             </button>
           ) : (
-            <>
-              {fitFileCount > 1 && (
-                <p className="text-xs text-orange-400/80">{fitFileCount} fichiers fusionnés</p>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                {fitData.avg_heart_rate && (
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-rose-400">{fitData.avg_heart_rate} bpm</p>
-                    <p className="text-slate-500 text-xs mt-0.5">FC moyenne</p>
+            <div className="space-y-3">
+              {/* Activités séparées */}
+              {fitData.activities.map((activity, idx) => {
+                const isRun = activity.sport?.toLowerCase().includes('run')
+                const label = getSportLabel(activity.sport, idx, fitData.activities.length)
+                const dur = activity.duration_seconds
+                  ? `${Math.floor(activity.duration_seconds / 60)}:${String(Math.floor(activity.duration_seconds % 60)).padStart(2, '0')}`
+                  : null
+                return (
+                  <div key={idx} className={`rounded-xl p-3 border ${isRun ? 'bg-green-500/5 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-sm font-semibold ${isRun ? 'text-green-300' : 'text-slate-200'}`}>{label}</span>
+                      {dur && <span className="ml-auto text-xs text-slate-400">{dur}</span>}
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {isRun && activity.avg_pace_min_km && (
+                        <div className="bg-white/5 rounded-lg p-2 text-center col-span-1">
+                          <p className="text-sm font-bold text-green-400">
+                            {Math.floor(activity.avg_pace_min_km)}:{String(Math.round((activity.avg_pace_min_km % 1) * 60)).padStart(2, '0')}
+                          </p>
+                          <p className="text-slate-500 text-xs">min/km</p>
+                        </div>
+                      )}
+                      {isRun && activity.distance_meters && activity.distance_meters > 0 && (
+                        <div className="bg-white/5 rounded-lg p-2 text-center">
+                          <p className="text-sm font-bold text-blue-400">{(activity.distance_meters / 1000).toFixed(2)} km</p>
+                          <p className="text-slate-500 text-xs">Distance</p>
+                        </div>
+                      )}
+                      {activity.avg_heart_rate && (
+                        <div className="bg-white/5 rounded-lg p-2 text-center">
+                          <p className="text-sm font-bold text-rose-400">{activity.avg_heart_rate} bpm</p>
+                          <p className="text-slate-500 text-xs">FC moy.</p>
+                        </div>
+                      )}
+                      {activity.max_heart_rate && (
+                        <div className="bg-white/5 rounded-lg p-2 text-center">
+                          <p className="text-sm font-bold text-rose-300">{activity.max_heart_rate} bpm</p>
+                          <p className="text-slate-500 text-xs">FC max</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-                {fitData.max_heart_rate && (
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-rose-400">{fitData.max_heart_rate} bpm</p>
-                    <p className="text-slate-500 text-xs mt-0.5">FC max</p>
-                  </div>
-                )}
-                {fitData.calories && (
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-orange-400">{fitData.calories}</p>
-                    <p className="text-slate-500 text-xs mt-0.5">Calories</p>
-                  </div>
-                )}
-                {fitData.distance_meters && fitData.distance_meters > 0 && (
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-blue-400">{(fitData.distance_meters / 1000).toFixed(2)} km</p>
-                    <p className="text-slate-500 text-xs mt-0.5">Distance</p>
-                  </div>
-                )}
-                {fitData.min_heart_rate && (
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-emerald-400">{fitData.min_heart_rate} bpm</p>
-                    <p className="text-slate-500 text-xs mt-0.5">FC min</p>
-                  </div>
-                )}
-                {fitData.avg_cadence && fitData.avg_cadence > 0 && (
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-violet-400">{fitData.avg_cadence} rpm</p>
-                    <p className="text-slate-500 text-xs mt-0.5">Cadence moy.</p>
-                  </div>
-                )}
-                {fitData.avg_temperature && (
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-lg font-bold text-slate-300">{fitData.avg_temperature}°C</p>
-                    <p className="text-slate-500 text-xs mt-0.5">Température</p>
-                  </div>
-                )}
+                )
+              })}
+
+              {/* Totaux */}
+              <div className="pt-1 border-t border-white/10">
+                <p className="text-xs text-slate-500 mb-2">Totaux</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {fitData.totals.calories && (
+                    <div className="bg-white/5 rounded-xl p-3 text-center">
+                      <p className="text-lg font-bold text-orange-400">{fitData.totals.calories}</p>
+                      <p className="text-slate-500 text-xs mt-0.5">Calories</p>
+                    </div>
+                  )}
+                  {fitData.totals.distance_meters && fitData.totals.distance_meters > 0 && (
+                    <div className="bg-white/5 rounded-xl p-3 text-center">
+                      <p className="text-lg font-bold text-blue-400">{(fitData.totals.distance_meters / 1000).toFixed(2)} km</p>
+                      <p className="text-slate-500 text-xs mt-0.5">Distance</p>
+                    </div>
+                  )}
+                  {fitData.totals.duration_seconds > 0 && (
+                    <div className="bg-white/5 rounded-xl p-3 text-center">
+                      <p className="text-lg font-bold text-slate-300">
+                        {Math.floor(fitData.totals.duration_seconds / 60)}:{String(Math.floor(fitData.totals.duration_seconds % 60)).padStart(2, '0')}
+                      </p>
+                      <p className="text-slate-500 text-xs mt-0.5">Durée totale</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              {fitData.hr_zones && fitData.hr_zones.length > 0 && (
-                <HrZonesChart zones={fitData.hr_zones} totalSeconds={fitData.duration_seconds ?? 0} />
+
+              {/* Zones HR cumulées */}
+              {fitData.totals.hr_zones && fitData.totals.hr_zones.length > 0 && (
+                <HrZonesChart zones={fitData.totals.hr_zones} totalSeconds={fitData.totals.duration_seconds} />
               )}
-            </>
+            </div>
           )}
         </div>
 
