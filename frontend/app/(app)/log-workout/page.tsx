@@ -4,7 +4,7 @@ import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise } from '@/domain/entities/workout-structure'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
-import { parseFitFile, ParsedFitData, HrZoneData } from '@/services/fit-import'
+import { parseFitFiles, ParsedFitData, HrZoneData } from '@/services/fit-import'
 import { sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -90,6 +90,7 @@ function LogWorkoutContent() {
 
   // FIT import
   const [fitData, setFitData] = useState<ParsedFitData | null>(null)
+  const [fitFileCount, setFitFileCount] = useState(0)
   const [isParsing, setIsParsing] = useState(false)
   const fitInputRef = useRef<HTMLInputElement>(null)
 
@@ -189,20 +190,22 @@ function LogWorkoutContent() {
     setCapScore('')
   }, [])
 
-  const handleFitFile = async (file: File) => {
+  const handleFitFiles = async (files: FileList) => {
+    const fileArray = Array.from(files)
     try {
       setIsParsing(true)
-      const data = await parseFitFile(file)
+      const data = await parseFitFiles(fileArray)
       setFitData(data)
+      setFitFileCount(fileArray.length)
       if (data.duration_seconds) {
         const totalMin = Math.floor(data.duration_seconds / 60)
         const totalSec = Math.floor(data.duration_seconds % 60)
         setTimeMinutes(String(totalMin))
         setTimeSeconds(String(totalSec).padStart(2, '0'))
       }
-      toast.success('Fichier .fit importé')
+      toast.success(fileArray.length > 1 ? `${fileArray.length} fichiers .fit fusionnés` : 'Fichier .fit importé')
     } catch {
-      toast.error('Impossible de lire le fichier .fit')
+      toast.error('Impossible de lire le(s) fichier(s) .fit')
     } finally {
       setIsParsing(false)
     }
@@ -478,6 +481,7 @@ function LogWorkoutContent() {
               <button
                 onClick={() => {
                   setFitData(null)
+                  setFitFileCount(0)
                   setTimeMinutes('')
                   setTimeSeconds('')
                   if (fitInputRef.current) fitInputRef.current.value = ''
@@ -499,8 +503,9 @@ function LogWorkoutContent() {
                 ref={fitInputRef}
                 type="file"
                 accept=".fit"
+                multiple
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFitFile(f) }}
+                onChange={(e) => { if (e.target.files?.length) handleFitFiles(e.target.files) }}
               />
               {isParsing ? (
                 <>
@@ -510,12 +515,18 @@ function LogWorkoutContent() {
               ) : (
                 <>
                   <span className="text-lg">📁</span>
-                  <span className="text-sm font-medium">Importer un fichier .fit</span>
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Importer des fichiers .fit</p>
+                    <p className="text-xs text-slate-500">1 fichier ou plusieurs (ex: Murph = course + muscu + course)</p>
+                  </div>
                 </>
               )}
             </button>
           ) : (
             <>
+              {fitFileCount > 1 && (
+                <p className="text-xs text-orange-400/80">{fitFileCount} fichiers fusionnés</p>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {fitData.avg_heart_rate && (
                   <div className="bg-white/5 rounded-xl p-3 text-center">

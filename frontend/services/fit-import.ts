@@ -37,3 +37,25 @@ export async function parseFitFile(file: File): Promise<ParsedFitData> {
 
   return response.json()
 }
+
+export async function parseFitFiles(files: File[]): Promise<ParsedFitData> {
+  if (files.length === 1) return parseFitFile(files[0])
+
+  const formData = new FormData()
+  for (const file of files) {
+    formData.append('files', file)
+  }
+
+  const response = await fetch(`${API_URL}/fit-import/parse-multiple`, {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => response.statusText)
+    throw new Error(text || `Erreur ${response.status}`)
+  }
+
+  return response.json()
+}
