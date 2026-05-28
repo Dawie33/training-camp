@@ -1,7 +1,7 @@
 'use client'
 
 import { apiClient } from '@/services/apiClient'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export type SportType = 'crossfit' | 'running' | 'hyrox' | 'athx' | 'global'
 
@@ -43,6 +43,20 @@ export function useProgressionReport(sport: SportType) {
   const [report, setReport] = useState<ProgressionReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadSaved() {
+      try {
+        const data = await apiClient.get<ProgressionReport | null>(
+          `/tracking/report/saved?sport=${sport}`,
+        )
+        if (data) setReport(data)
+      } catch {
+        // Pas de rapport sauvegardé, on laisse l'UI inviter à générer
+      }
+    }
+    loadSaved()
+  }, [sport])
 
   async function generate(months = 3) {
     setLoading(true)

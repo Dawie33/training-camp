@@ -89,6 +89,17 @@ export class TrackingService {
     })
   }
 
+  async getSavedReport(userId: string, sport: SportType): Promise<ProgressionReport | null> {
+    const row = await this.knex('tracking_reports')
+      .where('user_id', userId)
+      .where('sport', sport)
+      .select('report')
+      .first()
+
+    if (!row) return null
+    return (typeof row.report === 'string' ? JSON.parse(row.report) : row.report) as ProgressionReport
+  }
+
   // ─── CrossFit ─────────────────────────────────────────────────────────────
 
   private async generateCrossfitReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {

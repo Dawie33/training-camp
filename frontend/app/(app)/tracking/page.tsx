@@ -2,7 +2,7 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Footprints, LayoutDashboard, Trophy, Zap } from 'lucide-react'
+import { Activity, Footprints, History, LayoutDashboard, Trophy, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useMultiSportStats } from './_hooks/useMultiSportStats'
 import { useWodRunningSegments } from './_hooks/useWodRunningSegments'
@@ -10,6 +10,7 @@ import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
 import { AthxStatsPanel } from './components/AthxStatsPanel'
+import { BilansHistoryPanel } from './components/BilansHistoryPanel'
 import { GlobalOverview } from './components/GlobalOverview'
 import { HyroxStatsPanel } from './components/HyroxStatsPanel'
 import { OneRepMaxChart } from './components/OneRepMaxChart'
@@ -20,7 +21,7 @@ import { RunningStatsPanel } from './components/RunningStatsPanel'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
-type Tab = 'global' | 'crossfit' | 'running' | 'hyrox' | 'athx'
+type Tab = 'global' | 'crossfit' | 'running' | 'hyrox' | 'athx' | 'history'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode; color: string; activeColor: string }[] = [
   {
@@ -57,6 +58,13 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; color: string; acti
     icon: <Zap className="w-4 h-4" />,
     color: 'text-slate-400',
     activeColor: 'text-purple-300 border-purple-500/60 bg-purple-500/10',
+  },
+  {
+    id: 'history',
+    label: 'Bilans',
+    icon: <History className="w-4 h-4" />,
+    color: 'text-slate-400',
+    activeColor: 'text-slate-200 border-slate-400/60 bg-slate-500/10',
   },
 ]
 
@@ -265,6 +273,9 @@ function TrackingContent() {
               </div>
             </div>
           )}
+
+          {/* Historique des bilans */}
+          {activeTab === 'history' && <BilansHistoryPanel />}
 
         </motion.div>
       </div>
