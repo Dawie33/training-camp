@@ -30,6 +30,9 @@ export interface ProgressionReport {
   weak_points: string[]
   recommendations: string[]
   consistency_feedback: string
+  performance_highlights?: string[]
+  strength_progression?: string
+  movement_focus?: string[]
   fitness_profile?: FitnessProfile
   overall_fitness_level?: string
   sport_balance_feedback?: string

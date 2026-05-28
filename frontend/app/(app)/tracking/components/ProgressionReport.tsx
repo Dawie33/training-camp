@@ -121,6 +121,53 @@ function ReportContent({ report }: { report: ProgressionReport }) {
         </div>
       )}
 
+      {/* Performances notables */}
+      {report.performance_highlights && report.performance_highlights.length > 0 && (
+        <div className="p-5 bg-violet-500/5 border border-violet-500/15 rounded-2xl">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">⚡</span>
+            <h3 className="font-semibold text-white">Performances notables</h3>
+          </div>
+          <ul className="space-y-2">
+            {report.performance_highlights.map((h, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                <span className="text-violet-400 mt-0.5 shrink-0">▸</span>
+                {h}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Progression de force */}
+      {report.strength_progression && (
+        <div className="p-4 bg-rose-500/5 border border-rose-500/15 rounded-xl">
+          <div className="flex items-center gap-2 mb-1">
+            <span>🏋️</span>
+            <h3 className="text-sm font-semibold text-slate-300">Progression des charges</h3>
+          </div>
+          <p className="text-sm text-slate-400">{report.strength_progression}</p>
+        </div>
+      )}
+
+      {/* Mouvements à travailler */}
+      {report.movement_focus && report.movement_focus.length > 0 && (
+        <div className="p-5 bg-cyan-500/5 border border-cyan-500/15 rounded-2xl">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">🎯</span>
+            <h3 className="font-semibold text-white">Focus mouvements</h3>
+          </div>
+          <ul className="space-y-2">
+            {report.movement_focus.map((m, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                <span className="text-cyan-400 mt-0.5 shrink-0">→</span>
+                {m}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Tendances par type */}
       {report.type_trends.length > 0 && (
         <div>

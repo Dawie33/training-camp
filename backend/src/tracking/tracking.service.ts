@@ -30,6 +30,9 @@ export interface ProgressionReport {
   weak_points: string[]
   recommendations: string[]
   consistency_feedback: string
+  performance_highlights?: string[]
+  strength_progression?: string
+  movement_focus?: string[]
   fitness_profile?: FitnessProfile
   overall_fitness_level?: string
   sport_balance_feedback?: string
@@ -89,7 +92,7 @@ export class TrackingService {
   // ─── CrossFit ─────────────────────────────────────────────────────────────
 
   private async generateCrossfitReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const [sessions, oneRepMaxes, profile] = await Promise.all([
+    const [sessions, oneRepMaxes, ormHistory, profile] = await Promise.all([
       this.knex('workout_sessions as ws')
         .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
         .select('ws.started_at', 'ws.completed_at', 'ws.results', 'w.name as workout_name', 'w.workout_type')
@@ -98,19 +101,24 @@ export class TrackingService {
         .where('ws.started_at', '>=', since.toISOString())
         .orderBy('ws.started_at', 'asc'),
       this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId).orderBy('lift'),
+      this.knex('one_rep_max_history')
+        .select('lift', 'value', 'measured_at')
+        .where('user_id', userId)
+        .where('measured_at', '>=', since.toISOString())
+        .orderBy('measured_at', 'asc'),
       this.knex('users').select('sport_level', 'global_goals').where('id', userId).first(),
     ])
 
     if (sessions.length < 3) return this.notEnoughData('crossfit', months, sessions.length)
 
-    const agg = this.aggregateCrossfit(sessions)
+    const agg = this.aggregateCrossfit(sessions, ormHistory)
     const prompt = this.buildCrossfitPrompt(agg, oneRepMaxes, profile, months)
     const parsed = await this.callAI(prompt)
 
     return { sport: 'crossfit', period_months: months, ...parsed, generated_at: new Date().toISOString() }
   }
 
-  private aggregateCrossfit(sessions: any[]) {
+  private aggregateCrossfit(sessions: any[], ormHistory: any[]) {
     const total = sessions.length
     const weekSpan = this.computeWeekSpan(sessions)
     const avgPerWeek = (total / weekSpan).toFixed(1)
@@ -129,7 +137,32 @@ export class TrackingService {
       return { type, count: rows.length, trend, improvement_pct: pct }
     })
 
-    return { total, avgPerWeek, weekSpan, consistencyPct, typeStats }
+    const namedWorkouts = sessions
+      .filter(s => s.workout_name)
+      .map(s => {
+        const result = this.formatCFResult(s.results, s.workout_type)
+        return result
+          ? { name: s.workout_name, date: s.started_at.toString().split('T')[0], type: s.workout_type, result }
+          : null
+      })
+      .filter((s): s is NonNullable<typeof s> => s !== null)
+      .slice(-20)
+
+    const ormByLift: Record<string, { value: number; date: string }[]> = {}
+    for (const h of ormHistory) {
+      if (!ormByLift[h.lift]) ormByLift[h.lift] = []
+      ormByLift[h.lift].push({ value: Number(h.value), date: h.measured_at })
+    }
+    const ormProgression = Object.entries(ormByLift)
+      .filter(([, entries]) => entries.length >= 2)
+      .map(([lift, entries]) => ({
+        lift,
+        start: entries[0].value,
+        end: entries[entries.length - 1].value,
+        gain: entries[entries.length - 1].value - entries[0].value,
+      }))
+
+    return { total, avgPerWeek, weekSpan, consistencyPct, typeStats, namedWorkouts, ormProgression }
   }
 
   private buildCrossfitPrompt(agg: any, orms: any[], profile: any, months: number): string {
@@ -141,16 +174,35 @@ export class TrackingService {
       .map((t: any) => `- ${t.type} (${t.count} séances, ${t.trend}${t.improvement_pct ? `, ${t.improvement_pct > 0 ? '+' : ''}${t.improvement_pct}%` : ''})`)
       .join('\n')
 
-    return `Tu es un coach CrossFit expert. Génère un bilan de progression CrossFit sur ${months} mois.
+    const namedLines = agg.namedWorkouts.length
+      ? agg.namedWorkouts.map((w: any) => `- ${w.date} | ${w.name} (${w.type}) : ${w.result}`).join('\n')
+      : '- Aucun workout nommé avec résultat enregistré'
 
-Niveau : ${profile?.sport_level ?? 'intermédiaire'} | Objectifs : ${goals}
-1RMs : ${ormStr}
+    const ormProgressionLines = agg.ormProgression.length
+      ? agg.ormProgression.map((o: any) => `- ${o.lift}: ${o.start}kg → ${o.end}kg (${o.gain > 0 ? '+' : ''}${o.gain}kg)`).join('\n')
+      : '- Aucun nouveau PR de force enregistré sur la période'
 
-Données ${months} mois :
-- ${agg.total} séances, ${agg.avgPerWeek}/semaine, ${agg.consistencyPct}% régularité
+    return `Tu es un coach CrossFit expert et analytique. Génère un bilan de progression CrossFit approfondi sur ${months} mois.
 
-Tendances par type :
+Profil athlète :
+- Niveau : ${profile?.sport_level ?? 'intermédiaire'}
+- Objectifs : ${goals}
+- 1RMs actuels : ${ormStr}
+
+Volume et régularité :
+- ${agg.total} séances sur ${agg.weekSpan} semaines (${agg.avgPerWeek}/semaine)
+- Régularité : ${agg.consistencyPct}%
+
+Tendances par type de WOD :
 ${typeLines}
+
+Résultats des workouts nommés (benchmarks, WODs box) :
+${namedLines}
+
+Progression des charges / 1RMs sur la période :
+${ormProgressionLines}
+
+Analyse ces données précisément. Cite des résultats concrets (noms de workouts, temps, charges) dans tes commentaires. Sois un vrai coach — pas de conseils génériques.
 
 ${this.jsonInstructions()}`
   }
@@ -455,7 +507,7 @@ ${this.jsonInstructions(true)}`
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: isGlobal ? 1500 : 1200,
+      max_tokens: isGlobal ? 2000 : 2500,
       response_format: { type: 'json_object' },
     })
 
@@ -467,14 +519,17 @@ ${this.jsonInstructions(true)}`
   private jsonInstructions(isGlobal = false): string {
     const base = `Réponds en JSON avec exactement cette structure :
 {
-  "period_summary": "Résumé global en 2-3 phrases, ton coach et motivant",
+  "period_summary": "Résumé global en 3-4 phrases, ton coach précis et motivant. Mentionne des chiffres réels si disponibles.",
   "overall_trend": "improving | stable | declining",
-  "highlights": ["Point marquant 1", "Point marquant 2"],
-  "type_trends": [{ "type": "string", "trend": "improving | stable | declining", "detail": "Explication courte", "session_count": 0 }],
-  "strengths": ["Point fort 1", "Point fort 2"],
-  "weak_points": ["Axe de progression 1"],
-  "recommendations": ["Conseil concret 1", "Conseil concret 2", "Conseil concret 3"],
-  "consistency_feedback": "Feedback sur la régularité"`
+  "highlights": ["Point marquant 1 avec chiffre concret si possible", "Point marquant 2", "Point marquant 3"],
+  "type_trends": [{ "type": "string", "trend": "improving | stable | declining", "detail": "Explication précise avec données si disponibles", "session_count": 0 }],
+  "strengths": ["Point fort 1 précis", "Point fort 2 précis", "Point fort 3"],
+  "weak_points": ["Axe de progression 1 avec explication", "Axe de progression 2"],
+  "recommendations": ["Conseil concret et actionnable 1", "Conseil concret 2", "Conseil concret 3", "Conseil concret 4"],
+  "consistency_feedback": "Feedback détaillé sur la régularité et le volume",
+  "performance_highlights": ["Perf notable 1 avec résultat chiffré", "Perf notable 2"],
+  "strength_progression": "Analyse de l'évolution des charges et 1RMs sur la période (ou absence de données)",
+  "movement_focus": ["Mouvement/compétence prioritaire à travailler 1", "Mouvement 2"]`
 
     if (!isGlobal) return base + '\n}'
 
@@ -505,6 +560,22 @@ ${this.jsonInstructions(true)}`
       consistency_feedback: 'Données insuffisantes pour l\'instant.',
       generated_at: new Date().toISOString(),
     }
+  }
+
+  private formatCFResult(results: any, type: string): string | null {
+    if (!results) return null
+    if (type === 'for_time' && results.elapsed_time_seconds) {
+      const s = results.elapsed_time_seconds as number
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+    }
+    if (type === 'amrap') {
+      const rounds = results.rounds as number | undefined
+      const reps = results.reps as number | undefined
+      if (rounds !== undefined) return `${rounds} rounds${reps ? ` + ${reps} reps` : ''}`
+    }
+    if (results.load_kg) return `${results.load_kg}kg`
+    if (results.reps) return `${results.reps} reps`
+    return null
   }
 
   private extractCFScore(results: any, type: string): number | null {
