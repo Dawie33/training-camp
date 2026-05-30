@@ -62,6 +62,7 @@ export class AIHyroxGeneratorService {
               isOfficialMode: params.equipment_mode === 'official',
               recentSessionNames,
               variationSeed: this.pickVariationSeed(recentSessionNames),
+              recentAllSports: ctx.recentSessions,
             }),
           },
         ],

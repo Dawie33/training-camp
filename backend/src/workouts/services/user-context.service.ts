@@ -35,6 +35,16 @@ export interface ProgressionReportSummary {
   generated_at: string
 }
 
+export type RecentSessionSport = 'crossfit' | 'running' | 'hyrox' | 'strength' | 'athx'
+
+export interface RecentSession {
+  date: string
+  sport: RecentSessionSport
+  workout_type?: string
+  duration_minutes: number
+  perceived_effort?: number
+}
+
 export interface UserAIContext {
   sport_level: string
   height?: number
@@ -46,12 +56,7 @@ export interface UserAIContext {
   physical_limitations: Record<string, unknown>
   equipment_available: string[]
   training_preferences: { preferred_duration?: number; sessions_per_week?: number }
-  recentSessions: {
-    date: string
-    workout_type?: string
-    duration_minutes: number
-    perceived_effort?: number
-  }[]
+  recentSessions: RecentSession[]
   recentAnalyses: RecentAnalysis[]
   activeSkills: ActiveSkillContext[]
   progressionReports: ProgressionReportSummary[]
@@ -73,7 +78,7 @@ export class UserContextService {
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data
     }
-    const [profile, oneRepMaxes, recentSessions, recentAnalysesRaw, activeSkillsRaw, progressionReportsRaw] = await Promise.all([
+    const [profile, oneRepMaxes, cfSessions, runningSessions, hyroxSessions, athxSessions, strengthSessions, recentAnalysesRaw, activeSkillsRaw, progressionReportsRaw] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -103,9 +108,37 @@ export class UserContextService {
         )
         .where('ws.user_id', userId)
         .whereNotNull('ws.completed_at')
-        .whereRaw("ws.started_at >= NOW() - INTERVAL '7 days'")
+        .whereRaw("ws.started_at >= NOW() - INTERVAL '21 days'")
         .orderBy('ws.started_at', 'desc')
         .limit(10),
+
+      this.knex('running_sessions')
+        .select('session_date', 'run_type', 'duration_seconds', 'perceived_effort')
+        .where('user_id', userId)
+        .whereRaw("session_date >= NOW() - INTERVAL '21 days'")
+        .orderBy('session_date', 'desc')
+        .limit(7),
+
+      this.knex('hyrox_sessions')
+        .select('session_date', 'session_type', 'total_time_seconds', 'perceived_effort')
+        .where('user_id', userId)
+        .whereRaw("session_date >= NOW() - INTERVAL '21 days'")
+        .orderBy('session_date', 'desc')
+        .limit(7),
+
+      this.knex('athx_sessions')
+        .select('session_date', 'session_type', 'duration_minutes', 'perceived_effort')
+        .where('user_id', userId)
+        .whereRaw("session_date >= NOW() - INTERVAL '21 days'")
+        .orderBy('session_date', 'desc')
+        .limit(7),
+
+      this.knex('strength_sessions')
+        .select('session_date', 'session_goal', 'duration_minutes', 'perceived_effort')
+        .where('user_id', userId)
+        .whereRaw("session_date >= NOW() - INTERVAL '21 days'")
+        .orderBy('session_date', 'desc')
+        .limit(7),
 
       this.knex('workout_sessions as ws')
         .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
@@ -141,24 +174,53 @@ export class UserContextService {
         .orderBy('generated_at', 'desc'),
     ])
 
-    const recentSessionsMapped = recentSessions.map(
-      (s: {
-        started_at: string
-        completed_at: string
-        workout_type?: string
-        perceived_effort?: string
-      }) => {
-        const start = new Date(s.started_at)
-        const end = new Date(s.completed_at)
-        const duration_minutes = Math.round((end.getTime() - start.getTime()) / 60000)
-        return {
-          date: start.toISOString().split('T')[0],
-          workout_type: s.workout_type ?? undefined,
-          duration_minutes,
-          perceived_effort: s.perceived_effort ? Number(s.perceived_effort) : undefined,
-        }
-      },
-    )
+    const cfMapped: RecentSession[] = (cfSessions ?? []).map((s: { started_at: string; completed_at: string; workout_type?: string; perceived_effort?: string }) => {
+      const start = new Date(s.started_at)
+      const end = new Date(s.completed_at)
+      return {
+        date: start.toISOString().split('T')[0],
+        sport: 'crossfit' as const,
+        workout_type: s.workout_type ?? undefined,
+        duration_minutes: Math.round((end.getTime() - start.getTime()) / 60000),
+        perceived_effort: s.perceived_effort ? Number(s.perceived_effort) : undefined,
+      }
+    })
+
+    const runningMapped: RecentSession[] = (runningSessions ?? []).map((s: { session_date: string; run_type: string; duration_seconds?: number; perceived_effort?: number }) => ({
+      date: s.session_date,
+      sport: 'running' as const,
+      workout_type: s.run_type,
+      duration_minutes: s.duration_seconds ? Math.round(s.duration_seconds / 60) : 0,
+      perceived_effort: s.perceived_effort ?? undefined,
+    }))
+
+    const hyroxMapped: RecentSession[] = (hyroxSessions ?? []).map((s: { session_date: string; session_type: string; total_time_seconds?: number; perceived_effort?: number }) => ({
+      date: s.session_date,
+      sport: 'hyrox' as const,
+      workout_type: s.session_type,
+      duration_minutes: s.total_time_seconds ? Math.round(s.total_time_seconds / 60) : 0,
+      perceived_effort: s.perceived_effort ?? undefined,
+    }))
+
+    const athxMapped: RecentSession[] = (athxSessions ?? []).map((s: { session_date: string; session_type: string; duration_minutes?: number; perceived_effort?: number }) => ({
+      date: s.session_date,
+      sport: 'athx' as const,
+      workout_type: s.session_type,
+      duration_minutes: s.duration_minutes ?? 0,
+      perceived_effort: s.perceived_effort ?? undefined,
+    }))
+
+    const strengthMapped: RecentSession[] = (strengthSessions ?? []).map((s: { session_date: string; session_goal: string; duration_minutes?: number; perceived_effort?: number }) => ({
+      date: s.session_date,
+      sport: 'strength' as const,
+      workout_type: s.session_goal,
+      duration_minutes: s.duration_minutes ?? 0,
+      perceived_effort: s.perceived_effort ?? undefined,
+    }))
+
+    const recentSessionsMapped = [...cfMapped, ...runningMapped, ...hyroxMapped, ...athxMapped, ...strengthMapped]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 20)
 
     const recentAnalyses: RecentAnalysis[] = (recentAnalysesRaw ?? [])
       .map((row: { started_at: string; ai_analysis: unknown; workout_name?: string }) => {

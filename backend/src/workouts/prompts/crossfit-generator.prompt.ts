@@ -79,13 +79,19 @@ export function buildAthleteContextSection(context: UserAIContext): string {
   }
 
   if (context.recentSessions.length > 0) {
+    const sportLabels: Record<string, string> = {
+      crossfit: 'CrossFit', running: 'Running', hyrox: 'Hyrox',
+      strength: 'Musculation', athx: 'ATHX',
+    }
     lines.push('')
-    lines.push('**Activité récente (7 jours)** :')
+    lines.push('**Activité récente (21 jours, tous sports confondus)** :')
     for (const s of context.recentSessions) {
       const effort = s.perceived_effort ? `, RPE ${s.perceived_effort}/10` : ''
-      const type = s.workout_type ? ` : ${s.workout_type}` : ''
-      lines.push(`- ${s.date}${type}, ${s.duration_minutes}min${effort}`)
+      const type = s.workout_type ? ` (${s.workout_type})` : ''
+      const label = sportLabels[s.sport] ?? s.sport
+      lines.push(`- ${s.date} — ${label}${type}, ${s.duration_minutes}min${effort}`)
     }
+    lines.push('→ Tiens compte de la charge globale tous sports pour adapter l\'intensité et éviter la surcharge.')
   }
 
   if (context.recentAnalyses.length > 0) {

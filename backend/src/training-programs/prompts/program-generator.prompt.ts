@@ -57,10 +57,15 @@ function buildAthleteContextSection(context: UserAIContext): string {
   }
 
   if (context.recentSessions.length > 0) {
-    lines.push(`- Séances récentes (${context.recentSessions.length} dernières) :`)
-    context.recentSessions.slice(0, 5).forEach((s) => {
+    const sportLabels: Record<string, string> = {
+      crossfit: 'CrossFit', running: 'Running', hyrox: 'Hyrox',
+      strength: 'Musculation', athx: 'ATHX',
+    }
+    lines.push(`- Séances récentes tous sports (${context.recentSessions.length} sur 21 jours) :`)
+    context.recentSessions.slice(0, 7).forEach((s) => {
+      const label = sportLabels[s.sport] ?? s.sport
       lines.push(
-        `  - ${s.date} : ${s.workout_type || 'inconnu'}, ${s.duration_minutes} min, effort perçu ${s.perceived_effort ?? 'N/A'}/10`,
+        `  - ${s.date} — ${label} : ${s.workout_type || 'inconnu'}, ${s.duration_minutes} min, effort ${s.perceived_effort ?? 'N/A'}/10`,
       )
     })
   }

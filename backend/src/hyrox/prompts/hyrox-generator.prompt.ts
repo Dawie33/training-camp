@@ -1,4 +1,5 @@
 import { GenerateHyroxSessionDto, HYROX_ALTERNATIVES, HYROX_STATIONS } from '../dto/hyrox.dto'
+import { RecentSession } from 'src/workouts/services/user-context.service'
 
 const STATION_LABELS: Record<string, string> = {
   ski_erg: 'SkiErg (1000m)',
@@ -149,6 +150,7 @@ interface HyroxUserPromptParams extends GenerateHyroxSessionDto {
   isOfficialMode?: boolean
   recentSessionNames?: string[]
   variationSeed?: string
+  recentAllSports?: RecentSession[]
 }
 
 export function buildHyroxUserPrompt(params: HyroxUserPromptParams): string {
@@ -215,6 +217,21 @@ Les exercices poids du corps sont TOUJOURS disponibles.`
 
   if (params.variationSeed) {
     prompt += `\n\nDirective de variation — axe prioritaire pour cette séance : ${params.variationSeed}`
+  }
+
+  if (params.recentAllSports && params.recentAllSports.length > 0) {
+    const sportLabels: Record<string, string> = {
+      crossfit: 'CrossFit', running: 'Running', hyrox: 'Hyrox',
+      strength: 'Musculation', athx: 'ATHX',
+    }
+    prompt += `\n\n**Charge d'entraînement récente (tous sports, 21 jours) :**`
+    for (const s of params.recentAllSports.slice(0, 10)) {
+      const label = sportLabels[s.sport] ?? s.sport
+      const type = s.workout_type ? ` (${s.workout_type})` : ''
+      const effort = s.perceived_effort ? `, RPE ${s.perceived_effort}/10` : ''
+      prompt += `\n- ${s.date} — ${label}${type}, ${s.duration_minutes}min${effort}`
+    }
+    prompt += `\n→ Adapte le volume et l'intensité de cette séance en tenant compte de cette charge globale récente.`
   }
 
   return prompt
