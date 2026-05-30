@@ -3,7 +3,6 @@
 import 'temporal-polyfill/global'
 import './calendar-theme.css'
 
-import { LogWorkoutModal } from '@/components/calendar/LogWorkoutModal'
 import { ParseBoxWodModal } from '@/components/calendar/ParseBoxWodModal'
 import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
 import { WeeklyPlannerModal } from '@/components/calendar/WeeklyPlannerModal'
@@ -26,8 +25,6 @@ function CalendarContent() {
     dateActionOpen, setDateActionOpen,
     parseBoxWodOpen, setParseBoxWodOpen, parseBoxWodMode, setParseBoxWodMode,
     weeklyPlannerOpen, setWeeklyPlannerOpen,
-    logModalOpen, setLogModalOpen,
-    logModalData,
     googleConnected, googleLoading,
     handleGoogleConnect, handleGoogleDisconnect,
     printWorkoutData,
@@ -166,18 +163,7 @@ function CalendarContent() {
         onPlanned={() => refetch()}
       />
 
-      {logModalData && (
-        <LogWorkoutModal
-          open={logModalOpen}
-          onOpenChange={setLogModalOpen}
-          scheduleId={logModalData.scheduleId}
-          workoutId={logModalData.workoutId}
-          workoutName={logModalData.workoutName}
-          workoutType={logModalData.workoutType}
-          defaultLocation={logModalData.defaultLocation}
-          onLogged={() => { refetch(); setLogModalOpen(false) }}
-        />
-      )}
+
 
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null) }}>
         <DialogContent className="sm:max-w-[420px] bg-slate-900 border-white/10 text-white p-0 overflow-hidden">

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
-import { Check, ExternalLink, FileDown, SkipForward, Trash2, Trophy } from 'lucide-react'
-import { statusColors } from './CalendarEventContent'
 import { MUSCLE_LABELS, SESSION_GOAL_LABELS } from '@/services/strength'
+import { Check, ExternalLink, FileDown, SkipForward, Trash2 } from 'lucide-react'
+import { statusColors } from './CalendarEventContent'
 
 export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unknown> }) {
   const status = (calendarEvent.status as string) || 'scheduled'
@@ -10,7 +10,6 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const onComplete = calendarEvent._onComplete as (() => void) | undefined
   const onSkip = calendarEvent._onSkip as (() => void) | undefined
   const onDelete = calendarEvent._onDelete as (() => void) | undefined
-  const onLog = calendarEvent._onLog as (() => void) | undefined
   const onPrint = calendarEvent._onPrint as (() => void) | undefined
   const isStrength = module === 'strength'
   const targetMuscles = calendarEvent.target_muscles as string[] | undefined
@@ -86,16 +85,6 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
       <div className="flex flex-wrap gap-2 pt-3 border-t border-white/10">
         {status === 'scheduled' && (
           <>
-            {onLog && (
-              <Button
-                size="sm"
-                onClick={onLog}
-                className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
-              >
-                <Trophy className="w-3.5 h-3.5 mr-1" />
-                Logger le WOD
-              </Button>
-            )}
             {onComplete && (
               <Button
                 size="sm"
@@ -103,7 +92,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
                 className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
               >
                 <Check className="w-3.5 h-3.5 mr-1" />
-                Terminer sans résultat
+                Terminer
               </Button>
             )}
             {onSkip && (
