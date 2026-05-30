@@ -8,6 +8,7 @@ import { DailyWorkoutCard } from './components/DailyWorkoutCard'
 import { TrainingOverview } from './components/TrainingOverview'
 import { QuickActions } from './components/QuickActions'
 import { WeeklyCalendar } from './components/WeeklyCalendar'
+import { CoachRecommendationWidget } from '@/components/coach/CoachRecommendationWidget'
 
 function DashboardContent() {
   const user = useAuth()
@@ -38,6 +39,11 @@ function DashboardContent() {
             </div>
           </motion.div>
         </header>
+        {/* Recommandation Coach IA */}
+        <motion.div variants={fadeInUp}>
+          <CoachRecommendationWidget />
+        </motion.div>
+
         {/* Workout du jour */}
         <motion.div variants={fadeInUp}>
           <DailyWorkoutCard />
