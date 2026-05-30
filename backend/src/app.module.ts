@@ -22,6 +22,7 @@ import { HyroxModule } from './hyrox/hyrox.module'
 import { StrengthModule } from './strength/strength.module'
 import { FitImportModule } from './fit-import/fit-import.module'
 import { TrackingModule } from './tracking/tracking.module'
+import { RecommendationsModule } from './recommendations/recommendations.module'
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { TrackingModule } from './tracking/tracking.module'
     StrengthModule,
     FitImportModule,
     TrackingModule,
+    RecommendationsModule,
   ],
   providers: [
     {
