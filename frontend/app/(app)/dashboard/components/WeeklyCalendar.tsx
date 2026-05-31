@@ -2,13 +2,11 @@
 
 import { useWorkoutSchedule } from '@/app/(app)/calendar/_hooks/useWorkoutSchedule'
 import { useWorkoutSession } from '@/app/(app)/tracking/_hooks/useWorkoutSession'
-import { Workouts } from '@/domain/entities/workout'
-import { workoutsService } from '@/services/workouts'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { DayWorkout, WeekDay } from './types'
 
 
@@ -18,41 +16,6 @@ export function WeeklyCalendar() {
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0)
   const { workoutSessions } = useWorkoutSession()
   const { schedules } = useWorkoutSchedule()
-  const [workoutsDetails, setWorkoutsDetails] = useState<Map<string, Workouts>>(new Map())
-
-  // Récupérer les détails des workouts
-  useEffect(() => {
-    const fetchWorkoutDetails = async () => {
-      const allWorkoutIds = new Set<string>()
-
-      if (workoutSessions && workoutSessions.length > 0) {
-        workoutSessions.forEach(s => { if (s.workout_id) allWorkoutIds.add(s.workout_id) })
-      }
-
-      if (schedules && schedules.length > 0) {
-        schedules.forEach(s => { if (s.workout_id) allWorkoutIds.add(s.workout_id) })
-      }
-
-      if (allWorkoutIds.size === 0) return
-
-      const details = new Map<string, Workouts>()
-
-      await Promise.all(
-        Array.from(allWorkoutIds).map(async (workoutId) => {
-          try {
-            const workout = await workoutsService.getById(workoutId)
-            details.set(workoutId, workout)
-          } catch (error) {
-            console.error(`Failed to fetch workout ${workoutId}:`, error)
-          }
-        })
-      )
-
-      setWorkoutsDetails(details)
-    }
-
-    fetchWorkoutDetails()
-  }, [workoutSessions, schedules])
 
   const weekDays = useMemo(() => {
     const today = new Date()
@@ -86,17 +49,8 @@ export function WeeklyCalendar() {
               ? Math.floor((new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 1000)
               : undefined
 
-            const workoutDetail = session.workout_id ? workoutsDetails.get(session.workout_id) : undefined
-            const workoutName = workoutDetail?.name || `Workout ${(session.workout_id ?? session.id).substring(0, 8)}`
-
-            let intensity: 'low' | 'medium' | 'high' | undefined
-            if (workoutDetail?.intensity) {
-              const intensityMap: { [key: string]: 'low' | 'medium' | 'high' } = {
-                'low': 'low', 'medium': 'medium', 'high': 'high',
-                'faible': 'low', 'moyen': 'medium', 'intense': 'high'
-              }
-              intensity = intensityMap[workoutDetail.intensity.toLowerCase()]
-            }
+            const workoutName = session.workout_name || `Workout ${(session.workout_id ?? session.id).substring(0, 8)}`
+            const intensity: 'low' | 'medium' | 'high' | undefined = undefined
 
             dayWorkouts.push({
               id: session.id,
@@ -160,7 +114,7 @@ export function WeeklyCalendar() {
     }
 
     return days
-  }, [currentWeekOffset, workoutSessions, schedules, workoutsDetails])
+  }, [currentWeekOffset, workoutSessions, schedules])
 
   const currentMonth = weekDays[3].date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
