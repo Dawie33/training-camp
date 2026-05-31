@@ -95,8 +95,20 @@ export function CoachRecommendationWidget() {
     )
   }
 
-  // ── Erreur silencieuse ──
-  if (error || !data) return null
+  // ── Erreur ──
+  if (error || !data) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Brain className="w-5 h-5 text-slate-500" />
+          <p className="text-sm text-slate-400">Recommandation Coach IA indisponible</p>
+        </div>
+        <Link href="/workouts/generate-ai" className="px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/10 border border-orange-500/25 text-orange-300 hover:bg-orange-500/20 transition-colors whitespace-nowrap">
+          Générer une séance
+        </Link>
+      </div>
+    )
+  }
 
   const { recommendation: rec, session_stats: stats } = data
   const sport = SPORT_CONFIG[rec.recommended_sport]
@@ -194,9 +206,18 @@ export function CoachRecommendationWidget() {
           Générer cette séance
         </Link>
       ) : (
-        <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-green-500/20 bg-green-500/5 text-green-400 text-sm font-semibold">
-          <Heart className="w-4 h-4" />
-          Repos actif recommandé — prends soin de toi
+        <div className="space-y-2">
+          <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-green-500/20 bg-green-500/5 text-green-400 text-sm font-semibold">
+            <Heart className="w-4 h-4" />
+            Repos actif recommandé — prends soin de toi
+          </div>
+          <Link
+            href="/workouts/generate-ai"
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors text-sm"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+            Générer quand même une séance
+          </Link>
         </div>
       )}
     </motion.div>

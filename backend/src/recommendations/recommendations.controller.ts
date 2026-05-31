@@ -9,7 +9,7 @@ export class RecommendationsController {
   constructor(private readonly recommendationsService: RecommendationsService) {}
 
   @Get('next-session')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   async getNextSession(@Request() req: { user: { id: string } }) {
     return this.recommendationsService.getNextSessionRecommendation(req.user.id)
   }
