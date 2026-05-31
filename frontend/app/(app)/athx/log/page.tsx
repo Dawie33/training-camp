@@ -5,7 +5,6 @@ import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { MultiActivityFitData } from '@/services/fit-import'
 import { athxService, AthxSessionType, ATHX_SESSION_TYPE_LABELS } from '@/services/athx'
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -80,131 +79,109 @@ export default function AthxLogPage() {
   }
 
   return (
-    <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
-      initial="hidden" animate="visible" variants={staggerContainer}
-    >
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <motion.div className="space-y-6 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
 
-        {/* Header */}
-        <motion.div variants={fadeInUp} className="flex items-center gap-3">
-          <Link href="/athx" className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Enregistrer une séance</span>
-            </h1>
-            <p className="text-slate-400 text-sm mt-0.5">Log une séance ATHX réalisée</p>
-          </div>
-        </motion.div>
+      <motion.div variants={fadeInUp} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 space-y-4">
+        <h2 className="text-base font-semibold text-white">Séance</h2>
 
-        {/* Infos séance */}
-        <motion.div variants={fadeInUp} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Séance</h2>
+        <div>
+          <label className="block text-sm text-slate-400 mb-2">Date</label>
+          <input type="date" value={form.session_date}
+            onChange={e => setForm(f => ({ ...f, session_date: e.target.value }))}
+            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-purple-500/50 transition-all [color-scheme:dark]"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Date</label>
-            <input type="date" value={form.session_date}
-              onChange={e => setForm(f => ({ ...f, session_date: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-purple-500/50 transition-all [color-scheme:dark]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Type de séance</label>
-            <div className="flex gap-2 flex-wrap">
-              {SESSION_TYPES.map(type => (
-                <button key={type} type="button"
-                  onClick={() => setForm(f => ({ ...f, session_type: type }))}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    form.session_type === type
-                      ? SESSION_TYPE_COLORS[type]
-                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {ATHX_SESSION_TYPE_LABELS[type]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm text-slate-400 mb-2">Durée (min)</label>
-              <input type="number" min="1" max="300" placeholder="150"
-                value={form.duration_minutes}
-                onChange={e => setForm(f => ({ ...f, duration_minutes: e.target.value }))}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-slate-400 mb-2">RPE (1-10)</label>
-              <input type="number" min="1" max="10" placeholder="7"
-                value={form.perceived_effort}
-                onChange={e => setForm(f => ({ ...f, perceived_effort: e.target.value }))}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-400 mb-2">Notes (optionnel)</label>
-            <textarea rows={3} placeholder="Sensations, performances par zone..."
-              value={form.notes}
-              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 resize-none focus:outline-none focus:border-purple-500/50 transition-all"
-            />
-          </div>
-        </motion.div>
-
-        {/* Résultats par zone */}
-        <motion.div variants={fadeInUp} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-          <div>
-            <h2 className="text-lg font-semibold text-white">Résultats par zone</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Optionnel — score et notes par zone de travail</p>
-          </div>
-          <div className="space-y-3">
-            {ZONES.map(({ key, label }) => (
-              <div key={key} className="space-y-2">
-                <p className="text-sm font-medium text-slate-300">{label}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text" placeholder="Score / temps..."
-                    value={zoneResults[key]?.score ?? ''}
-                    onChange={e => setZoneResults(prev => ({ ...prev, [key]: { ...prev[key], score: e.target.value } }))}
-                    className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
-                  />
-                  <input
-                    type="text" placeholder="Notes..."
-                    value={zoneResults[key]?.notes ?? ''}
-                    onChange={e => setZoneResults(prev => ({ ...prev, [key]: { ...prev[key], notes: e.target.value } }))}
-                    className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
-                  />
-                </div>
-              </div>
+        <div>
+          <label className="block text-sm text-slate-400 mb-2">Type de séance</label>
+          <div className="flex gap-2 flex-wrap">
+            {SESSION_TYPES.map(type => (
+              <button key={type} type="button"
+                onClick={() => setForm(f => ({ ...f, session_type: type }))}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                  form.session_type === type
+                    ? SESSION_TYPE_COLORS[type]
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                }`}
+              >
+                {ATHX_SESSION_TYPE_LABELS[type]}
+              </button>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Coros */}
-        <motion.div variants={fadeInUp}>
-          <CorosImport accentColor="purple" onImport={handleCorosImport} onClear={() => setFitData(null)} />
-        </motion.div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Durée (min)</label>
+            <input type="number" min="1" max="300" placeholder="150"
+              value={form.duration_minutes}
+              onChange={e => setForm(f => ({ ...f, duration_minutes: e.target.value }))}
+              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">RPE (1-10)</label>
+            <input type="number" min="1" max="10" placeholder="7"
+              value={form.perceived_effort}
+              onChange={e => setForm(f => ({ ...f, perceived_effort: e.target.value }))}
+              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
+            />
+          </div>
+        </div>
 
-        {/* Actions */}
-        <motion.div variants={fadeInUp} className="flex gap-3 pb-20 sm:pb-8">
-          <Link href="/athx" className="flex-1 py-3.5 text-center border border-slate-700/50 bg-slate-800/50 text-slate-300 rounded-xl font-medium hover:bg-slate-700/50 transition-colors">
-            Annuler
-          </Link>
-          <button onClick={handleSave} disabled={saving}
-            className="flex-1 py-3.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all disabled:opacity-50"
-          >
-            {saving ? 'Enregistrement...' : 'Enregistrer la séance'}
-          </button>
-        </motion.div>
+        <div>
+          <label className="block text-sm text-slate-400 mb-2">Notes (optionnel)</label>
+          <textarea rows={3} placeholder="Sensations, performances par zone..."
+            value={form.notes}
+            onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 resize-none focus:outline-none focus:border-purple-500/50 transition-all"
+          />
+        </div>
+      </motion.div>
 
-      </div>
+      <motion.div variants={fadeInUp} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 space-y-3">
+        <div>
+          <h2 className="text-base font-semibold text-white">Résultats par zone</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Optionnel — score et notes par zone de travail</p>
+        </div>
+        <div className="space-y-3">
+          {ZONES.map(({ key, label }) => (
+            <div key={key} className="space-y-2">
+              <p className="text-sm font-medium text-slate-300">{label}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text" placeholder="Score / temps..."
+                  value={zoneResults[key]?.score ?? ''}
+                  onChange={e => setZoneResults(prev => ({ ...prev, [key]: { ...prev[key], score: e.target.value } }))}
+                  className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
+                />
+                <input
+                  type="text" placeholder="Notes..."
+                  value={zoneResults[key]?.notes ?? ''}
+                  onChange={e => setZoneResults(prev => ({ ...prev, [key]: { ...prev[key], notes: e.target.value } }))}
+                  className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-slate-600"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      <motion.div variants={fadeInUp}>
+        <CorosImport accentColor="purple" onImport={handleCorosImport} onClear={() => setFitData(null)} />
+      </motion.div>
+
+      <motion.div variants={fadeInUp} className="flex gap-3">
+        <Link href="/athx" className="flex-1 py-3.5 text-center border border-slate-700/50 bg-slate-800/50 text-slate-300 rounded-xl font-medium hover:bg-slate-700/50 transition-colors">
+          Annuler
+        </Link>
+        <button onClick={handleSave} disabled={saving}
+          className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-500 transition-all disabled:opacity-50"
+        >
+          {saving ? 'Enregistrement...' : 'Enregistrer la séance'}
+        </button>
+      </motion.div>
+
     </motion.div>
   )
 }

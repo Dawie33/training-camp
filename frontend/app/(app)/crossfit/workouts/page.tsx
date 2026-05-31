@@ -10,7 +10,7 @@ import {
   useReactTable
 } from "@tanstack/react-table"
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowUpDown, Edit, Eye, MoreHorizontal, Search, Trash2, Trophy } from "lucide-react"
+import { ArrowUpDown, Edit, Eye, MoreHorizontal, Search, Trash2, Trophy } from "lucide-react"
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import * as React from "react"
@@ -297,26 +297,10 @@ export default function CrossfitWorkoutsPage() {
   })
 
   return (
-    <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-    >
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <motion.div variants={fadeInUp} className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/crossfit" className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all">
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold">
-                <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Bibliothèque</span>
-              </h1>
-              <p className="text-slate-400 mt-1">Total : {total}</p>
-            </div>
-          </div>
+    <motion.div className="space-y-6 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
+      <div className="space-y-6">
+        <motion.div variants={fadeInUp}>
+          <p className="text-xs text-slate-500">{total} workout{total !== 1 ? 's' : ''}</p>
         </motion.div>
 
         {/* Filtres */}
@@ -544,7 +528,7 @@ export default function CrossfitWorkoutsPage() {
             ))
           )}
         </motion.div>
-      </div>
+    </div>
     </motion.div>
   )
 }
