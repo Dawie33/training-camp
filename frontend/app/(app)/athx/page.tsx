@@ -1,87 +1,184 @@
 'use client'
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { ATHX_SESSION_TYPE_LABELS } from '@/services/athx'
 import { motion } from 'framer-motion'
-import { Clock, Dumbbell, Plus, Target, Zap } from 'lucide-react'
+import { BookOpen, Clipboard, PenLine, Sparkles, Target } from 'lucide-react'
 import Link from 'next/link'
-import { AthxSessionCard } from './_components/AthxSessionCard'
+import { useState } from 'react'
 import { useAthxDashboard } from './_hooks/useAthxDashboard'
 
-export default function AthxPage() {
-  const { sessions, stats, loading, handleDelete } = useAthxDashboard()
+const LINK_ACTIONS = [
+  {
+    href: '/athx/log',
+    label: 'Enregistrer',
+    description: 'Loguer une séance réalisée',
+    icon: PenLine,
+    color: 'from-purple-500 to-pink-500',
+    shadow: 'shadow-purple-500/20',
+  },
+  {
+    href: '/athx/generate',
+    label: 'Générer avec IA',
+    description: 'Créer une séance personnalisée',
+    icon: Sparkles,
+    color: 'from-emerald-500 to-teal-500',
+    shadow: 'shadow-emerald-500/20',
+  },
+  {
+    href: '/athx/library',
+    label: 'Bibliothèque',
+    description: 'Parcourir toutes tes séances',
+    icon: BookOpen,
+    color: 'from-blue-500 to-indigo-500',
+    shadow: 'shadow-blue-500/20',
+  },
+]
 
+export default function AthxPage() {
+  const { sessions, loading } = useAthxDashboard()
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [pasteText, setPasteText] = useState('')
 
   return (
     <motion.div
       className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
       initial="hidden" animate="visible" variants={staggerContainer}
     >
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+
         {/* Header */}
-        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <motion.div variants={fadeInUp} className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <Target className="w-6 h-6 text-white" />
+          </div>
           <div>
-            <h1 className="text-2xl sm:text-4xl font-bold">
+            <h1 className="text-3xl font-bold">
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">ATHX</span>
             </h1>
-            <p className="text-sm text-slate-400">Athletic Fitness — Préparation compétition hybride 2h30</p>
+            <p className="text-slate-400 text-sm mt-0.5">Athletic Fitness — Préparation compétition hybride 2h30</p>
           </div>
-          <Link
-            href="/athx/generate"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 transition-colors text-sm font-medium self-start sm:self-auto"
-          >
-            <Plus className="w-4 h-4" />
-            Générer une séance
-          </Link>
         </motion.div>
 
-        {/* Stats */}
-        {!loading && stats && (
-          <motion.div variants={fadeInUp} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Séances', value: stats.total_sessions, icon: Target, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-              { label: 'Heures', value: `${stats.total_hours}h`, icon: Clock, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-              { label: 'RPE moyen', value: stats.avg_effort ?? '--', icon: Zap, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
-              { label: 'Types', value: Object.keys(stats.type_breakdown).length, icon: Dumbbell, color: 'text-pink-400', bg: 'bg-pink-500/10 border-pink-500/20' },
-            ].map(({ label, value, icon: Icon, color, bg }) => (
-              <div key={label} className={`rounded-xl border p-4 ${bg}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon className={`w-4 h-4 ${color}`} />
-                  <span className="text-xs text-slate-400">{label}</span>
-                </div>
-                <p className={`text-2xl font-bold ${color}`}>{value}</p>
-              </div>
-            ))}
-          </motion.div>
-        )}
+        {/* Actions */}
+        <motion.div variants={fadeInUp}>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-3">Actions</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            {LINK_ACTIONS.map((action) => {
+              const Icon = action.icon
+              return (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className={`group relative bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 hover:shadow-lg ${action.shadow}`}
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="font-semibold text-white text-sm">{action.label}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{action.description}</p>
+                </Link>
+              )
+            })}
+          </div>
+        </motion.div>
 
-        {/* Sessions */}
-        <motion.div variants={fadeInUp} className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
-            <Target className="w-5 h-5 text-purple-400" />
-            Séances récentes
-          </h2>
+        {/* Coller un entraînement */}
+        <motion.div variants={fadeInUp}>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-3">Coller un entraînement</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => setPasteOpen(true)}
+              className="group relative bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 hover:shadow-lg shadow-cyan-500/20 text-left"
+            >
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-sky-500 flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Clipboard className="w-5 h-5 text-white" />
+              </div>
+              <p className="font-semibold text-white text-sm">Coller un entraînement</p>
+              <p className="text-xs text-slate-400 mt-0.5">Coller depuis un texte ou programme</p>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Séances récentes */}
+        <motion.div variants={fadeInUp}>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">Séances récentes</h2>
+          </div>
 
           {loading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400" />
             </div>
           ) : sessions.length === 0 ? (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
-              <Target className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400 mb-4">Aucune séance ATHX pour l'instant</p>
-              <Link href="/athx/generate" className="px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-colors text-sm">
-                Générer avec l'IA
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+              <Target className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 mb-4">Aucune séance ATHX pour l&apos;instant</p>
+              <Link href="/athx/generate" className="inline-flex px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-colors text-sm">
+                Générer avec l&apos;IA
               </Link>
             </div>
           ) : (
-            <div className="space-y-3">
-              {sessions.map((session) => (
-                <AthxSessionCard key={session.id} session={session} onDelete={handleDelete} />
-              ))}
+            <div className="space-y-2">
+              {sessions.slice(0, 10).map((session) => {
+                const date = new Date(session.session_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                const name = session.ai_plan?.name ?? ATHX_SESSION_TYPE_LABELS[session.session_type]
+                return (
+                  <div key={session.id} className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl px-4 py-3 hover:bg-white/8 transition-colors">
+                    <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                      <Target className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white text-sm truncate">{name}</p>
+                      <p className="text-xs text-slate-500">{date}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-medium text-purple-400">{ATHX_SESSION_TYPE_LABELS[session.session_type]}</p>
+                      {session.duration_minutes && (
+                        <p className="text-xs text-slate-500">{session.duration_minutes} min</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </motion.div>
+
       </div>
+
+      {/* Modal coller */}
+      {pasteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPasteOpen(false)} />
+          <div className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-5 space-y-4">
+            <h2 className="font-semibold text-white">Coller un entraînement</h2>
+            <p className="text-xs text-slate-400">Colle ton programme ATHX — l&apos;IA va l&apos;analyser et créer ta séance.</p>
+            <textarea
+              rows={6}
+              placeholder="Ex: Zone Force - Back squat 5×5, Zone Endurance - 20 min row..."
+              value={pasteText}
+              onChange={e => setPasteText(e.target.value)}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 placeholder:text-slate-600 resize-none"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPasteOpen(false)}
+                className="flex-1 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg hover:bg-white/10 transition-colors text-sm"
+              >
+                Annuler
+              </button>
+              <Link
+                href={`/athx/generate?context=${encodeURIComponent(pasteText)}`}
+                className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity text-sm text-center"
+                onClick={() => setPasteOpen(false)}
+              >
+                Analyser avec l&apos;IA
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }

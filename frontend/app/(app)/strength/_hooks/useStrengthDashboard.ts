@@ -55,5 +55,5 @@ export function useStrengthDashboard() {
     } catch { toast.error('Erreur lors de la suppression') }
   }
 
-  return { sessions, stats, loading, filters, setFilters, handleDelete }
+  return { sessions, stats, loading, filters, setFilters, handleDelete, fetchSessions }
 }

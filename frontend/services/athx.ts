@@ -95,6 +95,10 @@ export const athxService = {
     return apiClient.get<AthxSession>(`/athx/sessions/${id}`)
   },
 
+  async create(data: Partial<AthxSession>) {
+    return apiClient.post<AthxSession>('/athx/sessions', data)
+  },
+
   async delete(id: string) {
     return apiClient.delete<{ success: boolean }>(`/athx/sessions/${id}`)
   },
