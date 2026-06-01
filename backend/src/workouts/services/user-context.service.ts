@@ -186,32 +186,32 @@ export class UserContextService {
       }
     })
 
-    const runningMapped: RecentSession[] = (runningSessions ?? []).map((s: { session_date: string; run_type: string; duration_seconds?: number; perceived_effort?: number }) => ({
-      date: s.session_date,
+    const runningMapped: RecentSession[] = (runningSessions ?? []).map((s: { session_date: string | Date; run_type: string; duration_seconds?: number; perceived_effort?: number }) => ({
+      date: new Date(s.session_date).toISOString().split('T')[0],
       sport: 'running' as const,
       workout_type: s.run_type,
       duration_minutes: s.duration_seconds ? Math.round(s.duration_seconds / 60) : 0,
       perceived_effort: s.perceived_effort ?? undefined,
     }))
 
-    const hyroxMapped: RecentSession[] = (hyroxSessions ?? []).map((s: { session_date: string; session_type: string; total_time_seconds?: number; perceived_effort?: number }) => ({
-      date: s.session_date,
+    const hyroxMapped: RecentSession[] = (hyroxSessions ?? []).map((s: { session_date: string | Date; session_type: string; total_time_seconds?: number; perceived_effort?: number }) => ({
+      date: new Date(s.session_date).toISOString().split('T')[0],
       sport: 'hyrox' as const,
       workout_type: s.session_type,
       duration_minutes: s.total_time_seconds ? Math.round(s.total_time_seconds / 60) : 0,
       perceived_effort: s.perceived_effort ?? undefined,
     }))
 
-    const athxMapped: RecentSession[] = (athxSessions ?? []).map((s: { session_date: string; session_type: string; duration_minutes?: number; perceived_effort?: number }) => ({
-      date: s.session_date,
+    const athxMapped: RecentSession[] = (athxSessions ?? []).map((s: { session_date: string | Date; session_type: string; duration_minutes?: number; perceived_effort?: number }) => ({
+      date: new Date(s.session_date).toISOString().split('T')[0],
       sport: 'athx' as const,
       workout_type: s.session_type,
       duration_minutes: s.duration_minutes ?? 0,
       perceived_effort: s.perceived_effort ?? undefined,
     }))
 
-    const strengthMapped: RecentSession[] = (strengthSessions ?? []).map((s: { session_date: string; session_goal: string; duration_minutes?: number; perceived_effort?: number }) => ({
-      date: s.session_date,
+    const strengthMapped: RecentSession[] = (strengthSessions ?? []).map((s: { session_date: string | Date; session_goal: string; duration_minutes?: number; perceived_effort?: number }) => ({
+      date: new Date(s.session_date).toISOString().split('T')[0],
       sport: 'strength' as const,
       workout_type: s.session_goal,
       duration_minutes: s.duration_minutes ?? 0,
