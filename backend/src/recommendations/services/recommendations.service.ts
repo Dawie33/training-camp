@@ -23,10 +23,10 @@ export class RecommendationsService {
       return cached.data
     }
 
-    const ctx = await this.userContextService.getUserAIContext(userId)
-    const stats = this.computeSessionStats(ctx)
-
     try {
+      const ctx = await this.userContextService.getUserAIContext(userId)
+      const stats = this.computeSessionStats(ctx)
+
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
