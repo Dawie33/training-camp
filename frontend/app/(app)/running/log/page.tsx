@@ -3,11 +3,12 @@
 import { CorosImport } from '@/components/fit-import/CorosImport'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { MultiActivityFitData } from '@/services/fit-import'
-import { runningService, RunType, RUN_TYPE_LABELS } from '@/services/running'
+import { runningService, RunningSession, RunType, RUN_TYPE_LABELS } from '@/services/running'
 import { motion } from 'framer-motion'
+import { ChevronDown, Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 const RUN_TYPES: RunType[] = ['easy', 'tempo', 'intervals', 'long_run', 'fartlek', 'recovery', 'race']
@@ -26,6 +27,12 @@ export default function RunningLogPage() {
   const [saving, setSaving] = useState(false)
   const [fitData, setFitData] = useState<MultiActivityFitData | null>(null)
 
+  const [aiPlans, setAiPlans] = useState<RunningSession[]>([])
+  const [selectedPlan, setSelectedPlan] = useState<RunningSession | null>(null)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [search, setSearch] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
   const [form, setForm] = useState({
     session_date: new Date().toISOString().split('T')[0],
     run_type: 'easy' as RunType,
@@ -36,6 +43,44 @@ export default function RunningLogPage() {
     avg_heart_rate: '',
     notes: '',
   })
+
+  useEffect(() => {
+    runningService.getSessions({ source: 'ai_generated', limit: 20 })
+      .then(res => setAiPlans(res.rows))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelectPlan = (plan: RunningSession) => {
+    setSelectedPlan(plan)
+    setShowDropdown(false)
+    setSearch('')
+    setForm(f => ({
+      ...f,
+      run_type: plan.run_type,
+      distance_km: plan.ai_plan?.total_distance_km ? String(plan.ai_plan.total_distance_km) : f.distance_km,
+      minutes: plan.ai_plan?.estimated_duration_minutes ? String(plan.ai_plan.estimated_duration_minutes) : f.minutes,
+      seconds: '0',
+    }))
+  }
+
+  const handleClearPlan = () => {
+    setSelectedPlan(null)
+    setSearch('')
+  }
+
+  const filteredPlans = aiPlans.filter(p =>
+    (p.ai_plan?.name ?? RUN_TYPE_LABELS[p.run_type]).toLowerCase().includes(search.toLowerCase())
+  )
 
   const handleCorosImport = (data: MultiActivityFitData) => {
     setFitData(data)
@@ -105,6 +150,70 @@ export default function RunningLogPage() {
 
   return (
     <motion.div className="space-y-6 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
+
+      {/* Sélection d'un plan IA */}
+      <motion.div variants={fadeInUp} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5">
+        <h2 className="text-base font-semibold text-white mb-3">Séance planifiée (optionnel)</h2>
+        <div className="relative" ref={dropdownRef}>
+          {selectedPlan ? (
+            <div className="flex items-center justify-between px-4 py-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
+              <div className="flex items-center gap-2 min-w-0">
+                <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white truncate">
+                    {selectedPlan.ai_plan?.name ?? RUN_TYPE_LABELS[selectedPlan.run_type]}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {selectedPlan.ai_plan?.total_distance_km && `${selectedPlan.ai_plan.total_distance_km} km · `}
+                    {selectedPlan.ai_plan?.estimated_duration_minutes && `${selectedPlan.ai_plan.estimated_duration_minutes} min`}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleClearPlan} className="ml-2 text-slate-400 hover:text-white transition-colors shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setShowDropdown(true) }}
+                  onFocus={() => setShowDropdown(true)}
+                  placeholder="Sélectionner un plan généré par l'IA..."
+                  className="w-full px-4 py-3 pr-10 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all"
+                />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+              {showDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  {filteredPlans.length === 0 ? (
+                    <p className="px-4 py-3 text-sm text-slate-500">Aucun plan trouvé</p>
+                  ) : (
+                    filteredPlans.map(plan => (
+                      <button
+                        key={plan.id}
+                        onClick={() => handleSelectPlan(plan)}
+                        className="w-full text-left px-4 py-3 hover:bg-slate-700/50 transition-colors border-b border-slate-700/50 last:border-0"
+                      >
+                        <p className="text-sm font-medium text-white">
+                          {plan.ai_plan?.name ?? RUN_TYPE_LABELS[plan.run_type]}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {new Date(plan.session_date).toLocaleDateString('fr-FR')}
+                          {plan.ai_plan?.total_distance_km && ` · ${plan.ai_plan.total_distance_km} km`}
+                          {plan.ai_plan?.estimated_duration_minutes && ` · ${plan.ai_plan.estimated_duration_minutes} min`}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </motion.div>
 
       <motion.div variants={fadeInUp} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 space-y-4">
         <h2 className="text-base font-semibold text-white">Sortie</h2>
