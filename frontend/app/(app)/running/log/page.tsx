@@ -125,7 +125,6 @@ export default function RunningLogPage() {
             : undefined,
         avg_heart_rate: form.avg_heart_rate ? Number(form.avg_heart_rate) : undefined,
         notes: form.notes || undefined,
-        source: 'manual',
       })
       toast.success('Sortie enregistrée !')
       router.push('/running')

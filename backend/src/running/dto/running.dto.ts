@@ -141,6 +141,7 @@ export class RunningSessionQueryDto {
   run_type?: RunType
 
   @IsOptional()
+  @IsString()
   @IsIn(['manual', 'ai_generated', 'strava'])
   source?: RunSource
 }
