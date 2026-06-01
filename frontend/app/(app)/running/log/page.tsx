@@ -45,8 +45,8 @@ export default function RunningLogPage() {
   })
 
   useEffect(() => {
-    runningService.getSessions({ source: 'ai_generated', limit: 20 })
-      .then(res => setAiPlans(res.rows))
+    runningService.getSessions({ limit: 50 })
+      .then(res => setAiPlans(res.rows.filter(s => s.source === 'ai_generated')))
       .catch(() => {})
   }, [])
 
