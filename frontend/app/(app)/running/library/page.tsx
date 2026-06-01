@@ -75,8 +75,8 @@ export default function RunningLibraryPage() {
       accessorKey: 'distance_km',
       header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Distance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
       cell: ({ row }) => {
-        const d = row.getValue('distance_km') as number | null
-        return d ? `${d.toFixed(1)} km` : '—'
+        const d = row.getValue('distance_km')
+        return d != null ? `${Number(d).toFixed(1)} km` : '—'
       },
     },
     {

@@ -43,7 +43,7 @@ export default function RunningPage() {
                       <p className="text-sm font-medium text-white truncate">{name}</p>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {date}
-                        {session.distance_km && ` · ${session.distance_km.toFixed(1)} km`}
+                        {session.distance_km && ` · ${Number(session.distance_km).toFixed(1)} km`}
                       </p>
                     </div>
                     <div className="text-right ml-4 flex-shrink-0">
