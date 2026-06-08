@@ -387,6 +387,7 @@ Exemple :
 4. **Standards de mouvement** : Précise les standards (full ROM, touch-and-go, etc.)
 5. **Cohérence** : Le workout doit être cohérent avec le workout_type choisi
 6. **Durée réaliste** : Total 30-60 minutes incluant warmup/cooldown
+7. **Format OBLIGATOIRE** : Le champ `format` est **obligatoire** pour toutes les sections autres que `warmup` et `cooldown`. Valeurs acceptées : `"AMRAP Xmin"`, `"EMOM Xmin"`, `"For Time (cap Xmin)"`, `"Tabata"`, `"Chipper"`, `"Straight Sets"`, `"E2MOM Xmin"`, `"Circuit"`, `"Build to Heavy"`. Pour `warmup` et `cooldown` uniquement : `null`.
 
 ## 9. PROTOCOLES VO2MAX
 
