@@ -4,8 +4,9 @@ import { ExerciseDifficulty } from '@/domain/entities/exercise'
 import { CreateWorkoutDTO } from '@/domain/entities/workout'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
 import { GeneratedWorkout, generatePersonalizedWorkoutWithAI, generateWorkoutWithAI, workoutsService } from '@/services'
+import { usersService } from '@/services/users'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 export function useGenerateWorkout() {
@@ -16,8 +17,17 @@ export function useGenerateWorkout() {
   const [difficulty, setDifficulty] = useState<ExerciseDifficulty>('intermediate')
   const [duration, setDuration] = useState(45)
   const [equipment, setEquipment] = useState<string[]>([])
+  const [profileEquipment, setProfileEquipment] = useState<string[]>([])
   const [additionalInstructions, setAdditionalInstructions] = useState('')
   const [personalized, setPersonalized] = useState(true)
+
+  useEffect(() => {
+    usersService.getUserProfile().then((user) => {
+      const saved = user.equipment_available ?? []
+      setProfileEquipment(saved)
+      setEquipment(saved)
+    }).catch(() => {/* silencieux si pas de profil */})
+  }, [])
 
   // UI state
   const [loading, setLoading] = useState(false)
@@ -118,6 +128,7 @@ export function useGenerateWorkout() {
     difficulty, setDifficulty,
     duration, setDuration,
     equipment, setEquipment, toggleEquipment,
+    profileEquipment,
     additionalInstructions, setAdditionalInstructions,
     personalized, setPersonalized,
     // UI

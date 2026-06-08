@@ -13,6 +13,7 @@ export default function GenerateWorkoutAIPage() {
     difficulty, setDifficulty,
     duration, setDuration,
     equipment, setEquipment, toggleEquipment,
+    profileEquipment,
     additionalInstructions, setAdditionalInstructions,
     personalized, setPersonalized,
     loading, error,
@@ -54,6 +55,7 @@ export default function GenerateWorkoutAIPage() {
             difficulty={difficulty} setDifficulty={setDifficulty}
             duration={duration} setDuration={setDuration}
             equipment={equipment} setEquipment={setEquipment} toggleEquipment={toggleEquipment}
+            profileEquipment={profileEquipment}
             additionalInstructions={additionalInstructions} setAdditionalInstructions={setAdditionalInstructions}
             personalized={personalized} setPersonalized={setPersonalized}
             loading={loading} error={error}

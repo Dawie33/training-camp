@@ -59,9 +59,8 @@ const EQUIPMENT_CATEGORIES = [
 ]
 
 const EQUIPMENT_PRESETS = [
-  { label: 'Minimal', items: ['bodyweight', 'mat'] },
-  { label: 'Home gym', items: ['bodyweight', 'mat', 'band', 'dumbbell', 'kettlebell', 'pull-up-bar', 'jump-rope'] },
-  { label: 'Box CrossFit', items: ['barbell', 'plates', 'rack', 'dumbbell', 'kettlebell', 'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'wall-ball', 'rings', 'medicine-ball', 'ghd'] },
+  { label: 'Poids du corps', items: ['bodyweight'] },
+  { label: 'Box gym', items: ['barbell', 'plates', 'rack', 'dumbbell', 'kettlebell', 'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'wall-ball', 'rings', 'medicine-ball', 'ghd'] },
 ]
 
 const selectClass = 'w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors'
@@ -76,6 +75,7 @@ interface GenerateFormProps {
   equipment: string[]
   setEquipment: (v: string[]) => void
   toggleEquipment: (item: string) => void
+  profileEquipment: string[]
   additionalInstructions: string
   setAdditionalInstructions: (v: string) => void
   personalized: boolean
@@ -90,6 +90,7 @@ export function GenerateForm({
   difficulty, setDifficulty,
   duration, setDuration,
   equipment, setEquipment, toggleEquipment,
+  profileEquipment,
   additionalInstructions, setAdditionalInstructions,
   personalized, setPersonalized,
   loading, error,
@@ -176,11 +177,22 @@ export function GenerateForm({
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-1">Équipement disponible</label>
         <p className="text-xs text-slate-500 mb-3">
-          Sélectionnez l'équipement dont vous disposez. Si vide, l'IA génère sans contrainte.
+          {profileEquipment.length > 0
+            ? 'Votre équipement de profil est pré-sélectionné. Modifiez-le ou choisissez un preset.'
+            : 'Sélectionnez l\'équipement dont vous disposez. Si vide, l\'IA génère sans contrainte.'}
         </p>
 
         {/* Presets rapides */}
         <div className="flex flex-wrap gap-2 mb-3">
+          {profileEquipment.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setEquipment(profileEquipment)}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-orange-500/10 border border-orange-500/40 text-orange-400 hover:bg-orange-500/20 transition-colors"
+            >
+              Mon équipement ({profileEquipment.length})
+            </button>
+          )}
           {EQUIPMENT_PRESETS.map((preset) => (
             <button
               key={preset.label}
