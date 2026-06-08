@@ -3,7 +3,7 @@
 import { CorosImport } from '@/components/fit-import/CorosImport'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { MultiActivityFitData } from '@/services/fit-import'
-import { MUSCLE_GROUPS, MUSCLE_LABELS, SESSION_GOAL_LABELS, SessionGoal, strengthService } from '@/services/strength'
+import { GeneratedStrengthSession, MUSCLE_GROUPS, MUSCLE_LABELS, SESSION_GOAL_LABELS, SessionGoal, strengthService } from '@/services/strength'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -29,6 +29,7 @@ export default function StrengthLogPage() {
     target_muscles: [] as string[],
     duration_minutes: '',
     perceived_effort: '',
+    session_plan: '',
     notes: '',
   })
 
@@ -50,6 +51,10 @@ export default function StrengthLogPage() {
       toast.error('Sélectionne au moins un groupe musculaire')
       return
     }
+
+    const notesParts = [form.session_plan.trim(), form.notes.trim()].filter(Boolean)
+    const notes = notesParts.length > 0 ? notesParts.join('\n\n---\n\n') : undefined
+
     setSaving(true)
     try {
       await strengthService.create({
@@ -58,9 +63,8 @@ export default function StrengthLogPage() {
         target_muscles: form.target_muscles,
         duration_minutes: form.duration_minutes ? Number(form.duration_minutes) : undefined,
         perceived_effort: form.perceived_effort ? Number(form.perceived_effort) : undefined,
-        notes: form.notes || undefined,
-        source: 'manual',
-        ...(fitData && { ai_plan: { coros: { activities: fitData.activities, totals: fitData.totals } } as unknown as Record<string, unknown> }),
+        notes,
+        ...(fitData && { ai_plan: { coros: { activities: fitData.activities, totals: fitData.totals } } as unknown as GeneratedStrengthSession }),
       })
       toast.success('Séance enregistrée !')
       router.push('/strength')
@@ -139,8 +143,19 @@ export default function StrengthLogPage() {
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Notes (optionnel)</label>
-          <textarea rows={3} placeholder="Exercices réalisés, sensations, charges..."
+          <label className="block text-sm text-slate-400 mb-2">Plan de séance (optionnel)</label>
+          <textarea
+            rows={10}
+            placeholder={"Colle ici le plan généré par l'IA…\n\nEx :\nBloc 1 — Compound lourd\n① Squat talon surélevé — 4 × 8\n…"}
+            value={form.session_plan}
+            onChange={e => setForm(f => ({ ...f, session_plan: e.target.value }))}
+            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-600 resize-y focus:outline-none focus:border-violet-500/50 transition-all text-sm font-mono leading-relaxed"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-slate-400 mb-2">Notes personnelles (optionnel)</label>
+          <textarea rows={3} placeholder="Sensations, charges utilisées, remarques…"
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 resize-none focus:outline-none focus:border-violet-500/50 transition-all"

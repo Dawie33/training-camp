@@ -15,11 +15,16 @@ import {
 } from '@/services/strength'
 import { usersService } from '@/services/users'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CheckCircle2, Clock, Dumbbell, Home, Loader2, RotateCcw, Save, Sparkles, Zap } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, Dumbbell, Loader2, RotateCcw, Save, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+
+const BODY_PARTS = {
+  upper: { label: 'Haut du corps', icon: '💪', muscles: ['chest', 'back', 'shoulders', 'arms', 'forearms'] as MuscleGroup[] },
+  lower: { label: 'Bas du corps', icon: '🦵', muscles: ['legs', 'glutes', 'core'] as MuscleGroup[] },
+}
 
 const GOALS: { value: SessionGoal; description: string; reps: string }[] = [
   { value: 'strength', description: 'Charges lourdes, faibles reps', reps: '3-6 reps · RPE 8-9' },
@@ -39,7 +44,13 @@ export default function GenerateStrengthPage() {
   const router = useRouter()
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([])
   const [sessionGoal, setSessionGoal] = useState<SessionGoal>('hypertrophy')
-  const [equipmentMode, setEquipmentMode] = useState<'saved' | 'bodyweight'>('saved')
+  const [equipmentMode, setEquipmentMode] = useState<'saved' | 'bodyweight' | 'crossfit'>('saved')
+
+  const CROSSFIT_BOX_EQUIPMENT = [
+    'barbell', 'bumper-plates', 'dumbbell', 'kettlebell', 'rings',
+    'pull-up-bar', 'rower', 'assault-bike', 'bike-erg', 'ski-erg',
+    'jump-rope', 'rack', 'box', 'bench', 'GHD',
+  ]
   const [savedEquipment, setSavedEquipment] = useState<string[]>([])
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [additionalContext, setAdditionalContext] = useState('')
@@ -60,10 +71,26 @@ export default function GenerateStrengthPage() {
   const toggleMuscle = (m: MuscleGroup) =>
     setSelectedMuscles((prev) => prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m])
 
+  const toggleBodyPart = (part: 'upper' | 'lower') => {
+    const muscles = BODY_PARTS[part].muscles
+    const allSelected = muscles.every(m => selectedMuscles.includes(m))
+    if (allSelected) {
+      setSelectedMuscles(prev => prev.filter(m => !muscles.includes(m)))
+    } else {
+      setSelectedMuscles(prev => [...new Set([...prev, ...muscles])])
+    }
+  }
+
+  const isBodyPartFull = (part: 'upper' | 'lower') =>
+    BODY_PARTS[part].muscles.every(m => selectedMuscles.includes(m))
+
+  const isBodyPartPartial = (part: 'upper' | 'lower') =>
+    BODY_PARTS[part].muscles.some(m => selectedMuscles.includes(m)) && !isBodyPartFull(part)
+
   const buildParams = (): GenerateStrengthDto => ({
     targetMuscles: selectedMuscles,
     sessionGoal,
-    availableEquipment: equipmentMode === 'bodyweight' ? [] : savedEquipment,
+    availableEquipment: equipmentMode === 'bodyweight' ? [] : equipmentMode === 'crossfit' ? CROSSFIT_BOX_EQUIPMENT : savedEquipment,
     additionalContext: additionalContext || undefined,
     targetDurationMinutes,
   })
@@ -125,21 +152,61 @@ export default function GenerateStrengthPage() {
                   <span className="ml-2 text-violet-400 font-normal">({selectedMuscles.length} sélectionnés)</span>
                 )}
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {MUSCLE_GROUPS.map((muscle) => (
+
+              {/* Boutons haut / bas du corps */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {(Object.entries(BODY_PARTS) as [keyof typeof BODY_PARTS, typeof BODY_PARTS[keyof typeof BODY_PARTS]][]).map(([key, part]) => (
                   <button
-                    key={muscle}
-                    onClick={() => toggleMuscle(muscle)}
-                    data-active={selectedMuscles.includes(muscle)}
-                    className="text-left p-3 rounded-xl border bg-white/5 border-white/10 transition-all data-[active=true]:bg-violet-500/20 data-[active=true]:border-violet-500 hover:border-white/20"
+                    key={key}
+                    onClick={() => toggleBodyPart(key)}
+                    className={`p-3 rounded-xl border transition-all text-left ${
+                      isBodyPartFull(key)
+                        ? 'bg-violet-500/20 border-violet-500 text-white'
+                        : isBodyPartPartial(key)
+                          ? 'bg-violet-500/10 border-violet-500/50 text-white'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                    }`}
                   >
-                    <p className="font-semibold text-sm text-white">{MUSCLE_LABELS[muscle]}</p>
-                    {selectedMuscles.includes(muscle) && (
-                      <CheckCircle2 className="w-3 h-3 text-violet-400 mt-0.5" />
-                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-sm">{part.label}</span>
+                      {isBodyPartFull(key) && <CheckCircle2 className="w-4 h-4 text-violet-400" />}
+                      {isBodyPartPartial(key) && <span className="text-xs text-violet-400">{BODY_PARTS[key].muscles.filter(m => selectedMuscles.includes(m)).length}/{part.muscles.length}</span>}
+                    </div>
+                    <p className="text-[11px] mt-0.5 opacity-60">
+                      {part.muscles.map(m => MUSCLE_LABELS[m]).join(', ')}
+                    </p>
                   </button>
                 ))}
               </div>
+
+              {/* Muscles détaillés pour affiner */}
+              {selectedMuscles.length > 0 && (
+                <div className="space-y-2">
+                  {(Object.entries(BODY_PARTS) as [keyof typeof BODY_PARTS, typeof BODY_PARTS[keyof typeof BODY_PARTS]][]).map(([key, part]) => {
+                    const visibleMuscles = part.muscles.filter(m =>
+                      selectedMuscles.includes(m) || isBodyPartPartial(key) || isBodyPartFull(key)
+                    )
+                    if (!isBodyPartFull(key) && !isBodyPartPartial(key)) return null
+                    return (
+                      <div key={key} className="flex flex-wrap gap-1.5">
+                        {part.muscles.map(m => (
+                          <button
+                            key={m}
+                            onClick={() => toggleMuscle(m)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                              selectedMuscles.includes(m)
+                                ? 'bg-violet-500/20 border-violet-500/60 text-violet-300'
+                                : 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300'
+                            }`}
+                          >
+                            {MUSCLE_LABELS[m]}
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Objectif */}
@@ -190,7 +257,7 @@ export default function GenerateStrengthPage() {
               <label className="block text-sm font-semibold text-slate-300 mb-3 flex items-center gap-1.5">
                 <Dumbbell className="w-4 h-4 text-slate-400" />Équipement disponible
               </label>
-              <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 <button
                   onClick={() => setEquipmentMode('saved')}
                   className={`text-left p-3 rounded-xl border transition-all ${
@@ -199,8 +266,7 @@ export default function GenerateStrengthPage() {
                       : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <Home className="w-3.5 h-3.5" />
+                  <div className="mb-0.5">
                     <p className="font-semibold text-sm">Mon équipement</p>
                   </div>
                   <p className="text-[11px] mt-0.5 opacity-70">Profil utilisateur</p>
@@ -213,13 +279,37 @@ export default function GenerateStrengthPage() {
                       : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <Zap className="w-3.5 h-3.5" />
+                  <div className="mb-0.5">
                     <p className="font-semibold text-sm">Poids du corps</p>
                   </div>
                   <p className="text-[11px] mt-0.5 opacity-70">Aucun équipement</p>
                 </button>
+                <button
+                  onClick={() => setEquipmentMode('crossfit')}
+                  className={`text-left p-3 rounded-xl border transition-all ${
+                    equipmentMode === 'crossfit'
+                      ? 'bg-orange-500/20 border-orange-500 text-orange-400'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                  }`}
+                >
+                  <div className="mb-0.5">
+                    <p className="font-semibold text-sm">Box CrossFit</p>
+                  </div>
+                  <p className="text-[11px] mt-0.5 opacity-70">Tout le matériel</p>
+                </button>
               </div>
+
+              {equipmentMode === 'crossfit' && (
+                <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 mb-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    {CROSSFIT_BOX_EQUIPMENT.map((e) => (
+                      <span key={e} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                        <CheckCircle2 className="w-3 h-3" />{e}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {equipmentMode === 'saved' && (
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3">

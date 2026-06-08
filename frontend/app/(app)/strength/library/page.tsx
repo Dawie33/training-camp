@@ -9,6 +9,7 @@ import { motion } from 'framer-motion'
 import { ArrowUpDown, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { StrengthSessionDetailModal } from '../_components/StrengthSessionDetailModal'
 
 const GOALS: SessionGoal[] = ['strength', 'hypertrophy', 'endurance', 'power']
 
@@ -18,6 +19,7 @@ export default function StrengthLibraryPage() {
   const [search, setSearch] = useState('')
   const [goalFilter, setGoalFilter] = useState('')
   const [sorting, setSorting] = useState<SortingState>([])
+  const [selectedSession, setSelectedSession] = useState<StrengthSession | null>(null)
 
   const fetchSessions = useCallback(async () => {
     setLoading(true)
@@ -42,6 +44,11 @@ export default function StrengthLibraryPage() {
     } catch {
       toast.error('Erreur lors de la suppression')
     }
+  }, [])
+
+  const handleSessionUpdate = useCallback((updated: StrengthSession) => {
+    setSessions(prev => prev.map(s => s.id === updated.id ? updated : s))
+    setSelectedSession(updated)
   }, [])
 
   const filtered = useMemo(() => sessions.filter(s => {
@@ -94,7 +101,12 @@ export default function StrengthLibraryPage() {
     {
       id: 'actions',
       cell: ({ row }) => (
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:text-red-400 hover:bg-red-500/10" onClick={() => handleDelete(row.original.id)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+          onClick={e => { e.stopPropagation(); handleDelete(row.original.id) }}
+        >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       ),
@@ -104,6 +116,7 @@ export default function StrengthLibraryPage() {
   const table = useReactTable({ data: filtered, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() })
 
   return (
+    <>
     <motion.div className="space-y-4 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
 
       <motion.div variants={fadeInUp} className="space-y-3">
@@ -157,7 +170,11 @@ export default function StrengthLibraryPage() {
               </TableRow>
             ) : (
               table.getRowModel().rows.map(row => (
-                <TableRow key={row.id} className="border-slate-700/40 hover:bg-slate-700/30 transition-colors">
+                <TableRow
+                  key={row.id}
+                  className="border-slate-700/40 hover:bg-slate-700/30 transition-colors cursor-pointer"
+                  onClick={() => setSelectedSession(row.original)}
+                >
                   {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id} className="text-slate-300 text-sm py-2.5">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -171,5 +188,12 @@ export default function StrengthLibraryPage() {
       </motion.div>
 
     </motion.div>
+
+    <StrengthSessionDetailModal
+      session={selectedSession}
+      onClose={() => setSelectedSession(null)}
+      onUpdate={handleSessionUpdate}
+    />
+    </>
   )
 }
