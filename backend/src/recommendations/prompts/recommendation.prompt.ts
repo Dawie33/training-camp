@@ -27,6 +27,12 @@ Un programme équilibré sur 3 semaines doit couvrir :
 - RPE 9-10 hier → recommander séance légère ou repos
 - 3 séances haute intensité en 5 jours → recommander récupération active (running easy, strength légère)
 - Pas de 2 séances de même sport à haute intensité 2 jours de suite
+- Blessures et limitations physiques → adapter le sport et le type de séance en conséquence (éviter les zones touchées)
+
+## Continuité de progression
+- Si des analyses post-workout sont disponibles, tenir compte des "prochaines étapes conseillées" pour assurer la continuité
+- Si une compétence gymnastic/haltéro est en cours, la prioriser si elle n'a pas été pratiquée depuis > 5 jours
+- Prendre en compte l'objectif de séances par semaine pour évaluer si l'athlète est en retard sur son planning
 
 ## Règles d'urgence (days_since_last)
 - **Urgence haute** : > 14 jours sans running, > 10 jours sans force, > 21 jours sans Hyrox
@@ -82,8 +88,15 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
   const goals = Object.keys(ctx.global_goals).filter((k) => ctx.global_goals[k])
   if (goals.length) lines.push(`Objectifs : ${goals.join(', ')}`)
 
-  const injuries = Object.keys(ctx.injuries)
-  if (injuries.length) lines.push(`Limitations : ${injuries.join(', ')}`)
+  if (ctx.training_preferences?.sessions_per_week) {
+    lines.push(`Objectif séances/semaine : ${ctx.training_preferences.sessions_per_week}`)
+  }
+
+  const injuriesEntries = Object.entries(ctx.injuries)
+  if (injuriesEntries.length) lines.push(`Blessures : ${injuriesEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}`)
+
+  const limitationsEntries = Object.entries(ctx.physical_limitations)
+  if (limitationsEntries.length) lines.push(`Limitations physiques : ${limitationsEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}`)
 
   // Stats globales
   lines.push('')
@@ -107,6 +120,34 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
       const effort = s.perceived_effort ? `, RPE ${s.perceived_effort}/10` : ''
       const type = s.workout_type ? ` — ${s.workout_type}` : ''
       lines.push(`- ${s.date} : ${sportLabels[s.sport] ?? s.sport}${type}, ${s.duration_minutes}min${effort}`)
+    }
+  }
+
+  // Analyses post-workout récentes
+  if (ctx.recentAnalyses.length > 0) {
+    lines.push('')
+    lines.push('## ANALYSES POST-WORKOUT RÉCENTES')
+    for (const a of ctx.recentAnalyses.slice(0, 3)) {
+      const perfMap: Record<string, string> = {
+        pr: 'PR', above_average: 'au-dessus de la moyenne', average: 'dans la moyenne',
+        below_average: 'en dessous de la moyenne', first_time: 'première fois',
+      }
+      lines.push(`- ${a.date} : ${a.workout_name} — ${perfMap[a.performance_level] ?? a.performance_level}`)
+      if (a.next_steps) lines.push(`  → Prochaines étapes conseillées : ${a.next_steps}`)
+      if (a.improvements.length) lines.push(`  Points à améliorer : ${a.improvements.join(', ')}`)
+    }
+  }
+
+  // Compétences actives
+  if (ctx.activeSkills.length > 0) {
+    lines.push('')
+    lines.push('## COMPÉTENCES EN COURS')
+    for (const skill of ctx.activeSkills) {
+      const today = new Date()
+      const lastTrained = skill.last_trained
+        ? `dernière pratique il y a ${Math.floor((today.getTime() - new Date(skill.last_trained).getTime()) / 86400000)}j`
+        : 'jamais pratiquée'
+      lines.push(`- ${skill.skill_name} (${skill.skill_category}) — étape actuelle : "${skill.step_title}" — ${lastTrained}`)
     }
   }
 
