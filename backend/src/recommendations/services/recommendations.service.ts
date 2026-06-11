@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import OpenAI from 'openai'
-import { ZodError } from 'zod'
 import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
+import { ZodError } from 'zod'
 import { buildRecommendationSystemPrompt, buildRecommendationUserPrompt } from '../prompts/recommendation.prompt'
 import { AIRecommendationSchema, NextSessionRecommendation, SessionStats } from '../schemas/recommendation.schema'
 
@@ -65,7 +65,7 @@ export class RecommendationsService {
   }
 
   private computeSessionStats(ctx: UserAIContext): SessionStats {
-    const ALL_SPORTS = ['crossfit', 'running', 'hyrox', 'strength', 'athx'] as const
+    const ALL_SPORTS = ['crossfit', 'running', 'biking', 'strength'] as const
 
     const bySport: Record<string, number> = {}
     const lastDateBySport: Record<string, string | null> = {}

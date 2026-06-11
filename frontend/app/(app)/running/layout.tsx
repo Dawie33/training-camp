@@ -28,9 +28,8 @@ export default function RunningLayout({ children }: { children: React.ReactNode 
             const isActive = tab.href === '/running' ? pathname === '/running' : pathname.startsWith(tab.href)
             return (
               <Link key={tab.href} href={tab.href}
-                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-                  isActive ? 'border-cyan-500 text-cyan-400' : 'border-transparent text-slate-400 hover:text-white'
-                }`}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${isActive ? 'border-cyan-500 text-cyan-400' : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
               >
                 {tab.label}
               </Link>

@@ -13,14 +13,13 @@ import { useAuth } from '@/hooks/useAuth'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Activity,
+  Bike,
   Calendar,
   ChevronDown,
   Dumbbell,
   Footprints,
   Home,
   TrendingUp,
-  Trophy,
-  Zap,
 } from 'lucide-react'
 
 import Link from 'next/link'
@@ -69,8 +68,7 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
       items: [
         { href: '/crossfit', label: 'CrossFit', icon: <Activity className="w-5 h-5" /> },
         { href: '/running', label: 'Running', icon: <Footprints className="w-5 h-5" /> },
-        { href: '/hyrox', label: 'HYROX', icon: <Trophy className="w-5 h-5" /> },
-        { href: '/athx', label: 'ATHX', icon: <Zap className="w-5 h-5" /> },
+        { href: '/biking', label: 'Vélo', icon: <Bike className="w-5 h-5" /> },
         { href: '/strength', label: 'Force', icon: <Dumbbell className="w-5 h-5" /> },
       ],
     },

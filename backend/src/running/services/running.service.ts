@@ -15,7 +15,7 @@ export class RunningService {
   constructor(
     @InjectModel() private readonly knex: Knex,
     private readonly aiGenerator: AIRunningGeneratorService,
-  ) {}
+  ) { }
 
   async findAll(userId: string, query: RunningSessionQueryDto) {
     const { limit = '20', offset = '0', start_date, end_date, run_type, source } = query

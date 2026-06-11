@@ -28,7 +28,7 @@ export class RunningController {
   constructor(
     private readonly runningService: RunningService,
     private readonly stravaService: StravaService,
-  ) {}
+  ) { }
 
   // ── Sessions ────────────────────────────────────────────────────────────────
 
@@ -110,7 +110,7 @@ export class RunningController {
 
 @Controller('running/strava')
 export class StravaCallbackController {
-  constructor(private readonly stravaService: StravaService) {}
+  constructor(private readonly stravaService: StravaService) { }
 
   @Get('callback')
   async callback(

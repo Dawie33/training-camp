@@ -11,4 +11,4 @@ import { StravaService } from './services/strava.service'
   providers: [RunningService, AIRunningGeneratorService, StravaService],
   exports: [RunningService, StravaService],
 })
-export class RunningModule {}
+export class RunningModule { }

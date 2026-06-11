@@ -6,7 +6,6 @@ import { activitiesApi } from '@/services/activities'
 import { scheduleApi } from '@/services/schedule'
 import { workoutsService } from '@/services/workouts'
 import { addDays, addWeeks, format } from 'date-fns'
-import { fr } from 'date-fns/locale'
 import { Calendar, Loader2, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -71,7 +70,7 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
           )
         }
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [open, weekOffset]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateDay = (idx: number, patch: Partial<DayConfig>) =>
@@ -137,7 +136,7 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
           sportRequests.push(
             activitiesApi.create({ activity_type: sport, scheduled_date: day.date })
           )
-          const labels: Record<string, string> = { running: 'Running', hyrox: 'HYROX', athx: 'ATHX' }
+          const labels: Record<string, string> = { running: 'Running', biking: 'Vélo' }
           sportActivities.push({ date: day.date, type: labels[sport] })
         }
       }

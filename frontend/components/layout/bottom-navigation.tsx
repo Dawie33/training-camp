@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Activity, Calendar, Dumbbell, Footprints, Home, PenLine, TrendingUp, Trophy, X, Zap } from 'lucide-react'
+import { Activity, Bike, Calendar, Dumbbell, Footprints, Home, PenLine, TrendingUp, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -22,8 +22,7 @@ const sportItems: NavItem[] = [
   { href: '/crossfit/log-workout', label: 'Log workout', icon: PenLine },
   { href: '/crossfit', label: 'CrossFit', icon: Activity },
   { href: '/running', label: 'Running', icon: Footprints },
-  { href: '/hyrox', label: 'HYROX', icon: Trophy },
-  { href: '/athx', label: 'ATHX', icon: Zap },
+  { href: '/biking', label: 'Vélo', icon: Bike },
   { href: '/strength', label: 'Force', icon: Dumbbell },
 ]
 
@@ -71,9 +70,8 @@ export function BottomNavigation() {
                       onClick={() => setShowSportMenu(false)}
                     >
                       <motion.div
-                        className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
-                          isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
-                        }`}
+                        className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
+                          }`}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}

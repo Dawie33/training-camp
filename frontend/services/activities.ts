@@ -32,7 +32,7 @@ export interface UnifiedActivity {
   completed_session_id?: string
 
   // Champs nouveaux modules
-  activity_type?: 'hyrox' | 'running' | 'athx' | 'strength'
+  activity_type?: 'running' | 'biking' | 'strength'
   activity_id?: string
 
   // Champs Force
@@ -46,7 +46,7 @@ export interface UnifiedActivity {
 }
 
 export interface CreateActivityDto {
-  activity_type: 'hyrox' | 'running' | 'athx' | 'strength'
+  activity_type: 'running' | 'biking' | 'strength'
   scheduled_date: string
   activity_id?: string
   notes?: string
@@ -75,14 +75,14 @@ export const activitiesApi = {
   },
 
   /**
-   * Crée une nouvelle activité planifiée (HYROX / Running / ATHX)
+   * Crée une nouvelle activité planifiée (Running / Biking / Strength)
    */
   async create(data: CreateActivityDto): Promise<UnifiedActivity> {
     return apiClient.post<UnifiedActivity>('/scheduled-activities', data)
   },
 
   /**
-   * Met à jour une activité planifiée (HYROX / Running / ATHX)
+   * Met à jour une activité planifiée (Running / Biking / Strength)
    */
   async update(id: string, data: UpdateActivityDto): Promise<UnifiedActivity> {
     return apiClient.patch<UnifiedActivity>(`/scheduled-activities/${id}`, data)

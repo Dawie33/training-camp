@@ -4,9 +4,8 @@ import { SessionStats } from '../schemas/recommendation.schema'
 const SPORT_LABELS: Record<string, string> = {
   crossfit: 'CrossFit',
   running: 'Running',
-  hyrox: 'Hyrox',
+  biking: 'Vélo',
   strength: 'Musculation',
-  athx: 'ATHX',
 }
 
 export function buildRecommendationSystemPrompt(): string {
@@ -18,48 +17,40 @@ Ta mission est d'analyser l'historique d'entraînement complet d'un athlète (to
 
 ## Équilibre des modalités
 Un programme équilibré sur 3 semaines doit couvrir :
-- **Cardio/endurance** : Running ou Hyrox run_prep (2-3x/3 semaines minimum)
+- **Cardio/endurance** : Running easy/long_run ou Biking endurance Z2 (2-3x/3 semaines minimum)
 - **Force/puissance** : Strength ou CrossFit strength_max (1-2x/semaine)
-- **Conditionnement métabolique** : CrossFit conditioning ou Hyrox station_prep (2-3x/semaine)
-- **Technique** : CrossFit technique_metcon, ATHX, Hyrox full_simulation (1x/semaine)
+- **Conditionnement métabolique** : CrossFit conditioning, Biking intervals (2-3x/semaine)
+- **Technique/seuil** : CrossFit technique_metcon, Biking sweet_spot (1x/semaine)
 
 ## Règles de récupération
 - RPE 9-10 hier → recommander séance légère ou repos
 - 3 séances haute intensité en 5 jours → recommander récupération active (running easy, strength légère)
 - Pas de 2 séances de même sport à haute intensité 2 jours de suite
-- Blessures et limitations physiques → adapter le sport et le type de séance en conséquence (éviter les zones touchées)
-
-## Continuité de progression
-- Si des analyses post-workout sont disponibles, tenir compte des "prochaines étapes conseillées" pour assurer la continuité
-- Si une compétence gymnastic/haltéro est en cours, la prioriser si elle n'a pas été pratiquée depuis > 5 jours
-- Prendre en compte l'objectif de séances par semaine pour évaluer si l'athlète est en retard sur son planning
 
 ## Règles d'urgence (days_since_last)
-- **Urgence haute** : > 14 jours sans running, > 10 jours sans force, > 21 jours sans Hyrox
+- **Urgence haute** : > 14 jours sans running, > 10 jours sans force, > 14 jours sans vélo
 - **Urgence moyenne** : 8-14 jours sans une modalité
 - **Urgence faible** : 3-7 jours sans une modalité (rotation normale)
 
 ## Types de séance par sport
 - **crossfit** : technique_metcon, strength_max, conditioning, benchmark, vo2max
 - **running** : easy, tempo, intervals, long_run, fartlek
-- **hyrox** : full_simulation, station_prep, run_prep, mixed
+- **biking** : endurance, sweet_spot, intervals, ftp_test, recovery, race
 - **strength** : strength, hypertrophy, endurance, power
-- **athx** : full_competition, strength_prep, endurance_prep, metcon_prep, mixed
 - **rest** : récupération active (type "active_recovery")
 
 ## Durée suggérée par sport et niveau
 - CrossFit : 45-60 min (beginner: 35-45 min)
 - Running : 30-60 min selon le type (easy: 30-40, intervals: 40-50, long_run: 60-90)
-- Hyrox : 45-75 min
+- Vélo : 45-90 min (endurance: 60-90, sweet_spot: 60-75, intervals: 60, recovery: 40-50)
 - Strength : 50-70 min
-- ATHX : 50-70 min
 
 # FORMAT JSON REQUIS
 
 Retourne UNIQUEMENT ce JSON :
 \`\`\`json
 {
-  "recommended_sport": "crossfit|running|hyrox|strength|athx|rest",
+  "recommended_sport": "crossfit|running|biking|strength|rest",
   "recommended_type": "type de séance spécifique",
   "urgency": "low|medium|high",
   "reason": "1-2 phrases directes expliquant POURQUOI cette séance maintenant",
@@ -88,15 +79,8 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
   const goals = Object.keys(ctx.global_goals).filter((k) => ctx.global_goals[k])
   if (goals.length) lines.push(`Objectifs : ${goals.join(', ')}`)
 
-  if (ctx.training_preferences?.sessions_per_week) {
-    lines.push(`Objectif séances/semaine : ${ctx.training_preferences.sessions_per_week}`)
-  }
-
-  const injuriesEntries = Object.entries(ctx.injuries)
-  if (injuriesEntries.length) lines.push(`Blessures : ${injuriesEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}`)
-
-  const limitationsEntries = Object.entries(ctx.physical_limitations)
-  if (limitationsEntries.length) lines.push(`Limitations physiques : ${limitationsEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}`)
+  const injuries = Object.keys(ctx.injuries)
+  if (injuries.length) lines.push(`Limitations : ${injuries.join(', ')}`)
 
   // Stats globales
   lines.push('')
@@ -104,7 +88,7 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
   lines.push(`Total séances : ${stats.total_sessions_21d}`)
   lines.push('Par sport :')
 
-  const ALL_SPORTS = ['crossfit', 'running', 'hyrox', 'strength', 'athx']
+  const ALL_SPORTS = ['crossfit', 'running', 'biking', 'strength']
   for (const sport of ALL_SPORTS) {
     const count = stats.by_sport[sport] ?? 0
     const days = stats.days_since_last[sport]
@@ -120,34 +104,6 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
       const effort = s.perceived_effort ? `, RPE ${s.perceived_effort}/10` : ''
       const type = s.workout_type ? ` — ${s.workout_type}` : ''
       lines.push(`- ${s.date} : ${sportLabels[s.sport] ?? s.sport}${type}, ${s.duration_minutes}min${effort}`)
-    }
-  }
-
-  // Analyses post-workout récentes
-  if (ctx.recentAnalyses.length > 0) {
-    lines.push('')
-    lines.push('## ANALYSES POST-WORKOUT RÉCENTES')
-    for (const a of ctx.recentAnalyses.slice(0, 3)) {
-      const perfMap: Record<string, string> = {
-        pr: 'PR', above_average: 'au-dessus de la moyenne', average: 'dans la moyenne',
-        below_average: 'en dessous de la moyenne', first_time: 'première fois',
-      }
-      lines.push(`- ${a.date} : ${a.workout_name} — ${perfMap[a.performance_level] ?? a.performance_level}`)
-      if (a.next_steps) lines.push(`  → Prochaines étapes conseillées : ${a.next_steps}`)
-      if (a.improvements.length) lines.push(`  Points à améliorer : ${a.improvements.join(', ')}`)
-    }
-  }
-
-  // Compétences actives
-  if (ctx.activeSkills.length > 0) {
-    lines.push('')
-    lines.push('## COMPÉTENCES EN COURS')
-    for (const skill of ctx.activeSkills) {
-      const today = new Date()
-      const lastTrained = skill.last_trained
-        ? `dernière pratique il y a ${Math.floor((today.getTime() - new Date(skill.last_trained).getTime()) / 86400000)}j`
-        : 'jamais pratiquée'
-      lines.push(`- ${skill.skill_name} (${skill.skill_category}) — étape actuelle : "${skill.step_title}" — ${lastTrained}`)
     }
   }
 

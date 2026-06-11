@@ -4,7 +4,7 @@ import { useRecommendation } from '@/hooks/useRecommendation'
 import { RecommendedSport } from '@/services/recommendations'
 import { motion } from 'framer-motion'
 import {
-  Activity, AlertTriangle, ArrowRight, Brain,
+  Activity, AlertTriangle, ArrowRight, Bike, Brain,
   Dumbbell, Heart, RefreshCw, Zap,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -35,13 +35,13 @@ const SPORT_CONFIG: Record<RecommendedSport, {
     bg: 'bg-cyan-500/10',
     href: '/running/generate',
   },
-  hyrox: {
-    label: 'Hyrox',
-    icon: <Zap className="w-4 h-4" />,
-    color: 'text-yellow-400',
-    border: 'border-yellow-500/40',
-    bg: 'bg-yellow-500/10',
-    href: '/hyrox/generate',
+  biking: {
+    label: 'Vélo',
+    icon: <Bike className="w-4 h-4" />,
+    color: 'text-blue-400',
+    border: 'border-blue-500/40',
+    bg: 'bg-blue-500/10',
+    href: '/biking/generate',
   },
   strength: {
     label: 'Musculation',
@@ -50,14 +50,6 @@ const SPORT_CONFIG: Record<RecommendedSport, {
     border: 'border-purple-500/40',
     bg: 'bg-purple-500/10',
     href: '/strength/generate',
-  },
-  athx: {
-    label: 'ATHX',
-    icon: <Activity className="w-4 h-4" />,
-    color: 'text-blue-400',
-    border: 'border-blue-500/40',
-    bg: 'bg-blue-500/10',
-    href: '/athx/generate',
   },
   rest: {
     label: 'Récupération',
@@ -173,7 +165,7 @@ export function CoachRecommendationWidget() {
 
       {/* Stats rapides */}
       <div className="flex gap-3 flex-wrap">
-        {(['crossfit', 'running', 'hyrox', 'strength', 'athx'] as const).map((s) => {
+        {(['crossfit', 'running', 'biking', 'strength'] as const).map((s) => {
           const days = stats.days_since_last[s]
           const count = stats.by_sport[s] ?? 0
           const isActive = s === rec.recommended_sport

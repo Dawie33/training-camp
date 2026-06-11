@@ -3,26 +3,23 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { activitiesApi } from '@/services/activities'
-import { ATHX_SESSION_TYPE_LABELS, AthxSessionType } from '@/services/athx'
-import { HYROX_SESSION_TYPE_LABELS, HyroxSessionType } from '@/services/hyrox'
+import { BIKE_TYPE_LABELS, BikeType } from '@/services/biking'
 import { RUN_TYPE_LABELS, RunType } from '@/services/running'
 import { SESSION_GOAL_LABELS, StrengthSession, strengthService } from '@/services/strength'
 import { workoutsApi, workoutsService } from '@/services/workouts'
-import { Activity, Dumbbell, Footprints, Search, Sparkles, Trophy, Zap } from 'lucide-react'
-import { format } from 'date-fns'
+import { Activity, Bike, Dumbbell, Footprints, Search, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { PersonalizedWorkoutListItem } from './PersonalizedWorkoutListItem'
 import { WorkoutFilterPanel } from './WorkoutFilterPanel'
 import { WorkoutListItem } from './WorkoutListItem'
 
-type SportTab = 'crossfit' | 'running' | 'hyrox' | 'athx' | 'strength'
+type SportTab = 'crossfit' | 'running' | 'biking' | 'strength'
 
 const SPORT_TABS: { id: SportTab; label: string; icon: React.ReactNode; color: string; activeColor: string }[] = [
   { id: 'crossfit', label: 'CrossFit', icon: <Activity className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
   { id: 'running', label: 'Running', icon: <Footprints className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  { id: 'hyrox', label: 'HYROX', icon: <Trophy className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  { id: 'athx', label: 'ATHX', icon: <Zap className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+  { id: 'biking', label: 'Vélo', icon: <Bike className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
   { id: 'strength', label: 'Force', icon: <Dumbbell className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-red-500/20 text-red-400 border-red-500/30' },
 ]
 
@@ -64,8 +61,7 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
 
   // Sport-specific state
   const [runType, setRunType] = useState<RunType>('easy')
-  const [hyroxType, setHyroxType] = useState<HyroxSessionType>('full_simulation')
-  const [athxType, setAthxType] = useState<AthxSessionType>('mixed')
+  const [bikeType, setBikeType] = useState<BikeType>('endurance')
 
   // Force
   const [strengthSessions, setStrengthSessions] = useState<StrengthSession[]>([])
@@ -99,7 +95,7 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
       setLoadingStrength(true)
       strengthService.getSessions({ limit: 30 })
         .then(data => setStrengthSessions(data.rows))
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setLoadingStrength(false))
     }
   }, [open, sportTab])
@@ -119,8 +115,7 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
     setShowFilters(false)
     setNotes('')
     setRunType('easy')
-    setHyroxType('full_simulation')
-    setAthxType('mixed')
+    setBikeType('endurance')
     setStrengthSessions([])
     setSelectedStrengthId('')
     setStrengthSearch('')
@@ -128,10 +123,9 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
   }
 
   const handleSubmitSportActivity = async () => {
-    const activityTypeMap: Record<Exclude<SportTab, 'crossfit'>, 'running' | 'hyrox' | 'athx' | 'strength'> = {
+    const activityTypeMap: Record<Exclude<SportTab, 'crossfit'>, 'running' | 'biking' | 'strength'> = {
       running: 'running',
-      hyrox: 'hyrox',
-      athx: 'athx',
+      biking: 'biking',
       strength: 'strength',
     }
     if (sportTab === 'crossfit') return
@@ -242,9 +236,8 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
               key={tab.id}
               type="button"
               onClick={() => setSportTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all border ${
-                sportTab === tab.id ? `${tab.activeColor} border` : 'text-slate-400 hover:text-white border-transparent'
-              }`}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all border ${sportTab === tab.id ? `${tab.activeColor} border` : 'text-slate-400 hover:text-white border-transparent'
+                }`}
             >
               {tab.icon}{tab.label}
             </button>
@@ -297,7 +290,7 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
           </form>
         )}
 
-        {/* --- RUNNING / HYROX / ATHX --- */}
+        {/* --- RUNNING / BIKING --- */}
         {sportTab !== 'crossfit' && sportTab !== 'strength' && (
           <div className="flex flex-col gap-4 flex-1">
             <div className="space-y-2">
@@ -309,15 +302,9 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
                     {label}
                   </button>
                 ))}
-                {sportTab === 'hyrox' && (Object.entries(HYROX_SESSION_TYPE_LABELS) as [HyroxSessionType, string][]).map(([value, label]) => (
-                  <button key={value} type="button" onClick={() => setHyroxType(value)}
-                    className={`px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${hyroxType === value ? activeSport.activeColor + ' border' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}>
-                    {label}
-                  </button>
-                ))}
-                {sportTab === 'athx' && (Object.entries(ATHX_SESSION_TYPE_LABELS) as [AthxSessionType, string][]).map(([value, label]) => (
-                  <button key={value} type="button" onClick={() => setAthxType(value)}
-                    className={`px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${athxType === value ? activeSport.activeColor + ' border' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}>
+                {sportTab === 'biking' && (Object.entries(BIKE_TYPE_LABELS) as [BikeType, string][]).map(([value, label]) => (
+                  <button key={value} type="button" onClick={() => setBikeType(value)}
+                    className={`px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${bikeType === value ? activeSport.activeColor + ' border' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}>
                     {label}
                   </button>
                 ))}
