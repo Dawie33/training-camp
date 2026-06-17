@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { IOSInstallBanner } from "@/components/layout/ios-install-banner"
 import { cn } from "@/lib/utils"
 import { Geist_Mono, Poppins } from "next/font/google"
 import type { Metadata } from "next"
@@ -62,6 +63,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
+            <IOSInstallBanner />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
