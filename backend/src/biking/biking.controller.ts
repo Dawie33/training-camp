@@ -10,6 +10,7 @@ import {
     Req,
     UseGuards,
 } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { BikingSessionQueryDto, CreateBikingSessionDto, GenerateBikingSessionDto, UpdateBikingSessionDto } from './dto/biking.dto'
 import { BikingService } from './services/biking.service'
@@ -55,11 +56,13 @@ export class BikingController {
     // ── Génération IA ────────────────────────────────────────────────────────────
 
     @Post('generate/preview')
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     async generatePreview(@Req() req, @Body() data: GenerateBikingSessionDto) {
         return this.bikingService.generatePreview(req.user.id, data)
     }
 
     @Post('generate/save')
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     async generateAndSave(@Req() req, @Body() data: GenerateBikingSessionDto) {
         return this.bikingService.generateAndSave(req.user.id, data)
     }

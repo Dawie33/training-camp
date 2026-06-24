@@ -1,5 +1,5 @@
 import { Transform, Type } from "class-transformer"
-import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MinLength, ValidateNested } from "class-validator"
+import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength, ValidateNested } from "class-validator"
 
 export class CreateWorkoutDto {
   @IsString()
@@ -200,6 +200,7 @@ export class GenerateWorkoutDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   additionalInstructions?: string
 }
 
@@ -227,6 +228,7 @@ export class GeneratePersonalizedWorkoutDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   additionalInstructions?: string
 }
 

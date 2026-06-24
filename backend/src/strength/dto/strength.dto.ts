@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsInt, IsOptional, IsString, Max, Min, IsNumber } from 'class-validator'
+import { IsArray, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, IsNumber } from 'class-validator'
 import type { MuscleGroup, SessionGoal } from '../types/strength.types'
 
 export class GenerateStrengthSessionDto {
@@ -20,6 +20,7 @@ export class GenerateStrengthSessionDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   additionalContext?: string
 
   @IsOptional()

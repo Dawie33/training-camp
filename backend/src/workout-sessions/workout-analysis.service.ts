@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import OpenAI from 'openai'
@@ -28,7 +28,7 @@ export class WorkoutAnalysisService {
       .where({ id: sessionId, user_id: userId })
       .first()
 
-    if (!session) throw new Error('Session not found')
+    if (!session) throw new NotFoundException('Session not found')
 
     // Retourner l'analyse déjà stockée en DB si elle existe et qu'on ne force pas la régénération
     if (!force && session.ai_analysis) {
@@ -90,18 +90,28 @@ Réponds en JSON avec exactement cette structure :
   "next_steps": "Conseil concret pour progresser sur ce workout"
 }`
 
-    const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4.1',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 800,
-      response_format: { type: 'json_object' },
-    })
+    let completion
+    try {
+      completion = await this.openai.chat.completions.create({
+        model: 'gpt-4.1',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 800,
+        response_format: { type: 'json_object' },
+      })
+    } catch (err) {
+      throw new InternalServerErrorException('Erreur lors de la communication avec l\'IA')
+    }
 
     const content = completion.choices[0]?.message?.content
-    if (!content) throw new Error('No response from AI')
+    if (!content) throw new InternalServerErrorException('Réponse vide de l\'IA')
 
-    const analysis = JSON.parse(content) as WodAnalysis
+    let analysis: WodAnalysis
+    try {
+      analysis = JSON.parse(content) as WodAnalysis
+    } catch {
+      throw new InternalServerErrorException('Réponse IA invalide')
+    }
 
     await this.knex('workout_sessions')
       .where({ id: sessionId })

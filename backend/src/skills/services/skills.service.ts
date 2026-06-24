@@ -212,8 +212,9 @@ export class SkillsService {
 
   async logProgress(userId: string, data: CreateSkillProgressLogDto) {
     const step = await this.knex('skill_program_steps')
-      .where({ id: data.step_id })
-      .first()
+      .join('skill_programs', 'skill_programs.id', 'skill_program_steps.program_id')
+      .where({ 'skill_program_steps.id': data.step_id, 'skill_programs.user_id': userId })
+      .first('skill_program_steps.*')
 
     if (!step) {
       throw new NotFoundException('Etape non trouvee')
@@ -232,7 +233,16 @@ export class SkillsService {
     return log
   }
 
-  async getStepLogs(stepId: string) {
+  async getStepLogs(stepId: string, userId: string) {
+    const step = await this.knex('skill_program_steps')
+      .join('skill_programs', 'skill_programs.id', 'skill_program_steps.program_id')
+      .where({ 'skill_program_steps.id': stepId, 'skill_programs.user_id': userId })
+      .first('skill_program_steps.id')
+
+    if (!step) {
+      throw new NotFoundException('Etape non trouvee')
+    }
+
     return this.knex('skill_progress_logs')
       .where({ step_id: stepId })
       .orderBy('session_date', 'desc')

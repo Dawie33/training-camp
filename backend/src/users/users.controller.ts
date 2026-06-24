@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Query, Request, UseGuards } from "@nestjs/common"
+import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Query, Request, UseGuards } from "@nestjs/common"
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard"
 import { UpdateUserDto, UserQueryDto } from "./dto"
 import { UsersService } from "./users.service"
@@ -35,13 +35,26 @@ export class UsersController {
 
     @Patch(':id')
     @UseGuards(JwtAuthGuard)
-    async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
+    async update(
+        @Param('id') id: string,
+        @Body() data: UpdateUserDto,
+        @Request() req: { user: { id: string; role: string } },
+    ) {
+        if (req.user.id !== id && req.user.role !== 'admin') {
+            throw new ForbiddenException('Accès interdit')
+        }
         return this.service.update(id, data)
     }
 
     @Delete(':id')
     @UseGuards(JwtAuthGuard)
-    async delete(@Param('id') id: string) {
+    async delete(
+        @Param('id') id: string,
+        @Request() req: { user: { id: string; role: string } },
+    ) {
+        if (req.user.id !== id && req.user.role !== 'admin') {
+            throw new ForbiddenException('Accès interdit')
+        }
         return this.service.delete(id)
     }
 } 

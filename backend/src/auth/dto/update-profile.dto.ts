@@ -65,11 +65,4 @@ export class UpdateProfileDto {
   @IsOptional()
   schedule_preferences?: Record<string, string>
 
-  @IsOptional()
-  @IsBoolean()
-  has_coach?: boolean
-
-  @IsOptional()
-  @IsBoolean()
-  premium_member?: boolean
 }

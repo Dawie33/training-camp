@@ -213,14 +213,18 @@ export class AuthService {
   async getFullProfile(userId: string) {
     const user = await this.knex('users')
       .where({ id: userId })
-      .first()
+      .first([
+        'id', 'email', 'firstName', 'lastName', 'role', 'isActive',
+        'dateOfBirth', 'gender', 'sport_level', 'height', 'weight',
+        'resting_heart_rate', 'max_heart_rate', 'body_fat_percentage',
+        'global_goals', 'injuries', 'physical_limitations', 'training_location',
+        'training_preferences', 'schedule_preferences', 'has_coach', 'premium_member',
+        'created_at', 'updated_at', 'lastLoginAt',
+      ])
 
     if (!user) {
       throw new UnauthorizedException('User not found')
     }
-
-    // Ne pas retourner le mot de passe
-    delete user.password
 
     return user
   }

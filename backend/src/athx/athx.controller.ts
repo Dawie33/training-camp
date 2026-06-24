@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { AthxSessionQueryDto, CreateAthxSessionDto, GenerateAthxSessionDto, UpdateAthxSessionDto } from './dto/athx.dto'
 import { AthxService } from './services/athx.service'
@@ -39,11 +40,13 @@ export class AthxController {
   }
 
   @Post('generate/preview')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   generatePreview(@Req() req, @Body() data: GenerateAthxSessionDto) {
     return this.athxService.generatePreview(req.user.id, data)
   }
 
   @Post('generate/save')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   generateAndSave(@Req() req, @Body() data: GenerateAthxSessionDto) {
     return this.athxService.generateAndSave(req.user.id, data)
   }

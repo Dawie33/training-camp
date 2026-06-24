@@ -1,5 +1,7 @@
 import { IsArray, IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString, MinLength } from 'class-validator'
 
+const ALLOWED_USER_ORDER_BY = ['created_at', 'updated_at', 'email', 'firstName', 'lastName', 'role'] as const
+
 export type UserProfile = {
   id: string
   email: string
@@ -109,8 +111,8 @@ export class UserQueryDto {
   role?: 'user' | 'admin' | 'coach'
 
   @IsOptional()
-  @IsString()
-  orderBy?: string
+  @IsIn(ALLOWED_USER_ORDER_BY)
+  orderBy?: typeof ALLOWED_USER_ORDER_BY[number]
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

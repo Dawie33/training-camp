@@ -29,8 +29,11 @@ export class SkillsController {
   // Static routes MUST come before :id parameterized routes
   @Get('progress/step/:stepId')
   @UseGuards(JwtAuthGuard)
-  async getStepLogs(@Param('stepId') stepId: string) {
-    return this.service.getStepLogs(stepId)
+  async getStepLogs(
+    @Param('stepId') stepId: string,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.service.getStepLogs(stepId, req.user.id)
   }
 
   @Get(':id')
