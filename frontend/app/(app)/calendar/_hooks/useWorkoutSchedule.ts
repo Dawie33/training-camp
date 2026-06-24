@@ -2,6 +2,7 @@
 
 import { activitiesApi, UnifiedActivity, UnifiedActivityQueryParams } from '@/services/activities'
 import { scheduleApi, CreateScheduleDto, UpdateScheduleDto } from '@/services/schedule'
+import { strengthService } from '@/services/strength'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -61,6 +62,8 @@ export function useWorkoutSchedule(params?: UnifiedActivityQueryParams) {
       const activity = schedules.find((s) => s.id === id)
       if (activity?._source === 'scheduled_activities') {
         await activitiesApi.delete(id)
+      } else if (activity?._source === 'strength_sessions') {
+        await strengthService.delete(id)
       } else {
         await scheduleApi.delete(id)
       }

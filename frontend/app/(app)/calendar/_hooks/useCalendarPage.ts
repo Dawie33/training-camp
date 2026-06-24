@@ -117,7 +117,7 @@ export function useCalendarPage() {
         perceived_effort: schedule.perceived_effort,
         _onComplete: schedule._source === 'strength_sessions' ? undefined : () => { markAsCompleted(schedule.id); setSelectedEvent(null) },
         _onSkip: schedule._source === 'strength_sessions' ? undefined : () => { markAsSkipped(schedule.id); setSelectedEvent(null) },
-        _onDelete: schedule._source === 'strength_sessions' ? undefined : () => {
+        _onDelete: () => {
           if (confirm('Voulez-vous vraiment supprimer cette planification ?')) {
             deleteSchedule(schedule.id)
             setSelectedEvent(null)
