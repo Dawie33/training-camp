@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { fadeInUp } from '@/lib/animations'
-import { WorkoutProgress } from '../hooks/useWorkoutProgress'
+import { WorkoutProgress } from '../_hooks/useWorkoutProgress'
 
 interface WorkoutProgressComparisonProps {
   progressData: WorkoutProgress[]

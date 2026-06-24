@@ -3,7 +3,7 @@
 import { authService } from '@/services'
 import type { LoginDto, SignupDto, User } from '@/domain/entities/auth'
 import { AuthContext } from '@/hooks/useAuth'
-import { ReactNode, useCallback, useEffect, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -28,32 +28,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth()
   }, [])
 
-  const login = async (data: LoginDto) => {
+  const login = useCallback(async (data: LoginDto) => {
     const response = await authService.login(data)
     setUser(response.user)
-  }
+  }, [])
 
-  const signup = async (data: SignupDto) => {
+  const signup = useCallback(async (data: SignupDto) => {
     const response = await authService.signup(data)
     setUser(response.user)
-  }
+  }, [])
 
   const logout = useCallback(async () => {
     await authService.logout()
     setUser(null)
   }, [])
 
+  const value = useMemo(() => ({
+    user,
+    loading,
+    login,
+    signup,
+    logout,
+    isAuthenticated: !!user,
+  }), [user, loading, login, signup, logout])
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        signup,
-        logout,
-        isAuthenticated: !!user,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {loading ? (
         <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">

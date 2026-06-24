@@ -63,7 +63,7 @@ export function WorkoutSummary({
           elapsed_time_seconds: elapsedTime,
           block_progress: blockProgress,
           rating,
-          metrics,
+          metrics: metrics as never,
         },
       })
       router.push('/dashboard')

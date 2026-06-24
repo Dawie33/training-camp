@@ -1,5 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
+function getAuthHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export interface HrZoneData {
   zone: number
   label: string
@@ -65,7 +70,7 @@ export async function parseFitFile(file: File): Promise<ParsedFitData> {
   const response = await fetch(`${API_URL}/fit-import/parse`, {
     method: 'POST',
     body: formData,
-    credentials: 'include',
+    headers: getAuthHeaders(),
   })
 
   if (!response.ok) {
@@ -85,7 +90,7 @@ export async function parseFitFiles(files: File[]): Promise<MultiActivityFitData
   const response = await fetch(`${API_URL}/fit-import/parse-multiple`, {
     method: 'POST',
     body: formData,
-    credentials: 'include',
+    headers: getAuthHeaders(),
   })
 
   if (!response.ok) {

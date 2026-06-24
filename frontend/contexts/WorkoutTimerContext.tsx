@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { TimerConfig, TimerState, TimerType, WorkoutTimerContext } from '../hooks/useWorkoutTimer'
 
 /**
@@ -16,59 +16,55 @@ export function WorkoutTimerProvider({ children }: { children: React.ReactNode }
     const [timerType, setTimerType] = useState<TimerType | null>(null)
     const [timerConfig, setTimerConfig] = useState<TimerConfig>({})
 
-    const openMenu = () => setState('menu')
+    const openMenu = useCallback(() => setState('menu'), [])
 
-    const selectTimerType = (type: TimerType) => {
+    const selectTimerType = useCallback((type: TimerType) => {
         setTimerType(type)
         setState('config')
-    }
+    }, [])
 
-    const startTimer = (config: TimerConfig) => {
+    const startTimer = useCallback((config: TimerConfig) => {
         setTimerConfig(config)
         setState('running')
-    }
+    }, [])
 
-    const stopTimer = () => {
+    const stopTimer = useCallback(() => {
         setState('badge')
         setTimerType(null)
         setTimerConfig({})
-    }
+    }, [])
 
-    const closeTimer = () => {
+    const closeTimer = useCallback(() => {
         setState('badge')
         setTimerType(null)
         setTimerConfig({})
-    }
+    }, [])
 
-    const goBackToMenu = () => {
+    const goBackToMenu = useCallback(() => {
         setState('menu')
         setTimerType(null)
-    }
+    }, [])
 
-    const minimizeTimer = () => {
-        setState('minimized')
-    }
+    const minimizeTimer = useCallback(() => setState('minimized'), [])
 
-    const maximizeTimer = () => {
-        setState('running')
-    }
+    const maximizeTimer = useCallback(() => setState('running'), [])
+
+    const value = useMemo(() => ({
+        state,
+        timerType,
+        timerConfig,
+        openMenu,
+        selectTimerType,
+        startTimer,
+        stopTimer,
+        closeTimer,
+        goBackToMenu,
+        minimizeTimer,
+        maximizeTimer,
+    }), [state, timerType, timerConfig, openMenu, selectTimerType, startTimer, stopTimer, closeTimer, goBackToMenu, minimizeTimer, maximizeTimer])
 
     return (
-        <WorkoutTimerContext.Provider
-            value={{
-                state,
-                timerType,
-                timerConfig,
-                openMenu,
-                selectTimerType,
-                startTimer,
-                stopTimer,
-                closeTimer,
-                goBackToMenu,
-                minimizeTimer,
-                maximizeTimer
-            }}
-        >
+        <WorkoutTimerContext.Provider value={value}>
             {children}
         </WorkoutTimerContext.Provider>
     )

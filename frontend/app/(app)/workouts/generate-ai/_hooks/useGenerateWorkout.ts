@@ -66,7 +66,7 @@ export function useGenerateWorkout() {
       setGeneratedWorkout(workout)
       setEditedName(workout.name)
       setEditedDescription(workout.description)
-      setEditedDifficulty(workout.difficulty)
+      setEditedDifficulty(workout.difficulty as ExerciseDifficulty)
       setEditedDuration(workout.estimated_duration)
       setEditedIntensity(workout.intensity)
       setEditedBlocks(JSON.stringify(workout.blocks, null, 2))

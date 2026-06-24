@@ -16,6 +16,14 @@ import { toast } from 'sonner'
 import { CustomEventContent } from '../_components/CalendarEventContent'
 import { useWorkoutSchedule } from './useWorkoutSchedule'
 
+const MODULE_COLORS: Record<string, string> = {
+  crossfit: '',
+  hyrox: 'hyrox',
+  running: 'running',
+  athx: 'athx',
+  strength: 'strength',
+}
+
 export function useCalendarPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -73,15 +81,6 @@ export function useCalendarPage() {
     } finally {
       setGoogleLoading(false)
     }
-  }
-
-  // Couleurs par module pour différencier visuellement les activités dans le calendrier
-  const MODULE_COLORS: Record<string, string> = {
-    crossfit: '',       // couleur par défaut (status-based)
-    hyrox: 'hyrox',
-    running: 'running',
-    athx: 'athx',
-    strength: 'strength',
   }
 
   const mapSchedulesToEvents = useCallback((scheduleList: UnifiedActivity[]) => {

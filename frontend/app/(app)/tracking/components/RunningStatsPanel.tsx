@@ -42,10 +42,10 @@ function WodRunningChart({ segments }: { segments: RunningSegment[] }) {
         <Tooltip
           contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
           labelStyle={{ color: '#94a3b8', fontSize: 12 }}
-          formatter={(value: number, _name: string, entry) => [
-            `${Math.floor(value)}:${String(Math.round((value % 1) * 60)).padStart(2, '0')} min/km — ${entry.payload.dist} km`,
-            entry.payload.label,
-          ]}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={((value: number) =>
+            `${Math.floor(value)}:${String(Math.round((value % 1) * 60)).padStart(2, '0')} min/km`
+          ) as any}
         />
         <Line
           type="monotone"

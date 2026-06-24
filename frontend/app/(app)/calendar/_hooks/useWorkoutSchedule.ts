@@ -3,26 +3,34 @@
 import { activitiesApi, UnifiedActivity, UnifiedActivityQueryParams } from '@/services/activities'
 import { scheduleApi, CreateScheduleDto, UpdateScheduleDto } from '@/services/schedule'
 import { strengthService } from '@/services/strength'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 export function useWorkoutSchedule(params?: UnifiedActivityQueryParams) {
   const [schedules, setSchedules] = useState<UnifiedActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
   const fetchSchedules = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       const data = await activitiesApi.getUnified(params)
+      if (!mountedRef.current) return
       setSchedules(data)
     } catch (err) {
+      if (!mountedRef.current) return
       setError(err as Error)
       console.error('Error fetching activities:', err)
       setSchedules([])
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
     }
   }, [params?.start_date, params?.end_date, params?.status, params?.module])
 

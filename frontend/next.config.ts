@@ -29,13 +29,10 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001/api'
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: '**' },
+      { protocol: 'http', hostname: 'localhost' },
     ],
   },
   async headers() {

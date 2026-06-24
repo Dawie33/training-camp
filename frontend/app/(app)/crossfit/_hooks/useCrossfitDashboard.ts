@@ -3,6 +3,7 @@
 import { sessionService } from '@/services'
 import { WorkoutSession } from '@/domain/entities/workout'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 export function formatResult(results: WorkoutSession['results']): string {
   if (!results) return '—'
@@ -28,7 +29,7 @@ export function useCrossfitDashboard() {
   useEffect(() => {
     sessionService.getAll({ limit: 5, orderBy: 'completed_at', orderDir: 'desc' })
       .then((res) => setSessions(res.rows ?? res))
-      .catch(() => {})
+      .catch(() => toast.error('Impossible de charger les sessions'))
       .finally(() => setLoading(false))
   }, [])
 

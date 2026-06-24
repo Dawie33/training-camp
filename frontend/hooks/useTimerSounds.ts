@@ -2,20 +2,30 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 
+type TimeoutId = ReturnType<typeof setTimeout>
+
 /**
  * Hook pour gérer les effets sonores des timers
  * Utilise l'API Web Audio pour générer des sons
  */
 export function useTimerSounds() {
   const audioContextRef = useRef<AudioContext | null>(null)
+  const timeoutsRef = useRef<TimeoutId[]>([])
+
+  const scheduleTimeout = useCallback((fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay)
+    timeoutsRef.current.push(id)
+    return id
+  }, [])
 
   useEffect(() => {
-    // Créer le contexte audio une seule fois
     if (typeof window !== 'undefined') {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
     }
 
     return () => {
+      timeoutsRef.current.forEach(clearTimeout)
+      timeoutsRef.current = []
       audioContextRef.current?.close()
     }
   }, [])
@@ -46,39 +56,34 @@ export function useTimerSounds() {
   // Son de démarrage (bip montant)
   const playStartSound = useCallback(() => {
     playBeep(400, 100)
-    setTimeout(() => playBeep(600, 100), 100)
-    setTimeout(() => playBeep(800, 150), 200)
-  }, [playBeep])
+    scheduleTimeout(() => playBeep(600, 100), 100)
+    scheduleTimeout(() => playBeep(800, 150), 200)
+  }, [playBeep, scheduleTimeout])
 
-  // Son de fin (double bip aigu)
   const playFinishSound = useCallback(() => {
     playBeep(1000, 200)
-    setTimeout(() => playBeep(1200, 300), 250)
-  }, [playBeep])
+    scheduleTimeout(() => playBeep(1200, 300), 250)
+  }, [playBeep, scheduleTimeout])
 
-  // Son d'alerte (bip urgent)
   const playAlertSound = useCallback(() => {
     playBeep(900, 150)
-    setTimeout(() => playBeep(900, 150), 200)
-  }, [playBeep])
+    scheduleTimeout(() => playBeep(900, 150), 200)
+  }, [playBeep, scheduleTimeout])
 
-  // Son de phase TRAVAIL (Tabata)
   const playWorkSound = useCallback(() => {
     playBeep(800, 200)
-    setTimeout(() => playBeep(1000, 200), 250)
-  }, [playBeep])
+    scheduleTimeout(() => playBeep(1000, 200), 250)
+  }, [playBeep, scheduleTimeout])
 
-  // Son de phase REPOS (Tabata)
   const playRestSound = useCallback(() => {
     playBeep(400, 300)
   }, [playBeep])
 
-  // Son de nouveau round (EMOM)
   const playRoundSound = useCallback(() => {
     playBeep(700, 150)
-    setTimeout(() => playBeep(700, 150), 200)
-    setTimeout(() => playBeep(900, 200), 400)
-  }, [playBeep])
+    scheduleTimeout(() => playBeep(700, 150), 200)
+    scheduleTimeout(() => playBeep(900, 200), 400)
+  }, [playBeep, scheduleTimeout])
 
   return {
     playCountdownBeep,

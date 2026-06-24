@@ -10,6 +10,29 @@ export type LogModalState =
   | { isOpen: false }
   | { isOpen: true; stepId: string; data: { value: string; notes: string; date: string }; saving: boolean }
 
+export type WodModalState =
+  | { isOpen: false }
+  | {
+      isOpen: true
+      stepContext: {
+        title: string
+        recommended_exercises?: unknown[]
+        warmup?: string | null
+      }
+      generating: boolean
+      generated: {
+        name: string
+        description?: string
+        workout_type?: string
+        difficulty?: string
+        estimated_duration?: number
+        intensity?: string
+        blocks?: { sections: import('@/domain/entities/workout-structure').WorkoutSection[] }
+        coach_notes?: string
+      } | null
+      saving: boolean
+    }
+
 
 export function useSkillDetail() {
   const router = useRouter()

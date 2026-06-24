@@ -47,10 +47,11 @@ function Button({
   const Comp = asChild ? Slot : "button"
 
   return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
+      {...(props as any)}
     />
   )
 }

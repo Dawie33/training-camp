@@ -105,7 +105,7 @@ export default function WorkoutsPage() {
         status: status || undefined,
         difficulty: difficulty || undefined,
         workout_type: workoutType || undefined,
-        is_benchmark: isBenchmark,
+        is_benchmark: isBenchmark !== undefined ? String(isBenchmark) : undefined,
         orderBy: orderBy,
         orderDir: orderDir
       }
