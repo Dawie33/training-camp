@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+// Toujours passer par le rewrite Next.js (/api -> BACKEND_URL, voir next.config.ts)
+// pour que le cookie JWT httpOnly reste same-origin (voir apiClient.ts)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
 
 export interface HrZoneData {
   zone: number

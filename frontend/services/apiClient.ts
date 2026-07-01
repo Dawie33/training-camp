@@ -5,12 +5,11 @@
 
 import type { ApiClientConfig, RequestOptions } from './types'
 
-// En production, utiliser l'URL de l'API déployée sur Render
-// En développement, utiliser localhost
-const API_URL = process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://training-camp.onrender.com/api'
-    : 'http://localhost:3001/api')
+// Toujours passer par le rewrite Next.js (/api -> BACKEND_URL, voir next.config.ts)
+// pour que les requêtes soient same-origin depuis le navigateur : le cookie JWT
+// httpOnly n'est alors plus un cookie cross-site, ce qui évite qu'il soit bloqué
+// par les navigateurs mobiles qui bloquent les cookies tiers par défaut.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
 
 console.log('🔧 API_URL configured:', API_URL)
 console.log('🔧 NODE_ENV:', process.env.NODE_ENV)
