@@ -63,7 +63,7 @@ export class AIWorkoutGeneratorService {
   async generateWorkout(params: WorkoutGenerationParams): Promise<GeneratedWorkout> {
     const systemPrompt = buildCrossFitSystemPrompt(params.equipment)
     const userPrompt = buildCrossFitWorkoutPrompt({
-      workoutType: params.workoutType || 'mixed',
+      workoutType: params.workoutType || 'conditioning',
       duration: params.duration,
       difficulty: params.difficulty || 'intermediate',
       equipment: params.equipment,
@@ -99,7 +99,7 @@ export class AIWorkoutGeneratorService {
 
     const systemPrompt = buildCrossFitSystemPrompt(equipment, context)
     const userPrompt = buildCrossFitWorkoutPrompt({
-      workoutType: params.workoutType || 'mixed',
+      workoutType: params.workoutType || 'conditioning',
       duration: params.duration,
       difficulty,
       equipment,
@@ -294,7 +294,7 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
       ...persoDays.map(async (day) => {
         try {
           const wod = await this.generatePersonalizedWorkout(userId, {
-            workoutType: 'mixed',
+            workoutType: 'conditioning',
             duration: 45,
             techniqueFocus: day.focus ?? '',
             skipSkillBlock: true,

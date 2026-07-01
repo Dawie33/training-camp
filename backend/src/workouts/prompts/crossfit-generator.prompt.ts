@@ -152,7 +152,7 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
 {
   "name": "Nom du WOD",
   "description": "Description courte (1-2 phrases) incluant le stimulus recherché",
-  "workout_type": "technique_metcon|strength_max|conditioning|strength_accessory|benchmark|mixed",
+  "workout_type": "technique_metcon|strength_max|conditioning|strength_accessory|benchmark",
   "estimated_duration": 45,
   "difficulty": "beginner|intermediate|advanced|elite",
   "intensity": "moderate|high|very_high",
@@ -606,7 +606,6 @@ export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): strin
     'conditioning': 'MetCon haute intensité orienté conditionnement',
     'strength_accessory': 'Force avec volume + mouvements accessoires',
     'benchmark': `Benchmark CrossFit officiel${benchmarkName ? ` : ${benchmarkName}` : ''}`,
-    'mixed': 'Workout varié mélangeant plusieurs éléments',
     'vo2max': 'Intervalles cardio haute intensité pour améliorer la VO2max',
   }
 
@@ -632,9 +631,6 @@ ${additionalInstructions ? `\n**Instructions additionnelles** : ${additionalInst
   } else if (workoutType === 'conditioning') {
     const format = pickRandomFormat()
     prompt += `\nFocus sur haute intensité métabolique. **Format MetCon imposé : ${format}** — utilise CE format, pas un autre. Multi-modal (combiner M-G-W).`
-  } else if (workoutType === 'mixed') {
-    const format = pickRandomFormat()
-    prompt += `\n**Format MetCon imposé : ${format}** — utilise ce format pour le MetCon principal. Varie les modalités (M-G-W).`
   } else if (workoutType === 'vo2max') {
     const vo2maxProtocols = ['billat_30_30', 'norwegian_4x4', 'tabata_cardio', '3x5min'] as const
     const protocol = vo2maxProtocols[Math.floor(Math.random() * vo2maxProtocols.length)]

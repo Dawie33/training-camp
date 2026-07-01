@@ -61,7 +61,7 @@ export class WorkoutAnalysisService {
     // 4. Construire le prompt
     const results = session.results as Record<string, unknown> ?? {}
     const workoutName = (workout?.name as string) ?? 'Workout inconnu'
-    const workoutType = (workout?.workout_type as string) ?? 'mixed'
+    const workoutType = (workout?.workout_type as string) ?? 'conditioning'
 
     const scoreDescription = this.buildScoreDescription(results, workoutType)
     const pastPerfsDescription = this.buildPastPerfsDescription(pastSessions, workoutType)

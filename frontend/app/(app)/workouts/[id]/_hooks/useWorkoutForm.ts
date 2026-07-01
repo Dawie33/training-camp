@@ -217,7 +217,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
 
     try {
       const generationParams = {
-        workoutType: aiParams.workout_type || 'mixed',
+        workoutType: aiParams.workout_type || 'conditioning',
         difficulty: aiParams.difficulty as 'beginner' | 'intermediate' | 'advanced' | 'elite',
         duration: aiParams.duration_min,
         focus: undefined,
