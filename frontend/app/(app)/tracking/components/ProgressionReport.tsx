@@ -14,7 +14,8 @@ const SPORT_CONFIG: Record<SportType, { label: string; icon: string; color: stri
   running: { label: 'Running', icon: '🏃', color: 'green' },
   hyrox: { label: 'HYROX', icon: '🏟️', color: 'yellow' },
   athx: { label: 'ATHX', icon: '⚡', color: 'purple' },
-  global: { label: 'Multi-sport', icon: '🌐', color: 'blue' },
+  biking: { label: 'Vélo', icon: '🚴', color: 'blue' },
+  global: { label: 'Multi-sport', icon: '🌐', color: 'slate' },
 }
 
 const LEVEL_LABELS: Record<string, string> = {

@@ -2,7 +2,7 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Footprints, History, LayoutDashboard, Trophy, Zap } from 'lucide-react'
+import { Activity, Bike, Footprints, History, LayoutDashboard, Trophy, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useMultiSportStats } from './_hooks/useMultiSportStats'
 import { useWodRunningSegments } from './_hooks/useWodRunningSegments'
@@ -10,6 +10,7 @@ import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
 import { AthxStatsPanel } from './components/AthxStatsPanel'
+import { BikingStatsPanel } from './components/BikingStatsPanel'
 import { BilansHistoryPanel } from './components/BilansHistoryPanel'
 import { GlobalOverview } from './components/GlobalOverview'
 import { HyroxStatsPanel } from './components/HyroxStatsPanel'
@@ -21,7 +22,7 @@ import { RunningStatsPanel } from './components/RunningStatsPanel'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
-type Tab = 'global' | 'crossfit' | 'running' | 'hyrox' | 'athx' | 'history'
+type Tab = 'global' | 'crossfit' | 'running' | 'hyrox' | 'athx' | 'biking' | 'history'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode; color: string; activeColor: string }[] = [
   {
@@ -58,6 +59,13 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; color: string; acti
     icon: <Zap className="w-4 h-4" />,
     color: 'text-slate-400',
     activeColor: 'text-purple-300 border-purple-500/60 bg-purple-500/10',
+  },
+  {
+    id: 'biking',
+    label: 'Vélo',
+    icon: <Bike className="w-4 h-4" />,
+    color: 'text-slate-400',
+    activeColor: 'text-blue-300 border-blue-500/60 bg-blue-500/10',
   },
   {
     id: 'history',
@@ -130,6 +138,7 @@ function TrackingContent() {
                 runningStats={multiStats.running}
                 hyroxStats={multiStats.hyrox}
                 athxStats={multiStats.athx}
+                bikingStats={multiStats.biking}
                 onTabChange={(tab) => setActiveTab(tab as Tab)}
               />
               <ProgressionReportPanel sport="global" />
@@ -270,6 +279,20 @@ function TrackingContent() {
                   <h2 className="text-2xl font-bold text-white">Statistiques ATHX</h2>
                 </div>
                 <AthxStatsPanel stats={multiStats.athx} loading={multiLoading} />
+              </div>
+            </div>
+          )}
+
+          {/* Vélo */}
+          {activeTab === 'biking' && (
+            <div className="space-y-6">
+              <ProgressionReportPanel sport="biking" />
+              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-lg">🚴</span>
+                  <h2 className="text-2xl font-bold text-white">Statistiques Vélo</h2>
+                </div>
+                <BikingStatsPanel stats={multiStats.biking} loading={multiLoading} />
               </div>
             </div>
           )}

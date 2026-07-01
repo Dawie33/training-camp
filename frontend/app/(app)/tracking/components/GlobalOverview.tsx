@@ -2,6 +2,7 @@
 
 import { WorkoutStats } from '@/domain/entities/workout-history'
 import { AthxStats } from '@/services/athx'
+import { BikingStats } from '@/services/biking'
 import { HyroxStats } from '@/services/hyrox'
 import { RunningStats } from '@/services/running'
 
@@ -43,6 +44,7 @@ interface GlobalOverviewProps {
   runningStats: RunningStats | null
   hyroxStats: HyroxStats | null
   athxStats: AthxStats | null
+  bikingStats: BikingStats | null
   onTabChange: (tab: string) => void
 }
 
@@ -51,13 +53,15 @@ export function GlobalOverview({
   runningStats,
   hyroxStats,
   athxStats,
+  bikingStats,
   onTabChange,
 }: GlobalOverviewProps) {
   const totalSessions =
     (workoutStats?.totalWorkouts ?? 0) +
     (runningStats?.total_sessions ?? 0) +
     (hyroxStats?.total_sessions ?? 0) +
-    (athxStats?.total_sessions ?? 0)
+    (athxStats?.total_sessions ?? 0) +
+    (bikingStats?.total_sessions ?? 0)
 
   return (
     <div className="space-y-6">
@@ -74,7 +78,7 @@ export function GlobalOverview({
       </div>
 
       {/* Mini-cartes par sport */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <SportCard
           href="/crossfit"
           color="border-orange-500/20"
@@ -123,6 +127,16 @@ export function GlobalOverview({
           stat={athxStats ? `${athxStats.total_hours}h` : '--'}
           statLabel="Temps total"
           onTabChange={() => onTabChange('athx')}
+        />
+        <SportCard
+          href="/biking"
+          color="border-blue-500/20"
+          icon="🚴"
+          label="Vélo"
+          sessions={bikingStats?.total_sessions ?? 0}
+          stat={bikingStats ? `${bikingStats.total_km} km` : '--'}
+          statLabel="Distance totale"
+          onTabChange={() => onTabChange('biking')}
         />
       </div>
     </div>
