@@ -80,8 +80,8 @@ export function buildAthleteContextSection(context: UserAIContext): string {
 
   if (context.recentSessions.length > 0) {
     const sportLabels: Record<string, string> = {
-      crossfit: 'CrossFit', running: 'Running', hyrox: 'Hyrox',
-      strength: 'Musculation', athx: 'ATHX',
+      crossfit: 'CrossFit', running: 'Running',
+      strength: 'Musculation', biking: 'Vélo',
     }
     lines.push('')
     lines.push('**Activité récente (21 jours, tous sports confondus)** :')

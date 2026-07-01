@@ -1,9 +1,7 @@
 'use client'
 
 import { WorkoutStats } from '@/domain/entities/workout-history'
-import { AthxStats } from '@/services/athx'
 import { BikingStats } from '@/services/biking'
-import { HyroxStats } from '@/services/hyrox'
 import { RunningStats } from '@/services/running'
 
 interface SportCardProps {
@@ -42,8 +40,6 @@ function SportCard({ color, icon, label, sessions, stat, statLabel, onTabChange 
 interface GlobalOverviewProps {
   workoutStats: WorkoutStats | null
   runningStats: RunningStats | null
-  hyroxStats: HyroxStats | null
-  athxStats: AthxStats | null
   bikingStats: BikingStats | null
   onTabChange: (tab: string) => void
 }
@@ -51,16 +47,12 @@ interface GlobalOverviewProps {
 export function GlobalOverview({
   workoutStats,
   runningStats,
-  hyroxStats,
-  athxStats,
   bikingStats,
   onTabChange,
 }: GlobalOverviewProps) {
   const totalSessions =
     (workoutStats?.totalWorkouts ?? 0) +
     (runningStats?.total_sessions ?? 0) +
-    (hyroxStats?.total_sessions ?? 0) +
-    (athxStats?.total_sessions ?? 0) +
     (bikingStats?.total_sessions ?? 0)
 
   return (
@@ -78,7 +70,7 @@ export function GlobalOverview({
       </div>
 
       {/* Mini-cartes par sport */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <SportCard
           href="/crossfit"
           color="border-orange-500/20"
@@ -98,35 +90,6 @@ export function GlobalOverview({
           stat={runningStats ? `${runningStats.total_km} km` : '--'}
           statLabel="Distance totale"
           onTabChange={() => onTabChange('running')}
-        />
-        <SportCard
-          href="/hyrox"
-          color="border-yellow-500/20"
-          icon="🏟️"
-          label="HYROX"
-          sessions={hyroxStats?.total_sessions ?? 0}
-          stat={hyroxStats?.best_time_seconds
-            ? (() => {
-              const h = Math.floor(hyroxStats.best_time_seconds / 3600)
-              const m = Math.floor((hyroxStats.best_time_seconds % 3600) / 60)
-              const s = hyroxStats.best_time_seconds % 60
-              return h > 0
-                ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-                : `${m}:${s.toString().padStart(2, '0')}`
-            })()
-            : '--'}
-          statLabel="Meilleur temps"
-          onTabChange={() => onTabChange('hyrox')}
-        />
-        <SportCard
-          href="/athx"
-          color="border-purple-500/20"
-          icon="⚡"
-          label="ATHX"
-          sessions={athxStats?.total_sessions ?? 0}
-          stat={athxStats ? `${athxStats.total_hours}h` : '--'}
-          statLabel="Temps total"
-          onTabChange={() => onTabChange('athx')}
         />
         <SportCard
           href="/biking"

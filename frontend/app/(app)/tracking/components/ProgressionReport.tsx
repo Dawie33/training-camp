@@ -12,8 +12,6 @@ const TREND_CONFIG = {
 const SPORT_CONFIG: Record<SportType, { label: string; icon: string; color: string }> = {
   crossfit: { label: 'CrossFit', icon: '🔥', color: 'orange' },
   running: { label: 'Running', icon: '🏃', color: 'green' },
-  hyrox: { label: 'HYROX', icon: '🏟️', color: 'yellow' },
-  athx: { label: 'ATHX', icon: '⚡', color: 'purple' },
   biking: { label: 'Vélo', icon: '🚴', color: 'blue' },
   global: { label: 'Multi-sport', icon: '🌐', color: 'slate' },
 }

@@ -17,8 +17,6 @@ interface PlanResultListProps {
 
 const ACTIVITY_STYLE: Record<string, { color: string; icon: string }> = {
   Running: { color: 'bg-green-500/10 border-green-500/20', icon: '👟' },
-  HYROX:   { color: 'bg-yellow-500/10 border-yellow-500/20', icon: '🏆' },
-  ATHX:    { color: 'bg-purple-500/10 border-purple-500/20', icon: '⚡' },
 }
 
 export function PlanResultList({ result, onClose }: PlanResultListProps) {

@@ -2,18 +2,16 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Bike, Footprints, History, LayoutDashboard, Trophy, Zap } from 'lucide-react'
+import { Activity, Bike, Footprints, History, LayoutDashboard } from 'lucide-react'
 import { useState } from 'react'
 import { useMultiSportStats } from './_hooks/useMultiSportStats'
 import { useWodRunningSegments } from './_hooks/useWodRunningSegments'
 import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
-import { AthxStatsPanel } from './components/AthxStatsPanel'
 import { BikingStatsPanel } from './components/BikingStatsPanel'
 import { BilansHistoryPanel } from './components/BilansHistoryPanel'
 import { GlobalOverview } from './components/GlobalOverview'
-import { HyroxStatsPanel } from './components/HyroxStatsPanel'
 import { OneRepMaxChart } from './components/OneRepMaxChart'
 import { PersonalRecords } from './components/PersonalRecords'
 import { ProgressChart } from './components/ProgressChart'
@@ -22,7 +20,7 @@ import { RunningStatsPanel } from './components/RunningStatsPanel'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
-type Tab = 'global' | 'crossfit' | 'running' | 'hyrox' | 'athx' | 'biking' | 'history'
+type Tab = 'global' | 'crossfit' | 'running' | 'biking' | 'history'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode; color: string; activeColor: string }[] = [
   {
@@ -45,20 +43,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; color: string; acti
     icon: <Footprints className="w-4 h-4" />,
     color: 'text-slate-400',
     activeColor: 'text-green-300 border-green-500/60 bg-green-500/10',
-  },
-  {
-    id: 'hyrox',
-    label: 'HYROX',
-    icon: <Trophy className="w-4 h-4" />,
-    color: 'text-slate-400',
-    activeColor: 'text-yellow-300 border-yellow-500/60 bg-yellow-500/10',
-  },
-  {
-    id: 'athx',
-    label: 'ATHX',
-    icon: <Zap className="w-4 h-4" />,
-    color: 'text-slate-400',
-    activeColor: 'text-purple-300 border-purple-500/60 bg-purple-500/10',
   },
   {
     id: 'biking',
@@ -136,8 +120,6 @@ function TrackingContent() {
               <GlobalOverview
                 workoutStats={workoutStats}
                 runningStats={multiStats.running}
-                hyroxStats={multiStats.hyrox}
-                athxStats={multiStats.athx}
                 bikingStats={multiStats.biking}
                 onTabChange={(tab) => setActiveTab(tab as Tab)}
               />
@@ -251,34 +233,6 @@ function TrackingContent() {
                   wodSegments={wodRunSegments}
                   wodSegmentsLoading={wodRunLoading}
                 />
-              </div>
-            </div>
-          )}
-
-          {/* HYROX */}
-          {activeTab === 'hyrox' && (
-            <div className="space-y-6">
-              <ProgressionReportPanel sport="hyrox" />
-              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="text-lg">🏟️</span>
-                  <h2 className="text-2xl font-bold text-white">Statistiques HYROX</h2>
-                </div>
-                <HyroxStatsPanel stats={multiStats.hyrox} loading={multiLoading} />
-              </div>
-            </div>
-          )}
-
-          {/* ATHX */}
-          {activeTab === 'athx' && (
-            <div className="space-y-6">
-              <ProgressionReportPanel sport="athx" />
-              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="text-lg">⚡</span>
-                  <h2 className="text-2xl font-bold text-white">Statistiques ATHX</h2>
-                </div>
-                <AthxStatsPanel stats={multiStats.athx} loading={multiLoading} />
               </div>
             </div>
           )}

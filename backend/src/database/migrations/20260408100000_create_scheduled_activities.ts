@@ -5,9 +5,9 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
     table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
     table.date('scheduled_date').notNullable()
-    table.enum('activity_type', ['hyrox', 'running', 'athx']).notNullable()
-    // Référence polymorphique vers la session du module correspondant (hyrox_sessions, running_sessions, athx_sessions)
-    // Pas de FK contrainte car les tables n'existent pas encore — sera ajouté lors de la migration de chaque module
+    table.enum('activity_type', ['running']).notNullable()
+    // Référence polymorphique vers la session du module correspondant (running_sessions, strength_sessions)
+    // Pas de FK contrainte — sera ajouté lors de la migration de chaque module
     table.uuid('activity_id').nullable()
     table.enum('status', ['scheduled', 'completed', 'skipped', 'rescheduled']).notNullable().defaultTo('scheduled')
     table.text('notes').nullable()

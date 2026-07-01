@@ -5,7 +5,7 @@ import { InjectModel } from 'nest-knexjs'
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
 import { UnifiedActivity } from './types/unified-activity.type'
 
-const ACTIVITY_LABELS: Record<string, string> = { hyrox: 'HYROX', running: 'Running', athx: 'ATHX', strength: 'Force' }
+const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', strength: 'Force' }
 
 @Injectable()
 export class ScheduledActivitiesService {

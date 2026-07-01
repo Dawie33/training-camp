@@ -117,9 +117,8 @@ function CalendarContent() {
             <div className="flex flex-wrap gap-4">
               {[
                 { label: 'CrossFit', color: 'bg-orange-500/20 border-orange-500/50 text-orange-400' },
-                { label: 'HYROX', color: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400' },
                 { label: 'RUN', color: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' },
-                { label: 'ATHX', color: 'bg-purple-500/20 border-purple-500/50 text-purple-400' },
+                { label: 'FORCE', color: 'bg-violet-500/20 border-violet-500/50 text-violet-400' },
               ].map(({ label, color }) => (
                 <div key={label} className="flex items-center gap-1.5 text-xs">
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${color}`}>{label}</span>

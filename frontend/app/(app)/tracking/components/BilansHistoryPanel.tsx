@@ -7,8 +7,7 @@ import { useReportsHistory } from '../_hooks/useReportsHistory'
 const SPORT_CONFIG: Record<SportType, { label: string; icon: string; color: string; border: string }> = {
   crossfit: { label: 'CrossFit', icon: '🔥', color: 'text-orange-300', border: 'border-orange-500/20' },
   running: { label: 'Running', icon: '🏃', color: 'text-green-300', border: 'border-green-500/20' },
-  hyrox: { label: 'HYROX', icon: '🏟️', color: 'text-yellow-300', border: 'border-yellow-500/20' },
-  athx: { label: 'ATHX', icon: '⚡', color: 'text-purple-300', border: 'border-purple-500/20' },
+  biking: { label: 'Vélo', icon: '🚴', color: 'text-blue-300', border: 'border-blue-500/20' },
   global: { label: 'Multi-sport', icon: '🌐', color: 'text-blue-300', border: 'border-blue-500/20' },
 }
 
@@ -18,7 +17,7 @@ const TREND_CONFIG = {
   declining: { icon: '▼', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', label: 'En baisse' },
 }
 
-const SPORT_ORDER: SportType[] = ['global', 'crossfit', 'running', 'hyrox', 'athx']
+const SPORT_ORDER: SportType[] = ['global', 'crossfit', 'running', 'biking']
 
 function BilanCard({ report }: { report: ProgressionReport }) {
   const [expanded, setExpanded] = useState(false)

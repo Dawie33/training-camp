@@ -5,7 +5,7 @@ export async function up(knex: Knex): Promise<void> {
     ALTER TABLE scheduled_activities
     DROP CONSTRAINT scheduled_activities_activity_type_check,
     ADD CONSTRAINT scheduled_activities_activity_type_check
-      CHECK (activity_type IN ('hyrox', 'running', 'athx', 'strength'))
+      CHECK (activity_type IN ('running', 'strength'))
   `)
 }
 
@@ -14,6 +14,6 @@ export async function down(knex: Knex): Promise<void> {
     ALTER TABLE scheduled_activities
     DROP CONSTRAINT scheduled_activities_activity_type_check,
     ADD CONSTRAINT scheduled_activities_activity_type_check
-      CHECK (activity_type IN ('hyrox', 'running', 'athx'))
+      CHECK (activity_type IN ('running'))
   `)
 }

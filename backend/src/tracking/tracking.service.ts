@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import OpenAI from 'openai'
 
-export type SportType = 'crossfit' | 'running' | 'hyrox' | 'athx' | 'biking' | 'global'
+export type SportType = 'crossfit' | 'running' | 'biking' | 'global'
 
 export interface TypeTrend {
   type: string
@@ -57,9 +57,7 @@ export class TrackingService {
     if (sport === 'global') report = await this.generateGlobalReport(userId, months, since)
     else if (sport === 'crossfit') report = await this.generateCrossfitReport(userId, months, since)
     else if (sport === 'running') report = await this.generateRunningReport(userId, months, since)
-    else if (sport === 'hyrox') report = await this.generateHyroxReport(userId, months, since)
-    else if (sport === 'biking') report = await this.generateBikingReport(userId, months, since)
-    else report = await this.generateAthxReport(userId, months, since)
+    else report = await this.generateBikingReport(userId, months, since)
 
     await this.saveReport(userId, sport, months, report)
     return report
@@ -288,143 +286,6 @@ ${typeLines}
 ${this.jsonInstructions()}`
   }
 
-  // ─── HYROX ────────────────────────────────────────────────────────────────
-
-  private async generateHyroxReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const sessions = await this.knex('hyrox_sessions')
-      .select('session_date', 'session_type', 'total_time_seconds', 'station_times', 'perceived_effort')
-      .where('user_id', userId)
-      .where('session_date', '>=', since.toISOString().split('T')[0])
-      .orderBy('session_date', 'asc')
-
-    if (sessions.length < 2) return this.notEnoughData('hyrox', months, sessions.length)
-
-    const agg = this.aggregateHyrox(sessions)
-    const prompt = this.buildHyroxPrompt(agg, months)
-    const parsed = await this.callAI(prompt)
-
-    return { sport: 'hyrox', period_months: months, ...parsed, generated_at: new Date().toISOString() }
-  }
-
-  private aggregateHyrox(sessions: any[]) {
-    const total = sessions.length
-    const simulations = sessions.filter(s => s.session_type === 'full_simulation')
-
-    const simTimes = simulations.map(s => s.total_time_seconds).filter(Boolean)
-    const bestTime = simTimes.length ? Math.min(...simTimes) : null
-    const simTrend: 'improving' | 'stable' | 'declining' =
-      simTimes.length >= 2
-        ? (simTimes[0] - simTimes[simTimes.length - 1] > 60 ? 'improving' : simTimes[simTimes.length - 1] - simTimes[0] > 60 ? 'declining' : 'stable')
-        : 'stable'
-
-    const byType: Record<string, number> = {}
-    for (const s of sessions) { byType[s.session_type] = (byType[s.session_type] ?? 0) + 1 }
-
-    const withEffort = sessions.filter(s => s.perceived_effort)
-    const avgEffort = withEffort.length
-      ? (withEffort.reduce((a, s) => a + s.perceived_effort, 0) / withEffort.length).toFixed(1)
-      : null
-
-    // Station PRs
-    const stationPrs: Record<string, number> = {}
-    for (const s of sessions) {
-      const times: { station: string; time_seconds: number }[] = Array.isArray(s.station_times) ? s.station_times : []
-      for (const st of times) {
-        if (!stationPrs[st.station] || st.time_seconds < stationPrs[st.station]) {
-          stationPrs[st.station] = st.time_seconds
-        }
-      }
-    }
-
-    return { total, simulations: simulations.length, bestTime, simTrend, byType, avgEffort, stationPrs }
-  }
-
-  private buildHyroxPrompt(agg: any, months: number): string {
-    const typeLines = Object.entries(agg.byType)
-      .map(([type, count]) => `- ${type}: ${count} séance(s)`)
-      .join('\n')
-
-    const stationLines = Object.entries(agg.stationPrs).length
-      ? Object.entries(agg.stationPrs).map(([s, t]) => `- ${s}: ${Math.floor((t as number) / 60)}:${String((t as number) % 60).padStart(2, '0')}`).join('\n')
-      : '- Aucun PR de station enregistré'
-
-    const bestTimeStr = agg.bestTime
-      ? `${Math.floor(agg.bestTime / 3600)}h${String(Math.floor((agg.bestTime % 3600) / 60)).padStart(2, '0')}`
-      : 'aucune simulation complète'
-
-    return `Tu es un coach HYROX expert. Génère un bilan de progression HYROX sur ${months} mois.
-
-Données ${months} mois :
-- ${agg.total} séances dont ${agg.simulations} simulation(s) complète(s)
-- Meilleur temps simulation : ${bestTimeStr}
-- Tendance simulations : ${agg.simTrend}
-- Effort perçu moyen : ${agg.avgEffort ?? 'non renseigné'}/10
-
-Types de séances :
-${typeLines}
-
-PRs par station :
-${stationLines}
-
-${this.jsonInstructions()}`
-  }
-
-  // ─── ATHX ─────────────────────────────────────────────────────────────────
-
-  private async generateAthxReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const sessions = await this.knex('athx_sessions')
-      .select('session_date', 'session_type', 'duration_minutes', 'perceived_effort', 'zone_results')
-      .where('user_id', userId)
-      .where('session_date', '>=', since.toISOString().split('T')[0])
-      .orderBy('session_date', 'asc')
-
-    if (sessions.length < 2) return this.notEnoughData('athx', months, sessions.length)
-
-    const agg = this.aggregateAthx(sessions)
-    const prompt = this.buildAthxPrompt(agg, months)
-    const parsed = await this.callAI(prompt)
-
-    return { sport: 'athx', period_months: months, ...parsed, generated_at: new Date().toISOString() }
-  }
-
-  private aggregateAthx(sessions: any[]) {
-    const total = sessions.length
-    const totalMinutes = sessions.reduce((a, s) => a + (s.duration_minutes ?? 0), 0)
-    const totalHours = (totalMinutes / 60).toFixed(1)
-
-    const byType: Record<string, number> = {}
-    for (const s of sessions) { byType[s.session_type] = (byType[s.session_type] ?? 0) + 1 }
-
-    const withEffort = sessions.filter(s => s.perceived_effort)
-    const firstHalfEffort = withEffort.slice(0, Math.floor(withEffort.length / 2))
-    const secondHalfEffort = withEffort.slice(Math.floor(withEffort.length / 2))
-    const avg = (arr: any[]) => arr.length ? arr.reduce((a, s) => a + s.perceived_effort, 0) / arr.length : 0
-    const effortTrend: 'improving' | 'stable' | 'declining' =
-      firstHalfEffort.length && secondHalfEffort.length
-        ? (avg(firstHalfEffort) - avg(secondHalfEffort) > 0.5 ? 'improving' : avg(secondHalfEffort) - avg(firstHalfEffort) > 0.5 ? 'declining' : 'stable')
-        : 'stable'
-
-    return { total, totalHours, byType, effortTrend, avgEffort: withEffort.length ? avg(withEffort).toFixed(1) : null }
-  }
-
-  private buildAthxPrompt(agg: any, months: number): string {
-    const typeLines = Object.entries(agg.byType)
-      .map(([type, count]) => `- ${type}: ${count} séance(s)`)
-      .join('\n')
-
-    return `Tu es un coach ATHX expert. Génère un bilan de progression ATHX sur ${months} mois.
-
-Données ${months} mois :
-- ${agg.total} séances, ${agg.totalHours}h d'entraînement au total
-- Effort perçu moyen : ${agg.avgEffort ?? 'non renseigné'}/10
-- Tendance effort : ${agg.effortTrend} (amélioration = effort moindre pour même intensité)
-
-Types de séances :
-${typeLines}
-
-${this.jsonInstructions()}`
-  }
-
   // ─── Biking ───────────────────────────────────────────────────────────────
 
   private async generateBikingReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
@@ -503,14 +364,10 @@ ${this.jsonInstructions()}`
     const sinceDate = since.toISOString().split('T')[0]
     const sinceISO = since.toISOString()
 
-    const [cfSessions, runningSessions, hyroxSessions, athxSessions, bikingSessions, orms, profile] = await Promise.all([
+    const [cfSessions, runningSessions, bikingSessions, orms, profile] = await Promise.all([
       this.knex('workout_sessions').where('user_id', userId).whereNotNull('completed_at').where('started_at', '>=', sinceISO).count('* as count').first(),
       this.knex('running_sessions').where('user_id', userId).where('session_date', '>=', sinceDate)
         .select('distance_km', 'avg_pace_seconds_per_km', 'avg_heart_rate', 'run_type'),
-      this.knex('hyrox_sessions').where('user_id', userId).where('session_date', '>=', sinceDate)
-        .select('session_type', 'total_time_seconds', 'perceived_effort'),
-      this.knex('athx_sessions').where('user_id', userId).where('session_date', '>=', sinceDate)
-        .select('duration_minutes', 'perceived_effort', 'session_type'),
       this.knex('biking_sessions').where('user_id', userId).where('session_date', '>=', sinceDate)
         .select('distance_km', 'duration_seconds', 'avg_power_watts', 'bike_type'),
       this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId).orderBy('lift'),
@@ -518,28 +375,21 @@ ${this.jsonInstructions()}`
     ])
 
     const cfCount = Number((cfSessions as any)?.count ?? 0)
-    const totalSessions = cfCount + runningSessions.length + hyroxSessions.length + athxSessions.length + bikingSessions.length
+    const totalSessions = cfCount + runningSessions.length + bikingSessions.length
 
     if (totalSessions < 5) return this.notEnoughData('global', months, totalSessions)
 
-    const agg = this.aggregateGlobal({ cfCount, runningSessions, hyroxSessions, athxSessions, bikingSessions, orms, profile })
+    const agg = this.aggregateGlobal({ cfCount, runningSessions, bikingSessions, orms, profile })
     const prompt = this.buildGlobalPrompt(agg, months)
     const parsed = await this.callAI(prompt, true)
 
     return { sport: 'global', period_months: months, ...parsed, generated_at: new Date().toISOString() }
   }
 
-  private aggregateGlobal({ cfCount, runningSessions, hyroxSessions, athxSessions, bikingSessions, orms, profile }: any) {
+  private aggregateGlobal({ cfCount, runningSessions, bikingSessions, orms, profile }: any) {
     const totalRunningKm = runningSessions.reduce((a: number, s: any) => a + (s.distance_km ?? 0), 0).toFixed(1)
     const paceValues = runningSessions.filter((s: any) => s.avg_pace_seconds_per_km).map((s: any) => s.avg_pace_seconds_per_km)
     const avgPace = paceValues.length ? Math.round(paceValues.reduce((a: number, v: number) => a + v, 0) / paceValues.length) : null
-
-    const hyroxSimulations = hyroxSessions.filter((s: any) => s.session_type === 'full_simulation')
-    const bestHyroxTime = hyroxSimulations.length
-      ? Math.min(...hyroxSimulations.map((s: any) => s.total_time_seconds).filter(Boolean))
-      : null
-
-    const totalAthxHours = (athxSessions.reduce((a: number, s: any) => a + (s.duration_minutes ?? 0), 0) / 60).toFixed(1)
 
     const totalBikingKm = bikingSessions.reduce((a: number, s: any) => a + (Number(s.distance_km) ?? 0), 0).toFixed(1)
     const bikingPowerValues = bikingSessions.filter((s: any) => s.avg_power_watts).map((s: any) => s.avg_power_watts as number)
@@ -552,22 +402,16 @@ ${this.jsonInstructions()}`
     const balance = {
       crossfit: cfCount,
       running: runningSessions.length,
-      hyrox: hyroxSessions.length,
-      athx: athxSessions.length,
       biking: bikingSessions.length,
     }
 
-    return { cfCount, totalRunningKm, avgPace, bestHyroxTime, totalAthxHours, totalBikingKm, avgBikingPower, ormStr, balance, profile }
+    return { cfCount, totalRunningKm, avgPace, totalBikingKm, avgBikingPower, ormStr, balance, profile }
   }
 
   private buildGlobalPrompt(agg: any, months: number): string {
     const paceStr = agg.avgPace
       ? `${Math.floor(agg.avgPace / 60)}:${String(agg.avgPace % 60).padStart(2, '0')}/km`
       : 'non renseignée'
-
-    const hyroxStr = agg.bestHyroxTime
-      ? `${Math.floor(agg.bestHyroxTime / 3600)}h${String(Math.floor((agg.bestHyroxTime % 3600) / 60)).padStart(2, '0')}`
-      : 'aucune simulation'
 
     const balanceLines = Object.entries(agg.balance)
       .map(([sport, count]) => `- ${sport}: ${count} séance(s)`)
@@ -589,8 +433,6 @@ ${balanceLines}
 Indicateurs par discipline :
 - CrossFit : ${agg.cfCount} séances
 - Running : ${agg.totalRunningKm} km totaux, allure moyenne ${paceStr}
-- HYROX : ${agg.balance.hyrox} séances, meilleur temps simulation ${hyroxStr}
-- ATHX : ${agg.totalAthxHours}h totales
 - Vélo : ${agg.balance.biking} séances — ${bikingStr}
 
 En te basant sur ces données, évalue la condition physique globale de l'athlète.

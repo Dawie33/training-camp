@@ -1,6 +1,6 @@
 import { apiClient } from './index'
 
-export type ActivityModule = 'crossfit' | 'hyrox' | 'running' | 'athx' | 'strength'
+export type ActivityModule = 'crossfit' | 'running' | 'strength'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**
@@ -66,9 +66,10 @@ export interface UnifiedActivityQueryParams extends Record<string, string | numb
   module?: ActivityModule
 }
 
+
 export const activitiesApi = {
   /**
-   * Récupère la vue unifiée de toutes les activités planifiées (CrossFit + HYROX + Running + ATHX)
+   * Récupère la vue unifiée de toutes les activités planifiées (CrossFit + Running + Force)
    */
   async getUnified(params?: UnifiedActivityQueryParams): Promise<UnifiedActivity[]> {
     return apiClient.get<UnifiedActivity[]>('/scheduled-activities/unified', { params })
@@ -89,7 +90,7 @@ export const activitiesApi = {
   },
 
   /**
-   * Supprime une activité planifiée (HYROX / Running / ATHX)
+   * Supprime une activité planifiée (Running / Force)
    */
   async delete(id: string): Promise<{ success: boolean }> {
     return apiClient.delete<{ success: boolean }>(`/scheduled-activities/${id}`)

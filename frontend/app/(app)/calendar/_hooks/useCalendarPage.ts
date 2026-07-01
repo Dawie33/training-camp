@@ -18,9 +18,7 @@ import { useWorkoutSchedule } from './useWorkoutSchedule'
 
 const MODULE_COLORS: Record<string, string> = {
   crossfit: '',
-  hyrox: 'hyrox',
   running: 'running',
-  athx: 'athx',
   strength: 'strength',
 }
 
