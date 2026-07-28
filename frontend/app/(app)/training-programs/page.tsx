@@ -89,6 +89,16 @@ function WeekSessionCard({ session, num }: { session: ProgramSession; num: numbe
             <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${FOCUS_COLOR[session.focus] ?? 'bg-slate-500/20 text-slate-400'}`}>
               {FOCUS_LABEL[session.focus] ?? session.focus}
             </span>
+            {session._progression?.deload && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-green-500/20 text-green-400 border-green-500/30">
+                Deload
+              </span>
+            )}
+            {session._progression && !session._progression.deload && session._progression.intensity_delta > 0 && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-orange-500/10 text-orange-300 border-orange-500/20">
+                +{session._progression.intensity_delta}%
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Clock className="w-3 h-3" />

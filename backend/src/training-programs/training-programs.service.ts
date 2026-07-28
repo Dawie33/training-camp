@@ -17,6 +17,74 @@ export interface ProgramRecommendationContext {
   today_session?: { title: string; focus: string; estimated_duration: number } | null
 }
 
+export interface WeeklyProgression {
+  week_in_phase: number
+  phase_length: number
+  deload: boolean
+  intensity_delta: number // points de % ajoutés (négatif en deload)
+}
+
+// Points de % 1RM ajoutés par semaine à l'intérieur d'une phase (surcharge progressive)
+const INTENSITY_STEP = 5
+
+// Ajuste la première valeur "NN%" d'une chaîne d'intensité (ex: "75% 1RM" -> "80% 1RM")
+function adjustIntensityString(
+  intensity: string | null | undefined,
+  deltaPts: number,
+): string | null | undefined {
+  if (!intensity || deltaPts === 0) return intensity
+  return intensity.replace(/(\d{1,3})(\s*%)/, (_m, num: string, suffix: string) => {
+    const v = Math.min(95, Math.max(40, parseInt(num, 10) + deltaPts))
+    return `${v}${suffix}`
+  })
+}
+
+/**
+ * Applique une surcharge progressive déterministe à une séance selon sa position
+ * dans la phase : l'intensité monte semaine après semaine, avec un deload sur la
+ * dernière semaine des phases de 3 semaines ou plus.
+ */
+function applyWeeklyProgression(
+  session: ProgramSession,
+  weekInPhase: number,
+  phaseLength: number,
+): ProgramSession & { _progression: WeeklyProgression } {
+  const deload = phaseLength >= 3 && weekInPhase === phaseLength
+  const deltaPts = deload ? -10 : (weekInPhase - 1) * INTENSITY_STEP
+
+  let strength_work = session.strength_work
+  if (strength_work && deltaPts !== 0) {
+    strength_work = {
+      movements: strength_work.movements.map((m) => ({
+        ...m,
+        intensity: adjustIntensityString(m.intensity, deltaPts),
+        sets: deload ? Math.max(1, m.sets - 1) : m.sets,
+      })),
+    }
+  }
+
+  let conditioning = session.conditioning
+  if (conditioning && deload) {
+    conditioning = {
+      ...conditioning,
+      duration_minutes: conditioning.duration_minutes
+        ? Math.round(conditioning.duration_minutes * 0.7)
+        : conditioning.duration_minutes,
+      rounds: conditioning.rounds ? Math.max(1, Math.round(conditioning.rounds * 0.7)) : conditioning.rounds,
+      scaling_notes: [conditioning.scaling_notes, 'Semaine de récupération : réduis le volume et garde de la marge.']
+        .filter(Boolean)
+        .join(' '),
+    }
+  }
+
+  return {
+    ...session,
+    strength_work,
+    conditioning,
+    _progression: { week_in_phase: weekInPhase, phase_length: phaseLength, deload, intensity_delta: deltaPts },
+  }
+}
+
 @Injectable()
 export class TrainingProgramsService {
   constructor(@InjectModel() private readonly knex: Knex) {}
@@ -184,7 +252,14 @@ export class TrainingProgramsService {
       return { ...session, ...swap.replacement, _swapped: true }
     })
 
-    return { phase: { ...phase, sessions: undefined }, sessions, weekNum }
+    const sortedWeeks = [...phase.weeks].sort((a, b) => a - b)
+    const weekInPhase = sortedWeeks.indexOf(weekNum) + 1
+    const phaseLength = sortedWeeks.length
+    const progressedSessions = sessions.map((s) =>
+      applyWeeklyProgression(s as ProgramSession, weekInPhase, phaseLength),
+    )
+
+    return { phase: { ...phase, sessions: undefined }, sessions: progressedSessions, weekNum }
   }
 
   /**

@@ -47,6 +47,12 @@ export interface ProgramSession {
   skill_work?: { name: string; description: string; sets?: number | null; duration?: string | null } | null
   coach_notes?: string | null
   _swapped?: boolean
+  _progression?: {
+    week_in_phase: number
+    phase_length: number
+    deload: boolean
+    intensity_delta: number
+  }
 }
 
 export interface WeekSessions {
