@@ -5,6 +5,18 @@ import { CreateProgramDto } from './dto/create-program.dto'
 import { ScheduleWeekDto, SwapSessionDto, UpdateEnrollmentDto } from './dto/update-enrollment.dto'
 import type { ProgramPhase, ProgramSession } from './schemas/program.schema'
 
+export interface ProgramRecommendationContext {
+  has_active_program: boolean
+  program_name?: string
+  objectives?: string | null
+  current_week?: number
+  total_weeks?: number
+  sessions_per_week?: number
+  current_phase?: { phase_number: number; name: string; description: string }
+  week_planned_focuses?: string[]
+  today_session?: { title: string; focus: string; estimated_duration: number } | null
+}
+
 @Injectable()
 export class TrainingProgramsService {
   constructor(@InjectModel() private readonly knex: Knex) {}
@@ -404,5 +416,64 @@ export class TrainingProgramsService {
     }
 
     return { auto_advanced: false, completed, total }
+  }
+
+  /**
+   * Contexte léger du programme actif, destiné à aligner la recommandation
+   * "séance du jour" sur le programme en cours (phase, focus de la semaine,
+   * séance planifiée aujourd'hui).
+   */
+  async getRecommendationContext(userId: string): Promise<ProgramRecommendationContext> {
+    const enrollment = await this.getActiveEnrollment(userId)
+    if (!enrollment) {
+      return { has_active_program: false }
+    }
+
+    const ctx: ProgramRecommendationContext = {
+      has_active_program: true,
+      program_name: enrollment.program_name,
+      objectives: enrollment.program_objectives ?? null,
+      current_week: enrollment.current_week,
+      total_weeks: enrollment.duration_weeks,
+      sessions_per_week: enrollment.sessions_per_week,
+    }
+
+    // Phase courante + focus planifiés de la semaine (best-effort)
+    try {
+      const { phase, sessions } = await this.getWeekSessions(enrollment.id, userId, enrollment.current_week)
+      if (phase) {
+        const p = phase as { phase_number: number; name: string; description: string }
+        ctx.current_phase = {
+          phase_number: p.phase_number,
+          name: p.name,
+          description: p.description,
+        }
+      }
+      ctx.week_planned_focuses = (sessions as ProgramSession[]).map((s) => s.focus)
+    } catch {
+      // structure indisponible pour cette semaine — on continue sans le détail
+    }
+
+    // Séance programme planifiée aujourd'hui (non complétée)
+    const today = new Date().toISOString().split('T')[0]
+    const todayRow = await this.knex('user_workout_schedule')
+      .where({ user_id: userId, program_enrollment_id: enrollment.id })
+      .whereRaw('scheduled_date = ?', [today])
+      .whereNot('status', 'completed')
+      .first()
+
+    if (todayRow?.session_data) {
+      const data =
+        typeof todayRow.session_data === 'string' ? JSON.parse(todayRow.session_data) : todayRow.session_data
+      if (data?.title && data?.focus) {
+        ctx.today_session = {
+          title: data.title,
+          focus: data.focus,
+          estimated_duration: data.estimated_duration ?? 60,
+        }
+      }
+    }
+
+    return ctx
   }
 }

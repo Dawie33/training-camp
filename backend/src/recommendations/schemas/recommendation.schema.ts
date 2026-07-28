@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { ProgramRecommendationContext } from 'src/training-programs/training-programs.service'
 
 export const RecommendedSportSchema = z.enum(['crossfit', 'running', 'biking', 'strength', 'rest'])
 
@@ -11,6 +12,7 @@ export const AIRecommendationSchema = z.object({
   suggested_duration: z.number().int().positive(),
   suggested_focus: z.string().nullable().optional(),
   suggested_instructions: z.string().nullable().optional(),
+  aligned_with_program: z.boolean().optional(),
 })
 
 export type AIRecommendation = z.infer<typeof AIRecommendationSchema>
@@ -24,5 +26,6 @@ export interface SessionStats {
 export interface NextSessionRecommendation {
   recommendation: AIRecommendation
   session_stats: SessionStats
+  program?: ProgramRecommendationContext
   generated_at: string
 }
