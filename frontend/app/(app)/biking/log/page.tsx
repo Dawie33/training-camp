@@ -34,7 +34,7 @@ export default function BikingLogPage() {
         setFitData(data)
         const updates: Partial<CreateBikingSessionDto> = {}
         if (data.totals.duration_seconds) {
-            updates.duration_seconds = data.totals.duration_seconds
+            updates.duration_seconds = Math.round(data.totals.duration_seconds)
         }
         if (!isIndoor && data.totals.distance_meters && data.totals.distance_meters > 0) {
             updates.distance_km = Math.round((data.totals.distance_meters / 1000) * 100) / 100
@@ -47,10 +47,10 @@ export default function BikingLogPage() {
             return sport.includes('cycl') || sport.includes('bik')
         })
         if (bikeActivity?.avg_heart_rate) {
-            updates.avg_heart_rate = bikeActivity.avg_heart_rate
+            updates.avg_heart_rate = Math.round(bikeActivity.avg_heart_rate)
         }
         if (bikeActivity?.max_heart_rate) {
-            updates.max_heart_rate = bikeActivity.max_heart_rate
+            updates.max_heart_rate = Math.round(bikeActivity.max_heart_rate)
         }
         if (data.totals.calories) {
             updates.calories = data.totals.calories
