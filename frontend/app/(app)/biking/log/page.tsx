@@ -73,7 +73,7 @@ export default function BikingLogPage() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
             {/* Date */}
             <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
