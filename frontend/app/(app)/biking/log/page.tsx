@@ -53,7 +53,7 @@ export default function BikingLogPage() {
             updates.max_heart_rate = Math.round(bikeActivity.max_heart_rate)
         }
         if (data.totals.calories) {
-            updates.calories = data.totals.calories
+            updates.calories = Math.round(data.totals.calories)
         }
         setForm(prev => ({ ...prev, ...updates }))
     }
