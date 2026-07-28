@@ -20,6 +20,8 @@ export interface ParsedFitData {
   sport: string | null
   avg_temperature: number | null
   avg_cadence: number | null
+  avg_power: number | null
+  max_power: number | null
   hr_zones: HrZoneData[] | null
 }
 
@@ -34,6 +36,8 @@ export interface FitActivity {
   distance_meters: number | null
   avg_temperature: number | null
   avg_cadence: number | null
+  avg_power: number | null
+  max_power: number | null
   avg_pace_min_km: number | null
   hr_zones: HrZoneData[] | null
 }
@@ -44,12 +48,15 @@ export interface MultiActivityFitData {
     duration_seconds: number
     calories: number | null
     distance_meters: number | null
+    avg_power: number | null
     hr_zones: HrZoneData[] | null
   }
 }
 
 export function getSportLabel(sport: string | null, index: number, totalActivities: number): string {
   const isRun = sport?.toLowerCase().includes('run')
+  const isBike = sport?.toLowerCase().includes('cycl') || sport?.toLowerCase().includes('bik')
+  if (isBike) return 'Vélo'
   if (!isRun) return 'Musculation / Mouvements'
   const runActivities = Array.from({ length: totalActivities })
   const runIndex = runActivities

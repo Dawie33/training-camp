@@ -3,6 +3,7 @@
 import { BIKE_TYPE_LABELS, BikeType, bikingService, BikingSession } from '@/services/biking'
 import { Bike } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { BikingSessionCard } from '../_components/BikingSessionCard'
 
 const BIKE_TYPES: BikeType[] = ['endurance', 'sweet_spot', 'intervals', 'ftp_test', 'recovery', 'race']
@@ -29,6 +30,17 @@ export default function BikingLibraryPage() {
         }
         load()
     }, [filter])
+
+    const handleDelete = async (id: string) => {
+        try {
+            await bikingService.delete(id)
+            setSessions(prev => prev.filter(s => s.id !== id))
+            setCount(prev => prev - 1)
+            toast.success('Séance supprimée')
+        } catch {
+            toast.error('Erreur lors de la suppression')
+        }
+    }
 
     return (
         <div className="space-y-4">
@@ -67,7 +79,7 @@ export default function BikingLibraryPage() {
             ) : (
                 <div className="space-y-3">
                     {sessions.map(session => (
-                        <BikingSessionCard key={session.id} session={session} />
+                        <BikingSessionCard key={session.id} session={session} onDelete={handleDelete} />
                     ))}
                 </div>
             )}

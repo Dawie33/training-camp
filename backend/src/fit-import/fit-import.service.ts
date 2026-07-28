@@ -19,6 +19,8 @@ export interface ParsedFitData {
   sport: string | null
   avg_temperature: number | null
   avg_cadence: number | null
+  avg_power: number | null
+  max_power: number | null
   hr_zones: HrZoneData[] | null
 }
 
@@ -33,6 +35,8 @@ export interface FitActivity {
   distance_meters: number | null
   avg_temperature: number | null
   avg_cadence: number | null
+  avg_power: number | null // uniquement pour le vélo
+  max_power: number | null // uniquement pour le vélo
   avg_pace_min_km: number | null // uniquement pour le running
   hr_zones: HrZoneData[] | null
 }
@@ -43,6 +47,7 @@ export interface MultiActivityFitData {
     duration_seconds: number
     calories: number | null
     distance_meters: number | null
+    avg_power: number | null
     hr_zones: HrZoneData[] | null
   }
 }
@@ -130,6 +135,8 @@ export class FitImportService {
       sport: session.sport ?? null,
       avg_temperature: session.avg_temperature ?? null,
       avg_cadence: session.avg_cadence ?? null,
+      avg_power: session.avg_power ?? null,
+      max_power: session.max_power ?? null,
       hr_zones,
     }
   }
@@ -147,6 +154,8 @@ export class FitImportService {
       distance_meters: d.distance_meters,
       avg_temperature: d.avg_temperature,
       avg_cadence: d.avg_cadence,
+      avg_power: d.avg_power,
+      max_power: d.max_power,
       avg_pace_min_km: d.sport?.toLowerCase().includes('run')
         ? toPaceMinKm(d.duration_seconds, d.distance_meters)
         : null,
@@ -156,6 +165,14 @@ export class FitImportService {
     const totalDuration = activities.reduce((s, a) => s + (a.duration_seconds ?? 0), 0)
     const totalCalories = activities.reduce((s, a) => s + (a.calories ?? 0), 0)
     const totalDistance = activities.reduce((s, a) => s + (a.distance_meters ?? 0), 0)
+    const powerWeightedSum = activities.reduce(
+      (s, a) => s + (a.avg_power && a.duration_seconds ? a.avg_power * a.duration_seconds : 0),
+      0,
+    )
+    const powerWeightedDuration = activities.reduce(
+      (s, a) => s + (a.avg_power && a.duration_seconds ? a.duration_seconds : 0),
+      0,
+    )
 
     return {
       activities,
@@ -163,6 +180,7 @@ export class FitImportService {
         duration_seconds: totalDuration,
         calories: totalCalories || null,
         distance_meters: totalDistance || null,
+        avg_power: powerWeightedDuration > 0 ? Math.round(powerWeightedSum / powerWeightedDuration) : null,
         hr_zones: mergeHrZones(activities.map(a => a.hr_zones)),
       },
     }

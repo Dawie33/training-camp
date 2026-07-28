@@ -1,13 +1,17 @@
 import { BIKE_TYPE_COLORS, BIKE_TYPE_LABELS, BikingSession, formatDuration } from '@/services/biking'
-import { Bike, Clock, Flame, Heart, Zap } from 'lucide-react'
+import { Bike, Clock, Flame, Heart, Home, Trash2, X, Zap } from 'lucide-react'
+import { useState } from 'react'
 
 interface BikingSessionCardProps {
     session: BikingSession
+    onDelete?: (id: string) => void
 }
 
-export function BikingSessionCard({ session }: BikingSessionCardProps) {
+export function BikingSessionCard({ session, onDelete }: BikingSessionCardProps) {
+    const [confirming, setConfirming] = useState(false)
     const typeColor = BIKE_TYPE_COLORS[session.bike_type]
     const typeLabel = BIKE_TYPE_LABELS[session.bike_type]
+    const isIndoor = session.location_type === 'indoor'
     const date = new Date(session.session_date).toLocaleDateString('fr-FR', {
         weekday: 'short',
         day: 'numeric',
@@ -29,9 +33,47 @@ export function BikingSessionCard({ session }: BikingSessionCardProps) {
                     </div>
                 </div>
 
-                <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${typeColor}`}>
-                    {typeLabel}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    {isIndoor && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border bg-slate-500/20 text-slate-400 border-slate-500/30">
+                            <Home className="w-3 h-3" />
+                            Intérieur
+                        </span>
+                    )}
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${typeColor}`}>
+                        {typeLabel}
+                    </span>
+                    {onDelete && (
+                        confirming ? (
+                            <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => onDelete(session.id)}
+                                    className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                                >
+                                    Supprimer
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirming(false)}
+                                    className="text-slate-500 hover:text-slate-300 transition-colors p-1"
+                                    aria-label="Annuler"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setConfirming(true)}
+                                className="text-slate-600 hover:text-red-400 transition-colors p-1"
+                                aria-label="Supprimer la séance"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )
+                    )}
+                </div>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
@@ -59,7 +101,7 @@ export function BikingSessionCard({ session }: BikingSessionCardProps) {
                         <span>{session.calories} kcal</span>
                     </div>
                 )}
-                {session.distance_km && (
+                {!isIndoor && session.distance_km && (
                     <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <span className="font-medium text-slate-300">{session.distance_km} km</span>
                     </div>

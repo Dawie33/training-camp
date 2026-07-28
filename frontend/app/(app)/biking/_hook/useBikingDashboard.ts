@@ -2,6 +2,7 @@
 
 import { bikingService, BikingSession, BikingStats } from '@/services/biking'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 export function useBikingDashboard() {
     const [sessions, setSessions] = useState<BikingSession[]>([])
@@ -28,5 +29,15 @@ export function useBikingDashboard() {
         load()
     }, [])
 
-    return { sessions, stats, loading, error }
+    const handleDelete = async (id: string) => {
+        try {
+            await bikingService.delete(id)
+            setSessions(prev => prev.filter(s => s.id !== id))
+            toast.success('Séance supprimée')
+        } catch {
+            toast.error('Erreur lors de la suppression')
+        }
+    }
+
+    return { sessions, stats, loading, error, handleDelete }
 }
