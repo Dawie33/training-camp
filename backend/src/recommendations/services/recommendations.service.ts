@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import OpenAI from 'openai'
+import { ProgramRecommendationContext, TrainingProgramsService } from 'src/training-programs/training-programs.service'
 import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { buildRecommendationSystemPrompt, buildRecommendationUserPrompt } from '../prompts/recommendation.prompt'
@@ -11,7 +12,10 @@ export class RecommendationsService {
   private readonly cache = new Map<string, { data: NextSessionRecommendation; expiresAt: number }>()
   private readonly TTL_MS = 2 * 60 * 60 * 1000 // 2h
 
-  constructor(private readonly userContextService: UserContextService) {
+  constructor(
+    private readonly userContextService: UserContextService,
+    private readonly trainingProgramsService: TrainingProgramsService,
+  ) {
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) throw new Error('OPENAI_API_KEY environment variable is not set')
     this.openai = new OpenAI({ apiKey })
@@ -24,14 +28,17 @@ export class RecommendationsService {
     }
 
     try {
-      const ctx = await this.userContextService.getUserAIContext(userId)
+      const [ctx, programContext] = await Promise.all([
+        this.userContextService.getUserAIContext(userId),
+        this.trainingProgramsService.getRecommendationContext(userId),
+      ])
       const stats = this.computeSessionStats(ctx)
 
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           { role: 'system', content: buildRecommendationSystemPrompt() },
-          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
+          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats, programContext) },
         ],
         temperature: 0.4,
         max_tokens: 800,
@@ -46,6 +53,7 @@ export class RecommendationsService {
       const result: NextSessionRecommendation = {
         recommendation,
         session_stats: stats,
+        program: programContext,
         generated_at: new Date().toISOString(),
       }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Activity, Bike, Calendar, Dumbbell, Footprints, Home, PenLine, TrendingUp, X } from 'lucide-react'
+import { Activity, Bike, Calendar, Dumbbell, Footprints, Home, PenLine, Target, TrendingUp, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -14,6 +14,7 @@ interface NavItem {
 
 const mainItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/training-programs', label: 'Programme', icon: Target },
   { href: '/calendar', label: 'Calendrier', icon: Calendar },
   { href: '/tracking', label: 'Suivi', icon: TrendingUp },
 ]

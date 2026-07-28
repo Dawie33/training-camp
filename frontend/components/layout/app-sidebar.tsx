@@ -19,6 +19,7 @@ import {
   Dumbbell,
   Footprints,
   Home,
+  Target,
   TrendingUp,
 } from 'lucide-react'
 
@@ -59,6 +60,7 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
       label: 'Principal',
       items: [
         { href: '/dashboard', label: 'Tableau de bord', icon: <Home className="w-5 h-5" /> },
+        { href: '/training-programs', label: 'Programme', icon: <Target className="w-5 h-5" /> },
         { href: '/calendar', label: 'Calendrier', icon: <Calendar className="w-5 h-5" /> },
         { href: '/tracking', label: 'Suivi', icon: <TrendingUp className="w-5 h-5" /> },
       ],

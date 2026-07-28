@@ -1,4 +1,5 @@
 import { UserAIContext } from 'src/workouts/services/user-context.service'
+import type { ProgramRecommendationContext } from 'src/training-programs/training-programs.service'
 import { SessionStats } from '../schemas/recommendation.schema'
 
 const SPORT_LABELS: Record<string, string> = {
@@ -45,6 +46,17 @@ Un programme équilibré sur 3 semaines doit couvrir :
 - Vélo : 45-90 min (endurance: 60-90, sweet_spot: 60-75, intervals: 60, recovery: 40-50)
 - Strength : 50-70 min
 
+# ALIGNEMENT AVEC LE PROGRAMME ACTIF (PRIORITAIRE)
+
+Si l'athlète suit un programme structuré, celui-ci est LA RÉFÉRENCE. Ta recommandation doit le servir, jamais le contredire :
+
+- **Une séance est programmée aujourd'hui** → recommande-la telle quelle. Mappe son "focus" vers recommended_sport : strength→strength, conditioning→crossfit, skill→crossfit, mixed→crossfit, recovery→rest. Reprends sa durée estimée. Mets aligned_with_program = true.
+- **Programme actif mais rien de programmé aujourd'hui** → propose une séance qui COMPLÈTE les focus restants de la semaine et respecte la phase en cours (ex. phase "force max" → strength lourd prioritaire ; phase "endurance de base" → cardio Z2). aligned_with_program = true.
+- **Phase de deload / récupération** → réduis nettement intensité et volume, privilégie récupération active ou repos, même si une modalité est "en retard".
+- **Aucun programme actif** → applique les principes cross-training génériques ci-dessus. aligned_with_program = false.
+
+Les règles d'urgence (days_since_last) restent secondaires face au programme : on ne casse pas la périodisation pour rattraper une modalité négligée.
+
 # FORMAT JSON REQUIS
 
 Retourne UNIQUEMENT ce JSON :
@@ -57,14 +69,19 @@ Retourne UNIQUEMENT ce JSON :
   "coaching_insight": "Explication pédagogique : ce que cette séance apporte dans la progression globale, comment elle complémente les séances récentes",
   "suggested_duration": 45,
   "suggested_focus": "focus optionnel (ex: 'legs', 'upper body', 'vo2max') ou null",
-  "suggested_instructions": "Instructions pré-remplies pour le formulaire de génération, ou null"
+  "suggested_instructions": "Instructions pré-remplies pour le formulaire de génération, ou null",
+  "aligned_with_program": true
 }
 \`\`\`
 
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 }
 
-export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: SessionStats): string {
+export function buildRecommendationUserPrompt(
+  ctx: UserAIContext,
+  stats: SessionStats,
+  program?: ProgramRecommendationContext,
+): string {
   const sportLabels = SPORT_LABELS
   const levelMap: Record<string, string> = {
     beginner: 'Débutant', intermediate: 'Intermédiaire', advanced: 'Avancé', elite: 'Elite',
@@ -81,6 +98,31 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
 
   const injuries = Object.keys(ctx.injuries)
   if (injuries.length) lines.push(`Limitations : ${injuries.join(', ')}`)
+
+  // Programme en cours
+  lines.push('')
+  lines.push('## PROGRAMME EN COURS')
+  if (!program?.has_active_program) {
+    lines.push('Aucun programme structuré actif — génération libre selon les principes cross-training.')
+  } else {
+    lines.push(`Programme : ${program.program_name}${program.objectives ? ` (objectif : ${program.objectives})` : ''}`)
+    if (program.current_week && program.total_weeks) {
+      lines.push(`Semaine ${program.current_week}/${program.total_weeks}${program.sessions_per_week ? ` — ${program.sessions_per_week} séances/sem.` : ''}`)
+    }
+    if (program.current_phase) {
+      lines.push(`Phase actuelle : ${program.current_phase.name} — ${program.current_phase.description}`)
+    }
+    if (program.week_planned_focuses?.length) {
+      lines.push(`Focus planifiés cette semaine : ${program.week_planned_focuses.join(', ')}`)
+    }
+    if (program.today_session) {
+      lines.push(
+        `➡️ Séance PROGRAMMÉE AUJOURD'HUI : « ${program.today_session.title} » (focus ${program.today_session.focus}, ${program.today_session.estimated_duration} min) — recommande-la en priorité.`,
+      )
+    } else {
+      lines.push("Aucune séance spécifiquement programmée aujourd'hui — propose une séance cohérente avec la phase et les focus restants.")
+    }
+  }
 
   // Stats globales
   lines.push('')
