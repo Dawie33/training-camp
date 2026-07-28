@@ -5,6 +5,7 @@ import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
+import { ActiveProgramCard } from './components/ActiveProgramCard'
 import { TrainingOverview } from './components/TrainingOverview'
 import { QuickActions } from './components/QuickActions'
 import { WeeklyCalendar } from './components/WeeklyCalendar'
@@ -42,6 +43,11 @@ function DashboardContent() {
         {/* Recommandation Coach IA */}
         <motion.div variants={fadeInUp}>
           <CoachRecommendationWidget />
+        </motion.div>
+
+        {/* Programme actif */}
+        <motion.div variants={fadeInUp}>
+          <ActiveProgramCard />
         </motion.div>
 
         {/* Workout du jour */}
