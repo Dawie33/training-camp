@@ -45,7 +45,19 @@ export class ScheduledActivitiesService {
       const cfRows = await cfQuery.orderBy('user_workout_schedule.scheduled_date', 'asc')
 
       for (const row of cfRows) {
-        const title = row.session_type === 'box_session' ? 'Jour Box' : (row.workout_name || 'Workout')
+        const sessionData =
+          row.session_data && typeof row.session_data === 'object'
+            ? (row.session_data as { title?: string; estimated_duration?: number })
+            : null
+
+        let title: string
+        if (row.session_type === 'box_session') {
+          title = 'Jour Box'
+        } else if (row.session_type === 'program_session') {
+          title = sessionData?.title || 'Séance programme'
+        } else {
+          title = row.workout_name || 'Workout'
+        }
 
         activities.push({
           id: row.id,
@@ -66,8 +78,10 @@ export class ScheduledActivitiesService {
           workout_type: row.workout_type,
           difficulty: row.difficulty,
           intensity: row.intensity,
-          estimated_duration: row.estimated_duration,
+          estimated_duration: row.estimated_duration ?? sessionData?.estimated_duration,
           completed_session_id: row.completed_session_id,
+          program_enrollment_id: row.program_enrollment_id,
+          session_data: row.session_data,
           _source: 'workout_schedule',
         })
       }

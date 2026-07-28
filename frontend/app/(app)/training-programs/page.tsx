@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import {
   ArrowRight,
   Calendar,
+  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -48,6 +49,18 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   enrolled: { label: 'Inscrit', color: 'text-blue-400' },
   active: { label: 'En cours', color: 'text-green-400' },
   paused: { label: 'En pause', color: 'text-yellow-400' },
+}
+
+// Lundi de la semaine courante au format YYYY-MM-DD
+function mondayOfCurrentWeek(): string {
+  const d = new Date()
+  const day = d.getDay() // 0 = dimanche
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
 }
 
 // --- Composant session de la semaine ---
@@ -95,6 +108,9 @@ export default function TrainingProgramsPage() {
   const [loadingWeek, setLoadingWeek] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const [viewWeek, setViewWeek] = useState<number>(1)
+  const [showSchedule, setShowSchedule] = useState(false)
+  const [scheduleDate, setScheduleDate] = useState<string>(mondayOfCurrentWeek())
+  const [scheduling, setScheduling] = useState(false)
 
   const fetchEnrollment = useCallback(async () => {
     try {
@@ -173,6 +189,30 @@ export default function TrainingProgramsPage() {
       toast.error('Erreur')
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  const handleSchedule = async () => {
+    if (!enrollment) return
+    setScheduling(true)
+    try {
+      const res = await trainingProgramsApi.scheduleWeek(enrollment.id, {
+        week_num: viewWeek,
+        start_date: scheduleDate,
+        box_dates: [],
+      })
+      const count = res?.scheduled?.length ?? 0
+      toast.success(`${count} séance${count > 1 ? 's' : ''} planifiée${count > 1 ? 's' : ''} dans le calendrier`)
+      setShowSchedule(false)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (msg.toLowerCase().includes('disponibles')) {
+        toast.error(msg)
+      } else {
+        toast.error('Impossible de planifier cette semaine')
+      }
+    } finally {
+      setScheduling(false)
     }
   }
 
@@ -321,24 +361,70 @@ export default function TrainingProgramsPage() {
                 )}
               </h2>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setViewWeek(v => Math.max(1, v - 1))}
-                disabled={viewWeek <= 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs text-slate-400 px-2">{viewWeek} / {enrollment.duration_weeks}</span>
-              <button
-                onClick={() => setViewWeek(v => Math.min(enrollment.duration_weeks, v + 1))}
-                disabled={viewWeek >= enrollment.duration_weeks}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+            <div className="flex items-center gap-2">
+              {(enrollment.status === 'active' || enrollment.status === 'enrolled') && (
+                <button
+                  onClick={() => setShowSchedule(v => !v)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition-colors text-xs font-semibold"
+                >
+                  <CalendarPlus className="w-3.5 h-3.5" />
+                  Planifier
+                </button>
+              )}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setViewWeek(v => Math.max(1, v - 1))}
+                  disabled={viewWeek <= 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs text-slate-400 px-2">{viewWeek} / {enrollment.duration_weeks}</span>
+                <button
+                  onClick={() => setViewWeek(v => Math.min(enrollment.duration_weeks, v + 1))}
+                  disabled={viewWeek >= enrollment.duration_weeks}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Panneau de planification */}
+          {showSchedule && (
+            <div className="mb-4 bg-white/5 border border-orange-500/20 rounded-xl p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <CalendarPlus className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-slate-400">
+                  Les {weekData?.sessions.length ?? ''} séances de la semaine {viewWeek} seront réparties sur les jours libres
+                  à partir de la date choisie (les jours déjà occupés sont ignorés).
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+                <div className="flex-1">
+                  <label className="text-xs text-slate-500 mb-1 block">Début de semaine</label>
+                  <input
+                    type="date"
+                    value={scheduleDate}
+                    onChange={(e) => setScheduleDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
+                  />
+                </div>
+                <button
+                  onClick={handleSchedule}
+                  disabled={scheduling}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all disabled:opacity-50"
+                >
+                  {scheduling ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" />Planification...</>
+                  ) : (
+                    <><Calendar className="w-4 h-4" />Ajouter au calendrier</>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
 
           {loadingWeek ? (
             <div className="flex justify-center py-10">

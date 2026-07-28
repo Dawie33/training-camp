@@ -107,6 +107,9 @@ export const trainingProgramsApi = {
   abandon: (enrollmentId: string) =>
     apiClient.patch(`/training-programs/enrollments/${enrollmentId}/abandon`, {}),
 
-  scheduleWeek: (enrollmentId: string, dto: { week_num: number; start_date: string; box_dates: string[] }) =>
+  scheduleWeek: (
+    enrollmentId: string,
+    dto: { week_num: number; start_date: string; box_dates: string[] }
+  ): Promise<{ scheduled: { date: string; session_title: string; schedule_id: string }[]; week_num: number }> =>
     apiClient.post(`/training-programs/enrollments/${enrollmentId}/schedule-week`, dto),
 }

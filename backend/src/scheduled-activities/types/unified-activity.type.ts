@@ -20,13 +20,15 @@ export interface UnifiedActivity {
   // Champs CrossFit (source: user_workout_schedule)
   workout_id?: string
   personalized_workout_id?: string
-  session_type?: 'workout' | 'box_session'
+  session_type?: 'workout' | 'box_session' | 'program_session'
   workout_name?: string
   workout_type?: string
   difficulty?: string
   intensity?: string
   estimated_duration?: number
   completed_session_id?: string
+  program_enrollment_id?: string
+  session_data?: unknown
 
   // Champs nouveaux modules (source: scheduled_activities)
   activity_type?: 'running' | 'strength'
