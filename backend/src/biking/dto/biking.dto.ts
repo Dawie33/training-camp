@@ -14,6 +14,7 @@ import {
 
 export type BikeType = 'endurance' | 'sweet_spot' | 'intervals' | 'ftp_test' | 'recovery' | 'race'
 export type BikeSource = 'manual' | 'ai_generated'
+export type BikeLocationType = 'indoor' | 'outdoor'
 
 export class CreateBikingSessionDto {
     @IsDateString()
@@ -21,6 +22,10 @@ export class CreateBikingSessionDto {
 
     @IsEnum(['endurance', 'sweet_spot', 'intervals', 'ftp_test', 'recovery', 'race'])
     bike_type!: BikeType
+
+    @IsOptional()
+    @IsEnum(['indoor', 'outdoor'])
+    location_type?: BikeLocationType
 
     @IsOptional()
     @IsUUID()
@@ -77,6 +82,10 @@ export class UpdateBikingSessionDto {
     @IsOptional()
     @IsEnum(['endurance', 'sweet_spot', 'intervals', 'ftp_test', 'recovery', 'race'])
     bike_type?: BikeType
+
+    @IsOptional()
+    @IsEnum(['indoor', 'outdoor'])
+    location_type?: BikeLocationType
 
     @IsOptional()
     @IsNumber()
@@ -141,6 +150,10 @@ export class BikingSessionQueryDto {
     @IsOptional()
     @IsIn(['endurance', 'sweet_spot', 'intervals', 'ftp_test', 'recovery', 'race'])
     bike_type?: BikeType
+
+    @IsOptional()
+    @IsIn(['indoor', 'outdoor'])
+    location_type?: BikeLocationType
 }
 
 export class GenerateBikingSessionDto {

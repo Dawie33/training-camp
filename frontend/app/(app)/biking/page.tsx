@@ -6,7 +6,7 @@ import { BikingSessionCard } from './_components/BikingSessionCard'
 import { useBikingDashboard } from './_hook/useBikingDashboard'
 
 export default function BikingPage() {
-    const { sessions, stats, loading, error } = useBikingDashboard()
+    const { sessions, stats, loading, error, handleDelete } = useBikingDashboard()
 
     if (loading) {
         return (
@@ -84,7 +84,7 @@ export default function BikingPage() {
                 <div className="space-y-3">
                     <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Séances récentes</h2>
                     {sessions.map(session => (
-                        <BikingSessionCard key={session.id} session={session} />
+                        <BikingSessionCard key={session.id} session={session} onDelete={handleDelete} />
                     ))}
                     <Link href="/biking/library"
                         className="block text-center text-sm text-slate-500 hover:text-slate-300 transition-colors py-2">

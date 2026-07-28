@@ -2,6 +2,12 @@ import { apiClient } from './index'
 
 export type BikeType = 'endurance' | 'sweet_spot' | 'intervals' | 'ftp_test' | 'recovery' | 'race'
 export type BikeSource = 'manual' | 'ai_generated'
+export type BikeLocationType = 'indoor' | 'outdoor'
+
+export const BIKE_LOCATION_LABELS: Record<BikeLocationType, string> = {
+    indoor: 'Intérieur',
+    outdoor: 'Extérieur',
+}
 
 export const BIKE_TYPE_LABELS: Record<BikeType, string> = {
     endurance: 'Endurance (Z2)',
@@ -53,6 +59,7 @@ export interface BikingSession {
     user_id: string
     session_date: string
     bike_type: BikeType
+    location_type: BikeLocationType
     source: BikeSource
     scheduled_activity_id?: string
     distance_km?: number
@@ -81,6 +88,7 @@ export interface BikingStats {
 export interface CreateBikingSessionDto {
     session_date: string
     bike_type: BikeType
+    location_type?: BikeLocationType
     scheduled_activity_id?: string
     distance_km?: number
     duration_seconds?: number

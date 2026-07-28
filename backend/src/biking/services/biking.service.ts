@@ -14,13 +14,14 @@ export class BikingService {
     ) { }
 
     async findAll(userId: string, query: BikingSessionQueryDto) {
-        const { limit = '20', offset = '0', start_date, end_date, bike_type } = query
+        const { limit = '20', offset = '0', start_date, end_date, bike_type, location_type } = query
 
         let q = this.knex('biking_sessions').where('user_id', userId)
 
         if (start_date) q = q.where('session_date', '>=', start_date)
         if (end_date) q = q.where('session_date', '<=', end_date)
         if (bike_type) q = q.where('bike_type', bike_type)
+        if (location_type) q = q.where('location_type', location_type)
 
         const [rows, countResult] = await Promise.all([
             q.clone().orderBy('session_date', 'desc').limit(Number(limit)).offset(Number(offset)),

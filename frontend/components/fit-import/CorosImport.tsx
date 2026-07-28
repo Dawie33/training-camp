@@ -31,14 +31,15 @@ function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSecon
 
 function ActivityCard({ activity, idx, total }: { activity: FitActivity; idx: number; total: number }) {
   const isRun = activity.sport?.toLowerCase().includes('run')
+  const isBike = activity.sport?.toLowerCase().includes('cycl') || activity.sport?.toLowerCase().includes('bik')
   const label = getSportLabel(activity.sport, idx, total)
   const dur = activity.duration_seconds
     ? `${Math.floor(activity.duration_seconds / 60)}:${String(Math.floor(activity.duration_seconds % 60)).padStart(2, '0')}`
     : null
   return (
-    <div className={`rounded-xl p-3 border ${isRun ? 'bg-green-500/5 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
+    <div className={`rounded-xl p-3 border ${isRun ? 'bg-green-500/5 border-green-500/20' : isBike ? 'bg-blue-500/5 border-blue-500/20' : 'bg-white/5 border-white/10'}`}>
       <div className="flex items-center gap-2 mb-2">
-        <span className={`text-sm font-semibold ${isRun ? 'text-green-300' : 'text-slate-200'}`}>{label}</span>
+        <span className={`text-sm font-semibold ${isRun ? 'text-green-300' : isBike ? 'text-blue-300' : 'text-slate-200'}`}>{label}</span>
         {dur && <span className="ml-auto text-xs text-slate-400">{dur}</span>}
       </div>
       <div className="grid grid-cols-3 gap-1.5">
@@ -50,10 +51,16 @@ function ActivityCard({ activity, idx, total }: { activity: FitActivity; idx: nu
             <p className="text-slate-500 text-xs">min/km</p>
           </div>
         )}
-        {isRun && activity.distance_meters && activity.distance_meters > 0 && (
+        {(isRun || isBike) && activity.distance_meters && activity.distance_meters > 0 && (
           <div className="bg-white/5 rounded-lg p-2 text-center">
             <p className="text-sm font-bold text-blue-400">{(activity.distance_meters / 1000).toFixed(2)} km</p>
             <p className="text-slate-500 text-xs">Distance</p>
+          </div>
+        )}
+        {isBike && activity.avg_power && (
+          <div className="bg-white/5 rounded-lg p-2 text-center">
+            <p className="text-sm font-bold text-amber-400">{activity.avg_power} W</p>
+            <p className="text-slate-500 text-xs">Puissance moy.</p>
           </div>
         )}
         {activity.avg_heart_rate && (
@@ -90,6 +97,7 @@ export function CorosImport({ accentColor = 'orange', onImport, onClear }: Props
     yellow: 'hover:border-yellow-500/50',
     cyan: 'hover:border-cyan-500/50',
     purple: 'hover:border-purple-500/50',
+    blue: 'hover:border-blue-500/50',
   }[accentColor] ?? 'hover:border-orange-500/50'
 
   const spinColor = {
@@ -98,6 +106,7 @@ export function CorosImport({ accentColor = 'orange', onImport, onClear }: Props
     yellow: 'border-yellow-500',
     cyan: 'border-cyan-500',
     purple: 'border-purple-500',
+    blue: 'border-blue-500',
   }[accentColor] ?? 'border-orange-500'
 
   const handleFiles = async (files: FileList) => {
@@ -133,7 +142,7 @@ export function CorosImport({ accentColor = 'orange', onImport, onClear }: Props
           <p className="text-xs text-slate-500 mt-0.5">Optionnel — importe ton .fit pour enrichir le log</p>
         </div>
         {fitData && (
-          <button onClick={handleClear} className="text-slate-400 hover:text-white transition-colors text-xl leading-none">
+          <button type="button" onClick={handleClear} className="text-slate-400 hover:text-white transition-colors text-xl leading-none">
             &times;
           </button>
         )}
@@ -141,6 +150,7 @@ export function CorosImport({ accentColor = 'orange', onImport, onClear }: Props
 
       {!fitData ? (
         <button
+          type="button"
           onClick={() => fitInputRef.current?.click()}
           disabled={isParsing}
           className={`w-full flex items-center justify-center gap-3 py-4 border border-dashed border-slate-600 ${focusColor} hover:bg-white/5 rounded-xl transition-all text-slate-400 hover:text-white disabled:opacity-50`}
@@ -173,7 +183,7 @@ export function CorosImport({ accentColor = 'orange', onImport, onClear }: Props
 
           <div className="pt-1 border-t border-white/10">
             <p className="text-xs text-slate-500 mb-2">Totaux</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {fitData.totals.calories && (
                 <div className="bg-white/5 rounded-xl p-3 text-center">
                   <p className="text-lg font-bold text-orange-400">{fitData.totals.calories}</p>
@@ -184,6 +194,12 @@ export function CorosImport({ accentColor = 'orange', onImport, onClear }: Props
                 <div className="bg-white/5 rounded-xl p-3 text-center">
                   <p className="text-lg font-bold text-blue-400">{(fitData.totals.distance_meters / 1000).toFixed(2)} km</p>
                   <p className="text-slate-500 text-xs mt-0.5">Distance</p>
+                </div>
+              )}
+              {fitData.totals.avg_power && (
+                <div className="bg-white/5 rounded-xl p-3 text-center">
+                  <p className="text-lg font-bold text-amber-400">{fitData.totals.avg_power} W</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Puissance moy.</p>
                 </div>
               )}
               {fitData.totals.duration_seconds > 0 && (
