@@ -65,6 +65,21 @@ function mondayOfCurrentWeek(): string {
   return `${y}-${m}-${dd}`
 }
 
+// Dates par défaut réparties sur la semaine, une par séance
+function defaultSessionDates(startDate: string, count: number): string[] {
+  const dates: string[] = []
+  for (let i = 0; i < count; i++) {
+    const offset = count > 1 ? Math.round((i * 6) / (count - 1)) : 0
+    const d = new Date(startDate)
+    d.setDate(d.getDate() + offset)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    dates.push(`${y}-${m}-${dd}`)
+  }
+  return dates
+}
+
 // --- Composant session de la semaine ---
 
 function WeekSessionCard({ session, num }: { session: ProgramSession; num: number }) {
@@ -183,6 +198,7 @@ export default function TrainingProgramsPage() {
   const [viewWeek, setViewWeek] = useState<number>(1)
   const [showSchedule, setShowSchedule] = useState(false)
   const [scheduleDate, setScheduleDate] = useState<string>(mondayOfCurrentWeek())
+  const [sessionDates, setSessionDates] = useState<string[]>([])
   const [scheduling, setScheduling] = useState(false)
   const [addingBonus, setAddingBonus] = useState(false)
 
@@ -221,6 +237,13 @@ export default function TrainingProgramsPage() {
       fetchWeek(enrollment.id, viewWeek)
     }
   }, [enrollment, viewWeek, fetchWeek])
+
+  useEffect(() => {
+    const count = weekData?.sessions.length ?? 0
+    if (showSchedule && count > 0) {
+      setSessionDates(defaultSessionDates(scheduleDate, count))
+    }
+  }, [showSchedule, scheduleDate, weekData])
 
   const handleStart = async () => {
     if (!enrollment) return
@@ -267,24 +290,28 @@ export default function TrainingProgramsPage() {
   }
 
   const handleSchedule = async () => {
-    if (!enrollment) return
+    if (!enrollment || !weekData) return
+    const dates = sessionDates.slice(0, weekData.sessions.length)
+    if (dates.some((d) => !d)) {
+      toast.error('Choisis une date pour chaque séance')
+      return
+    }
+    if (new Set(dates).size !== dates.length) {
+      toast.error('Deux séances ne peuvent pas être le même jour')
+      return
+    }
     setScheduling(true)
     try {
       const res = await trainingProgramsApi.scheduleWeek(enrollment.id, {
         week_num: viewWeek,
-        start_date: scheduleDate,
-        box_dates: [],
+        assignments: dates.map((date, i) => ({ session_index: i, date })),
       })
       const count = res?.scheduled?.length ?? 0
       toast.success(`${count} séance${count > 1 ? 's' : ''} planifiée${count > 1 ? 's' : ''} dans le calendrier`)
       setShowSchedule(false)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
-      if (msg.toLowerCase().includes('disponibles')) {
-        toast.error(msg)
-      } else {
-        toast.error('Impossible de planifier cette semaine')
-      }
+      toast.error(msg && msg.length < 120 ? msg : 'Impossible de planifier cette semaine')
     } finally {
       setScheduling(false)
     }
@@ -491,36 +518,62 @@ export default function TrainingProgramsPage() {
 
           {/* Panneau de planification */}
           {showSchedule && (
-            <div className="mb-4 bg-white/5 border border-orange-500/20 rounded-xl p-4 space-y-3">
+            <div className="mb-4 bg-white/5 border border-orange-500/20 rounded-xl p-4 space-y-4">
               <div className="flex items-start gap-2">
                 <CalendarPlus className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-slate-400">
-                  Les {weekData?.sessions.length ?? ''} séances de la semaine {viewWeek} seront réparties sur les jours libres
-                  à partir de la date choisie (les jours déjà occupés sont ignorés).
+                  Choisis le jour de chaque séance de la semaine {viewWeek}. Le bouton ci-dessous répartit
+                  automatiquement les séances sur la semaine, à toi d&apos;ajuster.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
-                <div className="flex-1">
-                  <label className="text-xs text-slate-500 mb-1 block">Début de semaine</label>
-                  <input
-                    type="date"
-                    value={scheduleDate}
-                    onChange={(e) => setScheduleDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
-                  />
-                </div>
-                <button
-                  onClick={handleSchedule}
-                  disabled={scheduling}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all disabled:opacity-50"
-                >
-                  {scheduling ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" />Planification...</>
-                  ) : (
-                    <><Calendar className="w-4 h-4" />Ajouter au calendrier</>
-                  )}
-                </button>
+
+              {/* Base de semaine pour la répartition automatique */}
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500">Répartir à partir du</label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  className="px-2 py-1 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
+                />
               </div>
+
+              {/* Une date par séance */}
+              <div className="space-y-2">
+                {(weekData?.sessions ?? []).map((session, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 text-sm text-white truncate">
+                      {session.title}
+                      {session._bonus && <span className="ml-2 text-xs text-purple-300">· Bonus</span>}
+                    </span>
+                    <input
+                      type="date"
+                      value={sessionDates[i] ?? ''}
+                      onChange={(e) => {
+                        const next = [...sessionDates]
+                        next[i] = e.target.value
+                        setSessionDates(next)
+                      }}
+                      className="px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={handleSchedule}
+                disabled={scheduling}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all disabled:opacity-50"
+              >
+                {scheduling ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Planification...</>
+                ) : (
+                  <><Calendar className="w-4 h-4" />Ajouter au calendrier</>
+                )}
+              </button>
             </div>
           )}
 

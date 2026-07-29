@@ -334,6 +334,45 @@ export class TrainingProgramsService {
   async scheduleWeek(enrollmentId: string, userId: string, dto: ScheduleWeekDto) {
     const { sessions } = await this.getWeekSessions(enrollmentId, userId, dto.week_num)
 
+    // Mode 1 : assignation explicite (une date choisie par séance)
+    if (dto.assignments && dto.assignments.length > 0) {
+      const scheduled: Array<{ date: string; session_title: string; schedule_id: string }> = []
+      const seenDates = new Set<string>()
+
+      for (const assignment of dto.assignments) {
+        const session = sessions[assignment.session_index]
+        if (!session) {
+          throw new BadRequestException(`Séance ${assignment.session_index} introuvable`)
+        }
+        if (seenDates.has(assignment.date)) {
+          throw new BadRequestException(`Deux séances sont assignées au ${assignment.date}`)
+        }
+        seenDates.add(assignment.date)
+
+        const [entry] = await this.knex('user_workout_schedule')
+          .insert({
+            user_id: userId,
+            workout_id: null,
+            personalized_workout_id: null,
+            scheduled_date: assignment.date,
+            session_type: 'program_session',
+            program_enrollment_id: enrollmentId,
+            session_data: JSON.stringify(session),
+            status: 'scheduled',
+          })
+          .returning('*')
+
+        scheduled.push({ date: assignment.date, session_title: session.title, schedule_id: entry.id })
+      }
+
+      return { scheduled, box_dates_skipped: dto.box_dates ?? [], week_num: dto.week_num }
+    }
+
+    // Mode 2 : auto-distribution à partir de start_date
+    if (!dto.start_date) {
+      throw new BadRequestException('start_date ou assignments requis')
+    }
+
     // Construire les 7 dates de la semaine à partir de start_date
     const allDates: string[] = []
     for (let i = 0; i < 7; i++) {
@@ -348,7 +387,7 @@ export class TrainingProgramsService {
       .whereIn('scheduled_date', allDates)
       .pluck('scheduled_date')
 
-    const usedDates = new Set([...dto.box_dates, ...occupiedDates])
+    const usedDates = new Set([...(dto.box_dates ?? []), ...occupiedDates])
     const availableDates = allDates.filter((d) => !usedDates.has(d))
 
     if (availableDates.length < sessions.length) {
@@ -379,7 +418,7 @@ export class TrainingProgramsService {
       scheduled.push({ date, session_title: session.title, schedule_id: entry.id })
     }
 
-    return { scheduled, box_dates_skipped: dto.box_dates, week_num: dto.week_num }
+    return { scheduled, box_dates_skipped: dto.box_dates ?? [], week_num: dto.week_num }
   }
 
   /**

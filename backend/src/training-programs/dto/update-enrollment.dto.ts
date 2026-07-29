@@ -1,4 +1,5 @@
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator'
+import { IsArray, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator'
+import { Type } from 'class-transformer'
 
 export class UpdateEnrollmentDto {
   @IsOptional()
@@ -41,13 +42,32 @@ export class SwapSessionDto {
   }
 }
 
+export class SessionAssignmentDto {
+  @IsInt()
+  @Min(0)
+  session_index!: number
+
+  @IsString()
+  date!: string // YYYY-MM-DD
+}
+
 export class ScheduleWeekDto {
   @IsInt()
   @Min(1)
   week_num!: number
 
+  @IsOptional()
   @IsString()
-  start_date!: string // YYYY-MM-DD
+  start_date?: string // YYYY-MM-DD (fallback auto-distribution)
 
-  box_dates!: string[] // YYYY-MM-DD[]
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  box_dates?: string[] // YYYY-MM-DD[]
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SessionAssignmentDto)
+  assignments?: SessionAssignmentDto[] // date choisie par séance (index dans la semaine)
 }
