@@ -1,4 +1,5 @@
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator'
+import { Transform } from 'class-transformer'
 
 export enum ExerciseCategory {
     STRENGTH = 'strength',
@@ -180,6 +181,11 @@ export class ExerciseQueryDto {
     @IsOptional()
     @IsEnum(ExerciseDifficulty)
     difficulty?: ExerciseDifficulty
+
+    @IsOptional()
+    @Transform(({ value }) => value === true || value === 'true')
+    @IsBoolean()
+    bodyweight_only?: boolean
 
     @IsOptional()
     @IsString()

@@ -136,6 +136,26 @@ describe('ExercisesService.findAll', () => {
         expect(listBuilder.offset).toHaveBeenCalledWith(20)
         expect(listBuilder.orderBy).toHaveBeenCalledWith('created_at', 'desc')
     })
+
+    it('avec bodyweight_only → filtre sur bodyweight_only', async () => {
+        // Arrange
+        const rows = [{ id: '9', name: 'Air Squat', bodyweight_only: true }]
+        const listBuilder = createKnexBuilderMock({ orderBy: rows })
+        const countBuilder = createKnexBuilderMock({ first: { count: 1 } })
+        const knexMock: any = jest
+            .fn()
+            .mockReturnValueOnce(listBuilder)
+            .mockReturnValueOnce(countBuilder)
+        const service = await buildService(knexMock)
+
+        // Act
+        const result = await service.findAll({ bodyweight_only: true } as any)
+
+        // Assert
+        expect(result).toEqual({ rows, count: 1 })
+        expect(listBuilder.where).toHaveBeenCalledWith('bodyweight_only', true)
+        expect(countBuilder.where).toHaveBeenCalledWith('bodyweight_only', true)
+    })
 })
 
 describe('ExercisesService.findOne', () => {

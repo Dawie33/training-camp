@@ -24,6 +24,7 @@ export class ExercisesService {
         search,
         category,
         difficulty,
+        bodyweight_only,
         orderBy = 'created_at',
         orderDir = 'desc'
     }: ExerciseQueryDto) {
@@ -45,6 +46,11 @@ export class ExercisesService {
             query = query.where('difficulty', difficulty)
         }
 
+        // Filtre bodyweight only
+        if (bodyweight_only !== undefined) {
+            query = query.where('bodyweight_only', bodyweight_only)
+        }
+
         const rows = await query
             .limit(Number(limit))
             .offset(Number(offset))
@@ -61,6 +67,9 @@ export class ExercisesService {
         }
         if (difficulty) {
             countQuery = countQuery.where('difficulty', difficulty)
+        }
+        if (bodyweight_only !== undefined) {
+            countQuery = countQuery.where('bodyweight_only', bodyweight_only)
         }
 
         const countResult = await countQuery.first()
