@@ -116,7 +116,7 @@ export const trainingProgramsApi = {
 
   scheduleWeek: (
     enrollmentId: string,
-    dto: { week_num: number; start_date: string; box_dates: string[] }
+    dto: { week_num: number; start_date?: string; box_dates?: string[]; assignments?: { session_index: number; date: string }[] }
   ): Promise<{ scheduled: { date: string; session_title: string; schedule_id: string }[]; week_num: number }> =>
     apiClient.post(`/training-programs/enrollments/${enrollmentId}/schedule-week`, dto),
 
