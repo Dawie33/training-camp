@@ -72,22 +72,33 @@ Deux idées clés :
 ## 3. Le mock Knex chaînable (helper réutilisable)
 
 On crée une factory qui fabrique un builder chaînable. Les méthodes de chaînage
-retournent `this` ; les méthodes terminales (`orderBy`, `first`) retournent une
-promesse de la valeur voulue.
+retournent `this` ; les méthodes **terminales** (celles sur lesquelles on fait
+`await` : `orderBy`, `first`, `returning`, `delete`) résolvent la valeur voulue.
+On passe ces valeurs terminales en paramètre pour couvrir aussi bien les lectures
+que les écritures (`insert`/`update`/`delete`).
 
 ```ts
-function createKnexBuilderMock(result: {
-  rows?: unknown[]
-  count?: { count: number | string }
-}) {
+function createKnexBuilderMock(terminal: {
+  orderBy?: unknown[]        // requête liste : await ...orderBy()
+  first?: unknown            // findOne / count : await ...first()
+  returning?: unknown[]      // insert/update : await ...returning('*')
+  delete?: number            // delete : await ...delete()
+} = {}) {
   const builder: any = {
+    // chaînage → renvoient le builder
     select: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
+    orWhere: jest.fn().mockReturnThis(),
     count: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     offset: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockResolvedValue(result.rows ?? []),
-    first: jest.fn().mockResolvedValue(result.count ?? { count: 0 }),
+    insert: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
+    // terminales → résolvent une valeur
+    orderBy: jest.fn().mockResolvedValue(terminal.orderBy ?? []),
+    first: jest.fn().mockResolvedValue(terminal.first),
+    returning: jest.fn().mockResolvedValue(terminal.returning ?? []),
+    delete: jest.fn().mockResolvedValue(terminal.delete ?? 1),
   }
   return builder
 }
@@ -98,14 +109,26 @@ liste, une fois pour le count), on crée un builder distinct à chaque appel et 
 en garde une référence pour les assertions :
 
 ```ts
-const listBuilder = createKnexBuilderMock({ rows })
-const countBuilder = createKnexBuilderMock({ count: { count: rows.length } })
+const listBuilder = createKnexBuilderMock({ orderBy: rows })
+const countBuilder = createKnexBuilderMock({ first: { count: rows.length } })
 
 // knex est une fonction : knex('exercises') -> builder
 const knexMock: any = jest
   .fn()
   .mockReturnValueOnce(listBuilder)   // 1er appel = requête liste
   .mockReturnValueOnce(countBuilder)  // 2e appel = requête count
+```
+
+Pour une méthode qui n'appelle `this.knex(...)` qu'une seule fois (`findOne`,
+`create`, `update`, `delete`), un seul builder suffit :
+
+```ts
+// findOne: this.knex('exercises').where({ id }).first()
+const builder = createKnexBuilderMock({ first: { id: '1', name: 'Air Squat' } })
+const knexMock: any = jest.fn().mockReturnValue(builder)
+
+// create: this.knex('exercises').insert({...}).returning('*')
+const builder = createKnexBuilderMock({ returning: [{ id: '1', name: 'Air Squat' }] })
 ```
 
 > ⚠️ L'ordre des `mockReturnValueOnce` doit suivre l'ordre des appels
@@ -147,8 +170,8 @@ Chaque test suit trois temps clairs :
 it('applique un filtre ilike sur le nom quand search est fourni', async () => {
   // Arrange — préparer les données et les mocks
   const rows = [{ id: '1', name: 'Air Squat' }]
-  const listBuilder = createKnexBuilderMock({ rows })
-  const countBuilder = createKnexBuilderMock({ count: { count: 1 } })
+  const listBuilder = createKnexBuilderMock({ orderBy: rows })
+  const countBuilder = createKnexBuilderMock({ first: { count: 1 } })
   const knexMock: any = jest
     .fn()
     .mockReturnValueOnce(listBuilder)
