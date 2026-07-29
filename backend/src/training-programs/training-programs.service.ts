@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { AIProgramGeneratorService } from './ai-program-generator.service'
 import { CreateProgramDto } from './dto/create-program.dto'
 import { ScheduleWeekDto, SwapSessionDto, UpdateEnrollmentDto } from './dto/update-enrollment.dto'
 import type { ProgramPhase, ProgramSession } from './schemas/program.schema'
@@ -87,7 +88,10 @@ function applyWeeklyProgression(
 
 @Injectable()
 export class TrainingProgramsService {
-  constructor(@InjectModel() private readonly knex: Knex) {}
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly aiGenerator: AIProgramGeneratorService,
+  ) {}
 
   /**
    * Crée un programme IA et inscrit l'utilisateur
@@ -259,7 +263,68 @@ export class TrainingProgramsService {
       applyWeeklyProgression(s as ProgramSession, weekInPhase, phaseLength),
     )
 
-    return { phase: { ...phase, sessions: undefined }, sessions: progressedSessions, weekNum }
+    // Séances bonus ajoutées par l'utilisateur pour cette semaine (pas de surcharge progressive)
+    const bonusSessions = customizations
+      .filter((c) => c.week === weekNum && c.type === 'bonus_session')
+      .map((c, i) => ({
+        ...(c.replacement.session as ProgramSession),
+        session_in_week: progressedSessions.length + i + 1,
+        _bonus: true,
+      }))
+
+    return {
+      phase: { ...phase, sessions: undefined },
+      sessions: [...progressedSessions, ...bonusSessions],
+      weekNum,
+    }
+  }
+
+  /**
+   * Génère (IA) et ajoute une séance bonus complémentaire à une semaine donnée.
+   * Persistée dans customizations_applied de l'enrollment.
+   */
+  async addBonusSession(enrollmentId: string, userId: string, weekNum: number, focus?: string) {
+    const enrollment = await this.knex('user_program_enrollments as upe')
+      .join('training_programs as tp', 'upe.program_id', 'tp.id')
+      .where('upe.id', enrollmentId)
+      .where('upe.user_id', userId)
+      .select('upe.*', 'tp.weekly_structure', 'tp.duration_weeks', 'tp.program_type', 'tp.target_level')
+      .first()
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment non trouvé')
+    }
+    if (weekNum < 1 || weekNum > enrollment.duration_weeks) {
+      throw new BadRequestException(`Numéro de semaine invalide (1-${enrollment.duration_weeks})`)
+    }
+
+    // Focus déjà couverts cette semaine (séances de base + bonus existants)
+    const { sessions } = await this.getWeekSessions(enrollmentId, userId, weekNum)
+    const weekFocuses = sessions.map((s) => s.focus)
+
+    const bonusSession = await this.aiGenerator.generateBonusSession(userId, {
+      program_type: enrollment.program_type,
+      target_level: enrollment.target_level,
+      week_focuses: weekFocuses,
+      focus,
+    })
+
+    const customizations: Array<Record<string, unknown>> = Array.isArray(enrollment.customizations_applied)
+      ? enrollment.customizations_applied
+      : JSON.parse(enrollment.customizations_applied || '[]')
+
+    customizations.push({
+      week: weekNum,
+      type: 'bonus_session',
+      session_in_week: 99,
+      replacement: { session: bonusSession },
+    })
+
+    await this.knex('user_program_enrollments')
+      .where({ id: enrollmentId, user_id: userId })
+      .update({ customizations_applied: JSON.stringify(customizations) })
+
+    return { ...bonusSession, session_in_week: sessions.length + 1, _bonus: true }
   }
 
   /**

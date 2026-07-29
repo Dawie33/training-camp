@@ -89,6 +89,11 @@ function WeekSessionCard({ session, num }: { session: ProgramSession; num: numbe
             <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${FOCUS_COLOR[session.focus] ?? 'bg-slate-500/20 text-slate-400'}`}>
               {FOCUS_LABEL[session.focus] ?? session.focus}
             </span>
+            {session._bonus && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-purple-500/20 text-purple-300 border-purple-500/30">
+                Bonus
+              </span>
+            )}
             {session._progression?.deload && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-green-500/20 text-green-400 border-green-500/30">
                 Deload
@@ -179,6 +184,7 @@ export default function TrainingProgramsPage() {
   const [showSchedule, setShowSchedule] = useState(false)
   const [scheduleDate, setScheduleDate] = useState<string>(mondayOfCurrentWeek())
   const [scheduling, setScheduling] = useState(false)
+  const [addingBonus, setAddingBonus] = useState(false)
 
   const fetchEnrollment = useCallback(async () => {
     try {
@@ -281,6 +287,20 @@ export default function TrainingProgramsPage() {
       }
     } finally {
       setScheduling(false)
+    }
+  }
+
+  const handleAddBonus = async () => {
+    if (!enrollment) return
+    setAddingBonus(true)
+    try {
+      await trainingProgramsApi.addBonusSession(enrollment.id, viewWeek)
+      toast.success('Séance bonus ajoutée à la semaine')
+      await fetchWeek(enrollment.id, viewWeek)
+    } catch {
+      toast.error("Impossible d'ajouter une séance bonus")
+    } finally {
+      setAddingBonus(false)
     }
   }
 
@@ -430,6 +450,16 @@ export default function TrainingProgramsPage() {
               </h2>
             </div>
             <div className="flex items-center gap-2">
+              {(enrollment.status === 'active' || enrollment.status === 'enrolled') && (
+                <button
+                  onClick={handleAddBonus}
+                  disabled={addingBonus}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-colors text-xs font-semibold disabled:opacity-50"
+                >
+                  {addingBonus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  Ajouter une séance
+                </button>
+              )}
               {(enrollment.status === 'active' || enrollment.status === 'enrolled') && (
                 <button
                   onClick={() => setShowSchedule(v => !v)}
