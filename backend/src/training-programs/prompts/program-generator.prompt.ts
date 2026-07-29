@@ -218,3 +218,74 @@ function computePhaseCount(durationWeeks: number): string {
   if (durationWeeks <= 8) return '2-3 phases (3+3+2 ou 4+4 semaines)'
   return '3-4 phases (accumulation + build + peak + deload)'
 }
+
+export interface BonusSessionParams {
+  program_type: string
+  target_level: string
+  week_focuses: string[]
+  focus?: string
+}
+
+export function buildBonusSessionSystemPrompt(): string {
+  return `Tu es un coach CrossFit certifie Level 3+. Tu generes UNE seule seance d'entrainement complementaire au format JSON strict.
+
+# STRUCTURE JSON REQUISE
+
+Retourne UNIQUEMENT cet objet JSON (une seule seance), sans texte avant ni apres :
+
+\`\`\`json
+{
+  "session_in_week": 99,
+  "title": "Titre de la seance",
+  "focus": "strength|conditioning|skill|mixed|recovery",
+  "estimated_duration": 45,
+  "strength_work": {
+    "movements": [
+      { "name": "Front Squat", "sets": 4, "reps": "6", "intensity": "70% 1RM", "rest": "2min", "notes": null }
+    ]
+  },
+  "conditioning": {
+    "type": "amrap|for_time|emom|tabata|rounds_for_time|chipper",
+    "duration_minutes": 12,
+    "rounds": null,
+    "movements": [ { "name": "Row", "calories": 12 }, { "name": "Burpees", "reps": 10 } ],
+    "score_type": "rounds_and_reps|time|weight|calories|reps",
+    "scaling_notes": "..."
+  },
+  "skill_work": null,
+  "coach_notes": "..."
+}
+\`\`\`
+
+# REGLES STRICTES
+1. UN SEUL objet seance (pas de tableau, pas de phases).
+2. "session_in_week" doit valoir 99 (il sera reassigné automatiquement).
+3. strength_work et conditioning peuvent etre null selon le focus.
+4. "reps" peut etre un nombre ou une chaine.
+5. JAMAIS de texte hors JSON.`
+}
+
+export function buildBonusSessionUserPrompt(params: BonusSessionParams, context: UserAIContext): string {
+  const programTypeLabel = PROGRAM_TYPE_LABELS[params.program_type] || params.program_type
+  const levelLabel = LEVEL_LABELS[params.target_level] || params.target_level
+  const focusesStr = params.week_focuses.length > 0 ? params.week_focuses.join(', ') : 'aucune'
+  const focusNote = params.focus ? `\n**Souhait de l'athlete pour cette seance bonus** : ${params.focus}` : ''
+
+  const athleteSection = buildAthleteContextSection(context)
+
+  return `Genere UNE seance d'entrainement BONUS complementaire, a ajouter a une semaine existante.
+
+**Type de programme** : ${programTypeLabel}
+**Niveau** : ${levelLabel}
+**Focus deja couverts cette semaine par les autres seances** : ${focusesStr}${focusNote}
+
+Regle de complementarite : choisis un focus qui EQUILIBRE la semaine.
+- Si la semaine est deja tres orientee force → propose du conditioning, du cardio (endurance zone 2) ou du skill.
+- Si la semaine est deja tres cardio → propose de la force accessoire ou du skill.
+- Evite de dupliquer un stimulus deja tres present. Ne surcharge pas les memes groupes musculaires.
+- Duree raisonnable (30-50 min) car c'est une seance en plus.
+
+${athleteSection}
+
+Retourne UNIQUEMENT le JSON d'une seule seance, sans texte avant ou apres.`
+}

@@ -4,10 +4,18 @@ import { ZodError } from 'zod'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { GenerateProgramDto } from './dto/generate-program.dto'
 import {
+  buildBonusSessionSystemPrompt,
+  buildBonusSessionUserPrompt,
+  BonusSessionParams,
   buildProgramGeneratorSystemPrompt,
   buildProgramGeneratorUserPrompt,
 } from './prompts/program-generator.prompt'
-import { GeneratedProgramSchema, GeneratedProgramValidated } from './schemas/program.schema'
+import {
+  GeneratedProgramSchema,
+  GeneratedProgramValidated,
+  ProgramSession,
+  ProgramSessionSchema,
+} from './schemas/program.schema'
 
 @Injectable()
 export class AIProgramGeneratorService {
@@ -65,6 +73,48 @@ export class AIProgramGeneratorService {
       }
 
       throw new BadRequestException(`Échec de la génération du programme : ${(error as Error).message}`)
+    }
+  }
+
+  async generateBonusSession(userId: string, params: BonusSessionParams): Promise<ProgramSession> {
+    try {
+      const context = await this.userContextService.getUserAIContext(userId)
+
+      const systemPrompt = buildBonusSessionSystemPrompt()
+      const userPrompt = buildBonusSessionUserPrompt(params, context)
+
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4.1',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
+        response_format: { type: 'json_object' },
+      })
+
+      const content = completion.choices[0]?.message?.content
+      if (!content) {
+        throw new BadRequestException("Pas de réponse de l'IA")
+      }
+
+      const sessionData = JSON.parse(content)
+      return ProgramSessionSchema.parse(sessionData)
+    } catch (error) {
+      console.error('Error generating bonus session with AI:', error)
+
+      if (error instanceof SyntaxError) {
+        throw new BadRequestException("L'IA a généré un JSON invalide")
+      }
+      if (error instanceof ZodError) {
+        const errorMessages = error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')
+        throw new BadRequestException(`Validation de la séance échouée : ${errorMessages}`)
+      }
+      if (error instanceof BadRequestException) {
+        throw error
+      }
+      throw new BadRequestException(`Échec de la génération de la séance : ${(error as Error).message}`)
     }
   }
 }

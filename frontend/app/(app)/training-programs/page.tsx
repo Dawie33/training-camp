@@ -9,6 +9,8 @@ import {
   CalendarPlus,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Dumbbell,
   Flame,
@@ -66,6 +68,7 @@ function mondayOfCurrentWeek(): string {
 // --- Composant session de la semaine ---
 
 function WeekSessionCard({ session, num }: { session: ProgramSession; num: number }) {
+  const [open, setOpen] = useState(false)
   const movements = [
     ...(session.strength_work?.movements.map(m => m.name) ?? []),
     ...(session.conditioning?.movements.map(m => m.name) ?? []),
@@ -73,27 +76,97 @@ function WeekSessionCard({ session, num }: { session: ProgramSession; num: numbe
   ]
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center">
-            {num}
-          </span>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${FOCUS_COLOR[session.focus] ?? 'bg-slate-500/20 text-slate-400'}`}>
-            {FOCUS_LABEL[session.focus] ?? session.focus}
-          </span>
+    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full text-left p-4 space-y-2 hover:bg-white/5 transition-colors"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center">
+              {num}
+            </span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${FOCUS_COLOR[session.focus] ?? 'bg-slate-500/20 text-slate-400'}`}>
+              {FOCUS_LABEL[session.focus] ?? session.focus}
+            </span>
+            {session._bonus && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-purple-500/20 text-purple-300 border-purple-500/30">
+                Bonus
+              </span>
+            )}
+            {session._progression?.deload && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-green-500/20 text-green-400 border-green-500/30">
+                Deload
+              </span>
+            )}
+            {session._progression && !session._progression.deload && session._progression.intensity_delta > 0 && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-orange-500/10 text-orange-300 border-orange-500/20">
+                +{session._progression.intensity_delta}%
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Clock className="w-3 h-3" />
+            {session.estimated_duration} min
+            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
         </div>
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock className="w-3 h-3" />
-          {session.estimated_duration} min
+        <p className="font-semibold text-white text-sm">{session.title}</p>
+        {!open && movements.length > 0 && (
+          <p className="text-xs text-slate-400 truncate">{movements.slice(0, 4).join(' · ')}{movements.length > 4 ? ` +${movements.length - 4}` : ''}</p>
+        )}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
+          {session.strength_work && (
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Force</p>
+              <div className="space-y-1">
+                {session.strength_work.movements.map((m, i) => (
+                  <div key={i} className="flex items-baseline gap-2 text-sm">
+                    <span className="text-white font-medium">{m.name}</span>
+                    <span className="text-slate-400">{m.sets}×{m.reps}</span>
+                    {m.intensity && <span className="text-slate-500 text-xs">@ {m.intensity}</span>}
+                    {m.rest && <span className="text-slate-600 text-xs">· repos {m.rest}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {session.conditioning && (
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-500 mb-2">
+                Conditioning — {session.conditioning.type.toUpperCase()}
+                {session.conditioning.duration_minutes && ` ${session.conditioning.duration_minutes}min`}
+                {session.conditioning.rounds && ` ${session.conditioning.rounds} rounds`}
+              </p>
+              <div className="space-y-1">
+                {session.conditioning.movements.map((m, i) => (
+                  <div key={i} className="text-sm text-slate-300">
+                    {m.reps && <span>{m.reps} </span>}
+                    {m.distance && <span>{m.distance} </span>}
+                    <span className="text-white">{m.name}</span>
+                    {m.weight && <span className="text-slate-400"> @ {m.weight}</span>}
+                  </div>
+                ))}
+              </div>
+              {session.conditioning.scaling_notes && (
+                <p className="text-xs text-slate-500 mt-2 italic">{session.conditioning.scaling_notes}</p>
+              )}
+            </div>
+          )}
+          {session.skill_work && (
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Technique</p>
+              <p className="text-sm font-medium text-white">{session.skill_work.name}</p>
+              <p className="text-xs text-slate-400">{session.skill_work.description}</p>
+            </div>
+          )}
+          {session.coach_notes && (
+            <p className="text-xs text-slate-500 italic border-t border-white/10 pt-2">{session.coach_notes}</p>
+          )}
         </div>
-      </div>
-      <p className="font-semibold text-white text-sm">{session.title}</p>
-      {movements.length > 0 && (
-        <p className="text-xs text-slate-400 truncate">{movements.slice(0, 4).join(' · ')}{movements.length > 4 ? ` +${movements.length - 4}` : ''}</p>
-      )}
-      {session.coach_notes && (
-        <p className="text-xs text-slate-500 italic">{session.coach_notes}</p>
       )}
     </div>
   )
@@ -111,6 +184,7 @@ export default function TrainingProgramsPage() {
   const [showSchedule, setShowSchedule] = useState(false)
   const [scheduleDate, setScheduleDate] = useState<string>(mondayOfCurrentWeek())
   const [scheduling, setScheduling] = useState(false)
+  const [addingBonus, setAddingBonus] = useState(false)
 
   const fetchEnrollment = useCallback(async () => {
     try {
@@ -213,6 +287,20 @@ export default function TrainingProgramsPage() {
       }
     } finally {
       setScheduling(false)
+    }
+  }
+
+  const handleAddBonus = async () => {
+    if (!enrollment) return
+    setAddingBonus(true)
+    try {
+      await trainingProgramsApi.addBonusSession(enrollment.id, viewWeek)
+      toast.success('Séance bonus ajoutée à la semaine')
+      await fetchWeek(enrollment.id, viewWeek)
+    } catch {
+      toast.error("Impossible d'ajouter une séance bonus")
+    } finally {
+      setAddingBonus(false)
     }
   }
 
@@ -362,6 +450,16 @@ export default function TrainingProgramsPage() {
               </h2>
             </div>
             <div className="flex items-center gap-2">
+              {(enrollment.status === 'active' || enrollment.status === 'enrolled') && (
+                <button
+                  onClick={handleAddBonus}
+                  disabled={addingBonus}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-colors text-xs font-semibold disabled:opacity-50"
+                >
+                  {addingBonus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  Ajouter une séance
+                </button>
+              )}
               {(enrollment.status === 'active' || enrollment.status === 'enrolled') && (
                 <button
                   onClick={() => setShowSchedule(v => !v)}

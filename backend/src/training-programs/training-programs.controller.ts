@@ -128,6 +128,20 @@ export class TrainingProgramsController {
   }
 
   /**
+   * POST /api/training-programs/enrollments/:id/week/:weekNum/bonus-session
+   * Génère et ajoute une séance bonus complémentaire à la semaine
+   */
+  @Post('enrollments/:id/week/:weekNum/bonus-session')
+  async addBonusSession(
+    @Request() req: { user: { id: string } },
+    @Param('id') id: string,
+    @Param('weekNum', ParseIntPipe) weekNum: number,
+    @Body() body: { focus?: string },
+  ) {
+    return this.service.addBonusSession(id, req.user.id, weekNum, body?.focus)
+  }
+
+  /**
    * GET /api/training-programs/enrollments/:id/check-week-progress
    * Vérifie si toutes les sessions de la semaine courante sont complètes
    */

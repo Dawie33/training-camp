@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { AIProgramGeneratorService } from './ai-program-generator.service'
 import { CreateProgramDto } from './dto/create-program.dto'
 import { ScheduleWeekDto, SwapSessionDto, UpdateEnrollmentDto } from './dto/update-enrollment.dto'
 import type { ProgramPhase, ProgramSession } from './schemas/program.schema'
@@ -17,9 +18,80 @@ export interface ProgramRecommendationContext {
   today_session?: { title: string; focus: string; estimated_duration: number } | null
 }
 
+export interface WeeklyProgression {
+  week_in_phase: number
+  phase_length: number
+  deload: boolean
+  intensity_delta: number // points de % ajoutés (négatif en deload)
+}
+
+// Points de % 1RM ajoutés par semaine à l'intérieur d'une phase (surcharge progressive)
+const INTENSITY_STEP = 5
+
+// Ajuste la première valeur "NN%" d'une chaîne d'intensité (ex: "75% 1RM" -> "80% 1RM")
+function adjustIntensityString(
+  intensity: string | null | undefined,
+  deltaPts: number,
+): string | null | undefined {
+  if (!intensity || deltaPts === 0) return intensity
+  return intensity.replace(/(\d{1,3})(\s*%)/, (_m, num: string, suffix: string) => {
+    const v = Math.min(95, Math.max(40, parseInt(num, 10) + deltaPts))
+    return `${v}${suffix}`
+  })
+}
+
+/**
+ * Applique une surcharge progressive déterministe à une séance selon sa position
+ * dans la phase : l'intensité monte semaine après semaine, avec un deload sur la
+ * dernière semaine des phases de 3 semaines ou plus.
+ */
+function applyWeeklyProgression(
+  session: ProgramSession,
+  weekInPhase: number,
+  phaseLength: number,
+): ProgramSession & { _progression: WeeklyProgression } {
+  const deload = phaseLength >= 3 && weekInPhase === phaseLength
+  const deltaPts = deload ? -10 : (weekInPhase - 1) * INTENSITY_STEP
+
+  let strength_work = session.strength_work
+  if (strength_work && deltaPts !== 0) {
+    strength_work = {
+      movements: strength_work.movements.map((m) => ({
+        ...m,
+        intensity: adjustIntensityString(m.intensity, deltaPts),
+        sets: deload ? Math.max(1, m.sets - 1) : m.sets,
+      })),
+    }
+  }
+
+  let conditioning = session.conditioning
+  if (conditioning && deload) {
+    conditioning = {
+      ...conditioning,
+      duration_minutes: conditioning.duration_minutes
+        ? Math.round(conditioning.duration_minutes * 0.7)
+        : conditioning.duration_minutes,
+      rounds: conditioning.rounds ? Math.max(1, Math.round(conditioning.rounds * 0.7)) : conditioning.rounds,
+      scaling_notes: [conditioning.scaling_notes, 'Semaine de récupération : réduis le volume et garde de la marge.']
+        .filter(Boolean)
+        .join(' '),
+    }
+  }
+
+  return {
+    ...session,
+    strength_work,
+    conditioning,
+    _progression: { week_in_phase: weekInPhase, phase_length: phaseLength, deload, intensity_delta: deltaPts },
+  }
+}
+
 @Injectable()
 export class TrainingProgramsService {
-  constructor(@InjectModel() private readonly knex: Knex) {}
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly aiGenerator: AIProgramGeneratorService,
+  ) {}
 
   /**
    * Crée un programme IA et inscrit l'utilisateur
@@ -184,7 +256,75 @@ export class TrainingProgramsService {
       return { ...session, ...swap.replacement, _swapped: true }
     })
 
-    return { phase: { ...phase, sessions: undefined }, sessions, weekNum }
+    const sortedWeeks = [...phase.weeks].sort((a, b) => a - b)
+    const weekInPhase = sortedWeeks.indexOf(weekNum) + 1
+    const phaseLength = sortedWeeks.length
+    const progressedSessions = sessions.map((s) =>
+      applyWeeklyProgression(s as ProgramSession, weekInPhase, phaseLength),
+    )
+
+    // Séances bonus ajoutées par l'utilisateur pour cette semaine (pas de surcharge progressive)
+    const bonusSessions = customizations
+      .filter((c) => c.week === weekNum && c.type === 'bonus_session')
+      .map((c, i) => ({
+        ...(c.replacement.session as ProgramSession),
+        session_in_week: progressedSessions.length + i + 1,
+        _bonus: true,
+      }))
+
+    return {
+      phase: { ...phase, sessions: undefined },
+      sessions: [...progressedSessions, ...bonusSessions],
+      weekNum,
+    }
+  }
+
+  /**
+   * Génère (IA) et ajoute une séance bonus complémentaire à une semaine donnée.
+   * Persistée dans customizations_applied de l'enrollment.
+   */
+  async addBonusSession(enrollmentId: string, userId: string, weekNum: number, focus?: string) {
+    const enrollment = await this.knex('user_program_enrollments as upe')
+      .join('training_programs as tp', 'upe.program_id', 'tp.id')
+      .where('upe.id', enrollmentId)
+      .where('upe.user_id', userId)
+      .select('upe.*', 'tp.weekly_structure', 'tp.duration_weeks', 'tp.program_type', 'tp.target_level')
+      .first()
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment non trouvé')
+    }
+    if (weekNum < 1 || weekNum > enrollment.duration_weeks) {
+      throw new BadRequestException(`Numéro de semaine invalide (1-${enrollment.duration_weeks})`)
+    }
+
+    // Focus déjà couverts cette semaine (séances de base + bonus existants)
+    const { sessions } = await this.getWeekSessions(enrollmentId, userId, weekNum)
+    const weekFocuses = sessions.map((s) => s.focus)
+
+    const bonusSession = await this.aiGenerator.generateBonusSession(userId, {
+      program_type: enrollment.program_type,
+      target_level: enrollment.target_level,
+      week_focuses: weekFocuses,
+      focus,
+    })
+
+    const customizations: Array<Record<string, unknown>> = Array.isArray(enrollment.customizations_applied)
+      ? enrollment.customizations_applied
+      : JSON.parse(enrollment.customizations_applied || '[]')
+
+    customizations.push({
+      week: weekNum,
+      type: 'bonus_session',
+      session_in_week: 99,
+      replacement: { session: bonusSession },
+    })
+
+    await this.knex('user_program_enrollments')
+      .where({ id: enrollmentId, user_id: userId })
+      .update({ customizations_applied: JSON.stringify(customizations) })
+
+    return { ...bonusSession, session_in_week: sessions.length + 1, _bonus: true }
   }
 
   /**

@@ -47,6 +47,13 @@ export interface ProgramSession {
   skill_work?: { name: string; description: string; sets?: number | null; duration?: string | null } | null
   coach_notes?: string | null
   _swapped?: boolean
+  _bonus?: boolean
+  _progression?: {
+    week_in_phase: number
+    phase_length: number
+    deload: boolean
+    intensity_delta: number
+  }
 }
 
 export interface WeekSessions {
@@ -112,4 +119,11 @@ export const trainingProgramsApi = {
     dto: { week_num: number; start_date: string; box_dates: string[] }
   ): Promise<{ scheduled: { date: string; session_title: string; schedule_id: string }[]; week_num: number }> =>
     apiClient.post(`/training-programs/enrollments/${enrollmentId}/schedule-week`, dto),
+
+  addBonusSession: (
+    enrollmentId: string,
+    weekNum: number,
+    focus?: string
+  ): Promise<ProgramSession & { _bonus: true }> =>
+    apiClient.post(`/training-programs/enrollments/${enrollmentId}/week/${weekNum}/bonus-session`, { focus }),
 }
