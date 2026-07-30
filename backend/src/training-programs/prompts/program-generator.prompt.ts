@@ -101,10 +101,13 @@ function buildAthleteContextSection(context: UserAIContext): string {
 export function buildProgramGeneratorSystemPrompt(programType?: string): string {
   const isStrengthOnly = programType === 'strength_building'
   const complementaryRule = isStrengthOnly
-    ? `- Programme ORIENTE FORCE PURE : chaque seance developpe la force / halterophilie (squat, deadlift, presses, olympic lifts et accessoires cibles).
-- INTERDICTION d'ajouter du conditioning / metcon / AMRAP / cardio : le champ "conditioning" doit TOUJOURS valoir null.
-- "focus" doit rester "strength" (ou "recovery" pour une seance de deload) — jamais "conditioning" ni "mixed".
-- La variete vient des schemas series/reps/intensite, des mouvements accessoires et au besoin d'un skill_work leger (technique d'halterophilie), PAS du cardio.`
+    ? `- Programme ORIENTE FORCE : chaque seance commence par le travail de force / halterophilie (squat, deadlift, presses, olympic lifts + accessoires cibles) comme PIECE MAITRESSE (~35-45 min).
+- APRES la force, ajoute TOUJOURS un WOD CrossFit COURT (8-15 min) dans le champ "conditioning", cible sur la MEME zone / le meme patron musculaire que la force du jour :
+  - force bas du corps -> finisher bas du corps (ex: air squats, walking lunges, box jumps, KB swings, wall balls),
+  - force haut du corps (press/tirage) -> finisher haut du corps (ex: push-ups, DB shoulder press, pull-ups, ring rows),
+  - full body / olympic -> finisher mixte cousin du mouvement travaille.
+- Le WOD est un FINISHER lie a la force, pas une piece longue independante : calibre sa duree pour que le TOTAL de la seance tienne dans ~60 min.
+- "estimated_duration" = 60. "focus" = "mixed" (ou "recovery" pour un deload leger, conditioning alors null).`
     : `- Toujours inclure un stimulus complementaire (force + condo ou skill + condo)`
 
   return `Tu es un coach CrossFit certifie Level 3+ specialise dans la programmation periodisee et le developpement de la performance.
@@ -205,7 +208,7 @@ export function buildProgramGeneratorUserPrompt(params: ProgramGenerationParams,
 
   const strengthOnlyNote =
     params.program_type === 'strength_building'
-      ? `\n**Programme force pure** : uniquement du travail de force / halterophilie. AUCUN conditioning, metcon ni AMRAP — le champ "conditioning" doit valoir null pour chaque seance, et "focus" reste "strength" (ou "recovery" pour un deload).`
+      ? `\n**Programme force + finisher lie** : chaque seance = travail de force en PIECE MAITRESSE, PUIS un WOD CrossFit COURT (8-15 min) cible sur la MEME zone musculaire (force bas du corps -> finisher bas du corps, force haut du corps -> finisher haut du corps). Objectif seance ~60 min : "estimated_duration" = 60, "focus" = "mixed", "conditioning" renseigne mais court (finisher, pas metcon long independant).`
       : ''
 
   return `Genere un programme d'entrainement CrossFit avec ces parametres :
@@ -290,10 +293,10 @@ export function buildBonusSessionUserPrompt(params: BonusSessionParams, context:
 
   const isStrengthOnly = params.program_type === 'strength_building'
   const complementarityRules = isStrengthOnly
-    ? `Regle (programme FORCE PURE) : la seance bonus reste orientee force / halterophilie.
-- AUCUN conditioning / metcon / AMRAP / cardio : le champ "conditioning" doit valoir null.
-- Choisis un focus force complementaire (ex: haut du corps si la semaine a fait du bas du corps) ou du skill technique (halterophilie).
-- "focus" reste "strength" (ou "skill" si seance purement technique). Duree raisonnable (30-50 min).`
+    ? `Regle (programme FORCE) : la seance bonus reste orientee force, avec un finisher lie.
+- Force en piece maitresse, PUIS un WOD CrossFit court (8-15 min) cible sur la meme zone musculaire que la force du jour.
+- Choisis de preference une zone complementaire aux focus deja couverts cette semaine (ex: bas du corps si la semaine a surtout fait du haut du corps).
+- "focus" = "mixed" (ou "skill" si seance purement technique, conditioning alors null). Duree raisonnable (~45-60 min).`
     : `Regle de complementarite : choisis un focus qui EQUILIBRE la semaine.
 - Si la semaine est deja tres orientee force → propose du conditioning, du cardio (endurance zone 2) ou du skill.
 - Si la semaine est deja tres cardio → propose de la force accessoire ou du skill.
