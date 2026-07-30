@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { MUSCLE_LABELS, SESSION_GOAL_LABELS } from '@/services/strength'
 import { Check, ExternalLink, FileDown, SkipForward, Trash2 } from 'lucide-react'
 import { statusColors } from './CalendarEventContent'
+import { ProgramSessionDetail, type ProgramSessionData } from './ProgramSessionDetail'
 
 export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unknown> }) {
   const status = (calendarEvent.status as string) || 'scheduled'
@@ -18,6 +19,18 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const skillStepTitle = calendarEvent.skill_step_title as string | undefined
   const skillProgress = calendarEvent.skill_progress as number | undefined
   const skillProgramId = calendarEvent.skill_program_id as string | undefined
+
+  const rawSession = calendarEvent.session_data
+  let session: ProgramSessionData | null = null
+  if (rawSession && typeof rawSession === 'object') {
+    session = rawSession as ProgramSessionData
+  } else if (typeof rawSession === 'string') {
+    try {
+      session = JSON.parse(rawSession) as ProgramSessionData
+    } catch {
+      session = null
+    }
+  }
 
   // Thème Clay (calendrier en style Clay éditorial)
   const clay = true
@@ -54,47 +67,47 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
       <div className="space-y-2 mb-4">
         {!!calendarEvent.workout_type && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Type:</span>
-            <span className="text-slate-300 capitalize">{(calendarEvent.workout_type as string).replace(/_/g, ' ')}</span>
+            <span className="text-muted-foreground">Type:</span>
+            <span className="text-foreground capitalize">{(calendarEvent.workout_type as string).replace(/_/g, ' ')}</span>
           </div>
         )}
         {!!calendarEvent.difficulty && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Difficulté:</span>
-            <span className="text-slate-300 capitalize">{calendarEvent.difficulty as string}</span>
+            <span className="text-muted-foreground">Difficulté:</span>
+            <span className="text-foreground capitalize">{calendarEvent.difficulty as string}</span>
           </div>
         )}
         {!!calendarEvent.duration && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Durée:</span>
-            <span className="text-slate-300">{calendarEvent.duration as number} min</span>
+            <span className="text-muted-foreground">Durée:</span>
+            <span className="text-foreground">{calendarEvent.duration as number} min</span>
           </div>
         )}
         {/* Détails spécifiques Force */}
         {isStrength && sessionGoal && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Objectif:</span>
-            <span className="text-slate-300 capitalize">{SESSION_GOAL_LABELS[sessionGoal as keyof typeof SESSION_GOAL_LABELS] ?? sessionGoal}</span>
+            <span className="text-muted-foreground">Objectif:</span>
+            <span className="text-foreground capitalize">{SESSION_GOAL_LABELS[sessionGoal as keyof typeof SESSION_GOAL_LABELS] ?? sessionGoal}</span>
           </div>
         )}
         {isStrength && targetMuscles && targetMuscles.length > 0 && (
           <div className="flex items-start gap-2 text-sm">
-            <span className="text-slate-500 shrink-0">Muscles:</span>
-            <span className="text-slate-300">
+            <span className="text-muted-foreground shrink-0">Muscles:</span>
+            <span className="text-foreground">
               {targetMuscles.map((m) => MUSCLE_LABELS[m as keyof typeof MUSCLE_LABELS] ?? m).join(', ')}
             </span>
           </div>
         )}
         {isStrength && !!calendarEvent.duration_minutes && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Durée:</span>
-            <span className="text-slate-300">{calendarEvent.duration_minutes as number} min</span>
+            <span className="text-muted-foreground">Durée:</span>
+            <span className="text-foreground">{calendarEvent.duration_minutes as number} min</span>
           </div>
         )}
         {isStrength && !!calendarEvent.perceived_effort && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">RPE:</span>
-            <span className="text-slate-300">{calendarEvent.perceived_effort as number} / 10</span>
+            <span className="text-muted-foreground">RPE:</span>
+            <span className="text-foreground">{calendarEvent.perceived_effort as number} / 10</span>
           </div>
         )}
         {/* Détails spécifiques Skill */}
@@ -107,10 +120,13 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
         {isSkill && typeof skillProgress === 'number' && (
           <div className="flex items-center gap-2 text-sm">
             <span className={c.label}>Progression:</span>
-            <span className={clay ? 'text-primary font-medium' : 'text-slate-300'}>{skillProgress}%</span>
+            <span className={clay ? 'text-primary font-medium' : 'text-foreground'}>{skillProgress}%</span>
           </div>
         )}
       </div>
+
+      {/* Contenu de la séance (programme) */}
+      {session && <ProgramSessionDetail session={session} />}
 
       {/* Actions */}
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
