@@ -113,84 +113,84 @@ function NewSkillContent() {
     >
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => router.push('/skills')} className="text-slate-400 hover:text-white">
+        <Button variant="ghost" onClick={() => router.push('/skills')} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Retour
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-white">Nouveau programme de progression</h1>
-          <p className="text-slate-400 text-sm">Etape {step} sur 2</p>
+          <h1 className="font-display text-3xl font-semibold text-foreground tracking-tight">Nouveau programme de progression</h1>
+          <p className="eyebrow mt-1">Étape {step} sur 2</p>
         </div>
       </motion.div>
 
       {/* Step indicator */}
       <motion.div variants={fadeInUp} className="flex items-center gap-4">
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${step === 1 ? 'bg-orange-500/20 text-orange-300' : 'bg-white/5 text-slate-400'}`}>
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${step === 1 ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
           <span className="font-medium">1.</span> Configuration
         </div>
-        <ArrowRight className="w-4 h-4 text-slate-600" />
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${step === 2 ? 'bg-orange-500/20 text-orange-300' : 'bg-white/5 text-slate-400'}`}>
-          <span className="font-medium">2.</span> Preview & Sauvegarder
+        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${step === 2 ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+          <span className="font-medium">2.</span> Aperçu &amp; Sauvegarder
         </div>
       </motion.div>
 
       {/* Step 1: Form */}
       {step === 1 && (
         <motion.div variants={fadeInUp}>
-          <Card className="bg-white/5 border-white/10 p-6 space-y-6">
+          <Card className="bg-card border-border p-6 space-y-6">
             <div className="space-y-2">
-              <Label className="text-white">Nom du skill *</Label>
+              <Label className="text-foreground">Nom du skill *</Label>
               <Input
                 value={skillName}
                 onChange={(e) => setSkillName(e.target.value)}
                 placeholder="Ex: Muscle-Up, Handstand Walk, Pistol Squat..."
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card border-border text-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Categorie *</Label>
+              <Label className="text-foreground">Catégorie *</Label>
               <Select value={skillCategory} onValueChange={setSkillCategory}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue placeholder="Choisir une categorie" />
+                <SelectTrigger className="bg-card border-border text-foreground">
+                  <SelectValue placeholder="Choisir une catégorie" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gymnastics">Gymnastique</SelectItem>
-                  <SelectItem value="olympic_lifting">Halterophilie</SelectItem>
+                  <SelectItem value="olympic_lifting">Haltérophilie</SelectItem>
                   <SelectItem value="strength">Force</SelectItem>
-                  <SelectItem value="mobility">Mobilite</SelectItem>
+                  <SelectItem value="mobility">Mobilité</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Niveau actuel</Label>
+              <Label className="text-foreground">Niveau actuel</Label>
               <Select value={userLevel} onValueChange={setUserLevel}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-card border-border text-foreground">
                   <SelectValue placeholder="Choisir un niveau" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="beginner">Debutant</SelectItem>
-                  <SelectItem value="intermediate">Intermediaire</SelectItem>
-                  <SelectItem value="advanced">Avance</SelectItem>
+                  <SelectItem value="beginner">Débutant</SelectItem>
+                  <SelectItem value="intermediate">Intermédiaire</SelectItem>
+                  <SelectItem value="advanced">Avancé</SelectItem>
                   <SelectItem value="elite">Elite</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Capacites actuelles</Label>
+              <Label className="text-foreground">Capacités actuelles</Label>
               <Textarea
                 value={currentCapabilities}
                 onChange={(e) => setCurrentCapabilities(e.target.value)}
                 placeholder="Ex: Je peux faire 8 strict pull-ups, je tiens 15s en L-sit..."
-                className="bg-white/5 border-white/10 text-white min-h-[80px]"
+                className="bg-card border-border text-foreground min-h-[80px]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Equipement disponible</Label>
-              <p className="text-xs text-slate-500">Selectionnez l&apos;equipement auquel vous avez acces. L&apos;IA n&apos;utilisera que celui-ci.</p>
+              <Label className="text-foreground">Equipement disponible</Label>
+              <p className="text-xs text-muted-foreground">Sélectionnez l&apos;équipement auquel vous avez accès. L&apos;IA n&apos;utilisera que celui-ci.</p>
               <div className="flex flex-wrap gap-2 mt-2">
                 {allEquipments.map((eq) => {
                   const isSelected = selectedEquipment.includes(eq.label)
@@ -203,10 +203,10 @@ function NewSkillContent() {
                           isSelected ? prev.filter(e => e !== eq.label) : [...prev, eq.label]
                         )
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
                         isSelected
-                          ? 'bg-orange-500/20 border-orange-500/50 text-orange-300'
-                          : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                          ? 'bg-primary/10 border-primary/50 text-primary'
+                          : 'bg-card border-border text-muted-foreground hover:border-primary/40'
                       }`}
                     >
                       {eq.label}
@@ -215,34 +215,34 @@ function NewSkillContent() {
                 })}
               </div>
               {selectedEquipment.length > 0 && (
-                <p className="text-xs text-orange-400 mt-1">{selectedEquipment.length} equipement(s) selectionne(s)</p>
+                <p className="text-xs text-primary mt-1">{selectedEquipment.length} équipement(s) sélectionné(s)</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Contraintes / Limitations</Label>
+              <Label className="text-foreground">Contraintes / Limitations</Label>
               <Textarea
                 value={constraints}
                 onChange={(e) => setConstraints(e.target.value)}
-                placeholder="Ex: Douleur epaule gauche, pas d'anneaux disponibles..."
-                className="bg-white/5 border-white/10 text-white min-h-[80px]"
+                placeholder="Ex: Douleur épaule gauche, pas d'anneaux disponibles..."
+                className="bg-card border-border text-foreground min-h-[80px]"
               />
             </div>
 
             <Button
               onClick={handleGenerate}
               disabled={loading || !skillName || !skillCategory}
-              className="w-full bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600"
+              className="w-full"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generation en cours...
+                  Génération en cours...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Generer avec l&apos;IA
+                  Générer avec l&apos;IA
                 </>
               )}
             </Button>
@@ -253,52 +253,52 @@ function NewSkillContent() {
       {/* Step 2: Preview */}
       {step === 2 && generatedProgram && (
         <div className="space-y-6">
-          <Card className="bg-white/5 border-white/10 p-6">
+          <Card className="bg-card border-border p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">{generatedProgram.skill_name}</h2>
-                <p className="text-slate-400 mt-1">{generatedProgram.description}</p>
+                <h2 className="font-display text-2xl font-semibold text-foreground">{generatedProgram.skill_name}</h2>
+                <p className="text-muted-foreground mt-1">{generatedProgram.description}</p>
               </div>
-              <Badge variant="outline" className="bg-orange-500/20 text-orange-300 border-orange-500/30">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 shrink-0">
                 {generatedProgram.estimated_weeks} semaines
               </Badge>
             </div>
 
             {generatedProgram.safety_notes && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
-                <p className="text-red-300 text-sm font-medium mb-1">Notes de securite</p>
-                <p className="text-red-200/80 text-sm">{generatedProgram.safety_notes}</p>
+              <div className="border-l-2 border-primary bg-secondary rounded-r-lg p-4 mb-4">
+                <p className="eyebrow text-primary mb-1">Notes de sécurité</p>
+                <p className="text-foreground/80 text-sm">{generatedProgram.safety_notes}</p>
               </div>
             )}
 
             {generatedProgram.progression_notes && (
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                <p className="text-blue-300 text-sm font-medium mb-1">Notes de progression</p>
-                <p className="text-blue-200/80 text-sm">{generatedProgram.progression_notes}</p>
+              <div className="bg-secondary rounded-lg p-4">
+                <p className="eyebrow mb-1">Notes de progression</p>
+                <p className="text-foreground/80 text-sm">{generatedProgram.progression_notes}</p>
               </div>
             )}
           </Card>
 
           {/* Steps preview */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Etapes de progression ({generatedProgram.steps.length})</h3>
+            <h3 className="font-display text-lg font-semibold text-foreground">Etapes de progression ({generatedProgram.steps.length})</h3>
             {generatedProgram.steps.map((s) => (
-              <Card key={s.step_number} className="bg-white/5 border-white/10 p-5">
+              <Card key={s.step_number} className="bg-card border-border p-5">
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
-                    <span className="text-orange-400 font-bold text-sm">{s.step_number}</span>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="font-display text-primary font-semibold text-sm">{s.step_number}</span>
                   </div>
                   <div className="flex-1 space-y-3">
-                    <h4 className="font-semibold text-white">{s.title}</h4>
-                    <p className="text-slate-400 text-sm">{s.description}</p>
+                    <h4 className="font-semibold text-foreground">{s.title}</h4>
+                    <p className="text-muted-foreground text-sm">{s.description}</p>
 
                     {/* Validation criteria */}
                     {s.validation_criteria && (
-                      <div className="bg-white/5 rounded-lg p-3">
-                        <p className="text-xs text-slate-500 mb-1">Critere de validation</p>
+                      <div className="bg-secondary rounded-lg p-3">
+                        <p className="eyebrow mb-1">Critère de validation</p>
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-emerald-400" />
-                          <span className="text-sm text-emerald-300">{s.validation_criteria.description}</span>
+                          <CheckCircle className="w-4 h-4 text-primary" />
+                          <span className="text-sm text-foreground">{s.validation_criteria.description}</span>
                         </div>
                       </div>
                     )}
@@ -306,17 +306,17 @@ function NewSkillContent() {
                     {/* Exercises */}
                     {s.recommended_exercises && s.recommended_exercises.length > 0 && (
                       <div>
-                        <p className="text-xs text-slate-500 mb-2">Exercices recommandes</p>
+                        <p className="eyebrow mb-2">Exercices recommandés</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {s.recommended_exercises.map((ex, i) => (
-                            <div key={i} className="bg-white/5 rounded-lg px-3 py-2">
-                              <p className="text-sm text-white font-medium">{ex.name}</p>
-                              <p className="text-xs text-slate-400">
+                            <div key={i} className="bg-secondary rounded-lg px-3 py-2">
+                              <p className="text-sm text-foreground font-medium">{ex.name}</p>
+                              <p className="text-xs text-muted-foreground">
                                 {[
-                                  ex.sets && `${ex.sets} series`,
+                                  ex.sets && `${ex.sets} séries`,
                                   ex.reps && `${ex.reps} reps`,
                                   ex.rest && `repos ${ex.rest}`,
-                                ].filter(Boolean).join(' - ')}
+                                ].filter(Boolean).join(' · ')}
                               </p>
                             </div>
                           ))}
@@ -326,26 +326,26 @@ function NewSkillContent() {
 
                     {/* Programming info */}
                     {(s.frequency || s.when_to_train || s.warmup) && (
-                      <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 space-y-1">
-                        <p className="text-xs text-orange-300 font-medium mb-1">Programmation</p>
+                      <div className="border-l-2 border-primary bg-secondary rounded-r-lg p-3 space-y-1">
+                        <p className="eyebrow text-primary mb-1">Programmation</p>
                         {s.frequency && (
-                          <p className="text-sm text-orange-200/80"><span className="text-orange-300 font-medium">Frequence :</span> {s.frequency}</p>
+                          <p className="text-sm text-foreground/80"><span className="font-medium">Fréquence :</span> {s.frequency}</p>
                         )}
                         {s.when_to_train && (
-                          <p className="text-sm text-orange-200/80"><span className="text-orange-300 font-medium">Quand :</span> {s.when_to_train}</p>
+                          <p className="text-sm text-foreground/80"><span className="font-medium">Quand :</span> {s.when_to_train}</p>
                         )}
                         {s.warmup && (
-                          <p className="text-sm text-orange-200/80"><span className="text-orange-300 font-medium">Echauffement :</span> {s.warmup}</p>
+                          <p className="text-sm text-foreground/80"><span className="font-medium">Échauffement :</span> {s.warmup}</p>
                         )}
                       </div>
                     )}
 
                     {s.coaching_tips && (
-                      <p className="text-xs text-slate-500 italic">{s.coaching_tips}</p>
+                      <p className="text-xs text-muted-foreground italic">{s.coaching_tips}</p>
                     )}
 
                     {s.estimated_duration_weeks && (
-                      <Badge variant="outline" className="text-xs bg-white/5 border-white/10 text-slate-400">
+                      <Badge variant="outline" className="text-xs bg-card border-border text-muted-foreground">
                         ~{s.estimated_duration_weeks} semaines
                       </Badge>
                     )}
@@ -357,14 +357,14 @@ function NewSkillContent() {
 
           {/* Actions */}
           <div className="flex gap-4">
-            <Button variant="outline" onClick={() => setStep(1)} className="border-white/10 text-slate-300 hover:bg-white/5">
+            <Button variant="outline" onClick={() => setStep(1)} className="border-border text-foreground hover:border-primary hover:text-primary">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Modifier
             </Button>
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600"
+              className="flex-1"
             >
               {saving ? (
                 <>

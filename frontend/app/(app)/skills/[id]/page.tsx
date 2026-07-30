@@ -35,7 +35,7 @@ function SkillDetailContent() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -43,7 +43,7 @@ function SkillDetailContent() {
   if (!program) {
     return (
       <div className="text-center py-20">
-        <p className="text-slate-400">Programme non trouve</p>
+        <p className="text-muted-foreground">Programme non trouvé</p>
       </div>
     )
   }
@@ -55,11 +55,11 @@ function SkillDetailContent() {
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      className="max-w-4xl mx-auto space-y-8"
+      className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8"
     >
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <Button variant="ghost" onClick={() => router.push('/skills')} className="text-slate-400 hover:text-white mb-4">
+        <Button variant="ghost" onClick={() => router.push('/skills')} className="text-muted-foreground hover:text-foreground mb-4 -ml-3">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Retour aux progressions
         </Button>
@@ -75,19 +75,19 @@ function SkillDetailContent() {
       {/* Safety notes */}
       {program.safety_notes && (
         <motion.div variants={fadeInUp}>
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-            <p className="text-red-300 text-sm font-medium mb-1">Notes de securite</p>
-            <p className="text-red-200/80 text-sm">{program.safety_notes}</p>
+          <div className="border-l-2 border-primary bg-secondary rounded-r-lg p-4">
+            <p className="eyebrow text-primary mb-1">Notes de sécurité</p>
+            <p className="text-foreground/80 text-sm">{program.safety_notes}</p>
           </div>
         </motion.div>
       )}
 
       {/* Timeline */}
       <motion.div variants={fadeInUp} className="space-y-4">
-        <h2 className="text-lg font-semibold text-white">Etapes de progression</h2>
+        <h2 className="eyebrow">Étapes de progression</h2>
 
         <div className="relative">
-          <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-white/10" />
+          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
           <div className="space-y-4">
             {program.steps?.map((step) => (
               <SkillStepCard

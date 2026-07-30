@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { motion } from 'framer-motion'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
 import { ActiveProgramCard } from './components/ActiveProgramCard'
+import { SkillOfTheDayCard } from './components/SkillOfTheDayCard'
 import { TrainingOverview } from './components/TrainingOverview'
 import { QuickActions } from './components/QuickActions'
 import { WeeklyCalendar } from './components/WeeklyCalendar'
@@ -55,6 +56,11 @@ function DashboardContent() {
         {/* Programme actif */}
         <motion.div variants={fadeInUp}>
           <ActiveProgramCard index="03" />
+        </motion.div>
+
+        {/* Skill du jour */}
+        <motion.div variants={fadeInUp}>
+          <SkillOfTheDayCard index="04" />
         </motion.div>
 
         {/* Vue d'ensemble */}
