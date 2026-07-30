@@ -339,6 +339,19 @@ export class TrainingProgramsService {
       const scheduled: Array<{ date: string; session_title: string; schedule_id: string }> = []
       const seenDates = new Set<string>()
 
+      // Bloque les dates déjà occupées (contrainte unique user/date) avec un
+      // message clair plutôt que de laisser Postgres lever une 500.
+      const targetDates = dto.assignments.map((a) => a.date)
+      const occupiedRows = await this.knex('user_workout_schedule')
+        .where('user_id', userId)
+        .whereIn('scheduled_date', targetDates)
+        .pluck('scheduled_date')
+      const occupied = new Set(occupiedRows.map((d) => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10))))
+      const conflicts = [...new Set(targetDates.filter((d) => occupied.has(d)))]
+      if (conflicts.length > 0) {
+        throw new ConflictException(`Une séance est déjà planifiée le ${conflicts.join(', ')}. Choisis une autre date.`)
+      }
+
       for (const assignment of dto.assignments) {
         const session = sessions[assignment.session_index]
         if (!session) {
