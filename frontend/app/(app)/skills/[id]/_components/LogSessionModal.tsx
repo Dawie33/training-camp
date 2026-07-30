@@ -33,47 +33,47 @@ export function LogSessionModal({ logModal, setLogModal, handleSaveLog, program 
 
   return (
     <Dialog open={logModal.isOpen} onOpenChange={(open) => !open && setLogModal({ isOpen: false })}>
-      <DialogContent className="bg-slate-900 border-white/10">
+      <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-white">Logger une session</DialogTitle>
+          <DialogTitle className="font-display text-foreground">Logger une session</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-white">Date</Label>
+            <Label className="text-foreground">Date</Label>
             <Input
               type="date"
               value={logModal.isOpen ? logModal.data.date : ''}
               onChange={(e) => setLogModal(logModal.isOpen ? { ...logModal, data: { ...logModal.data, date: e.target.value } } : logModal)}
-              className="bg-white/5 border-white/10 text-white"
+              className="bg-card border-border text-foreground"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-white">{valueLabel}</Label>
+            <Label className="text-foreground">{valueLabel}</Label>
             <Input
               type="number"
               value={logModal.isOpen ? logModal.data.value : ''}
               onChange={(e) => setLogModal(logModal.isOpen ? { ...logModal, data: { ...logModal.data, value: e.target.value } } : logModal)}
               placeholder={valuePlaceholder}
-              className="bg-white/5 border-white/10 text-white"
+              className="bg-card border-border text-foreground"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-white">Notes (optionnel)</Label>
+            <Label className="text-foreground">Notes (optionnel)</Label>
             <Textarea
               value={logModal.isOpen ? logModal.data.notes : ''}
               onChange={(e) => setLogModal(logModal.isOpen ? { ...logModal, data: { ...logModal.data, notes: e.target.value } } : logModal)}
-              placeholder="Comment s'est passee la session..."
-              className="bg-white/5 border-white/10 text-white min-h-[80px]"
+              placeholder="Comment s'est passée la session..."
+              className="bg-card border-border text-foreground min-h-[80px]"
             />
           </div>
 
           <Button
             onClick={handleSaveLog}
             disabled={!logModal.isOpen || logModal.saving || !logModal.data.value}
-            className="w-full bg-gradient-to-r from-orange-500 to-rose-500"
+            className="w-full"
           >
             {logModal.isOpen && logModal.saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
