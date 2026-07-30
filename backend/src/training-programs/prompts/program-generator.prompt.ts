@@ -98,7 +98,15 @@ function buildAthleteContextSection(context: UserAIContext): string {
   return lines.join('\n')
 }
 
-export function buildProgramGeneratorSystemPrompt(): string {
+export function buildProgramGeneratorSystemPrompt(programType?: string): string {
+  const isStrengthOnly = programType === 'strength_building'
+  const complementaryRule = isStrengthOnly
+    ? `- Programme ORIENTE FORCE PURE : chaque seance developpe la force / halterophilie (squat, deadlift, presses, olympic lifts et accessoires cibles).
+- INTERDICTION d'ajouter du conditioning / metcon / AMRAP / cardio : le champ "conditioning" doit TOUJOURS valoir null.
+- "focus" doit rester "strength" (ou "recovery" pour une seance de deload) — jamais "conditioning" ni "mixed".
+- La variete vient des schemas series/reps/intensite, des mouvements accessoires et au besoin d'un skill_work leger (technique d'halterophilie), PAS du cardio.`
+    : `- Toujours inclure un stimulus complementaire (force + condo ou skill + condo)`
+
   return `Tu es un coach CrossFit certifie Level 3+ specialise dans la programmation periodisee et le developpement de la performance.
 
 Ta mission est de generer des programmes d'entrainement structures et progressifs en format JSON strict.
@@ -174,7 +182,7 @@ Tu dois TOUJOURS retourner UNIQUEMENT ce JSON, sans texte avant ni apres :
 - Phase 1 (Accumulation) : volume eleve, intensite moderee, technique prioritaire
 - Phase 2 (Build) : volume reduit, intensite augmentee
 - Phase 3 (Peak/Realisation) : volume bas, intensite maximale, expression de la forme
-- Toujours inclure un stimulus complementaire (force + condo ou skill + condo)
+${complementaryRule}
 - Progression semaine par semaine dans chaque phase (intensite ou volume)
 - Adapter au niveau de l'athlete et a son contexte CrossFit box`
 }
@@ -194,12 +202,17 @@ export function buildProgramGeneratorUserPrompt(params: ProgramGenerationParams,
 
   const focusNote = params.focus ? `\n**Focus particulier** : ${params.focus}` : ''
 
+  const strengthOnlyNote =
+    params.program_type === 'strength_building'
+      ? `\n**Programme force pure** : uniquement du travail de force / halterophilie. AUCUN conditioning, metcon ni AMRAP — le champ "conditioning" doit valoir null pour chaque seance, et "focus" reste "strength" (ou "recovery" pour un deload).`
+      : ''
+
   return `Genere un programme d'entrainement CrossFit avec ces parametres :
 
 **Type** : ${programTypeLabel}
 **Durée** : ${params.duration_weeks} semaines
 **Séances par semaine** : ${params.sessions_per_week} seances personnelles${boxNote}
-**Niveau** : ${levelLabel}${focusNote}
+**Niveau** : ${levelLabel}${focusNote}${strengthOnlyNote}
 
 **Structure de phases suggérée** : ${phases}
 
@@ -273,17 +286,25 @@ export function buildBonusSessionUserPrompt(params: BonusSessionParams, context:
 
   const athleteSection = buildAthleteContextSection(context)
 
+  const isStrengthOnly = params.program_type === 'strength_building'
+  const complementarityRules = isStrengthOnly
+    ? `Regle (programme FORCE PURE) : la seance bonus reste orientee force / halterophilie.
+- AUCUN conditioning / metcon / AMRAP / cardio : le champ "conditioning" doit valoir null.
+- Choisis un focus force complementaire (ex: haut du corps si la semaine a fait du bas du corps) ou du skill technique (halterophilie).
+- "focus" reste "strength" (ou "skill" si seance purement technique). Duree raisonnable (30-50 min).`
+    : `Regle de complementarite : choisis un focus qui EQUILIBRE la semaine.
+- Si la semaine est deja tres orientee force → propose du conditioning, du cardio (endurance zone 2) ou du skill.
+- Si la semaine est deja tres cardio → propose de la force accessoire ou du skill.
+- Evite de dupliquer un stimulus deja tres present. Ne surcharge pas les memes groupes musculaires.
+- Duree raisonnable (30-50 min) car c'est une seance en plus.`
+
   return `Genere UNE seance d'entrainement BONUS complementaire, a ajouter a une semaine existante.
 
 **Type de programme** : ${programTypeLabel}
 **Niveau** : ${levelLabel}
 **Focus deja couverts cette semaine par les autres seances** : ${focusesStr}${focusNote}
 
-Regle de complementarite : choisis un focus qui EQUILIBRE la semaine.
-- Si la semaine est deja tres orientee force → propose du conditioning, du cardio (endurance zone 2) ou du skill.
-- Si la semaine est deja tres cardio → propose de la force accessoire ou du skill.
-- Evite de dupliquer un stimulus deja tres present. Ne surcharge pas les memes groupes musculaires.
-- Duree raisonnable (30-50 min) car c'est une seance en plus.
+${complementarityRules}
 
 ${athleteSection}
 

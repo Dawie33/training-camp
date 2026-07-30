@@ -33,7 +33,7 @@ export class AIProgramGeneratorService {
     try {
       const context = await this.userContextService.getUserAIContext(userId)
 
-      const systemPrompt = buildProgramGeneratorSystemPrompt()
+      const systemPrompt = buildProgramGeneratorSystemPrompt(params.program_type)
       const userPrompt = buildProgramGeneratorUserPrompt(params, context)
 
       const completion = await this.openai.chat.completions.create({
