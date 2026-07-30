@@ -1,6 +1,7 @@
 'use client'
 
 import { workoutsService } from '@/services'
+import { activitiesApi } from '@/services/activities'
 import { googleCalendarApi } from '@/services/google-calendar'
 import { scheduleApi } from '@/services/schedule'
 import type { UnifiedActivity } from '@/services/activities'
@@ -20,6 +21,7 @@ const MODULE_COLORS: Record<string, string> = {
   crossfit: '',
   running: 'running',
   strength: 'strength',
+  skill: 'skill',
 }
 
 export function useCalendarPage() {
@@ -29,6 +31,7 @@ export function useCalendarPage() {
   const [parseBoxWodOpen, setParseBoxWodOpen] = useState(false)
   const [parseBoxWodMode, setParseBoxWodMode] = useState<'instagram' | 'search'>('instagram')
   const [weeklyPlannerOpen, setWeeklyPlannerOpen] = useState(false)
+  const [scheduleSkillOpen, setScheduleSkillOpen] = useState(false)
   const [logModalOpen, setLogModalOpen] = useState(false)
   const [logModalData, setLogModalData] = useState<{
     scheduleId: string
@@ -112,6 +115,9 @@ export function useCalendarPage() {
         session_goal: schedule.session_goal,
         duration_minutes: schedule.duration_minutes,
         perceived_effort: schedule.perceived_effort,
+        skill_program_id: schedule.skill_program_id,
+        skill_step_title: schedule.skill_step_title,
+        skill_progress: schedule.skill_progress,
         _onComplete: schedule._source === 'strength_sessions' ? undefined : () => { markAsCompleted(schedule.id); setSelectedEvent(null) },
         _onSkip: schedule._source === 'strength_sessions' ? undefined : () => { markAsSkipped(schedule.id); setSelectedEvent(null) },
         _onDelete: () => {
@@ -207,6 +213,23 @@ export function useCalendarPage() {
     }
   }
 
+  const handleScheduleSkill = async (skillProgramId: string, notes?: string) => {
+    try {
+      await activitiesApi.create({
+        activity_type: 'skill',
+        activity_id: skillProgramId,
+        scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+        notes,
+      })
+      await refetch()
+      toast.success(`Skill planifié pour le ${format(selectedDate, 'dd/MM/yyyy')}`)
+    } catch (err) {
+      const error = err as { message?: string }
+      toast.error(error.message || 'Impossible de planifier ce skill (jour déjà occupé ?)')
+      throw err
+    }
+  }
+
   const customComponents = useMemo(() => ({
     monthGridEvent: CustomEventContent,
     dateGridEvent: CustomEventContent,
@@ -220,6 +243,7 @@ export function useCalendarPage() {
     dateActionOpen, setDateActionOpen,
     parseBoxWodOpen, setParseBoxWodOpen, parseBoxWodMode, setParseBoxWodMode,
     weeklyPlannerOpen, setWeeklyPlannerOpen,
+    scheduleSkillOpen, setScheduleSkillOpen,
     logModalOpen, setLogModalOpen,
     logModalData,
     // Google
@@ -234,6 +258,7 @@ export function useCalendarPage() {
     // Actions
     handleScheduleWorkout,
     handleMarkBoxDay,
+    handleScheduleSkill,
     refetch,
   }
 }

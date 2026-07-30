@@ -4,6 +4,7 @@ import 'temporal-polyfill/global'
 import './calendar-theme.css'
 
 import { ParseBoxWodModal } from '@/components/calendar/ParseBoxWodModal'
+import { ScheduleSkillModal } from '@/components/calendar/ScheduleSkillModal'
 import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
 import { WeeklyPlannerModal } from '@/components/calendar/WeeklyPlannerModal'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,7 @@ function CalendarContent() {
     dateActionOpen, setDateActionOpen,
     parseBoxWodOpen, setParseBoxWodOpen, parseBoxWodMode, setParseBoxWodMode,
     weeklyPlannerOpen, setWeeklyPlannerOpen,
+    scheduleSkillOpen, setScheduleSkillOpen,
     googleConnected, googleLoading,
     handleGoogleConnect, handleGoogleDisconnect,
     printWorkoutData,
@@ -33,6 +35,7 @@ function CalendarContent() {
     selectedEvent, setSelectedEvent,
     handleScheduleWorkout,
     handleMarkBoxDay,
+    handleScheduleSkill,
     refetch,
   } = useCalendarPage()
 
@@ -119,6 +122,7 @@ function CalendarContent() {
                 { label: 'CrossFit', color: 'bg-orange-500/20 border-orange-500/50 text-orange-400' },
                 { label: 'RUN', color: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' },
                 { label: 'FORCE', color: 'bg-violet-500/20 border-violet-500/50 text-violet-400' },
+                { label: 'SKILL', color: 'bg-amber-500/20 border-amber-500/50 text-amber-400' },
               ].map(({ label, color }) => (
                 <div key={label} className="flex items-center gap-1.5 text-xs">
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${color}`}>{label}</span>
@@ -137,6 +141,14 @@ function CalendarContent() {
         onParseBoxWod={() => { setParseBoxWodMode('instagram'); setParseBoxWodOpen(true) }}
         onLookupWod={() => { setParseBoxWodMode('search'); setParseBoxWodOpen(true) }}
         onMarkBoxDay={handleMarkBoxDay}
+        onPlanSkill={() => setScheduleSkillOpen(true)}
+      />
+
+      <ScheduleSkillModal
+        open={scheduleSkillOpen}
+        onOpenChange={setScheduleSkillOpen}
+        selectedDate={selectedDate}
+        onSchedule={handleScheduleSkill}
       />
 
       <ScheduleWorkoutModal

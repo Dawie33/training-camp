@@ -9,6 +9,7 @@ export const statusColors: Record<string, { dot: string; text: string; bg: strin
 export const moduleBadges: Record<string, { label: string; color: string }> = {
   running: { label: 'RUN', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' },
   strength: { label: 'FORCE', color: 'bg-violet-500/20 text-violet-400 border border-violet-500/30' },
+  skill: { label: 'SKILL', color: 'bg-primary text-primary-foreground' },
 }
 
 export function CustomEventContent({ calendarEvent }: { calendarEvent: Record<string, unknown> }) {

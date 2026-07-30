@@ -5,7 +5,16 @@ import { InjectModel } from 'nest-knexjs'
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
 import { UnifiedActivity } from './types/unified-activity.type'
 
-const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', strength: 'Force' }
+const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', strength: 'Force', skill: 'Skill' }
+
+export interface SkillEnrichment {
+  title: string
+  skill_program_id: string
+  skill_name: string
+  skill_category: string
+  skill_step_title?: string
+  skill_progress: number
+}
 
 @Injectable()
 export class ScheduledActivitiesService {
@@ -13,6 +22,46 @@ export class ScheduledActivitiesService {
     @InjectModel() private readonly knex: Knex,
     private readonly googleCalendarService: GoogleCalendarService,
   ) {}
+
+  /**
+   * Enrichit un lot de programmes de skill : nom, catégorie, étape en cours et % de progression.
+   * Retourne une Map indexée par skill_program_id.
+   */
+  private async getSkillEnrichment(programIds: string[]): Promise<Map<string, SkillEnrichment>> {
+    const map = new Map<string, SkillEnrichment>()
+    const uniqueIds = [...new Set(programIds.filter(Boolean))]
+    if (uniqueIds.length === 0) return map
+
+    const programs = await this.knex('skill_programs').whereIn('id', uniqueIds)
+    const steps = await this.knex('skill_program_steps')
+      .whereIn('program_id', uniqueIds)
+      .select('program_id', 'title', 'status')
+
+    const stepsByProgram = new Map<string, Array<{ title: string; status: string }>>()
+    for (const s of steps) {
+      const list = stepsByProgram.get(s.program_id) ?? []
+      list.push({ title: s.title, status: s.status })
+      stepsByProgram.set(s.program_id, list)
+    }
+
+    for (const p of programs) {
+      const programSteps = stepsByProgram.get(p.id) ?? []
+      const total = programSteps.length
+      const done = programSteps.filter(s => s.status === 'completed' || s.status === 'skipped').length
+      const currentStep = programSteps.find(s => s.status === 'in_progress')
+
+      map.set(p.id, {
+        title: p.skill_name,
+        skill_program_id: p.id,
+        skill_name: p.skill_name,
+        skill_category: p.skill_category,
+        skill_step_title: currentStep?.title,
+        skill_progress: total > 0 ? Math.round((done / total) * 100) : 0,
+      })
+    }
+
+    return map
+  }
 
   /**
    * Retourne la liste unifiée de toutes les activités planifiées d'un utilisateur
@@ -110,10 +159,17 @@ export class ScheduledActivitiesService {
         for (const s of linked) linkedStrengthMap.set(s.id, s)
       }
 
+      // Batch-fetch les programmes de skill liés pour enrichir les créneaux skill planifiés
+      const skillProgramIds = saRows
+        .filter(r => r.activity_type === 'skill' && r.activity_id)
+        .map(r => r.activity_id)
+      const skillEnrichmentMap = await this.getSkillEnrichment(skillProgramIds)
+
       for (const row of saRows) {
         let title = ACTIVITY_LABELS[row.activity_type] || row.activity_type
         let target_muscles: string[] | undefined
         let session_goal: string | undefined
+        let skillFields: Partial<UnifiedActivity> = {}
 
         if (row.activity_type === 'strength' && row.activity_id) {
           const session = linkedStrengthMap.get(row.activity_id)
@@ -122,6 +178,18 @@ export class ScheduledActivitiesService {
             title = (aiPlan?.session_name as string) || 'Séance Force'
             target_muscles = Array.isArray(session.target_muscles) ? session.target_muscles : []
             session_goal = session.session_goal as string | undefined
+          }
+        } else if (row.activity_type === 'skill' && row.activity_id) {
+          const skill = skillEnrichmentMap.get(row.activity_id)
+          if (skill) {
+            title = skill.title
+            skillFields = {
+              skill_program_id: skill.skill_program_id,
+              skill_name: skill.skill_name,
+              skill_category: skill.skill_category,
+              skill_step_title: skill.skill_step_title,
+              skill_progress: skill.skill_progress,
+            }
           }
         }
 
@@ -141,6 +209,7 @@ export class ScheduledActivitiesService {
           activity_id: row.activity_id,
           target_muscles,
           session_goal,
+          ...skillFields,
           _source: 'scheduled_activities',
         })
       }
@@ -209,6 +278,17 @@ export class ScheduledActivitiesService {
       throw new ConflictException(`Une activité ${data.activity_type} est déjà planifiée pour cette date`)
     }
 
+    // Vérifie que le programme de skill référencé appartient bien à l'utilisateur
+    if (data.activity_type === 'skill' && data.activity_id) {
+      const program = await this.knex('skill_programs')
+        .where('id', data.activity_id)
+        .where('user_id', userId)
+        .first()
+      if (!program) {
+        throw new NotFoundException('Programme de skill non trouvé')
+      }
+    }
+
     const [row] = await this.knex('scheduled_activities')
       .insert({
         user_id: userId,
@@ -229,6 +309,7 @@ export class ScheduledActivitiesService {
     let title = ACTIVITY_LABELS[row.activity_type] || row.activity_type
     let target_muscles: string[] | undefined
     let session_goal: string | undefined
+    let skillFields: Partial<UnifiedActivity> = {}
 
     if (row.activity_type === 'strength' && row.activity_id) {
       const session = await this.knex('strength_sessions').where('id', row.activity_id).first()
@@ -237,6 +318,18 @@ export class ScheduledActivitiesService {
         title = (aiPlan?.session_name as string) || 'Séance Force'
         target_muscles = Array.isArray(session.target_muscles) ? session.target_muscles : []
         session_goal = session.session_goal as string | undefined
+      }
+    } else if (row.activity_type === 'skill' && row.activity_id) {
+      const skill = (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
+      if (skill) {
+        title = skill.title
+        skillFields = {
+          skill_program_id: skill.skill_program_id,
+          skill_name: skill.skill_name,
+          skill_category: skill.skill_category,
+          skill_step_title: skill.skill_step_title,
+          skill_progress: skill.skill_progress,
+        }
       }
     }
 
@@ -256,6 +349,7 @@ export class ScheduledActivitiesService {
       activity_id: row.activity_id,
       target_muscles,
       session_goal,
+      ...skillFields,
       _source: 'scheduled_activities',
     }
   }
@@ -301,6 +395,7 @@ export class ScheduledActivitiesService {
     let updateTitle = ACTIVITY_LABELS[row.activity_type] || row.activity_type
     let updateMuscles: string[] | undefined
     let updateGoal: string | undefined
+    let updateSkillFields: Partial<UnifiedActivity> = {}
 
     if (row.activity_type === 'strength' && row.activity_id) {
       const session = await this.knex('strength_sessions').where('id', row.activity_id).first()
@@ -309,6 +404,18 @@ export class ScheduledActivitiesService {
         updateTitle = (aiPlan?.session_name as string) || 'Séance Force'
         updateMuscles = Array.isArray(session.target_muscles) ? session.target_muscles : []
         updateGoal = session.session_goal as string | undefined
+      }
+    } else if (row.activity_type === 'skill' && row.activity_id) {
+      const skill = (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
+      if (skill) {
+        updateTitle = skill.title
+        updateSkillFields = {
+          skill_program_id: skill.skill_program_id,
+          skill_name: skill.skill_name,
+          skill_category: skill.skill_category,
+          skill_step_title: skill.skill_step_title,
+          skill_progress: skill.skill_progress,
+        }
       }
     }
 
@@ -328,6 +435,7 @@ export class ScheduledActivitiesService {
       activity_id: row.activity_id,
       target_muscles: updateMuscles,
       session_goal: updateGoal,
+      ...updateSkillFields,
       _source: 'scheduled_activities',
     }
   }
