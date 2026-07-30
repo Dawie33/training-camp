@@ -1,6 +1,6 @@
 import { apiClient } from './index'
 
-export type ActivityModule = 'crossfit' | 'running' | 'strength'
+export type ActivityModule = 'crossfit' | 'running' | 'strength' | 'skill'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**
@@ -32,7 +32,7 @@ export interface UnifiedActivity {
   completed_session_id?: string
 
   // Champs nouveaux modules
-  activity_type?: 'running' | 'biking' | 'strength'
+  activity_type?: 'running' | 'biking' | 'strength' | 'skill'
   activity_id?: string
 
   // Champs Force
@@ -41,12 +41,19 @@ export interface UnifiedActivity {
   duration_minutes?: number
   perceived_effort?: number
 
+  // Champs Skill
+  skill_program_id?: string
+  skill_name?: string
+  skill_category?: string
+  skill_step_title?: string
+  skill_progress?: number
+
   // Identifie la table source pour les actions CRUD
   _source: 'workout_schedule' | 'scheduled_activities' | 'strength_sessions'
 }
 
 export interface CreateActivityDto {
-  activity_type: 'running' | 'biking' | 'strength'
+  activity_type: 'running' | 'biking' | 'strength' | 'skill'
   scheduled_date: string
   activity_id?: string
   notes?: string

@@ -12,20 +12,44 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const onDelete = calendarEvent._onDelete as (() => void) | undefined
   const onPrint = calendarEvent._onPrint as (() => void) | undefined
   const isStrength = module === 'strength'
+  const isSkill = module === 'skill'
   const targetMuscles = calendarEvent.target_muscles as string[] | undefined
   const sessionGoal = calendarEvent.session_goal as string | undefined
+  const skillStepTitle = calendarEvent.skill_step_title as string | undefined
+  const skillProgress = calendarEvent.skill_progress as number | undefined
+  const skillProgramId = calendarEvent.skill_program_id as string | undefined
+
+  // Thème Clay conditionnel pour les events skill (le reste du calendrier reste dark)
+  const clay = isSkill
+  const c = {
+    root: clay ? 'bg-card rounded-md' : '',
+    title: clay ? 'text-foreground' : 'text-slate-100',
+    label: clay ? 'text-muted-foreground' : 'text-slate-500',
+    value: clay ? 'text-foreground' : 'text-slate-300',
+    border: clay ? 'border-border' : 'border-white/10',
+    pill: clay ? 'bg-muted text-muted-foreground' : `${colors.bg} ${colors.text}`,
+    complete: clay
+      ? 'bg-emerald-600/10 text-emerald-700 border border-emerald-600/30 hover:bg-emerald-600/20'
+      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30',
+    skip: clay
+      ? 'bg-muted text-muted-foreground border border-border hover:bg-muted/70'
+      : 'bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30',
+    delete: clay
+      ? 'bg-red-600/10 text-red-700 border border-red-600/30 hover:bg-red-600/20 ml-auto'
+      : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 ml-auto',
+  }
 
   return (
-    <div className="p-4 min-w-[280px]">
+    <div className={`p-4 min-w-[280px] ${c.root}`}>
       {/* Header */}
       <div className="flex items-start gap-3 mb-4">
         <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${colors.dot}`} />
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-semibold text-slate-100 truncate">
+          <h3 className={`text-base font-semibold truncate ${clay ? 'font-display' : ''} ${c.title}`}>
             {calendarEvent.title as string}
           </h3>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${colors.bg} ${colors.text}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${c.pill}`}>
               {status === 'scheduled' ? 'Programmé' : status === 'completed' ? 'Complété' : status === 'skipped' ? 'Sauté' : 'Replanifié'}
             </span>
           </div>
@@ -79,17 +103,30 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
             <span className="text-slate-300">{calendarEvent.perceived_effort as number} / 10</span>
           </div>
         )}
+        {/* Détails spécifiques Skill */}
+        {isSkill && skillStepTitle && (
+          <div className="flex items-start gap-2 text-sm">
+            <span className={`shrink-0 ${c.label}`}>Étape en cours:</span>
+            <span className={c.value}>{skillStepTitle}</span>
+          </div>
+        )}
+        {isSkill && typeof skillProgress === 'number' && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className={c.label}>Progression:</span>
+            <span className={clay ? 'text-primary font-medium' : 'text-slate-300'}>{skillProgress}%</span>
+          </div>
+        )}
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-2 pt-3 border-t border-white/10">
+      <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
         {status === 'scheduled' && (
           <>
             {onComplete && (
               <Button
                 size="sm"
                 onClick={onComplete}
-                className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
+                className={c.complete}
               >
                 <Check className="w-3.5 h-3.5 mr-1" />
                 Terminer
@@ -99,7 +136,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
               <Button
                 size="sm"
                 onClick={onSkip}
-                className="bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30"
+                className={c.skip}
               >
                 <SkipForward className="w-3.5 h-3.5 mr-1" />
                 Sauté
@@ -116,6 +153,18 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
             <a href="/strength">
               <ExternalLink className="w-3.5 h-3.5 mr-1" />
               Voir dans Force
+            </a>
+          </Button>
+        )}
+        {isSkill && (
+          <Button
+            size="sm"
+            asChild
+            className="bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30"
+          >
+            <a href={skillProgramId ? `/skills/${skillProgramId}` : '/skills'}>
+              <ExternalLink className="w-3.5 h-3.5 mr-1" />
+              Voir dans Progressions
             </a>
           </Button>
         )}
@@ -145,7 +194,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
           <Button
             size="sm"
             onClick={onDelete}
-            className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 ml-auto"
+            className={c.delete}
           >
             <Trash2 className="w-3.5 h-3.5 mr-1" />
             Supprimer

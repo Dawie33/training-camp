@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { format } from 'date-fns'
-import { Building2, Dumbbell, Instagram, Search } from 'lucide-react'
+import { Building2, Dumbbell, Instagram, Search, Target } from 'lucide-react'
 
 interface DateActionDialogProps {
   open: boolean
@@ -10,9 +10,10 @@ interface DateActionDialogProps {
   onParseBoxWod: () => void
   onLookupWod: () => void
   onMarkBoxDay: () => void
+  onPlanSkill: () => void
 }
 
-export function DateActionDialog({ open, onOpenChange, selectedDate, onScheduleWorkout, onParseBoxWod, onLookupWod, onMarkBoxDay }: DateActionDialogProps) {
+export function DateActionDialog({ open, onOpenChange, selectedDate, onScheduleWorkout, onParseBoxWod, onLookupWod, onMarkBoxDay, onPlanSkill }: DateActionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[320px] bg-slate-900 border-white/10 text-white">
@@ -60,6 +61,16 @@ export function DateActionDialog({ open, onOpenChange, selectedDate, onScheduleW
             <div>
               <div className="text-sm font-medium text-white">Jour Box CrossFit</div>
               <div className="text-xs text-slate-400">Marquer ce jour comme entraînement en box</div>
+            </div>
+          </button>
+          <button
+            onClick={() => { onOpenChange(false); onPlanSkill() }}
+            className="flex items-center gap-3 w-full p-3 rounded-xl border border-white/10 hover:border-primary/60 hover:bg-primary/10 transition-all text-left"
+          >
+            <Target className="w-5 h-5 text-primary flex-shrink-0" />
+            <div>
+              <div className="text-sm font-medium text-white">Travailler un skill</div>
+              <div className="text-xs text-slate-400">Planifier une séance de progression</div>
             </div>
           </button>
         </div>
