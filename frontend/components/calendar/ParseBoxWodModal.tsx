@@ -30,17 +30,17 @@ interface ParseBoxWodModalProps {
 }
 
 const difficultyColors: Record<string, string> = {
-  beginner: 'bg-green-500/20 text-green-400 border-green-500/30',
-  intermediate: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  advanced: 'bg-red-500/20 text-red-400 border-red-500/30',
-  elite: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  beginner: 'bg-green-600/10 text-green-700 border-green-600/30',
+  intermediate: 'bg-yellow-600/10 text-yellow-700 border-yellow-600/30',
+  advanced: 'bg-red-600/10 text-red-700 border-red-600/30',
+  elite: 'bg-purple-600/10 text-purple-700 border-purple-600/30',
 }
 
 const intensityColors: Record<string, string> = {
-  low: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  moderate: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  high: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-  very_high: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  low: 'bg-blue-600/10 text-blue-700 border-blue-600/30',
+  moderate: 'bg-primary/10 text-primary border-primary/30',
+  high: 'bg-rose-600/10 text-rose-700 border-rose-600/30',
+  very_high: 'bg-purple-600/10 text-purple-700 border-purple-600/30',
 }
 
 export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode = 'instagram', onSchedule }: ParseBoxWodModalProps) {
@@ -133,20 +133,20 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
   const dateLabel = selectedDate ? format(selectedDate, 'EEEE dd MMMM', { locale: fr }) : null
 
   const titleIcon = mode === 'search'
-    ? <Search className="w-5 h-5 text-blue-400" />
-    : <Instagram className="w-5 h-5 text-cyan-400" />
+    ? <Search className="w-5 h-5 text-blue-700" />
+    : <Instagram className="w-5 h-5 text-cyan-700" />
 
   const titleLabel = mode === 'search' ? 'Rechercher un WOD connu' : 'Coller depuis Instagram'
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-hidden flex flex-col bg-slate-900 border-white/10 text-white">
+      <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-hidden flex flex-col bg-card border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
+          <DialogTitle className="flex items-center gap-2 font-display text-foreground">
             {titleIcon}
             {titleLabel}
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-muted-foreground">
             {dateLabel ? `Pour le ${dateLabel}` : 'Sera ajouté à ta bibliothèque de workouts'}
           </DialogDescription>
         </DialogHeader>
@@ -155,7 +155,7 @@ export function ParseBoxWodModal({ open, onOpenChange, selectedDate, initialMode
         {phase === 'input' && mode === 'instagram' && (
           <div className="flex flex-col gap-4 flex-1">
             <textarea
-              className="flex-1 min-h-[260px] w-full rounded-xl border border-white/10 bg-slate-800/50 p-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-400/50 resize-none"
+              className="flex-1 min-h-[260px] w-full rounded-md border border-border bg-card p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               placeholder="Colle ici la légende du post Instagram de ta box...
 
 Exemple :
@@ -169,13 +169,13 @@ AMRAP 20 minutes :
               onChange={(e) => setText(e.target.value)}
             />
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleClose} className="text-slate-400 hover:text-white">
+              <Button variant="ghost" onClick={handleClose} className="text-muted-foreground hover:text-foreground">
                 Annuler
               </Button>
               <Button
                 onClick={handleAnalyze}
                 disabled={analyzing || text.trim().length < 10}
-                className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
+                className="bg-primary/10 text-primary border border-primary/30 hover:bg-primary/15"
               >
                 {analyzing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyse en cours...</>
@@ -191,18 +191,18 @@ AMRAP 20 minutes :
         {phase === 'input' && mode === 'search' && (
           <div className="flex flex-col gap-4 flex-1">
             <div className="space-y-3">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Entre le nom d&apos;un WOD officiel : benchmark (Fran, Murph, Helen...), CrossFit Open (18.1, 24.3...) ou Hero WOD.
               </p>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   placeholder="ex: Fran, Open 18.1, Murph, DT..."
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-slate-800/50 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                  className="w-full pl-10 pr-4 py-3 rounded-md border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-600/30"
                   autoFocus
                 />
               </div>
@@ -211,18 +211,18 @@ AMRAP 20 minutes :
                   <button
                     key={name}
                     onClick={() => setSearchName(name)}
-                    className="px-3 py-1 rounded-full text-xs border border-white/10 bg-white/5 text-slate-400 hover:text-white hover:border-blue-500/40 transition-all"
+                    className="px-3 py-1 rounded-full text-xs border border-border bg-muted/60 text-muted-foreground hover:text-foreground hover:border-blue-600/40 transition-all"
                   >
                     {name}
                   </button>
                 ))}
               </div>
               <div className="space-y-1.5 pt-1">
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   WOD récent ou inconnu de l&apos;IA ? Colle ses détails ici (optionnel) :
                 </p>
                 <textarea
-                  className="w-full min-h-[100px] rounded-xl border border-white/10 bg-slate-800/50 p-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 resize-none"
+                  className="w-full min-h-[100px] rounded-md border border-border bg-card p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-600/30 resize-none"
                   placeholder={`Exemple :\n3 rounds for time:\n24m DB overhead walking lunge (22.5/15 kg)\n20 DB alternating snatches\n20 pull-ups`}
                   value={referenceData}
                   onChange={(e) => setReferenceData(e.target.value)}
@@ -231,13 +231,13 @@ AMRAP 20 minutes :
             </div>
 
             <div className="flex justify-end gap-2 mt-auto">
-              <Button variant="ghost" onClick={handleClose} className="text-slate-400 hover:text-white">
+              <Button variant="ghost" onClick={handleClose} className="text-muted-foreground hover:text-foreground">
                 Annuler
               </Button>
               <Button
                 onClick={handleLookup}
                 disabled={analyzing || searchName.trim().length < 2}
-                className="bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30"
+                className="bg-blue-600/10 text-blue-700 border border-blue-600/30 hover:bg-blue-600/15"
               >
                 {analyzing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Recherche en cours...</>
@@ -253,10 +253,10 @@ AMRAP 20 minutes :
         {phase === 'preview' && parsedWorkout && (
           <div className="flex flex-col gap-4 flex-1 overflow-hidden">
             <div className="space-y-2">
-              <h3 className="text-lg font-bold text-white">{parsedWorkout.name}</h3>
-              <p className="text-sm text-slate-400">{parsedWorkout.description}</p>
+              <h3 className="text-lg font-bold text-foreground">{parsedWorkout.name}</h3>
+              <p className="text-sm text-muted-foreground">{parsedWorkout.description}</p>
               <div className="flex flex-wrap gap-2">
-                <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs border bg-slate-700/50 text-slate-300 border-slate-600">
+                <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs border bg-muted/60 text-muted-foreground border-border">
                   <Clock className="w-3 h-3" />
                   {parsedWorkout.estimated_duration} min
                 </span>
@@ -277,12 +277,12 @@ AMRAP 20 minutes :
               ))}
             </div>
 
-            <div className="flex justify-between gap-2 pt-2 border-t border-white/10">
-              <Button variant="ghost" onClick={() => { setPhase('input'); setParsedWorkout(null) }} className="text-slate-400 hover:text-white">
+            <div className="flex justify-between gap-2 pt-2 border-t border-border">
+              <Button variant="ghost" onClick={() => { setPhase('input'); setParsedWorkout(null) }} className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {mode === 'search' ? 'Autre WOD' : 'Ré-analyser'}
               </Button>
-              <Button onClick={handleSaveAndSchedule} className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Button onClick={handleSaveAndSchedule} >
                 <Save className="w-4 h-4 mr-2" />
                 {onSchedule ? 'Sauvegarder & Planifier' : 'Sauvegarder dans la bibliothèque'}
               </Button>
@@ -293,8 +293,8 @@ AMRAP 20 minutes :
         {/* Phase: saving */}
         {phase === 'saving' && (
           <div className="flex flex-col items-center justify-center flex-1 gap-4 py-12">
-            <Loader2 className="w-10 h-10 animate-spin text-orange-400" />
-            <p className="text-slate-400 text-sm">Sauvegarde en cours...</p>
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-muted-foreground text-sm">Sauvegarde en cours...</p>
           </div>
         )}
       </DialogContent>

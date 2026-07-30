@@ -20,13 +20,13 @@ export function WeekNavigation({ currentWeekStart, weekOffset, onWeekOffsetChang
         <button
           onClick={() => onWeekOffsetChange(weekOffset - 1)}
           disabled={weekOffset <= 0}
-          className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-1 rounded-md hover:bg-muted/60 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <button
           onClick={() => onWeekOffsetChange(weekOffset + 1)}
-          className="p-1 rounded hover:bg-white/10 transition-colors"
+          className="p-1 rounded-md hover:bg-muted/60 transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
