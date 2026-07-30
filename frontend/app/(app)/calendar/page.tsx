@@ -41,35 +41,37 @@ function CalendarContent() {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+      className="min-h-screen"
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
     >
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* Header */}
-        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-4xl font-bold">
-              <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Calendrier</span>
+            <div className="eyebrow mb-3">Planning d&apos;entraînement</div>
+            <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-none tracking-tight">
+              Calendrier
             </h1>
-            <p className="text-sm sm:text-base text-slate-400">Gérez votre planning d&apos;entraînement</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
             {googleConnected ? (
               <Button
+                variant="outline"
                 onClick={handleGoogleDisconnect}
                 disabled={googleLoading}
-                className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                className="border-border text-muted-foreground hover:text-primary hover:border-primary"
               >
                 <Unlink className="w-4 h-4 mr-2" />
                 Déconnecter Google
               </Button>
             ) : (
               <Button
+                variant="outline"
                 onClick={handleGoogleConnect}
                 disabled={googleLoading}
-                className="bg-white/10 text-white border border-white/20 hover:bg-white/20"
+                className="border-border text-foreground hover:border-primary"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -80,10 +82,7 @@ function CalendarContent() {
                 {googleLoading ? 'Connexion...' : 'Sync Google Agenda'}
               </Button>
             )}
-            <Button
-              onClick={() => setWeeklyPlannerOpen(true)}
-              className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
-            >
+            <Button onClick={() => setWeeklyPlannerOpen(true)}>
               <Calendar className="w-4 h-4 mr-2" />
               Planifier ma semaine
             </Button>
@@ -91,38 +90,38 @@ function CalendarContent() {
         </motion.div>
 
         {/* Calendar */}
-        <motion.div variants={fadeInUp} className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6">
+        <motion.div variants={fadeInUp} className="bg-card rounded-md border border-border p-4 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
           ) : (
             <ScheduleXCalendar calendarApp={calendar} customComponents={customComponents} />
           )}
 
           {/* Legend */}
-          <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap gap-x-6 gap-y-3">
+          <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-x-6 gap-y-3">
             <div className="flex flex-wrap gap-4">
               {[
-                { color: 'blue', label: 'Programmé' },
-                { color: 'green', label: 'Complété' },
-                { color: 'gray', label: 'Sauté' },
-                { color: 'orange', label: 'Replanifié' },
-                { color: 'violet', label: 'Jour Box' },
-              ].map(({ color, label }) => (
+                { dot: 'bg-blue-500', label: 'Programmé' },
+                { dot: 'bg-emerald-500', label: 'Complété' },
+                { dot: 'bg-stone-400', label: 'Sauté' },
+                { dot: 'bg-primary', label: 'Replanifié' },
+                { dot: 'bg-violet-500', label: 'Jour Box' },
+              ].map(({ dot, label }) => (
                 <div key={label} className="flex items-center gap-1.5 text-xs">
-                  <div className={`w-3 h-3 rounded bg-${color}-500/20 border border-${color}-500/50`} />
-                  <span className="text-slate-400">{label}</span>
+                  <div className={`w-2.5 h-2.5 rounded-full ${dot}`} />
+                  <span className="text-muted-foreground">{label}</span>
                 </div>
               ))}
             </div>
-            <div className="w-px bg-white/10 hidden sm:block" />
+            <div className="w-px bg-border hidden sm:block" />
             <div className="flex flex-wrap gap-4">
               {[
-                { label: 'CrossFit', color: 'bg-orange-500/20 border-orange-500/50 text-orange-400' },
-                { label: 'RUN', color: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' },
-                { label: 'FORCE', color: 'bg-violet-500/20 border-violet-500/50 text-violet-400' },
-                { label: 'SKILL', color: 'bg-amber-500/20 border-amber-500/50 text-amber-400' },
+                { label: 'CrossFit', color: 'border-orange-500/40 text-orange-700 bg-orange-500/10' },
+                { label: 'RUN', color: 'border-cyan-500/40 text-cyan-700 bg-cyan-500/10' },
+                { label: 'FORCE', color: 'border-violet-500/40 text-violet-700 bg-violet-500/10' },
+                { label: 'SKILL', color: 'border-transparent text-primary-foreground bg-primary' },
               ].map(({ label, color }) => (
                 <div key={label} className="flex items-center gap-1.5 text-xs">
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${color}`}>{label}</span>
@@ -177,7 +176,7 @@ function CalendarContent() {
 
 
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null) }}>
-        <DialogContent className="sm:max-w-[420px] bg-slate-900 border-white/10 text-white p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[420px] bg-card border-border text-foreground p-0 overflow-hidden">
           {selectedEvent && <CustomEventModal calendarEvent={selectedEvent} />}
         </DialogContent>
       </Dialog>

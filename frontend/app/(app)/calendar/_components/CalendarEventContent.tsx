@@ -1,14 +1,14 @@
 export const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
-  scheduled: { dot: 'bg-blue-500', text: 'text-blue-400', bg: 'bg-blue-500/20' },
-  completed: { dot: 'bg-green-500', text: 'text-green-400', bg: 'bg-green-500/20' },
-  skipped: { dot: 'bg-gray-500', text: 'text-gray-400', bg: 'bg-gray-500/20' },
-  rescheduled: { dot: 'bg-orange-500', text: 'text-orange-400', bg: 'bg-orange-500/20' },
+  scheduled: { dot: 'bg-blue-500', text: 'text-blue-700', bg: 'bg-blue-500/15' },
+  completed: { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-500/15' },
+  skipped: { dot: 'bg-stone-400', text: 'text-stone-500', bg: 'bg-stone-400/15' },
+  rescheduled: { dot: 'bg-primary', text: 'text-primary', bg: 'bg-primary/15' },
 }
 
 // Badge coloré par module (affiché uniquement pour les modules non-CrossFit)
 export const moduleBadges: Record<string, { label: string; color: string }> = {
-  running: { label: 'RUN', color: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' },
-  strength: { label: 'FORCE', color: 'bg-violet-500/20 text-violet-400 border border-violet-500/30' },
+  running: { label: 'RUN', color: 'bg-cyan-500/15 text-cyan-700 border border-cyan-500/30' },
+  strength: { label: 'FORCE', color: 'bg-violet-500/15 text-violet-700 border border-violet-500/30' },
   skill: { label: 'SKILL', color: 'bg-primary text-primary-foreground' },
 }
 
