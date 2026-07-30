@@ -2,7 +2,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { IOSInstallBanner } from "@/components/layout/ios-install-banner"
 import { cn } from "@/lib/utils"
-import { Geist_Mono, Poppins } from "next/font/google"
+import { Geist_Mono, Fraunces, Inter_Tight } from "next/font/google"
 import type { Metadata } from "next"
 import { Toaster } from "sonner"
 import "./globals.css"
@@ -12,10 +12,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 })
 
-const poppins = Poppins({
-  variable: '--font-poppins',
+const interTight = Inter_Tight({
+  variable: '--font-sans',
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800']
+  weight: ['400', '500', '600', '700'],
+})
+
+const fraunces = Fraunces({
+  variable: '--font-display',
+  subsets: ['latin'],
+  weight: ['400', '600', '900'],
 })
 
 export const metadata: Metadata = {
@@ -53,7 +59,7 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang="en" className="h-full">
       <body
-        className={cn(poppins.variable, geistMono.variable, "font-sans", "antialiased", "h-full", "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900")}
+        className={cn(interTight.variable, fraunces.variable, geistMono.variable, "font-sans", "antialiased", "h-full", "bg-background text-foreground")}
       >
         <ThemeProvider
           attribute="class"

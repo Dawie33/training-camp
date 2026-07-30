@@ -118,38 +118,37 @@ export function WeeklyCalendar() {
 
   const currentMonth = weekDays[3].date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
-  const handleDayClick = (day: WeekDay) => {
+  const handleDayClick = () => {
     router.push('/calendar')
   }
 
   return (
-    <div className="h-full rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+    <div className="h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold">Planning hebdomadaire</h3>
-          <p className="text-sm text-slate-400 capitalize">{currentMonth}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-            onClick={() => setCurrentWeekOffset(prev => prev - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span
-            className="px-4 py-2 rounded-lg bg-white/5 text-sm cursor-pointer hover:bg-white/10 transition-colors"
-            onClick={() => setCurrentWeekOffset(0)}
-          >
-            Aujourd'hui
-          </span>
-          <button
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-            onClick={() => setCurrentWeekOffset(prev => prev + 1)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+      <div className="flex items-baseline justify-between mb-3">
+        <span className="eyebrow">Planning hebdomadaire</span>
+        <span className="eyebrow capitalize">{currentMonth}</span>
+      </div>
+      <div className="rule-strong mb-5" />
+      <div className="flex items-center justify-end gap-2 mb-5">
+        <button
+          className="p-2 rounded-md border border-border hover:bg-secondary transition-colors"
+          onClick={() => setCurrentWeekOffset(prev => prev - 1)}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span
+          className="px-4 py-2 rounded-md border border-border text-sm cursor-pointer hover:bg-secondary transition-colors"
+          onClick={() => setCurrentWeekOffset(0)}
+        >
+          Aujourd&apos;hui
+        </span>
+        <button
+          className="p-2 rounded-md border border-border hover:bg-secondary transition-colors"
+          onClick={() => setCurrentWeekOffset(prev => prev + 1)}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Calendar Grid */}
@@ -168,30 +167,30 @@ export function WeeklyCalendar() {
               transition={{ delay: index * 0.05 }}
               onClick={() => handleDayClick(day)}
               className={`
-                relative p-3 rounded-2xl text-center transition-all duration-300 cursor-pointer min-h-[100px]
+                relative p-3 rounded-lg text-center transition-all duration-300 cursor-pointer min-h-[100px]
                 ${day.isToday
-                  ? 'bg-gradient-to-br from-orange-500/20 to-rose-500/20 border-2 border-orange-500/50 shadow-lg shadow-orange-500/20'
+                  ? 'bg-primary/10 border-2 border-primary'
                   : isRest
-                    ? 'bg-emerald-500/10 border border-emerald-500/20'
-                    : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20'}
+                    ? 'bg-secondary border border-border'
+                    : 'bg-card border border-border hover:border-foreground/25'}
               `}
             >
               {/* Today indicator */}
               {day.isToday && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
               )}
 
               {/* Day Header */}
               <div className="flex flex-col items-center mb-2">
-                <p className="text-xs text-slate-400 mb-1">{day.dayName}</p>
-                <p className={`text-xl font-bold ${day.isToday ? 'text-orange-400' : ''}`}>
+                <p className="eyebrow mb-1">{day.dayName}</p>
+                <p className={`font-display text-xl font-semibold ${day.isToday ? 'text-primary' : ''}`}>
                   {day.dayNumber}
                 </p>
               </div>
 
               {/* Workout badges */}
               {isRest && (
-                <span className="inline-block mt-1 px-1.5 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full">
+                <span className="inline-block mt-1 px-1.5 py-0.5 text-xs bg-secondary text-muted-foreground rounded-md">
                   Repos
                 </span>
               )}
@@ -204,10 +203,10 @@ export function WeeklyCalendar() {
                         href={`/workout/${workout.workoutId}`}
                         onClick={e => e.stopPropagation()}
                         className={`
-                          block text-xs font-medium px-1.5 py-1 rounded-lg text-left leading-tight
+                          block text-xs font-medium px-1.5 py-1 rounded-md text-left leading-tight
                           ${workout.type === 'completed'
-                            ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                            : 'bg-orange-500/20 text-orange-300 hover:bg-orange-500/30'}
+                            ? 'bg-secondary text-foreground hover:bg-border'
+                            : 'bg-primary/10 text-primary hover:bg-primary/20'}
                         `}
                       >
                         <span className="line-clamp-2">{workout.name}</span>
@@ -216,10 +215,10 @@ export function WeeklyCalendar() {
                       <div
                         key={workout.id}
                         className={`
-                          text-xs font-medium px-1.5 py-1 rounded-lg text-left leading-tight
+                          text-xs font-medium px-1.5 py-1 rounded-md text-left leading-tight
                           ${workout.type === 'completed'
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'bg-orange-500/20 text-orange-300'}
+                            ? 'bg-secondary text-foreground'
+                            : 'bg-primary/10 text-primary'}
                         `}
                       >
                         <span className="line-clamp-2">{workout.name}</span>
@@ -227,7 +226,7 @@ export function WeeklyCalendar() {
                     )
                   ))}
                   {day.workouts.length > 2 && (
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       +{day.workouts.length - 2}
                     </div>
                   )}
@@ -237,8 +236,8 @@ export function WeeklyCalendar() {
               {/* Status dots */}
               {hasWorkouts && !isRest && (
                 <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                  {hasCompleted && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-                  {hasScheduled && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />}
+                  {hasCompleted && <div className="w-1.5 h-1.5 rounded-full bg-foreground" />}
+                  {hasScheduled && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                 </div>
               )}
             </motion.div>
@@ -247,16 +246,16 @@ export function WeeklyCalendar() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 mt-5 pt-4 border-t border-white/10">
+      <div className="flex items-center gap-6 mt-5 pt-4 border-t border-border">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-orange-400" />
-          <span className="text-xs text-slate-400">Planifié</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+          <span className="text-xs text-muted-foreground">Planifié</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-          <span className="text-xs text-slate-400">Complété</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-foreground" />
+          <span className="text-xs text-muted-foreground">Complété</span>
         </div>
-        <Link href="/calendar" className="ml-auto text-sm text-orange-400 hover:text-orange-300 transition-colors">
+        <Link href="/calendar" className="ml-auto text-sm text-primary hover:opacity-80 transition-opacity">
           Calendrier complet →
         </Link>
       </div>

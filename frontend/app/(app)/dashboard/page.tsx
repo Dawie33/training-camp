@@ -17,26 +17,23 @@ function DashboardContent() {
 
   return (
     <motion.div
-      className="min-h-screenbg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+      className="min-h-screen"
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
     >
 
-      <div className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-16">
         {/* Header*/}
-        <header className="mb-8">
-          <motion.div variants={fadeInUp} className="flex items-center justify-between">
+        <header>
+          <motion.div variants={fadeInUp} className="flex items-end justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-2">
-                Salut, <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">{user?.user?.firstName || 'Champion'}</span>
+              <div className="eyebrow mb-3">
+                {dateNow} · Prêt à t&apos;entraîner&nbsp;?
+              </div>
+              <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-none tracking-tight">
+                Salut, {user?.user?.firstName || 'Champion'}
               </h1>
-              <p className="text-slate-400 text-lg">Prêt à t'entraîner aujourd'hui ?</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="px-4 py-2 rounded-full bg-white/5 backdrop-blur border border-white/10 text-sm text-slate-300">
-                {dateNow}
-              </span>
             </div>
           </motion.div>
         </header>
@@ -45,25 +42,25 @@ function DashboardContent() {
           <CoachRecommendationWidget />
         </motion.div>
 
-        {/* Programme actif */}
+        {/* Actions rapides — remontées en tête pour un accès immédiat */}
         <motion.div variants={fadeInUp}>
-          <ActiveProgramCard />
+          <QuickActions index="01" />
         </motion.div>
 
         {/* Workout du jour */}
         <motion.div variants={fadeInUp}>
-          <DailyWorkoutCard />
+          <DailyWorkoutCard index="02" />
         </motion.div>
 
-        {/* Training Overview & Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-          <motion.div variants={fadeInUp} className="lg:col-span-2">
-            <TrainingOverview />
-          </motion.div>
-          <motion.div variants={fadeInUp}>
-            <QuickActions />
-          </motion.div>
-        </div>
+        {/* Programme actif */}
+        <motion.div variants={fadeInUp}>
+          <ActiveProgramCard index="03" />
+        </motion.div>
+
+        {/* Vue d'ensemble */}
+        <motion.div variants={fadeInUp}>
+          <TrainingOverview />
+        </motion.div>
 
         {/* Weekly Calendar */}
         <motion.div variants={fadeInUp}>
