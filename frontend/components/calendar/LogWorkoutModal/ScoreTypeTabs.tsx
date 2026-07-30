@@ -11,13 +11,13 @@ export function ScoreTypeTabs({ scoreType, onScoreTypeChange }: ScoreTypeTabsPro
   ]
 
   return (
-    <div className="flex gap-1 p-1 bg-slate-800 rounded-lg">
+    <div className="flex gap-1 p-1 bg-muted/60 rounded-md">
       {tabs.map(tab => (
         <button
           key={tab.key}
           onClick={() => onScoreTypeChange(tab.key)}
           className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            scoreType === tab.key ? 'bg-orange-500 text-white' : 'text-slate-400 hover:text-slate-200'
+            scoreType === tab.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           {tab.label}

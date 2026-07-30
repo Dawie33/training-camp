@@ -19,24 +19,18 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const skillProgress = calendarEvent.skill_progress as number | undefined
   const skillProgramId = calendarEvent.skill_program_id as string | undefined
 
-  // Thème Clay conditionnel pour les events skill (le reste du calendrier reste dark)
-  const clay = isSkill
+  // Thème Clay (calendrier en style Clay éditorial)
+  const clay = true
   const c = {
-    root: clay ? 'bg-card rounded-md' : '',
-    title: clay ? 'text-foreground' : 'text-slate-100',
-    label: clay ? 'text-muted-foreground' : 'text-slate-500',
-    value: clay ? 'text-foreground' : 'text-slate-300',
-    border: clay ? 'border-border' : 'border-white/10',
-    pill: clay ? 'bg-muted text-muted-foreground' : `${colors.bg} ${colors.text}`,
-    complete: clay
-      ? 'bg-emerald-600/10 text-emerald-700 border border-emerald-600/30 hover:bg-emerald-600/20'
-      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30',
-    skip: clay
-      ? 'bg-muted text-muted-foreground border border-border hover:bg-muted/70'
-      : 'bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30',
-    delete: clay
-      ? 'bg-red-600/10 text-red-700 border border-red-600/30 hover:bg-red-600/20 ml-auto'
-      : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 ml-auto',
+    root: 'bg-card rounded-md',
+    title: 'text-foreground',
+    label: 'text-muted-foreground',
+    value: 'text-foreground',
+    border: 'border-border',
+    pill: `${colors.bg} ${colors.text}`,
+    complete: 'bg-emerald-600/10 text-emerald-700 border border-emerald-600/30 hover:bg-emerald-600/20',
+    skip: 'bg-muted text-muted-foreground border border-border hover:bg-muted/70',
+    delete: 'bg-red-600/10 text-red-700 border border-red-600/30 hover:bg-red-600/20 ml-auto',
   }
 
   return (
@@ -148,7 +142,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
           <Button
             size="sm"
             asChild
-            className="bg-violet-500/20 text-violet-400 border border-violet-500/30 hover:bg-violet-500/30"
+            className="bg-violet-500/10 text-violet-700 border border-violet-500/30 hover:bg-violet-500/20"
           >
             <a href="/strength">
               <ExternalLink className="w-3.5 h-3.5 mr-1" />
@@ -160,7 +154,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
           <Button
             size="sm"
             asChild
-            className="bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30"
+            className="bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20"
           >
             <a href={skillProgramId ? `/skills/${skillProgramId}` : '/skills'}>
               <ExternalLink className="w-3.5 h-3.5 mr-1" />
@@ -172,7 +166,6 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
           <Button
             size="sm"
             asChild
-            className="bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30"
           >
             <a href={calendarEvent.workout_id ? `/workout/${calendarEvent.workout_id as string}` : `/personalized-workout/${calendarEvent.personalized_workout_id as string}`}>
               <ExternalLink className="w-3.5 h-3.5 mr-1" />
@@ -183,8 +176,9 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
         {!!calendarEvent.workout_id && onPrint && (
           <Button
             size="sm"
+            variant="outline"
             onClick={onPrint}
-            className="bg-slate-500/20 text-slate-300 border border-slate-500/30 hover:bg-slate-500/30"
+            className="border-border text-muted-foreground hover:text-foreground"
           >
             <FileDown className="w-3.5 h-3.5 mr-1" />
             PDF

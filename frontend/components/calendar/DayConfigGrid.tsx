@@ -15,9 +15,9 @@ export interface DayConfig {
 }
 
 const SPORTS: { type: SportType; label: string; activeClass: string; hoverClass: string }[] = [
-  { type: 'crossfit', label: 'CrossFit', activeClass: 'border-orange-500 bg-orange-500/20 text-orange-300', hoverClass: 'hover:border-orange-500/40 hover:text-orange-400' },
-  { type: 'running', label: 'Running', activeClass: 'border-green-500 bg-green-500/20 text-green-300', hoverClass: 'hover:border-green-500/40 hover:text-green-400' },
-  { type: 'biking', label: 'Vélo', activeClass: 'border-blue-500 bg-blue-500/20 text-blue-300', hoverClass: 'hover:border-blue-500/40 hover:text-blue-400' },
+  { type: 'crossfit', label: 'CrossFit', activeClass: 'border-primary bg-primary/10 text-primary', hoverClass: 'hover:border-primary hover:text-primary' },
+  { type: 'running', label: 'Running', activeClass: 'border-green-600/30 bg-green-600/10 text-green-700', hoverClass: 'hover:border-green-600/40 hover:text-green-700' },
+  { type: 'biking', label: 'Vélo', activeClass: 'border-blue-600/30 bg-blue-600/10 text-blue-700', hoverClass: 'hover:border-blue-600/40 hover:text-blue-700' },
 ]
 
 const TECH_OPTIONS: { value: TechFocus; label: string }[] = [
@@ -48,27 +48,27 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
         return (
           <div
             key={idx}
-            className={`rounded-xl border transition-all ${config.isRest
-                ? 'border-slate-700/50 bg-slate-800/30 opacity-50'
+            className={`rounded-md border transition-all ${config.isRest
+                ? 'border-border bg-muted/60 opacity-60'
                 : config.isBox
-                  ? 'border-blue-500/30 bg-blue-500/5'
+                  ? 'border-blue-600/30 bg-blue-600/10'
                   : hasSports
-                    ? 'border-white/10 bg-white/5'
-                    : 'border-white/5 bg-white/[0.02]'
+                    ? 'border-border bg-muted/60'
+                    : 'border-border bg-card'
               }`}
           >
             <div className="flex items-center px-3 py-2.5">
 
               {/* Jour + date — même ligne, gauche */}
               <div className="w-32 flex-shrink-0 flex items-center gap-1.5">
-                <p className="text-xs font-semibold text-white capitalize">
+                <p className="text-xs font-semibold text-foreground capitalize">
                   {format(day, 'EEE', { locale: fr })}
                 </p>
-                <p className="text-xs text-slate-500">{format(day, 'dd MMM', { locale: fr })}</p>
+                <p className="text-xs text-muted-foreground">{format(day, 'dd MMM', { locale: fr })}</p>
               </div>
 
               {/* Séparateur vertical */}
-              <div className="w-px h-6 bg-white/10 flex-shrink-0 mr-4" />
+              <div className="w-px h-6 bg-border flex-shrink-0 mr-4" />
 
               {/* Sport pills */}
               {!isBlocked ? (
@@ -79,7 +79,7 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
                       <button
                         key={type}
                         onClick={() => onToggleSport(idx, type)}
-                        className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${selected ? activeClass : `border-slate-700 text-slate-500 ${hoverClass}`
+                        className={`px-2.5 py-1 text-xs rounded-md border transition-all ${selected ? activeClass : `border-border text-muted-foreground ${hoverClass}`
                           }`}
                       >
                         {label}
@@ -88,7 +88,7 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
                   })}
                 </div>
               ) : (
-                <p className="flex-1 text-xs text-slate-600 italic">
+                <p className="flex-1 text-xs text-muted-foreground italic">
                   {config.isBox ? 'WOD du jour à importer' : 'Journée de récupération'}
                 </p>
               )}
@@ -97,18 +97,18 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
               <div className="flex gap-1.5 ml-4">
                 <button
                   onClick={() => onToggleBox(idx)}
-                  className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${config.isBox
-                      ? 'border-blue-500 bg-blue-500/20 text-blue-300 font-medium'
-                      : 'border-slate-700 text-slate-500 hover:border-blue-500/40 hover:text-slate-300'
+                  className={`px-2.5 py-1 text-xs rounded-md border transition-all ${config.isBox
+                      ? 'border-blue-600/30 bg-blue-600/10 text-blue-700 font-medium'
+                      : 'border-border text-muted-foreground hover:border-blue-600/40 hover:text-foreground'
                     }`}
                 >
                   Box
                 </button>
                 <button
                   onClick={() => onToggleRest(idx)}
-                  className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${config.isRest
-                      ? 'border-slate-500 bg-slate-700/50 text-slate-300 font-medium'
-                      : 'border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'
+                  className={`px-2.5 py-1 text-xs rounded-md border transition-all ${config.isRest
+                      ? 'border-border bg-muted text-foreground font-medium'
+                      : 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
                     }`}
                 >
                   Repos
@@ -118,15 +118,15 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
 
             {/* Focus CrossFit — sous-ligne */}
             {!isBlocked && hasCrossFit && (
-              <div className="flex items-center gap-2 px-3 pb-2 border-t border-white/5 pt-1.5 ml-[calc(4rem+1rem+85px+1rem)]">
-                <span className="text-[10px] text-slate-500">Focus :</span>
+              <div className="flex items-center gap-2 px-3 pb-2 border-t border-border pt-1.5 ml-[calc(4rem+1rem+85px+1rem)]">
+                <span className="text-[10px] text-muted-foreground">Focus :</span>
                 {TECH_OPTIONS.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => onCrossfitFocusChange(idx, opt.value)}
                     className={`px-2 py-0.5 text-[10px] rounded border transition-all ${config.crossfitFocus === opt.value
-                        ? 'border-orange-500/60 bg-orange-500/10 text-orange-300'
-                        : 'border-slate-800 text-slate-600 hover:text-slate-400 hover:border-slate-600'
+                        ? 'border-primary/60 bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:text-foreground hover:border-primary'
                       }`}
                   >
                     {opt.label}

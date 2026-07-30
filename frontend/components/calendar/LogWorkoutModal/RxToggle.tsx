@@ -6,24 +6,24 @@ interface RxToggleProps {
 export function RxToggle({ isRx, onIsRxChange }: RxToggleProps) {
   return (
     <div>
-      <label className="text-xs text-slate-400 mb-2 block">Performance</label>
+      <label className="text-xs text-muted-foreground mb-2 block">Performance</label>
       <div className="flex gap-2">
         <button
           onClick={() => onIsRxChange(true)}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+          className={`flex-1 py-2 text-sm font-semibold rounded-md border transition-colors ${
             isRx
-              ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-              : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+              ? 'bg-emerald-600/10 border-emerald-600/30 text-emerald-700'
+              : 'bg-card border-border text-muted-foreground hover:text-foreground'
           }`}
         >
           Rx
         </button>
         <button
           onClick={() => onIsRxChange(false)}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+          className={`flex-1 py-2 text-sm font-semibold rounded-md border transition-colors ${
             !isRx
-              ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
-              : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+              ? 'bg-primary/10 border-primary/30 text-primary'
+              : 'bg-card border-border text-muted-foreground hover:text-foreground'
           }`}
         >
           Scaled

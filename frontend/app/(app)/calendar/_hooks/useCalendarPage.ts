@@ -150,7 +150,7 @@ export function useCalendarPage() {
 
   const calendar = useCalendarApp({
     locale: 'fr-FR',
-    isDark: true,
+    isDark: false,
     defaultView: createViewMonthGrid().name,
     views: [createViewDay(), createViewWeek(), createViewMonthGrid()],
     events: [],

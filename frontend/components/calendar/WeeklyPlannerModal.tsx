@@ -170,17 +170,17 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[860px] max-h-[90vh] overflow-hidden flex flex-col bg-slate-900 border-white/10 text-white">
+      <DialogContent className="sm:max-w-[860px] max-h-[90vh] overflow-hidden flex flex-col bg-card border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
-            <Calendar className="w-5 h-5 text-orange-400" />
+          <DialogTitle className="flex items-center gap-2 font-display text-foreground">
+            <Calendar className="w-5 h-5 text-primary" />
             <WeekNavigation
               currentWeekStart={currentWeekStart}
               weekOffset={weekOffset}
               onWeekOffsetChange={setWeekOffset}
             />
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-muted-foreground">
             Box / Repos = jours bloqués · Sinon, sélectionne un ou plusieurs sports par jour
           </DialogDescription>
         </DialogHeader>
@@ -188,7 +188,7 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
         {phase === 'config' && (
           <div className="flex flex-col gap-4 flex-1 overflow-auto">
             {suggestionWeeks > 0 && (
-              <div className="text-xs text-slate-400 px-1">
+              <div className="text-xs text-muted-foreground px-1">
                 💡 Pré-rempli d&apos;après tes {suggestionWeeks} dernière{suggestionWeeks > 1 ? 's' : ''} semaine
                 {suggestionWeeks > 1 ? 's' : ''} — modifie si besoin.
               </div>
@@ -206,13 +206,12 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
             <PlanSummary dayConfigs={dayConfigs} />
 
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleClose} className="text-slate-400 hover:text-white">
+              <Button variant="ghost" onClick={handleClose} className="text-muted-foreground hover:text-foreground">
                 Annuler
               </Button>
               <Button
                 onClick={handleGenerate}
                 disabled={totalActiveDays === 0}
-                className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 <Zap className="w-4 h-4 mr-2" />
                 Générer le plan
@@ -223,10 +222,10 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
 
         {phase === 'loading' && (
           <div className="flex flex-col items-center justify-center flex-1 gap-4 py-16">
-            <Loader2 className="w-12 h-12 animate-spin text-orange-400" />
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
             <div className="text-center">
-              <p className="text-white font-medium">Génération en cours...</p>
-              <p className="text-slate-400 text-sm mt-1">
+              <p className="text-foreground font-medium">Génération en cours...</p>
+              <p className="text-muted-foreground text-sm mt-1">
                 {activeSportDays.filter(d => d.sports.includes('crossfit')).length > 1
                   ? `${activeSportDays.filter(d => d.sports.includes('crossfit')).length} workouts CrossFit IA en parallèle — 30-60s`
                   : 'Quelques secondes...'}

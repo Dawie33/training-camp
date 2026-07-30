@@ -17,10 +17,10 @@ import { WorkoutListItem } from './WorkoutListItem'
 type SportTab = 'crossfit' | 'running' | 'biking' | 'strength'
 
 const SPORT_TABS: { id: SportTab; label: string; icon: React.ReactNode; color: string; activeColor: string }[] = [
-  { id: 'crossfit', label: 'CrossFit', icon: <Activity className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-  { id: 'running', label: 'Running', icon: <Footprints className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  { id: 'biking', label: 'Vélo', icon: <Bike className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  { id: 'strength', label: 'Force', icon: <Dumbbell className="h-4 w-4" />, color: 'text-slate-400', activeColor: 'bg-red-500/20 text-red-400 border-red-500/30' },
+  { id: 'crossfit', label: 'CrossFit', icon: <Activity className="h-4 w-4" />, color: 'text-muted-foreground', activeColor: 'bg-primary/10 text-primary border-primary/30' },
+  { id: 'running', label: 'Running', icon: <Footprints className="h-4 w-4" />, color: 'text-muted-foreground', activeColor: 'bg-green-600/10 text-green-700 border-green-600/30' },
+  { id: 'biking', label: 'Vélo', icon: <Bike className="h-4 w-4" />, color: 'text-muted-foreground', activeColor: 'bg-blue-600/10 text-blue-700 border-blue-600/30' },
+  { id: 'strength', label: 'Force', icon: <Dumbbell className="h-4 w-4" />, color: 'text-muted-foreground', activeColor: 'bg-red-600/10 text-red-700 border-red-600/30' },
 ]
 
 interface ScheduleWorkoutModalProps {
@@ -221,22 +221,22 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col bg-slate-900 border-white/10 text-white">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col bg-card border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-white">Planifier une séance</DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogTitle className="font-display text-foreground">Planifier une séance</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </DialogDescription>
         </DialogHeader>
 
         {/* Sélecteur de sport */}
-        <div className="flex gap-1 bg-slate-800/60 rounded-xl p-1">
+        <div className="flex gap-1 bg-muted/60 rounded-md p-1">
           {SPORT_TABS.map(tab => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setSportTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all border ${sportTab === tab.id ? `${tab.activeColor} border` : 'text-slate-400 hover:text-white border-transparent'
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium transition-all border ${sportTab === tab.id ? `${tab.activeColor} border` : 'text-muted-foreground hover:text-foreground border-transparent'
                 }`}
             >
               {tab.icon}{tab.label}
@@ -247,13 +247,13 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
         {/* --- CROSSFIT --- */}
         {sportTab === 'crossfit' && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 flex-1 overflow-hidden min-h-0">
-            <div className="flex gap-1 bg-slate-800/40 rounded-xl p-1">
+            <div className="flex gap-1 bg-muted/60 rounded-md p-1">
               <button type="button" onClick={() => handleTabChange('library')}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'library' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'text-slate-400 hover:text-white'}`}>
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'library' ? 'bg-primary/10 text-primary border border-primary/30' : 'text-muted-foreground hover:text-foreground'}`}>
                 <Dumbbell className="h-4 w-4" />Bibliothèque
               </button>
               <button type="button" onClick={() => handleTabChange('personalized')}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'personalized' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:text-white'}`}>
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'personalized' ? 'bg-blue-600/10 text-blue-700 border border-blue-600/30' : 'text-muted-foreground hover:text-foreground'}`}>
                 <Sparkles className="h-4 w-4" />Personnalisés
               </button>
             </div>
@@ -268,22 +268,22 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
               <>
                 <div className="space-y-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input type="text" placeholder="Rechercher un workout personnalisé..." value={personalizedSearch} onChange={e => setPersonalizedSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input type="text" placeholder="Rechercher un workout personnalisé..." value={personalizedSearch} onChange={e => setPersonalizedSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-600/30" />
                   </div>
-                  <p className="text-xs text-slate-500">{personalizedTotal} workout{personalizedTotal > 1 ? 's' : ''} personnalisé{personalizedTotal > 1 ? 's' : ''}</p>
+                  <p className="text-xs text-muted-foreground">{personalizedTotal} workout{personalizedTotal > 1 ? 's' : ''} personnalisé{personalizedTotal > 1 ? 's' : ''}</p>
                 </div>
                 <PersonalizedWorkoutList workouts={personalizedWorkouts} selectedId={selectedWorkoutId} onSelect={setSelectedWorkoutId} loading={loadingPersonalized} hasMore={personalizedHasMore} onLoadMore={() => loadPersonalizedWorkouts(false)} />
               </>
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Notes (optionnel)</label>
-              <textarea placeholder="Ajouter des notes..." value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-400/50 resize-none" />
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes (optionnel)</label>
+              <textarea placeholder="Ajouter des notes..." value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
             </div>
-            <div className="flex justify-end gap-2 pt-1 border-t border-white/10">
-              <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">Annuler</button>
-              <button type="submit" disabled={!selectedWorkoutId || submitting} className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${!selectedWorkoutId || submitting ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : activeTab === 'personalized' ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-orange-500 hover:bg-orange-600 text-white'}`}>
+            <div className="flex justify-end gap-2 pt-1 border-t border-border">
+              <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Annuler</button>
+              <button type="submit" disabled={!selectedWorkoutId || submitting} className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${!selectedWorkoutId || submitting ? 'bg-muted text-muted-foreground cursor-not-allowed' : activeTab === 'personalized' ? 'bg-blue-600 hover:bg-blue-700 text-primary-foreground' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}>
                 {submitting ? 'Planification...' : 'Planifier'}
               </button>
             </div>
@@ -294,17 +294,17 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
         {sportTab !== 'crossfit' && sportTab !== 'strength' && (
           <div className="flex flex-col gap-4 flex-1">
             <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Type de séance</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Type de séance</label>
               <div className="grid grid-cols-2 gap-2">
                 {sportTab === 'running' && (Object.entries(RUN_TYPE_LABELS) as [RunType, string][]).map(([value, label]) => (
                   <button key={value} type="button" onClick={() => setRunType(value)}
-                    className={`px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${runType === value ? activeSport.activeColor + ' border' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}>
+                    className={`px-3 py-2.5 rounded-md border text-sm text-left transition-all ${runType === value ? activeSport.activeColor + ' border' : 'bg-card border-border text-foreground hover:bg-muted/60'}`}>
                     {label}
                   </button>
                 ))}
                 {sportTab === 'biking' && (Object.entries(BIKE_TYPE_LABELS) as [BikeType, string][]).map(([value, label]) => (
                   <button key={value} type="button" onClick={() => setBikeType(value)}
-                    className={`px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${bikeType === value ? activeSport.activeColor + ' border' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}>
+                    className={`px-3 py-2.5 rounded-md border text-sm text-left transition-all ${bikeType === value ? activeSport.activeColor + ' border' : 'bg-card border-border text-foreground hover:bg-muted/60'}`}>
                     {label}
                   </button>
                 ))}
@@ -312,14 +312,14 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Notes (optionnel)</label>
-              <textarea placeholder="Objectif, distance visée, intensité..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-400/50 resize-none" />
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes (optionnel)</label>
+              <textarea placeholder="Objectif, distance visée, intensité..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" />
             </div>
 
-            <div className="flex justify-end gap-2 mt-auto pt-1 border-t border-white/10">
-              <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">Annuler</button>
+            <div className="flex justify-end gap-2 mt-auto pt-1 border-t border-border">
+              <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Annuler</button>
               <button type="button" onClick={handleSubmitSportActivity} disabled={submitting}
-                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${submitting ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 text-white'}`}>
+                className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${submitting ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}>
                 {submitting ? 'Planification...' : 'Planifier'}
               </button>
             </div>
@@ -332,13 +332,13 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
             {/* Recherche + filtre objectif */}
             <div className="space-y-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Rechercher une séance..."
                   value={strengthSearch}
                   onChange={e => setStrengthSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-400/50"
+                  className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600/30"
                 />
               </div>
               <div className="flex gap-1.5 flex-wrap">
@@ -347,7 +347,7 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
                     key={goal}
                     type="button"
                     onClick={() => setStrengthGoalFilter(goal)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${strengthGoalFilter === goal ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${strengthGoalFilter === goal ? 'bg-red-600/10 border-red-600/30 text-red-700' : 'bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted/60'}`}
                   >
                     {goal === '' ? 'Tous' : SESSION_GOAL_LABELS[goal as keyof typeof SESSION_GOAL_LABELS]}
                   </button>
@@ -358,7 +358,7 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
             <div className="flex-1 overflow-y-auto pr-1 space-y-2 min-h-0" style={{ maxHeight: '240px' }}>
               {loadingStrength ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-400" />
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600" />
                 </div>
               ) : (() => {
                 const filtered = strengthSessions.filter(s => {
@@ -370,14 +370,14 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
                   return matchSearch && matchGoal
                 })
                 if (strengthSessions.length === 0) return (
-                  <div className="text-center py-8 text-slate-500 text-sm space-y-2">
-                    <Dumbbell className="w-8 h-8 mx-auto text-slate-600" />
+                  <div className="text-center py-8 text-muted-foreground text-sm space-y-2">
+                    <Dumbbell className="w-8 h-8 mx-auto text-muted-foreground" />
                     <p>Aucune séance force créée.</p>
-                    <a href="/strength/generate" className="text-red-400 hover:underline text-xs">Générer une séance →</a>
+                    <a href="/strength/generate" className="text-red-700 hover:underline text-xs">Générer une séance →</a>
                   </div>
                 )
                 if (filtered.length === 0) return (
-                  <p className="text-center py-6 text-slate-500 text-sm">Aucun résultat</p>
+                  <p className="text-center py-6 text-muted-foreground text-sm">Aucun résultat</p>
                 )
                 return filtered.map(session => {
                   const name = session.ai_plan?.session_name ?? SESSION_GOAL_LABELS[session.session_goal]
@@ -387,10 +387,10 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
                       key={session.id}
                       type="button"
                       onClick={() => setSelectedStrengthId(session.id)}
-                      className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all ${isSelected ? 'bg-red-500/20 border-red-500/50 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                      className={`w-full text-left px-3 py-2.5 rounded-md border transition-all ${isSelected ? 'bg-red-600/10 border-red-600/30 text-red-700' : 'bg-card border-border text-foreground hover:bg-muted/60'}`}
                     >
                       <p className="font-semibold text-sm">{name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{session.target_muscles.join(', ')} · {SESSION_GOAL_LABELS[session.session_goal]}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{session.target_muscles.join(', ')} · {SESSION_GOAL_LABELS[session.session_goal]}</p>
                     </button>
                   )
                 })
@@ -398,14 +398,14 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Notes (optionnel)</label>
-              <textarea placeholder="Objectif, charge cible, intention..." value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-400/50 resize-none" />
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes (optionnel)</label>
+              <textarea placeholder="Objectif, charge cible, intention..." value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600/30 resize-none" />
             </div>
 
-            <div className="flex justify-end gap-2 pt-1 border-t border-white/10">
-              <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-colors">Annuler</button>
+            <div className="flex justify-end gap-2 pt-1 border-t border-border">
+              <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Annuler</button>
               <button type="button" onClick={handleSubmitSportActivity} disabled={submitting}
-                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${submitting ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
+                className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${submitting ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-primary-foreground'}`}>
                 {submitting ? 'Planification...' : 'Planifier'}
               </button>
             </div>
@@ -436,10 +436,10 @@ function WorkoutList({
     <div className="flex-1 overflow-y-auto pr-1 space-y-2 min-h-0" style={{ maxHeight: '280px' }}>
       {loading && workouts.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-400" />
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
         </div>
       ) : workouts.length === 0 ? (
-        <div className="text-center py-8 text-slate-500 text-sm">Aucun workout trouvé</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">Aucun workout trouvé</div>
       ) : (
         <>
           {workouts.map(workout => (
@@ -455,7 +455,7 @@ function WorkoutList({
               type="button"
               onClick={onLoadMore}
               disabled={loading}
-              className="w-full py-2 text-sm text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-all"
+              className="w-full py-2 text-sm text-muted-foreground hover:text-foreground border border-border hover:border-primary rounded-md transition-all"
             >
               {loading ? 'Chargement...' : 'Charger plus'}
             </button>
@@ -485,10 +485,10 @@ function PersonalizedWorkoutList({
     <div className="flex-1 overflow-y-auto pr-1 space-y-2 min-h-0" style={{ maxHeight: '280px' }}>
       {loading && workouts.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400" />
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
         </div>
       ) : workouts.length === 0 ? (
-        <div className="text-center py-8 text-slate-500 text-sm">Aucun workout personnalisé trouvé</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">Aucun workout personnalisé trouvé</div>
       ) : (
         <>
           {workouts.map(pw => (
@@ -504,7 +504,7 @@ function PersonalizedWorkoutList({
               type="button"
               onClick={onLoadMore}
               disabled={loading}
-              className="w-full py-2 text-sm text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-all"
+              className="w-full py-2 text-sm text-muted-foreground hover:text-foreground border border-border hover:border-primary rounded-md transition-all"
             >
               {loading ? 'Chargement...' : 'Charger plus'}
             </button>

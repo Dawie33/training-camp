@@ -10,24 +10,24 @@ interface LocationToggleProps {
 export function LocationToggle({ location, onLocationChange }: LocationToggleProps) {
   return (
     <div>
-      <label className="text-xs text-slate-400 mb-2 block">Lieu</label>
+      <label className="text-xs text-muted-foreground mb-2 block">Lieu</label>
       <div className="flex gap-2">
         <button
           onClick={() => onLocationChange('box')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-md border transition-colors ${
             location === 'box'
-              ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-              : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+              ? 'bg-blue-600/10 border-blue-600/30 text-blue-700'
+              : 'bg-card border-border text-muted-foreground hover:text-foreground'
           }`}
         >
           🏋️ Box
         </button>
         <button
           onClick={() => onLocationChange('maison')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-md border transition-colors ${
             location === 'maison'
-              ? 'bg-orange-500/20 border-orange-500/50 text-orange-400'
-              : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+              ? 'bg-primary/10 border-primary/30 text-primary'
+              : 'bg-card border-border text-muted-foreground hover:text-foreground'
           }`}
         >
           <Home className="w-4 h-4" /> Maison
