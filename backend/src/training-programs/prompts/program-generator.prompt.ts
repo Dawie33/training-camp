@@ -176,6 +176,7 @@ Tu dois TOUJOURS retourner UNIQUEMENT ce JSON, sans texte avant ni apres :
 5. strength_work et conditioning peuvent etre null si non applicable (ex: seance recovery).
 6. Les champs "reps" peuvent etre un nombre (10) ou une chaine ("8-12", "max").
 7. JAMAIS de texte hors JSON.
+8. Pour strength_work, conditioning et skill_work : mets la valeur null si le bloc ne s'applique pas. N'emets JAMAIS un objet vide {} ni un objet partiel. Si tu inclus skill_work, il DOIT contenir "name" et "description" non vides.
 
 # METHODOLOGIE
 
@@ -275,7 +276,8 @@ Retourne UNIQUEMENT cet objet JSON (une seule seance), sans texte avant ni apres
 2. "session_in_week" doit valoir 99 (il sera reassigné automatiquement).
 3. strength_work et conditioning peuvent etre null selon le focus.
 4. "reps" peut etre un nombre ou une chaine.
-5. JAMAIS de texte hors JSON.`
+5. JAMAIS de texte hors JSON.
+6. Pour strength_work, conditioning et skill_work : mets null si le bloc ne s'applique pas. N'emets JAMAIS un objet vide {} ni partiel. Si skill_work est present, "name" et "description" doivent etre non vides.`
 }
 
 export function buildBonusSessionUserPrompt(params: BonusSessionParams, context: UserAIContext): string {
