@@ -35,19 +35,36 @@ export const SkillWorkSchema = z.object({
   notes: z.string().optional().nullable(),
 })
 
+export const StrengthWorkSchema = z.object({
+  movements: z.array(StrengthMovementSchema).min(1),
+})
+
+/**
+ * L'IA renvoie parfois un bloc vide `{}` ou partiel au lieu de `null`.
+ * Ce helper normalise un tel bloc en `null` (au lieu de faire echouer la
+ * validation), en s'appuyant sur un predicat de validite minimale.
+ */
+const nullifyEmptyBlock =
+  (isValid: (o: Record<string, unknown>) => boolean) =>
+  (v: unknown): unknown => {
+    if (v == null) return null
+    if (typeof v !== 'object') return v
+    return isValid(v as Record<string, unknown>) ? v : null
+  }
+
+const hasMovements = (o: Record<string, unknown>): boolean =>
+  Array.isArray(o.movements) && o.movements.length > 0
+
 export const ProgramSessionSchema = z.object({
   session_in_week: z.number().int().min(1),
   title: z.string().min(1),
   focus: z.enum(['strength', 'conditioning', 'skill', 'mixed', 'recovery']),
   estimated_duration: z.number().positive(),
-  strength_work: z
-    .object({
-      movements: z.array(StrengthMovementSchema).min(1),
-    })
-    .optional()
-    .nullable(),
-  conditioning: ConditioningSchema.optional().nullable(),
-  skill_work: SkillWorkSchema.optional().nullable(),
+  strength_work: z.preprocess(nullifyEmptyBlock(hasMovements), StrengthWorkSchema.nullable()).optional(),
+  conditioning: z.preprocess(nullifyEmptyBlock(hasMovements), ConditioningSchema.nullable()).optional(),
+  skill_work: z
+    .preprocess(nullifyEmptyBlock((o) => !!o.name && !!o.description), SkillWorkSchema.nullable())
+    .optional(),
   coach_notes: z.string().optional().nullable(),
 })
 
