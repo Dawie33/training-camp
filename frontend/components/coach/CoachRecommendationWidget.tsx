@@ -4,7 +4,7 @@ import { useRecommendation } from '@/hooks/useRecommendation'
 import { RecommendedSport } from '@/services/recommendations'
 import { motion } from 'framer-motion'
 import {
-  Activity, AlertTriangle, ArrowRight, Bike, Brain,
+  Activity, ArrowRight, Bike, Brain,
   Dumbbell, Heart, RefreshCw, Zap,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -14,57 +14,19 @@ import Link from 'next/link'
 const SPORT_CONFIG: Record<RecommendedSport, {
   label: string
   icon: React.ReactNode
-  color: string
-  border: string
-  bg: string
   href: string
 }> = {
-  crossfit: {
-    label: 'CrossFit',
-    icon: <Zap className="w-4 h-4" />,
-    color: 'text-orange-400',
-    border: 'border-orange-500/40',
-    bg: 'bg-orange-500/10',
-    href: '/workouts/generate-ai',
-  },
-  running: {
-    label: 'Running',
-    icon: <Activity className="w-4 h-4" />,
-    color: 'text-cyan-400',
-    border: 'border-cyan-500/40',
-    bg: 'bg-cyan-500/10',
-    href: '/running/generate',
-  },
-  biking: {
-    label: 'Vélo',
-    icon: <Bike className="w-4 h-4" />,
-    color: 'text-blue-400',
-    border: 'border-blue-500/40',
-    bg: 'bg-blue-500/10',
-    href: '/biking/generate',
-  },
-  strength: {
-    label: 'Musculation',
-    icon: <Dumbbell className="w-4 h-4" />,
-    color: 'text-purple-400',
-    border: 'border-purple-500/40',
-    bg: 'bg-purple-500/10',
-    href: '/strength/generate',
-  },
-  rest: {
-    label: 'Récupération',
-    icon: <Heart className="w-4 h-4" />,
-    color: 'text-green-400',
-    border: 'border-green-500/40',
-    bg: 'bg-green-500/10',
-    href: '#',
-  },
+  crossfit: { label: 'CrossFit', icon: <Zap className="w-4 h-4" />, href: '/workouts/generate-ai' },
+  running: { label: 'Running', icon: <Activity className="w-4 h-4" />, href: '/running/generate' },
+  biking: { label: 'Vélo', icon: <Bike className="w-4 h-4" />, href: '/biking/generate' },
+  strength: { label: 'Musculation', icon: <Dumbbell className="w-4 h-4" />, href: '/strength/generate' },
+  rest: { label: 'Récupération', icon: <Heart className="w-4 h-4" />, href: '#' },
 }
 
-const URGENCY_CONFIG = {
-  high: { label: 'Prioritaire', color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30', icon: <AlertTriangle className="w-3 h-3" /> },
-  medium: { label: 'Recommandé', color: 'text-orange-400', bg: 'bg-orange-500/15', border: 'border-orange-500/30', icon: <Zap className="w-3 h-3" /> },
-  low: { label: 'Suggestion', color: 'text-green-400', bg: 'bg-green-500/15', border: 'border-green-500/30', icon: <ArrowRight className="w-3 h-3" /> },
+const URGENCY_LABELS: Record<'high' | 'medium' | 'low', string> = {
+  high: 'Prioritaire',
+  medium: 'Recommandé',
+  low: 'Suggestion',
 }
 
 // ─── Composant ─────────────────────────────────────────────────────────────────
@@ -75,14 +37,11 @@ export function CoachRecommendationWidget() {
   // ── Loading ──
   if (loading) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 animate-pulse">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-white/10" />
-          <div className="h-4 w-40 bg-white/10 rounded" />
-        </div>
-        <div className="h-5 w-3/4 bg-white/10 rounded mb-2" />
-        <div className="h-4 w-full bg-white/10 rounded mb-1" />
-        <div className="h-4 w-2/3 bg-white/10 rounded" />
+      <div className="rounded-lg border border-border bg-card p-5 animate-pulse">
+        <div className="h-3 w-24 bg-muted rounded mb-4" />
+        <div className="h-5 w-3/4 bg-muted rounded mb-2" />
+        <div className="h-4 w-full bg-muted rounded mb-1" />
+        <div className="h-4 w-2/3 bg-muted rounded" />
       </div>
     )
   }
@@ -90,12 +49,15 @@ export function CoachRecommendationWidget() {
   // ── Erreur ──
   if (error || !data) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between gap-4">
+      <div className="rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <Brain className="w-5 h-5 text-slate-500" />
-          <p className="text-sm text-slate-400">Recommandation Coach IA indisponible</p>
+          <Brain className="w-5 h-5 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Recommandation Coach IA indisponible</p>
         </div>
-        <Link href="/workouts/generate-ai" className="px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/10 border border-orange-500/25 text-orange-300 hover:bg-orange-500/20 transition-colors whitespace-nowrap">
+        <Link
+          href="/workouts/generate-ai"
+          className="px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity whitespace-nowrap"
+        >
           Générer une séance
         </Link>
       </div>
@@ -104,8 +66,6 @@ export function CoachRecommendationWidget() {
 
   const { recommendation: rec, session_stats: stats } = data
   const sport = SPORT_CONFIG[rec.recommended_sport]
-  const urgency = URGENCY_CONFIG[rec.urgency]
-
   const typeLabel = rec.recommended_type.replace(/_/g, ' ')
 
   return (
@@ -113,58 +73,42 @@ export function CoachRecommendationWidget() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className={`rounded-2xl border ${sport.border} ${sport.bg} p-5 space-y-4`}
+      className="rounded-lg border border-border bg-card p-5 space-y-4"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sport.bg} border ${sport.border}`}>
-            <Brain className={`w-4 h-4 ${sport.color}`} />
-          </div>
-          <div>
-            <p className="text-xs text-slate-400 leading-none">Coach IA</p>
-            <p className="text-sm font-semibold text-white leading-tight">Séance recommandée</p>
-          </div>
+          <Brain className="w-4 h-4 text-primary" />
+          <span className="eyebrow">Coach IA · Séance recommandée</span>
         </div>
-
         <button
           onClick={refresh}
           disabled={refreshing}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all disabled:opacity-40"
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-all disabled:opacity-40"
           title="Nouvelle suggestion"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
+      <div className="rule-strong" />
 
       {/* Recommandation principale */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Badge urgence */}
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${urgency.bg} ${urgency.border} ${urgency.color}`}>
-            {urgency.icon}
-            {urgency.label}
-          </span>
-
-          {/* Sport + type */}
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${sport.bg} ${sport.border} ${sport.color}`}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 font-display text-2xl font-semibold">
             {sport.icon}
-            {sport.label} — {typeLabel}
+            {sport.label}
           </span>
-
-          {/* Durée suggérée */}
-          <span className="text-[11px] text-slate-500">{rec.suggested_duration} min</span>
+          <span className="text-sm text-muted-foreground capitalize">— {typeLabel}</span>
+          <span className="eyebrow ml-auto">{URGENCY_LABELS[rec.urgency]} · {rec.suggested_duration} min</span>
         </div>
 
-        {/* Raison directe */}
-        <p className="text-sm text-white font-medium leading-snug">{rec.reason}</p>
-
-        {/* Insight coach */}
-        <p className="text-xs text-slate-400 leading-relaxed">{rec.coaching_insight}</p>
+        <p className="text-sm text-foreground font-medium leading-snug">{rec.reason}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{rec.coaching_insight}</p>
       </div>
 
       {/* Stats rapides */}
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-2 flex-wrap">
         {(['crossfit', 'running', 'biking', 'strength'] as const).map((s) => {
           const days = stats.days_since_last[s]
           const count = stats.by_sport[s] ?? 0
@@ -172,17 +116,15 @@ export function CoachRecommendationWidget() {
           return (
             <div
               key={s}
-              className={`flex flex-col items-center px-2 py-1 rounded-lg border text-center ${isActive ? `${SPORT_CONFIG[s].bg} ${SPORT_CONFIG[s].border}` : 'border-white/5 bg-white/3'}`}
+              className={`flex flex-col items-center px-3 py-1.5 rounded-md border text-center ${isActive ? 'border-primary bg-primary/5' : 'border-border'}`}
             >
-              <span className={`text-[10px] font-medium ${isActive ? SPORT_CONFIG[s].color : 'text-slate-500'}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                 {SPORT_CONFIG[s].label}
               </span>
-              <span className={`text-[10px] ${isActive ? 'text-white' : 'text-slate-600'}`}>
-                {days === null ? '—' : days === 0 ? "auj." : `${days}j`}
+              <span className="text-[11px] text-foreground">
+                {days === null ? '—' : days === 0 ? 'auj.' : `${days}j`}
               </span>
-              <span className={`text-[9px] ${isActive ? 'text-slate-400' : 'text-slate-700'}`}>
-                {count}x/3sem
-              </span>
+              <span className="text-[9px] text-muted-foreground">{count}x/3sem</span>
             </div>
           )
         })}
@@ -192,23 +134,23 @@ export function CoachRecommendationWidget() {
       {rec.recommended_sport !== 'rest' ? (
         <Link
           href={sport.href}
-          className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border font-semibold text-sm transition-all ${sport.bg} ${sport.border} ${sport.color} hover:brightness-110`}
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full bg-primary text-primary-foreground font-display font-semibold text-sm hover:opacity-90 transition-opacity"
         >
-          <ArrowRight className="w-4 h-4" />
           Générer cette séance
+          <ArrowRight className="w-4 h-4" />
         </Link>
       ) : (
         <div className="space-y-2">
-          <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-green-500/20 bg-green-500/5 text-green-400 text-sm font-semibold">
-            <Heart className="w-4 h-4" />
+          <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-md border border-border text-foreground text-sm font-semibold">
+            <Heart className="w-4 h-4 text-primary" />
             Repos actif recommandé — prends soin de toi
           </div>
           <Link
             href="/workouts/generate-ai"
-            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors text-sm"
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
-            <ArrowRight className="w-3.5 h-3.5" />
             Générer quand même une séance
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}

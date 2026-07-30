@@ -86,12 +86,12 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
               whileHover={{ rotate: 180 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
-                <Dumbbell className="h-6 w-6 text-primary" />
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <Dumbbell className="h-6 w-6 text-primary-foreground" />
               </div>
 
             </motion.div>
-            <span className="text-xl font-bold tracking-tight text-white">Training-camp</span>
+            <span className="font-display text-xl font-semibold tracking-tight text-foreground">Training-camp</span>
           </Link>
         </div>
 
@@ -102,19 +102,19 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
               const isCollapsed = collapsedGroups[group.label] ?? false
               return (
                 <div key={group.label}>
-                  {groupIndex > 0 && <div className="border-t border-white/10 mb-3" />}
+                  {groupIndex > 0 && <div className="rule mb-3" />}
                   <button
                     onClick={() => toggleGroup(group.label)}
                     className="w-full flex items-center justify-between px-4 mb-1 group/header"
                   >
-                    <span className="text-xs font-semibold uppercase tracking-widest text-slate-500 group-hover/header:text-slate-400 transition-colors">
+                    <span className="eyebrow group-hover/header:text-foreground transition-colors">
                       {group.label}
                     </span>
                     <motion.span
                       animate={{ rotate: isCollapsed ? -90 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ChevronDown className="w-3 h-3 text-slate-600 group-hover/header:text-slate-400 transition-colors" />
+                      <ChevronDown className="w-3 h-3 text-muted-foreground group-hover/header:text-foreground transition-colors" />
                     </motion.span>
                   </button>
                   <AnimatePresence initial={false}>
@@ -133,19 +133,19 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
                               <Link
                                 href={item.href}
                                 key={item.href}
-                                className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group
+                                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-300 group
                                   ${isActive
-                                    ? 'bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg'
-                                    : 'hover:bg-white/5'}`}
+                                    ? 'bg-secondary border border-border'
+                                    : 'hover:bg-secondary/60'}`}
                               >
-                                <span className={`text-lg transition-all duration-300 ${isActive ? 'text-orange-400' : 'text-slate-400 group-hover:text-orange-300'}`}>
+                                <span className={`text-lg transition-all duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>
                                   {item.icon}
                                 </span>
-                                <span className={`font-medium ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                                <span className={`font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
                                   {item.label}
                                 </span>
                                 {isActive && (
-                                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-orange-400 shadow-lg shadow-orange-400/50" />
+                                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
                                 )}
                               </Link>
                             )
@@ -162,19 +162,19 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
 
 
         {/* User Profile */}
-        <div className="mt-auto pt-6 border-t border-white/10">
+        <div className="mt-auto pt-6 border-t border-border">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full flex items-center gap-3 px-2 hover:bg-white/5">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center text-sm font-bold">
+                <Button variant="ghost" className="w-full flex items-center gap-3 px-2 hover:bg-secondary">
+                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
                     {getInitials(`${user.firstName} ${user.lastName}`)}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="font-medium text-sm truncate text-white">
+                    <p className="font-medium text-sm truncate text-foreground">
                       {user.firstName} {user.lastName}
                     </p>
-                    <p className="text-xs text-slate-400 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {user.email}
                     </p>
                   </div>

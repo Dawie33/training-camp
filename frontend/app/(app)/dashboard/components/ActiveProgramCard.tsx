@@ -1,9 +1,10 @@
 'use client'
 
 import { ActiveEnrollment, trainingProgramsApi } from '@/services/training-programs'
-import { ArrowRight, Plus, Target, Trophy } from 'lucide-react'
+import { ArrowRight, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { SectionHeader } from './SectionHeader'
 
 const TYPE_LABELS: Record<string, string> = {
   strength_building: 'Force',
@@ -13,12 +14,12 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  enrolled: { label: 'Inscrit', color: 'text-blue-400' },
-  active: { label: 'En cours', color: 'text-green-400' },
-  paused: { label: 'En pause', color: 'text-yellow-400' },
+  enrolled: { label: 'Inscrit', color: 'text-muted-foreground' },
+  active: { label: 'En cours', color: 'text-primary' },
+  paused: { label: 'En pause', color: 'text-muted-foreground' },
 }
 
-export function ActiveProgramCard() {
+export function ActiveProgramCard({ index }: { index?: string } = {}) {
   const [enrollment, setEnrollment] = useState<ActiveEnrollment | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -32,11 +33,11 @@ export function ActiveProgramCard() {
 
   if (loading) {
     return (
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-        <div className="animate-pulse space-y-3">
-          <div className="h-5 bg-white/10 rounded w-1/2" />
-          <div className="h-2 bg-white/10 rounded" />
-          <div className="h-3 bg-white/10 rounded w-1/3" />
+      <div>
+        <SectionHeader index={index} title="Programme actif" />
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-2/3" />
+          <div className="h-2 bg-muted rounded" />
         </div>
       </div>
     )
@@ -45,76 +46,76 @@ export function ActiveProgramCard() {
   // Aucun programme actif → invitation à en créer un
   if (!enrollment) {
     return (
-      <Link
-        href="/training-programs/generate"
-        className="group flex items-center justify-between gap-4 bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/[0.07] transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400/20 to-rose-500/20 border border-orange-500/20 flex items-center justify-center flex-shrink-0">
-            <Trophy className="w-5 h-5 text-orange-400" />
-          </div>
+      <div>
+        <SectionHeader index={index} title="Programme actif" />
+        <Link href="/training-programs/generate" className="group flex items-end justify-between gap-6">
           <div>
-            <p className="font-semibold text-white text-sm">Aucun programme actif</p>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h3 className="font-display text-3xl font-semibold leading-tight">
+              Aucun programme actif
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md">
               Crée un programme structuré pour t&apos;entraîner selon tes besoins, pas juste ton humeur.
             </p>
           </div>
-        </div>
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-orange-400 flex-shrink-0">
-          <Plus className="w-4 h-4" />
-          Créer
-        </span>
-      </Link>
+          <span className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:gap-2.5 transition-all">
+            Créer <Plus className="w-4 h-4" />
+          </span>
+        </Link>
+      </div>
     )
   }
 
   const progressPct = enrollment.total_sessions
     ? Math.round((enrollment.completed_sessions / enrollment.total_sessions) * 100)
     : 0
+  const totalWeeks = enrollment.duration_weeks || 1
+  const status = STATUS_CONFIG[enrollment.status]
 
   return (
-    <Link
-      href="/training-programs"
-      className="group block bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 hover:bg-white/[0.07] transition-colors"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center flex-shrink-0">
-            <Target className="w-5 h-5 text-white" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                Programme
-              </span>
-              <span className={`text-[10px] font-semibold ${STATUS_CONFIG[enrollment.status]?.color ?? 'text-slate-400'}`}>
-                {STATUS_CONFIG[enrollment.status]?.label ?? enrollment.status}
-              </span>
-            </div>
-            <p className="font-semibold text-white text-sm truncate">{enrollment.program_name}</p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {TYPE_LABELS[enrollment.program_type] ?? enrollment.program_type} · Semaine{' '}
-              {enrollment.current_week} / {enrollment.duration_weeks}
-            </p>
-          </div>
+    <div>
+      <SectionHeader
+        index={index}
+        title="Programme actif"
+        right={`Semaine ${String(enrollment.current_week).padStart(2, '0')} — ${String(totalWeeks).padStart(2, '0')}`}
+      />
+
+      <div className="flex items-start justify-between gap-6">
+        <div className="min-w-0">
+          <Link href="/training-programs" className="group inline-flex items-start gap-2">
+            <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.05]">
+              {enrollment.program_name}
+            </h2>
+            <ArrowRight className="w-5 h-5 mt-2 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary transition-all shrink-0" />
+          </Link>
+          <p className="text-sm text-muted-foreground mt-3">
+            {TYPE_LABELS[enrollment.program_type] ?? enrollment.program_type} ·{' '}
+            <span className={`font-semibold ${status?.color ?? 'text-muted-foreground'}`}>
+              {status?.label ?? enrollment.status}
+            </span>
+          </p>
         </div>
-        <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+        <div className="text-right shrink-0">
+          <div className="font-display text-5xl sm:text-6xl font-semibold leading-none">
+            {enrollment.completed_sessions}
+            <span className="text-2xl text-muted-foreground">/{enrollment.total_sessions}</span>
+          </div>
+          <div className="eyebrow mt-1">séances</div>
+        </div>
       </div>
 
-      <div className="space-y-1.5">
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+      {/* Progression en segments plutôt qu'une barre pleine */}
+      <div className="mt-8 flex gap-1.5">
+        {Array.from({ length: enrollment.total_sessions || 8 }).map((_, i) => (
           <div
-            className="h-full bg-gradient-to-r from-orange-400 to-rose-400 rounded-full transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
+            key={i}
+            className={`flex-1 h-1.5 ${i < enrollment.completed_sessions ? 'bg-foreground' : 'bg-border'}`}
           />
-        </div>
-        <div className="flex justify-between text-xs text-slate-500">
-          <span>
-            {enrollment.completed_sessions} / {enrollment.total_sessions} séances
-          </span>
-          <span>{progressPct}%</span>
-        </div>
+        ))}
       </div>
-    </Link>
+      <div className="flex justify-between mt-2 eyebrow">
+        <span>Semaine {enrollment.current_week}</span>
+        <span>{progressPct} % complété</span>
+      </div>
+    </div>
   )
 }
