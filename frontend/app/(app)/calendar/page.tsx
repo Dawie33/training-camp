@@ -176,7 +176,7 @@ function CalendarContent() {
 
 
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null) }}>
-        <DialogContent className="sm:max-w-[420px] bg-card border-border text-foreground p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[460px] max-h-[85vh] overflow-y-auto bg-card border-border text-foreground p-0">
           {selectedEvent && <CustomEventModal calendarEvent={selectedEvent} />}
         </DialogContent>
       </Dialog>
