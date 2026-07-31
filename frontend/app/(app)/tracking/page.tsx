@@ -2,7 +2,7 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Bike, Footprints, History, LayoutDashboard } from 'lucide-react'
+import { Activity, Bike, Dumbbell, Footprints, History, LayoutDashboard, TrendingUp, Trophy, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useMultiSportStats } from './_hooks/useMultiSportStats'
 import { useWodRunningSegments } from './_hooks/useWodRunningSegments'
@@ -22,41 +22,36 @@ import { WorkoutProgressComparison } from './components/WorkoutProgressCompariso
 
 type Tab = 'global' | 'crossfit' | 'running' | 'biking' | 'history'
 
-const TABS: { id: Tab; label: string; icon: React.ReactNode; color: string; activeColor: string }[] = [
+const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
   {
     id: 'global',
     label: 'Vue globale',
     icon: <LayoutDashboard className="w-4 h-4" />,
-    color: 'text-slate-400',
-    activeColor: 'text-white border-white/60 bg-white/10',
+    activeColor: 'text-primary border-primary bg-primary/10',
   },
   {
     id: 'crossfit',
     label: 'CrossFit',
     icon: <Activity className="w-4 h-4" />,
-    color: 'text-slate-400',
-    activeColor: 'text-orange-300 border-orange-500/60 bg-orange-500/10',
+    activeColor: 'text-orange-600 border-orange-600 bg-orange-600/10',
   },
   {
     id: 'running',
     label: 'Running',
     icon: <Footprints className="w-4 h-4" />,
-    color: 'text-slate-400',
-    activeColor: 'text-green-300 border-green-500/60 bg-green-500/10',
+    activeColor: 'text-orange-600 border-orange-600 bg-orange-600/10',
   },
   {
     id: 'biking',
     label: 'Vélo',
     icon: <Bike className="w-4 h-4" />,
-    color: 'text-slate-400',
-    activeColor: 'text-blue-300 border-blue-500/60 bg-blue-500/10',
+    activeColor: 'text-orange-600 border-orange-600 bg-orange-600/10',
   },
   {
     id: 'history',
     label: 'Bilans',
     icon: <History className="w-4 h-4" />,
-    color: 'text-slate-400',
-    activeColor: 'text-slate-200 border-slate-400/60 bg-slate-500/10',
+    activeColor: 'text-foreground border-foreground/60 bg-foreground/5',
   },
 ]
 
@@ -71,7 +66,7 @@ function TrackingContent() {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+      className="min-h-screen"
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
@@ -80,12 +75,11 @@ function TrackingContent() {
 
         {/* Header */}
         <motion.section variants={fadeInUp} className="space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">
-              Suivi des performances
-            </span>
+          <div className="eyebrow">Suivi</div>
+          <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-none tracking-tight">
+            Suivi des performances
           </h1>
-          <p className="text-slate-400 text-lg">Analyse tes progrès sur toutes tes disciplines</p>
+          <p className="text-muted-foreground text-lg mt-2">Analyse tes progrès sur toutes tes disciplines</p>
         </motion.section>
 
         {/* Onglets */}
@@ -97,10 +91,10 @@ function TrackingContent() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
                     isActive
                       ? `${tab.activeColor} border-current`
-                      : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-300'
+                      : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                   }`}
                 >
                   {tab.icon}
@@ -136,32 +130,32 @@ function TrackingContent() {
                 <WorkoutProgressComparison progressData={progressData} loading={progressLoading} />
               )}
 
-              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+              <div className="p-6 bg-card border border-border rounded-lg">
                 <div className="flex items-center gap-2 mb-6">
-                  <span className="text-lg">📈</span>
-                  <h2 className="text-2xl font-bold text-white">Activité & Progression</h2>
+                  <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-display text-2xl font-semibold">Activité & Progression</h2>
                 </div>
                 {workoutSessions.length > 0 ? (
                   <ProgressChart sessions={workoutSessions} />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <p className="text-slate-400">Complète tes premiers workouts pour voir ta progression</p>
+                    <p className="text-muted-foreground">Complète tes premiers workouts pour voir ta progression</p>
                   </div>
                 )}
               </div>
 
-              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+              <div className="p-6 bg-card border border-border rounded-lg">
                 <div className="flex items-center gap-2 mb-6">
-                  <span className="text-lg">🏋️</span>
-                  <h2 className="text-2xl font-bold text-white">Évolution des 1RMs</h2>
+                  <Dumbbell className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-display text-2xl font-semibold">Évolution des 1RMs</h2>
                 </div>
                 {ormsLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600" />
                   </div>
                 ) : liftsWithHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <p className="text-slate-400">Enregistre tes 1RMs dans ton profil pour suivre ta progression</p>
+                    <p className="text-muted-foreground">Enregistre tes 1RMs dans ton profil pour suivre ta progression</p>
                   </div>
                 ) : (
                   <OneRepMaxChart liftsWithHistory={liftsWithHistory} />
@@ -169,50 +163,50 @@ function TrackingContent() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+                <div className="p-6 bg-card border border-border rounded-lg">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg">⚡</span>
-                    <h2 className="text-xl font-bold text-white">Workouts par Type</h2>
+                    <Zap className="w-4 h-4 text-muted-foreground" />
+                    <h2 className="font-display text-xl font-semibold">Workouts par Type</h2>
                   </div>
                   {workoutStats && workoutStats.totalWorkouts > 0 ? (
                     <div className="space-y-3">
                       {Object.entries(workoutStats.workoutsByType).map(([type, count]) => (
                         <div key={type} className="flex items-center justify-between">
-                          <span className="font-medium text-slate-200">{type.replace(/_/g, ' ')}</span>
+                          <span className="font-medium text-foreground">{type.replace(/_/g, ' ')}</span>
                           <div className="flex items-center gap-3">
-                            <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className="w-32 h-2 bg-border rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-gradient-to-r from-orange-400 to-rose-400 transition-all"
+                                className="h-full bg-orange-600 transition-all"
                                 style={{
                                   width: `${workoutStats.totalWorkouts > 0 ? (count / workoutStats.totalWorkouts) * 100 : 0}%`,
                                 }}
                               />
                             </div>
-                            <span className="text-sm text-slate-400 w-12 text-right">{count}</span>
+                            <span className="text-sm text-muted-foreground w-12 text-right">{count}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-slate-400 text-sm py-4">Aucun workout complété pour le moment</p>
+                    <p className="text-muted-foreground text-sm py-4">Aucun workout complété pour le moment</p>
                   )}
                 </div>
 
-                <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+                <div className="p-6 bg-card border border-border rounded-lg">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg">🏆</span>
-                    <h2 className="text-xl font-bold text-white">Records Personnels</h2>
+                    <Trophy className="w-4 h-4 text-muted-foreground" />
+                    <h2 className="font-display text-xl font-semibold">Records Personnels</h2>
                   </div>
                   {workoutStats && workoutStats.personalRecords.length > 0 ? (
                     <PersonalRecords records={workoutStats.personalRecords} />
                   ) : (
-                    <p className="text-slate-400 text-sm py-4">Complète des workouts pour établir tes records</p>
+                    <p className="text-muted-foreground text-sm py-4">Complète des workouts pour établir tes records</p>
                   )}
                 </div>
               </div>
 
-              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-                <h2 className="text-2xl font-bold mb-6 text-white">Historique Complet</h2>
+              <div className="p-6 bg-card border border-border rounded-lg">
+                <h2 className="font-display text-2xl font-semibold mb-6">Historique Complet</h2>
                 <WorkoutHistoryList />
               </div>
             </div>
@@ -222,10 +216,10 @@ function TrackingContent() {
           {activeTab === 'running' && (
             <div className="space-y-6">
               <ProgressionReportPanel sport="running" />
-              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+              <div className="p-6 bg-card border border-border rounded-lg">
                 <div className="flex items-center gap-2 mb-6">
-                  <span className="text-lg">🏃</span>
-                  <h2 className="text-2xl font-bold text-white">Statistiques Running</h2>
+                  <Footprints className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-display text-2xl font-semibold">Statistiques Running</h2>
                 </div>
                 <RunningStatsPanel
                   stats={multiStats.running}
@@ -241,10 +235,10 @@ function TrackingContent() {
           {activeTab === 'biking' && (
             <div className="space-y-6">
               <ProgressionReportPanel sport="biking" />
-              <div className="p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
+              <div className="p-6 bg-card border border-border rounded-lg">
                 <div className="flex items-center gap-2 mb-6">
-                  <span className="text-lg">🚴</span>
-                  <h2 className="text-2xl font-bold text-white">Statistiques Vélo</h2>
+                  <Bike className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-display text-2xl font-semibold">Statistiques Vélo</h2>
                 </div>
                 <BikingStatsPanel stats={multiStats.biking} loading={multiLoading} />
               </div>

@@ -34,10 +34,10 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   if (!active || !payload?.length) return null
   const entry = payload[0]
   return (
-    <div className="bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm shadow-xl">
-      <p className="text-slate-400 text-xs mb-1">{label}</p>
-      <p className="text-white font-bold">{entry.value} kg</p>
-      <p className="text-slate-500 text-xs">{entry.payload.source === 'real' ? 'Mesuré' : 'Estimé'}</p>
+    <div className="bg-card border border-border rounded-lg px-3 py-2 text-sm shadow-md">
+      <p className="text-muted-foreground text-xs mb-1">{label}</p>
+      <p className="text-foreground font-semibold">{entry.value} kg</p>
+      <p className="text-muted-foreground text-xs">{entry.payload.source === 'real' ? 'Mesuré' : 'Estimé'}</p>
     </div>
   )
 }
@@ -69,8 +69,8 @@ export function OneRepMaxChart({ liftsWithHistory }: OneRepMaxChartProps) {
             onClick={() => setSelectedLift(lift)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
               selectedLift === lift
-                ? 'bg-orange-500/20 border-orange-500/50 text-orange-400'
-                : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+                ? 'bg-orange-600/10 border-orange-600/40 text-orange-600'
+                : 'bg-card border-border text-muted-foreground hover:text-foreground'
             }`}
           >
             {getLiftLabel(lift)}
@@ -80,23 +80,23 @@ export function OneRepMaxChart({ liftsWithHistory }: OneRepMaxChartProps) {
 
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-slate-400 text-sm">Aucune donnée pour ce mouvement</p>
+          <p className="text-muted-foreground text-sm">Aucune donnée pour ce mouvement</p>
         </div>
       ) : (
         <>
           {/* Stats rapides */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-slate-800/60 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-500 mb-1">Actuel</p>
-              <p className="text-lg font-bold text-white">{lastValue} kg</p>
+            <div className="bg-secondary rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Actuel</p>
+              <p className="text-lg font-semibold text-foreground">{lastValue} kg</p>
             </div>
-            <div className="bg-slate-800/60 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-500 mb-1">Record (PR)</p>
-              <p className="text-lg font-bold text-orange-400">{maxValue} kg</p>
+            <div className="bg-secondary rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Record (PR)</p>
+              <p className="text-lg font-semibold text-orange-600">{maxValue} kg</p>
             </div>
-            <div className="bg-slate-800/60 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-500 mb-1">Progression</p>
-              <p className={`text-lg font-bold ${progression >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <div className="bg-secondary rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Progression</p>
+              <p className={`text-lg font-semibold ${progression >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                 {progression >= 0 ? '+' : ''}{progression}%
               </p>
             </div>
@@ -107,15 +107,15 @@ export function OneRepMaxChart({ liftsWithHistory }: OneRepMaxChartProps) {
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(34 18% 85%)" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10, fill: '#64748b' }}
+                    tick={{ fontSize: 10, fill: 'hsl(24 10% 42%)' }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 10, fill: '#64748b' }}
+                    tick={{ fontSize: 10, fill: 'hsl(24 10% 42%)' }}
                     axisLine={false}
                     tickLine={false}
                     domain={['auto', 'auto']}
@@ -125,31 +125,25 @@ export function OneRepMaxChart({ liftsWithHistory }: OneRepMaxChartProps) {
                   {maxValue !== lastValue && (
                     <ReferenceLine
                       y={maxValue}
-                      stroke="#f97316"
+                      stroke="#ea580c"
                       strokeDasharray="4 4"
                       strokeOpacity={0.5}
-                      label={{ value: 'PR', fill: '#f97316', fontSize: 10, position: 'right' }}
+                      label={{ value: 'PR', fill: '#ea580c', fontSize: 10, position: 'right' }}
                     />
                   )}
                   <Line
                     type="monotone"
                     dataKey="value"
-                    stroke="url(#orangeGradient)"
+                    stroke="#ea580c"
                     strokeWidth={2.5}
-                    dot={{ fill: '#f97316', r: 4, strokeWidth: 0 }}
-                    activeDot={{ r: 6, fill: '#fb923c' }}
+                    dot={{ fill: '#ea580c', r: 4, strokeWidth: 0 }}
+                    activeDot={{ r: 6, fill: '#ea580c' }}
                   />
-                  <defs>
-                    <linearGradient id="orangeGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#f97316" />
-                      <stop offset="100%" stopColor="#fb7185" />
-                    </linearGradient>
-                  </defs>
                 </LineChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-center text-slate-500 text-xs py-4">
+            <p className="text-center text-muted-foreground text-xs py-4">
               Enregistre au moins 2 mesures pour voir la courbe d&apos;évolution
             </p>
           )}

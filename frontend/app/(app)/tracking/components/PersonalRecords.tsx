@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Medal, TrendingUp, Trophy } from 'lucide-react'
 
 interface PersonalRecord {
   type: string
@@ -16,12 +17,12 @@ interface PersonalRecordsProps {
 export function PersonalRecords({ records }: PersonalRecordsProps) {
   if (records.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-400">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center">
-          <span className="text-xl">🏆</span>
+      <div className="text-center py-8 text-muted-foreground">
+        <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-secondary border border-border flex items-center justify-center">
+          <Trophy className="w-5 h-5" />
         </div>
         <p className="text-sm">Aucun record personnel</p>
-        <p className="text-xs mt-1 text-slate-500">Continue à t'entraîner pour établir tes premiers records !</p>
+        <p className="text-xs mt-1 text-muted-foreground">Continue à t'entraîner pour établir tes premiers records !</p>
       </div>
     )
   }
@@ -67,32 +68,32 @@ export function PersonalRecords({ records }: PersonalRecordsProps) {
             transition={{ delay: index * 0.05 }}
             className="relative group"
           >
-            <div className="flex items-center justify-between p-4 rounded-lg border border-slate-700/50 bg-slate-800/50 hover:bg-slate-800/70 transition-colors">
+            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card hover:border-foreground/25 transition-colors">
               <div className="flex items-center gap-3 flex-1">
-                <div className="p-2 rounded-lg bg-yellow-500/10">
-                  <span className="text-lg">🏅</span>
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Medal className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-white">{record.type}</h4>
+                    <h4 className="font-display font-semibold">{record.type}</h4>
                     {recent && (
-                      <span className="text-xs bg-green-500/10 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded">
+                      <span className="text-xs bg-emerald-600/10 text-emerald-600 border border-emerald-600/20 px-1.5 py-0.5 rounded">
                         Nouveau
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500">{formatDate(record.date)}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(record.date)}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-orange-400">
+                  <p className="text-2xl font-semibold text-orange-600">
                     {record.unit.includes(':') ? record.unit : record.value}
                   </p>
-                  <p className="text-xs text-slate-500 uppercase">{record.unit.includes(':') ? 'temps' : record.unit}</p>
+                  <p className="text-xs text-muted-foreground uppercase">{record.unit.includes(':') ? 'temps' : record.unit}</p>
                 </div>
-                <span className="text-emerald-400 text-sm">▲</span>
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
               </div>
             </div>
           </motion.div>
@@ -104,14 +105,14 @@ export function PersonalRecords({ records }: PersonalRecordsProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: records.length * 0.05 }}
-          className="mt-6 p-4 rounded-lg bg-slate-800/30 border border-dashed border-slate-700/50"
+          className="mt-6 p-4 rounded-lg bg-secondary border border-dashed border-border"
         >
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <span>🏆</span>
-              <span className="text-slate-400">Total des records</span>
+              <Trophy className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Total des records</span>
             </div>
-            <span className="font-bold text-white">{records.length}</span>
+            <span className="font-semibold text-foreground">{records.length}</span>
           </div>
         </motion.div>
       )}

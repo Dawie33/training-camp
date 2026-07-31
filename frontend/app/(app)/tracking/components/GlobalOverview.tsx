@@ -3,11 +3,11 @@
 import { WorkoutStats } from '@/domain/entities/workout-history'
 import { BikingStats } from '@/services/biking'
 import { RunningStats } from '@/services/running'
+import { Bike, Flame, Footprints, Trophy, type LucideIcon } from 'lucide-react'
+import { StatsCard } from './StatsCard'
 
 interface SportCardProps {
-  href: string
-  color: string
-  icon: string
+  icon: LucideIcon
   label: string
   sessions: number
   stat: string
@@ -15,22 +15,22 @@ interface SportCardProps {
   onTabChange: () => void
 }
 
-function SportCard({ color, icon, label, sessions, stat, statLabel, onTabChange }: SportCardProps) {
+function SportCard({ icon: Icon, label, sessions, stat, statLabel, onTabChange }: SportCardProps) {
   return (
     <button
       onClick={onTabChange}
-      className={`w-full text-left p-5 bg-white/5 border ${color} rounded-2xl hover:bg-white/8 transition-all group`}
+      className="w-full text-left p-5 bg-card border border-orange-600/20 rounded-lg hover:border-foreground/25 transition-colors group"
     >
       <div className="flex items-start justify-between mb-3">
-        <span className="text-2xl">{icon}</span>
-        <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">Voir détail →</span>
+        <Icon className="w-5 h-5 text-orange-600" />
+        <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">Voir détail →</span>
       </div>
-      <p className="font-bold text-white text-lg mb-0.5">{label}</p>
-      <p className="text-xs text-slate-500">{sessions} séance{sessions > 1 ? 's' : ''}</p>
+      <p className="font-display font-semibold text-lg mb-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground">{sessions} séance{sessions > 1 ? 's' : ''}</p>
       {stat !== '--' && (
-        <div className="mt-3 pt-3 border-t border-white/5">
-          <p className="text-sm font-semibold text-white">{stat}</p>
-          <p className="text-[10px] text-slate-500">{statLabel}</p>
+        <div className="mt-3 pt-3 border-t border-border">
+          <p className="text-sm font-semibold">{stat}</p>
+          <p className="text-[10px] text-muted-foreground">{statLabel}</p>
         </div>
       )}
     </button>
@@ -58,23 +58,17 @@ export function GlobalOverview({
   return (
     <div className="space-y-6">
       {/* Total global */}
-      <div className="p-5 bg-gradient-to-r from-orange-500/10 to-rose-500/10 border border-white/10 rounded-2xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-slate-400">Total toutes disciplines</p>
-            <p className="text-4xl font-black text-white mt-1">{totalSessions}</p>
-            <p className="text-xs text-slate-500 mt-0.5">séances enregistrées</p>
-          </div>
-          <div className="text-5xl opacity-30">🏋️</div>
-        </div>
-      </div>
+      <StatsCard
+        title="Total toutes disciplines"
+        value={totalSessions}
+        subtitle="séances enregistrées"
+        icon={Trophy}
+      />
 
       {/* Mini-cartes par sport */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <SportCard
-          href="/crossfit"
-          color="border-orange-500/20"
-          icon="🔥"
+          icon={Flame}
           label="CrossFit"
           sessions={workoutStats?.totalWorkouts ?? 0}
           stat={workoutStats?.currentStreak ? `${workoutStats.currentStreak}j` : '--'}
@@ -82,9 +76,7 @@ export function GlobalOverview({
           onTabChange={() => onTabChange('crossfit')}
         />
         <SportCard
-          href="/running"
-          color="border-green-500/20"
-          icon="🏃"
+          icon={Footprints}
           label="Running"
           sessions={runningStats?.total_sessions ?? 0}
           stat={runningStats ? `${runningStats.total_km} km` : '--'}
@@ -92,9 +84,7 @@ export function GlobalOverview({
           onTabChange={() => onTabChange('running')}
         />
         <SportCard
-          href="/biking"
-          color="border-blue-500/20"
-          icon="🚴"
+          icon={Bike}
           label="Vélo"
           sessions={bikingStats?.total_sessions ?? 0}
           stat={bikingStats ? `${bikingStats.total_km} km` : '--'}
