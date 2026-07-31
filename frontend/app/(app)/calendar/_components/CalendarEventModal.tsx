@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { MUSCLE_LABELS, SESSION_GOAL_LABELS } from '@/services/strength'
 import { Check, ExternalLink, FileDown, SkipForward, Trash2 } from 'lucide-react'
 import { statusColors } from './CalendarEventContent'
-import { ProgramSessionDetail, type ProgramSessionData } from './ProgramSessionDetail'
+import { ProgramSessionDetail, type ProgramSessionData } from '@/components/program/ProgramSessionDetail'
 
 export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unknown> }) {
   const status = (calendarEvent.status as string) || 'scheduled'

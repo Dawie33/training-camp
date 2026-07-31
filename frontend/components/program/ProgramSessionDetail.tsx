@@ -80,7 +80,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 
 /**
  * Rendu du contenu d'une séance de programme (session_data) en style Clay,
- * pour affichage inline dans le détail d'un événement du calendrier.
+ * réutilisé par le calendrier et par la partie training-programs.
  */
 export function ProgramSessionDetail({ session }: { session: ProgramSessionData }) {
   const strength = session.strength_work?.movements ?? []

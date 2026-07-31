@@ -1,606 +1,132 @@
 'use client'
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { trainingProgramsApi, ActiveEnrollment, ProgramSession, WeekSessions } from '@/services/training-programs'
 import { motion } from 'framer-motion'
-import {
-  ArrowRight,
-  Calendar,
-  CalendarPlus,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Dumbbell,
-  Flame,
-  Loader2,
-  Pause,
-  Play,
-  Plus,
-  Target,
-  Trophy,
-  XCircle,
-} from 'lucide-react'
-import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
+import { EmptyState } from './_components/EmptyState'
+import { ProgramHeader } from './_components/ProgramHeader'
+import { ScheduleWeekPanel } from './_components/ScheduleWeekPanel'
+import { WeekNavigator } from './_components/WeekNavigator'
+import { WeekSessionCard } from './_components/WeekSessionCard'
+import { useTrainingProgram } from './_hooks/useTrainingProgram'
 
-// --- Helpers ---
+function TrainingProgramsContent() {
+  const {
+    enrollment,
+    weekData,
+    loading,
+    loadingWeek,
+    actionLoading,
+    viewWeek,
+    setViewWeek,
+    showSchedule,
+    setShowSchedule,
+    scheduleDate,
+    setScheduleDate,
+    sessionDates,
+    setSessionDates,
+    scheduling,
+    addingBonus,
+    handleStart,
+    handlePause,
+    handleAbandon,
+    handleSchedule,
+    handleAddBonus,
+  } = useTrainingProgram()
 
-const TYPE_LABELS: Record<string, string> = {
-  strength_building: 'Force',
-  endurance_base: 'Endurance',
-  competition_prep: 'Compétition',
-  off_season: 'Off-season',
-}
-
-const FOCUS_COLOR: Record<string, string> = {
-  strength: 'bg-red-500/20 text-red-400 border-red-500/30',
-  conditioning: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  skill: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  mixed: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  recovery: 'bg-green-500/20 text-green-400 border-green-500/30',
-}
-
-const FOCUS_LABEL: Record<string, string> = {
-  strength: 'Force', conditioning: 'Cardio', skill: 'Technique', mixed: 'Mixte', recovery: 'Récup',
-}
-
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  enrolled: { label: 'Inscrit', color: 'text-blue-400' },
-  active: { label: 'En cours', color: 'text-green-400' },
-  paused: { label: 'En pause', color: 'text-yellow-400' },
-}
-
-// Lundi de la semaine courante au format YYYY-MM-DD
-function mondayOfCurrentWeek(): string {
-  const d = new Date()
-  const day = d.getDay() // 0 = dimanche
-  const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${dd}`
-}
-
-// Dates par défaut réparties sur la semaine, une par séance
-function defaultSessionDates(startDate: string, count: number): string[] {
-  const dates: string[] = []
-  for (let i = 0; i < count; i++) {
-    const offset = count > 1 ? Math.round((i * 6) / (count - 1)) : 0
-    const d = new Date(startDate)
-    d.setDate(d.getDate() + offset)
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    dates.push(`${y}-${m}-${dd}`)
-  }
-  return dates
-}
-
-// --- Composant session de la semaine ---
-
-function WeekSessionCard({ session, num }: { session: ProgramSession; num: number }) {
-  const [open, setOpen] = useState(false)
-  const movements = [
-    ...(session.strength_work?.movements.map(m => m.name) ?? []),
-    ...(session.conditioning?.movements.map(m => m.name) ?? []),
-    ...(session.skill_work ? [session.skill_work.name] : []),
-  ]
-
-  return (
-    <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full text-left p-4 space-y-2 hover:bg-white/5 transition-colors"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center">
-              {num}
-            </span>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${FOCUS_COLOR[session.focus] ?? 'bg-slate-500/20 text-slate-400'}`}>
-              {FOCUS_LABEL[session.focus] ?? session.focus}
-            </span>
-            {session._bonus && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-purple-500/20 text-purple-300 border-purple-500/30">
-                Bonus
-              </span>
-            )}
-            {session._progression?.deload && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-green-500/20 text-green-400 border-green-500/30">
-                Deload
-              </span>
-            )}
-            {session._progression && !session._progression.deload && session._progression.intensity_delta > 0 && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded border bg-orange-500/10 text-orange-300 border-orange-500/20">
-                +{session._progression.intensity_delta}%
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Clock className="w-3 h-3" />
-            {session.estimated_duration} min
-            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
-        </div>
-        <p className="font-semibold text-white text-sm">{session.title}</p>
-        {!open && movements.length > 0 && (
-          <p className="text-xs text-slate-400 truncate">{movements.slice(0, 4).join(' · ')}{movements.length > 4 ? ` +${movements.length - 4}` : ''}</p>
-        )}
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
-          {session.strength_work && (
-            <div>
-              <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Force</p>
-              <div className="space-y-1">
-                {session.strength_work.movements.map((m, i) => (
-                  <div key={i} className="flex items-baseline gap-2 text-sm">
-                    <span className="text-white font-medium">{m.name}</span>
-                    <span className="text-slate-400">{m.sets}×{m.reps}</span>
-                    {m.intensity && <span className="text-slate-500 text-xs">@ {m.intensity}</span>}
-                    {m.rest && <span className="text-slate-600 text-xs">· repos {m.rest}</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {session.conditioning && (
-            <div>
-              <p className="text-xs font-semibold uppercase text-slate-500 mb-2">
-                Conditioning — {session.conditioning.type.toUpperCase()}
-                {session.conditioning.duration_minutes && ` ${session.conditioning.duration_minutes}min`}
-                {session.conditioning.rounds && ` ${session.conditioning.rounds} rounds`}
-              </p>
-              <div className="space-y-1">
-                {session.conditioning.movements.map((m, i) => (
-                  <div key={i} className="text-sm text-slate-300">
-                    {m.reps && <span>{m.reps} </span>}
-                    {m.distance && <span>{m.distance} </span>}
-                    <span className="text-white">{m.name}</span>
-                    {m.weight && <span className="text-slate-400"> @ {m.weight}</span>}
-                  </div>
-                ))}
-              </div>
-              {session.conditioning.scaling_notes && (
-                <p className="text-xs text-slate-500 mt-2 italic">{session.conditioning.scaling_notes}</p>
-              )}
-            </div>
-          )}
-          {session.skill_work && (
-            <div>
-              <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Technique</p>
-              <p className="text-sm font-medium text-white">{session.skill_work.name}</p>
-              <p className="text-xs text-slate-400">{session.skill_work.description}</p>
-            </div>
-          )}
-          {session.coach_notes && (
-            <p className="text-xs text-slate-500 italic border-t border-white/10 pt-2">{session.coach_notes}</p>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// --- Page principale ---
-
-export default function TrainingProgramsPage() {
-  const [enrollment, setEnrollment] = useState<ActiveEnrollment | null>(null)
-  const [weekData, setWeekData] = useState<WeekSessions | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [loadingWeek, setLoadingWeek] = useState(false)
-  const [actionLoading, setActionLoading] = useState(false)
-  const [viewWeek, setViewWeek] = useState<number>(1)
-  const [showSchedule, setShowSchedule] = useState(false)
-  const [scheduleDate, setScheduleDate] = useState<string>(mondayOfCurrentWeek())
-  const [sessionDates, setSessionDates] = useState<string[]>([])
-  const [scheduling, setScheduling] = useState(false)
-  const [addingBonus, setAddingBonus] = useState(false)
-
-  const fetchEnrollment = useCallback(async () => {
-    try {
-      const data = await trainingProgramsApi.getActive()
-      setEnrollment(data)
-      if (data) {
-        setViewWeek(data.current_week)
-      }
-    } catch {
-      toast.error('Erreur lors du chargement du programme')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchEnrollment()
-  }, [fetchEnrollment])
-
-  const fetchWeek = useCallback(async (enrollmentId: string, week: number) => {
-    setLoadingWeek(true)
-    try {
-      const data = await trainingProgramsApi.getWeekSessions(enrollmentId, week)
-      setWeekData(data)
-    } catch {
-      toast.error('Impossible de charger les sessions de cette semaine')
-    } finally {
-      setLoadingWeek(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (enrollment) {
-      fetchWeek(enrollment.id, viewWeek)
-    }
-  }, [enrollment, viewWeek, fetchWeek])
-
-  useEffect(() => {
-    const count = weekData?.sessions.length ?? 0
-    if (showSchedule && count > 0) {
-      setSessionDates(defaultSessionDates(scheduleDate, count))
-    }
-  }, [showSchedule, scheduleDate, weekData])
-
-  const handleStart = async () => {
-    if (!enrollment) return
-    setActionLoading(true)
-    try {
-      await trainingProgramsApi.start(enrollment.id)
-      toast.success('Programme démarré !')
-      fetchEnrollment()
-    } catch {
-      toast.error('Erreur')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const handlePause = async () => {
-    if (!enrollment) return
-    setActionLoading(true)
-    try {
-      await trainingProgramsApi.pause(enrollment.id)
-      toast.success('Programme mis en pause')
-      fetchEnrollment()
-    } catch {
-      toast.error('Erreur')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const handleAbandon = async () => {
-    if (!enrollment) return
-    if (!confirm('Abandonner ce programme ? Cette action est irréversible.')) return
-    setActionLoading(true)
-    try {
-      await trainingProgramsApi.abandon(enrollment.id)
-      toast.success('Programme abandonné')
-      setEnrollment(null)
-      setWeekData(null)
-    } catch {
-      toast.error('Erreur')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const handleSchedule = async () => {
-    if (!enrollment || !weekData) return
-    const dates = sessionDates.slice(0, weekData.sessions.length)
-    if (dates.some((d) => !d)) {
-      toast.error('Choisis une date pour chaque séance')
-      return
-    }
-    if (new Set(dates).size !== dates.length) {
-      toast.error('Deux séances ne peuvent pas être le même jour')
-      return
-    }
-    setScheduling(true)
-    try {
-      const res = await trainingProgramsApi.scheduleWeek(enrollment.id, {
-        week_num: viewWeek,
-        assignments: dates.map((date, i) => ({ session_index: i, date })),
-      })
-      const count = res?.scheduled?.length ?? 0
-      toast.success(`${count} séance${count > 1 ? 's' : ''} planifiée${count > 1 ? 's' : ''} dans le calendrier`)
-      setShowSchedule(false)
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      toast.error(msg && msg.length < 120 ? msg : 'Impossible de planifier cette semaine')
-    } finally {
-      setScheduling(false)
-    }
-  }
-
-  const handleAddBonus = async () => {
-    if (!enrollment) return
-    setAddingBonus(true)
-    try {
-      await trainingProgramsApi.addBonusSession(enrollment.id, viewWeek)
-      toast.success('Séance bonus ajoutée à la semaine')
-      await fetchWeek(enrollment.id, viewWeek)
-    } catch {
-      toast.error("Impossible d'ajouter une séance bonus")
-    } finally {
-      setAddingBonus(false)
-    }
-  }
-
-  // --- Empty state ---
-  if (!loading && !enrollment) {
-    return (
-      <motion.div
-        className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-center p-8"
-        initial="hidden"
-        animate="visible"
-        variants={staggerContainer}
-      >
-        <motion.div variants={fadeInUp} className="max-w-md text-center space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-400/20 to-rose-500/20 border border-orange-500/20 flex items-center justify-center mx-auto">
-            <Trophy className="w-10 h-10 text-orange-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Aucun programme actif</h1>
-            <p className="text-slate-400 mt-2 text-sm">
-              Crée un programme structuré adapté à ton objectif — force, endurance, compétition ou objectif libre.
-            </p>
-          </div>
-          <Link
-            href="/training-programs/generate"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            Créer un programme
-          </Link>
-        </motion.div>
-      </motion.div>
-    )
-  }
-
-  // --- Loading ---
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
 
-  if (!enrollment) return null
-
-  const progressPct = Math.round((enrollment.completed_sessions / enrollment.total_sessions) * 100)
+  if (!enrollment) {
+    return (
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+        <EmptyState />
+      </div>
+    )
+  }
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+      variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      variants={staggerContainer}
+      className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-10"
     >
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* En-tête programme */}
+      <motion.div variants={fadeInUp}>
+        <ProgramHeader
+          enrollment={enrollment}
+          actionLoading={actionLoading}
+          onStart={handleStart}
+          onPause={handlePause}
+          onAbandon={handleAbandon}
+        />
+      </motion.div>
 
-        {/* Header programme */}
-        <motion.div variants={fadeInUp} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center flex-shrink-0">
-                <Target className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">{enrollment.program_name}</h1>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-slate-300">
-                    {TYPE_LABELS[enrollment.program_type] ?? enrollment.program_type}
-                  </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-slate-300">
-                    {enrollment.duration_weeks} semaines
-                  </span>
-                  <span className={`text-xs font-semibold ${STATUS_CONFIG[enrollment.status]?.color ?? 'text-slate-400'}`}>
-                    {STATUS_CONFIG[enrollment.status]?.label ?? enrollment.status}
-                  </span>
-                </div>
-              </div>
-            </div>
+      <div className="rule-strong" />
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {enrollment.status === 'enrolled' && (
-                <button
-                  onClick={handleStart}
-                  disabled={actionLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-colors text-xs font-semibold"
-                >
-                  <Play className="w-3.5 h-3.5" />Démarrer
-                </button>
-              )}
-              {enrollment.status === 'active' && (
-                <button
-                  onClick={handlePause}
-                  disabled={actionLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/30 transition-colors text-xs font-semibold"
-                >
-                  <Pause className="w-3.5 h-3.5" />Pause
-                </button>
-              )}
-              {enrollment.status === 'paused' && (
-                <button
-                  onClick={handleStart}
-                  disabled={actionLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-colors text-xs font-semibold"
-                >
-                  <Play className="w-3.5 h-3.5" />Reprendre
-                </button>
-              )}
-              <button
-                onClick={handleAbandon}
-                disabled={actionLoading}
-                className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors text-xs font-semibold"
-              >
-                <XCircle className="w-3.5 h-3.5" />Abandonner
-              </button>
+      {/* Semaine */}
+      <motion.div variants={fadeInUp}>
+        <WeekNavigator
+          enrollment={enrollment}
+          viewWeek={viewWeek}
+          onPrevWeek={() => setViewWeek((v) => Math.max(1, v - 1))}
+          onNextWeek={() => setViewWeek((v) => Math.min(enrollment.duration_weeks, v + 1))}
+          addingBonus={addingBonus}
+          onAddBonus={handleAddBonus}
+          showSchedule={showSchedule}
+          onToggleSchedule={() => setShowSchedule((v) => !v)}
+        />
+
+        {showSchedule && weekData && (
+          <ScheduleWeekPanel
+            viewWeek={viewWeek}
+            sessions={weekData.sessions}
+            scheduleDate={scheduleDate}
+            onScheduleDateChange={setScheduleDate}
+            sessionDates={sessionDates}
+            onSessionDateChange={(i, date) => {
+              const next = [...sessionDates]
+              next[i] = date
+              setSessionDates(next)
+            }}
+            scheduling={scheduling}
+            onSchedule={handleSchedule}
+          />
+        )}
+
+        {loadingWeek ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : weekData ? (
+          <div className="space-y-3">
+            {weekData.phase && (
+              <p className="text-xs text-muted-foreground px-1 mb-2">
+                <span className="text-foreground font-medium">
+                  Phase {weekData.phase.phase_number} — {weekData.phase.name}
+                </span>
+                {' · '}
+                {weekData.phase.description}
+              </p>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {weekData.sessions.map((session, i) => (
+                <WeekSessionCard key={i} session={session} num={i + 1} />
+              ))}
             </div>
           </div>
-
-          {/* Barre de progression */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>Progression globale</span>
-              <span>{enrollment.completed_sessions} / {enrollment.total_sessions} séances</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-orange-400 to-rose-400 rounded-full transition-all duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>Semaine {enrollment.current_week} / {enrollment.duration_weeks}</span>
-              <span>{progressPct}%</span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Navigation semaine */}
-        <motion.div variants={fadeInUp}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">
-                Semaine {viewWeek}
-                {viewWeek === enrollment.current_week && (
-                  <span className="ml-2 text-xs normal-case text-orange-400 font-normal">· semaine en cours</span>
-                )}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              {(enrollment.status === 'active' || enrollment.status === 'enrolled') && (
-                <button
-                  onClick={handleAddBonus}
-                  disabled={addingBonus}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-colors text-xs font-semibold disabled:opacity-50"
-                >
-                  {addingBonus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                  Ajouter une séance
-                </button>
-              )}
-              {(enrollment.status === 'active' || enrollment.status === 'enrolled') && (
-                <button
-                  onClick={() => setShowSchedule(v => !v)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition-colors text-xs font-semibold"
-                >
-                  <CalendarPlus className="w-3.5 h-3.5" />
-                  Planifier
-                </button>
-              )}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setViewWeek(v => Math.max(1, v - 1))}
-                  disabled={viewWeek <= 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-xs text-slate-400 px-2">{viewWeek} / {enrollment.duration_weeks}</span>
-                <button
-                  onClick={() => setViewWeek(v => Math.min(enrollment.duration_weeks, v + 1))}
-                  disabled={viewWeek >= enrollment.duration_weeks}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Panneau de planification */}
-          {showSchedule && (
-            <div className="mb-4 bg-white/5 border border-orange-500/20 rounded-xl p-4 space-y-4">
-              <div className="flex items-start gap-2">
-                <CalendarPlus className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-slate-400">
-                  Choisis le jour de chaque séance de la semaine {viewWeek}. Le bouton ci-dessous répartit
-                  automatiquement les séances sur la semaine, à toi d&apos;ajuster.
-                </p>
-              </div>
-
-              {/* Base de semaine pour la répartition automatique */}
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-slate-500">Répartir à partir du</label>
-                <input
-                  type="date"
-                  value={scheduleDate}
-                  onChange={(e) => setScheduleDate(e.target.value)}
-                  className="px-2 py-1 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-xs focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
-                />
-              </div>
-
-              {/* Une date par séance */}
-              <div className="space-y-2">
-                {(weekData?.sessions ?? []).map((session, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                      {i + 1}
-                    </span>
-                    <span className="flex-1 text-sm text-white truncate">
-                      {session.title}
-                      {session._bonus && <span className="ml-2 text-xs text-purple-300">· Bonus</span>}
-                    </span>
-                    <input
-                      type="date"
-                      value={sessionDates[i] ?? ''}
-                      onChange={(e) => {
-                        const next = [...sessionDates]
-                        next[i] = e.target.value
-                        setSessionDates(next)
-                      }}
-                      className="px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500/50 [color-scheme:dark]"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={handleSchedule}
-                disabled={scheduling}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all disabled:opacity-50"
-              >
-                {scheduling ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Planification...</>
-                ) : (
-                  <><Calendar className="w-4 h-4" />Ajouter au calendrier</>
-                )}
-              </button>
-            </div>
-          )}
-
-          {loadingWeek ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
-            </div>
-          ) : weekData ? (
-            <div className="space-y-3">
-              {weekData.phase && (
-                <div className="px-1 mb-2">
-                  <p className="text-xs text-slate-500">
-                    <span className="text-slate-300 font-medium">Phase {weekData.phase.phase_number} — {weekData.phase.name}</span>
-                    {' · '}{weekData.phase.description}
-                  </p>
-                </div>
-              )}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {weekData.sessions.map((session, i) => (
-                  <WeekSessionCard key={i} session={session} num={i + 1} />
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </motion.div>
-
-      </div>
+        ) : null}
+      </motion.div>
     </motion.div>
   )
+}
+
+export default function TrainingProgramsPage() {
+  return <TrainingProgramsContent />
 }
