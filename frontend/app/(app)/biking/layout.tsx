@@ -4,10 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const TABS = [
-    { label: 'Séances', href: '/biking' },
+    { label: 'Historique', href: '/biking' },
     { label: 'Enregistrer', href: '/biking/log' },
     { label: 'Générer', href: '/biking/generate' },
-    { label: 'Bibliothèque', href: '/biking/library' },
 ]
 
 export default function BikingLayout({ children }: { children: React.ReactNode }) {

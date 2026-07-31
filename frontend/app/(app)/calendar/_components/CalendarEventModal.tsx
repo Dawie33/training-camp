@@ -160,9 +160,9 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
             asChild
             className="bg-violet-500/10 text-violet-700 border border-violet-500/30 hover:bg-violet-500/20"
           >
-            <a href="/strength">
+            <a href="/musculation">
               <ExternalLink className="w-3.5 h-3.5 mr-1" />
-              Voir dans Force
+              Voir dans Musculation
             </a>
           </Button>
         )}

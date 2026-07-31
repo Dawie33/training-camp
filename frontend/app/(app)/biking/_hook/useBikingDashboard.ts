@@ -1,6 +1,6 @@
 'use client'
 
-import { bikingService, BikingSession, BikingStats } from '@/services/biking'
+import { BikeType, bikingService, BikingSession, BikingStats } from '@/services/biking'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -9,13 +9,14 @@ export function useBikingDashboard() {
     const [stats, setStats] = useState<BikingStats | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [filter, setFilter] = useState<BikeType | ''>('')
 
     useEffect(() => {
         async function load() {
             try {
                 setLoading(true)
                 const [sessionsData, statsData] = await Promise.all([
-                    bikingService.getSessions({ limit: 10 }),
+                    bikingService.getSessions({ limit: 50, ...(filter ? { bike_type: filter } : {}) }),
                     bikingService.getStats(),
                 ])
                 setSessions(sessionsData.rows)
@@ -27,7 +28,7 @@ export function useBikingDashboard() {
             }
         }
         load()
-    }, [])
+    }, [filter])
 
     const handleDelete = async (id: string) => {
         try {
@@ -39,5 +40,5 @@ export function useBikingDashboard() {
         }
     }
 
-    return { sessions, stats, loading, error, handleDelete }
+    return { sessions, stats, loading, error, handleDelete, filter, setFilter }
 }

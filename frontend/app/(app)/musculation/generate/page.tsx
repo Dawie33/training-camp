@@ -54,6 +54,8 @@ export default function GenerateStrengthPage() {
   const [savedEquipment, setSavedEquipment] = useState<string[]>([])
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [additionalContext, setAdditionalContext] = useState('')
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [pasteText, setPasteText] = useState('')
   const [targetDurationMinutes, setTargetDurationMinutes] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -116,7 +118,7 @@ export default function GenerateStrengthPage() {
       setSaving(true)
       await strengthService.generateAndSave({ ...lastParams, existingPlan: plan })
       toast.success('Séance sauvegardée !')
-      router.push('/strength')
+      router.push('/musculation')
     } catch { toast.error('Erreur lors de la sauvegarde') } finally { setSaving(false) }
   }
 
@@ -128,17 +130,54 @@ export default function GenerateStrengthPage() {
       <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <motion.div variants={fadeInUp} className="flex items-center gap-3">
-          <Link href="/strength" className="text-slate-400 hover:text-white transition-colors">
+          <Link href="/musculation" className="text-slate-400 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-2xl font-bold">
               <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                Générer une séance Force
+                Générer une séance Musculation
               </span>
             </h1>
             <p className="text-sm text-slate-400">L'IA adapte la séance à ton matériel et inclut des mouvements de rotation</p>
           </div>
+        </motion.div>
+
+        <motion.div variants={fadeInUp}>
+          {pasteOpen ? (
+            <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-4 space-y-3">
+              <label className="block text-sm font-semibold text-slate-300">Coller un programme existant</label>
+              <textarea
+                rows={4}
+                placeholder="Ex: Back squat 5×5 @ 80%, Romanian deadlift 4×8..."
+                value={pasteText}
+                onChange={e => setPasteText(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-violet-500 placeholder:text-slate-600 resize-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setPasteOpen(false); setPasteText('') }}
+                  className="flex-1 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors text-sm"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => { setAdditionalContext(pasteText); setPasteOpen(false) }}
+                  disabled={!pasteText.trim()}
+                  className="flex-1 py-2 bg-violet-600 text-white font-medium rounded-lg hover:bg-violet-500 transition-colors text-sm disabled:opacity-50"
+                >
+                  Utiliser ce texte
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setPasteOpen(true)}
+              className="text-sm text-violet-400 hover:text-violet-300 underline underline-offset-2"
+            >
+              Coller un programme existant →
+            </button>
+          )}
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-6">

@@ -1,12 +1,15 @@
 'use client'
 
+import { BIKE_TYPE_LABELS, BikeType } from '@/services/biking'
 import { Bike, Clock, Flame, Plus, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { BikingSessionCard } from './_components/BikingSessionCard'
 import { useBikingDashboard } from './_hook/useBikingDashboard'
 
+const BIKE_TYPES: BikeType[] = ['endurance', 'sweet_spot', 'intervals', 'ftp_test', 'recovery', 'race']
+
 export default function BikingPage() {
-    const { sessions, stats, loading, error, handleDelete } = useBikingDashboard()
+    const { sessions, stats, loading, error, handleDelete, filter, setFilter } = useBikingDashboard()
 
     if (loading) {
         return (
@@ -73,23 +76,40 @@ export default function BikingPage() {
                 </Link>
             </div>
 
+            {/* Filtres */}
+            <div className="flex flex-wrap gap-1.5">
+                <button
+                    onClick={() => setFilter('')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filter === '' ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                        }`}
+                >
+                    Tous
+                </button>
+                {BIKE_TYPES.map(type => (
+                    <button
+                        key={type}
+                        onClick={() => setFilter(type)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filter === type ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                            }`}
+                    >
+                        {BIKE_TYPE_LABELS[type]}
+                    </button>
+                ))}
+            </div>
+
             {/* Liste des séances */}
             {sessions.length === 0 ? (
                 <div className="text-center py-16 space-y-3">
                     <Bike className="w-12 h-12 text-slate-600 mx-auto" />
-                    <p className="text-slate-400 font-medium">Aucune séance pour l'instant</p>
-                    <p className="text-slate-500 text-sm">Enregistre ta première sortie ou génère un plan IA</p>
+                    <p className="text-slate-400 font-medium">{filter ? 'Aucune séance trouvée' : "Aucune séance pour l'instant"}</p>
+                    {!filter && <p className="text-slate-500 text-sm">Enregistre ta première sortie ou génère un plan IA</p>}
                 </div>
             ) : (
                 <div className="space-y-3">
-                    <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Séances récentes</h2>
+                    <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Séances</h2>
                     {sessions.map(session => (
                         <BikingSessionCard key={session.id} session={session} onDelete={handleDelete} />
                     ))}
-                    <Link href="/biking/library"
-                        className="block text-center text-sm text-slate-500 hover:text-slate-300 transition-colors py-2">
-                        Voir toutes les séances →
-                    </Link>
                 </div>
             )}
         </div>

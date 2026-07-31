@@ -5,6 +5,7 @@ import { RUN_TYPE_LABELS, RunType } from '@/services/running'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
 import { RunPlanPreview } from './_components/RunPlanPreview'
 import { useGenerateRunning } from './_hooks/useGenerateRunning'
 
@@ -31,6 +32,9 @@ export default function GenerateRunningPage() {
     handleSave,
   } = useGenerateRunning()
 
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [pasteText, setPasteText] = useState('')
+
   return (
     <motion.div
       className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
@@ -52,6 +56,43 @@ export default function GenerateRunningPage() {
             </h1>
             <p className="text-sm text-slate-400">L'IA crée un plan adapté à ton niveau et tes objectifs</p>
           </div>
+        </motion.div>
+
+        <motion.div variants={fadeInUp}>
+          {pasteOpen ? (
+            <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-4 space-y-3">
+              <label className="block text-sm font-semibold text-slate-300">Coller un plan existant</label>
+              <textarea
+                rows={4}
+                placeholder="Ex: 2km échauffement + 6×800m @ allure 5'/km + 2km retour au calme..."
+                value={pasteText}
+                onChange={e => setPasteText(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 placeholder:text-slate-600 resize-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setPasteOpen(false); setPasteText('') }}
+                  className="flex-1 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors text-sm"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => { setAdditionalInstructions(pasteText); setPasteOpen(false) }}
+                  disabled={!pasteText.trim()}
+                  className="flex-1 py-2 bg-cyan-600 text-white font-medium rounded-lg hover:bg-cyan-500 transition-colors text-sm disabled:opacity-50"
+                >
+                  Utiliser ce texte
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setPasteOpen(true)}
+              className="text-sm text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+            >
+              Coller un plan existant →
+            </button>
+          )}
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-6">

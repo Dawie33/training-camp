@@ -7,13 +7,14 @@ import { MUSCLE_LABELS, SESSION_GOAL_LABELS, SessionGoal, strengthService, Stren
 import { ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from '@tanstack/react-table'
 import { motion } from 'framer-motion'
 import { ArrowUpDown, Search, Trash2 } from 'lucide-react'
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { StrengthSessionDetailModal } from '../_components/StrengthSessionDetailModal'
+import { StrengthSessionDetailModal } from './_components/StrengthSessionDetailModal'
 
 const GOALS: SessionGoal[] = ['strength', 'hypertrophy', 'endurance', 'power']
 
-export default function StrengthLibraryPage() {
+export default function MusculationPage() {
   const [sessions, setSessions] = useState<StrengthSession[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -66,7 +67,7 @@ export default function StrengthLibraryPage() {
     {
       id: 'name',
       header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Séance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
-      accessorFn: row => row.ai_plan?.session_name ?? 'Séance de force',
+      accessorFn: row => row.ai_plan?.session_name ?? 'Séance de musculation',
       cell: ({ getValue }) => <span className="font-medium text-white">{getValue() as string}</span>,
     },
     {
@@ -114,6 +115,17 @@ export default function StrengthLibraryPage() {
   ], [handleDelete])
 
   const table = useReactTable({ data: filtered, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() })
+
+  if (!loading && sessions.length === 0) {
+    return (
+      <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl px-4 py-10 text-center">
+        <p className="text-slate-500 mb-3 text-sm">Aucune séance enregistrée</p>
+        <Link href="/musculation/log" className="text-sm text-violet-400 hover:text-violet-300 underline underline-offset-2">
+          Enregistrer ma première séance
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -165,7 +177,7 @@ export default function StrengthLibraryPage() {
             ) : filtered.length === 0 ? (
               <TableRow className="border-slate-700/50">
                 <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500 text-sm">
-                  {sessions.length === 0 ? 'Aucune séance de force pour l\'instant' : 'Aucun résultat'}
+                  Aucun résultat
                 </TableCell>
               </TableRow>
             ) : (

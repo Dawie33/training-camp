@@ -373,7 +373,7 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
                   <div className="text-center py-8 text-muted-foreground text-sm space-y-2">
                     <Dumbbell className="w-8 h-8 mx-auto text-muted-foreground" />
                     <p>Aucune séance force créée.</p>
-                    <a href="/strength/generate" className="text-red-700 hover:underline text-xs">Générer une séance →</a>
+                    <a href="/musculation/generate" className="text-red-700 hover:underline text-xs">Générer une séance →</a>
                   </div>
                 )
                 if (filtered.length === 0) return (

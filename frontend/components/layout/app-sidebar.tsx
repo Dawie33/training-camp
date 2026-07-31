@@ -71,7 +71,7 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
         { href: '/crossfit', label: 'CrossFit', icon: <Activity className="w-5 h-5" /> },
         { href: '/running', label: 'Running', icon: <Footprints className="w-5 h-5" /> },
         { href: '/biking', label: 'Vélo', icon: <Bike className="w-5 h-5" /> },
-        { href: '/strength', label: 'Force', icon: <Dumbbell className="w-5 h-5" /> },
+        { href: '/musculation', label: 'Musculation', icon: <Dumbbell className="w-5 h-5" /> },
       ],
     },
   ]

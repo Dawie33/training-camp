@@ -4,10 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const TABS = [
-  { label: 'Séances', href: '/running' },
+  { label: 'Historique', href: '/running' },
   { label: 'Enregistrer', href: '/running/log' },
   { label: 'Générer', href: '/running/generate' },
-  { label: 'Bibliothèque', href: '/running/library' },
 ]
 
 export default function RunningLayout({ children }: { children: React.ReactNode }) {

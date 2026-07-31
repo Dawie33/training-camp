@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation'
 const TABS = [
   { label: 'Séances', href: '/crossfit' },
   { label: 'Enregistrer un WOD', href: '/crossfit/log-workout' },
-  { label: 'Générer IA', href: '/crossfit/generate' },
-  { label: 'Bibliothèque', href: '/crossfit/workouts' },
+  { label: 'Générer un WOD', href: '/crossfit/generate' },
+  { label: 'Catalogue WOD', href: '/crossfit/workouts' },
   { label: 'Progressions', href: '/crossfit/skills' },
 ]
 

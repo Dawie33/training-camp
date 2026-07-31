@@ -1,90 +1,199 @@
 'use client'
 
-import { formatDuration, formatPace, RUN_TYPE_LABELS } from '@/services/running'
+import { Button } from '@/components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { formatDuration, formatPace, runningService, RunningSession, RunType, RUN_TYPE_LABELS } from '@/services/running'
+import { ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from '@tanstack/react-table'
+import { motion } from 'framer-motion'
+import { ArrowUpDown, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
-import { useRunningDashboard } from './_hooks/useRunningDashboard'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
+
+const RUN_TYPES: RunType[] = ['easy', 'tempo', 'intervals', 'long_run', 'fartlek', 'recovery', 'race']
 
 export default function RunningPage() {
-  const { sessions, loading } = useRunningDashboard()
-  const [pasteOpen, setPasteOpen] = useState(false)
-  const [pasteText, setPasteText] = useState('')
+  const [sessions, setSessions] = useState<RunningSession[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [sorting, setSorting] = useState<SortingState>([])
+
+  const fetchSessions = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await runningService.getSessions({ limit: 200 })
+      setSessions(data.rows)
+    } catch {
+      toast.error('Impossible de charger les séances')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchSessions() }, [fetchSessions])
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!confirm('Supprimer cette sortie ?')) return
+    try {
+      await runningService.delete(id)
+      setSessions(prev => prev.filter(s => s.id !== id))
+      toast.success('Sortie supprimée')
+    } catch {
+      toast.error('Erreur lors de la suppression')
+    }
+  }, [])
+
+  const filtered = useMemo(() => sessions.filter(s => {
+    if (typeFilter && s.run_type !== typeFilter) return false
+    if (search) {
+      const q = search.toLowerCase()
+      const name = (s.ai_plan?.name ?? RUN_TYPE_LABELS[s.run_type]).toLowerCase()
+      if (!name.includes(q)) return false
+    }
+    return true
+  }), [sessions, typeFilter, search])
+
+  const columns = useMemo<ColumnDef<RunningSession>[]>(() => [
+    {
+      id: 'name',
+      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Sortie <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+      accessorFn: row => row.ai_plan?.name ?? RUN_TYPE_LABELS[row.run_type],
+      cell: ({ getValue }) => <span className="font-medium text-white">{getValue() as string}</span>,
+    },
+    {
+      accessorKey: 'session_date',
+      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Date <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+      cell: ({ row }) => new Date(row.getValue('session_date')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+    },
+    {
+      accessorKey: 'run_type',
+      header: 'Type',
+      cell: ({ row }) => <span className="px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/15 text-cyan-400">{RUN_TYPE_LABELS[row.getValue('run_type') as RunType]}</span>,
+    },
+    {
+      accessorKey: 'distance_km',
+      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Distance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+      cell: ({ row }) => {
+        const d = row.getValue('distance_km')
+        return d != null ? `${Number(d).toFixed(1)} km` : '—'
+      },
+    },
+    {
+      accessorKey: 'duration_seconds',
+      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Durée <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+      cell: ({ row }) => {
+        const s = row.getValue('duration_seconds') as number | null
+        return s ? <span className="font-mono text-cyan-400">{formatDuration(s)}</span> : '—'
+      },
+    },
+    {
+      accessorKey: 'avg_pace_seconds_per_km',
+      header: 'Allure',
+      cell: ({ row }) => {
+        const p = row.getValue('avg_pace_seconds_per_km') as number | null
+        return p ? formatPace(p) : '—'
+      },
+    },
+    {
+      accessorKey: 'avg_heart_rate',
+      header: 'FC moy.',
+      cell: ({ row }) => {
+        const hr = row.getValue('avg_heart_rate') as number | null
+        return hr ? `${hr} bpm` : '—'
+      },
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:text-red-400 hover:bg-red-500/10" onClick={() => handleDelete(row.original.id)}>
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      ),
+    },
+  ], [handleDelete])
+
+  const table = useReactTable({ data: filtered, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() })
+
+  if (!loading && sessions.length === 0) {
+    return (
+      <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl px-4 py-10 text-center">
+        <p className="text-slate-500 mb-3 text-sm">Aucune sortie enregistrée</p>
+        <Link href="/running/log" className="text-sm text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
+          Enregistrer ma première sortie
+        </Link>
+      </div>
+    )
+  }
 
   return (
-    <>
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Sorties récentes</h2>
+    <motion.div className="space-y-4 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
 
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-400" />
-            </div>
-          ) : sessions.length === 0 ? (
-            <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl px-4 py-10 text-center">
-              <p className="text-slate-500 mb-3 text-sm">Aucune sortie enregistrée</p>
-              <Link href="/running/log" className="text-sm text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
-                Enregistrer ma première sortie
-              </Link>
-            </div>
-          ) : (
-            <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl overflow-hidden">
-              {sessions.slice(0, 10).map((session, i) => {
-                const date = new Date(session.session_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-                const name = session.ai_plan?.name ?? RUN_TYPE_LABELS[session.run_type]
-                const duration = formatDuration(session.duration_seconds)
-                const pace = formatPace(session.avg_pace_seconds_per_km)
-                const count = Math.min(sessions.length, 10)
-                return (
-                  <div key={session.id}
-                    className={`flex items-center justify-between px-4 py-3 hover:bg-slate-700/30 transition-colors ${i < count - 1 ? 'border-b border-slate-700/40' : ''}`}
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{name}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {date}
-                        {session.distance_km && ` · ${Number(session.distance_km).toFixed(1)} km`}
-                      </p>
-                    </div>
-                    <div className="text-right ml-4 flex-shrink-0">
-                      <p className="text-sm font-mono text-cyan-400">{duration}</p>
-                      {pace !== '--' && <p className="text-xs text-slate-500">{pace}</p>}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {pasteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPasteOpen(false)} />
-          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 space-y-4">
-            <h2 className="font-semibold text-white">Coller un plan</h2>
-            <textarea
-              rows={6}
-              placeholder="Ex: 2km échauffement + 6×800m @ allure 5'/km + 2km retour au calme..."
-              value={pasteText}
-              onChange={e => setPasteText(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 placeholder:text-slate-600 resize-none"
+      <motion.div variants={fadeInUp} className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              placeholder="Rechercher..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
             />
-            <div className="flex gap-2">
-              <button onClick={() => setPasteOpen(false)} className="flex-1 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors text-sm">
-                Annuler
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            <button onClick={() => setTypeFilter('')} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${typeFilter === '' ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>Tous</button>
+            {RUN_TYPES.map(type => (
+              <button key={type} onClick={() => setTypeFilter(type)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${typeFilter === type ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>
+                {RUN_TYPE_LABELS[type]}
               </button>
-              <Link
-                href={`/running/generate?context=${encodeURIComponent(pasteText)}`}
-                className="flex-1 py-2 bg-cyan-600 text-white font-medium rounded-lg hover:bg-cyan-500 transition-colors text-sm text-center"
-                onClick={() => setPasteOpen(false)}
-              >
-                Analyser avec l&apos;IA
-              </Link>
-            </div>
+            ))}
           </div>
         </div>
-      )}
-    </>
+        <p className="text-xs text-slate-500">{loading ? '...' : `${filtered.length} sortie${filtered.length !== 1 ? 's' : ''}`}</p>
+      </motion.div>
+
+      <motion.div variants={fadeInUp} className="rounded-xl border border-slate-700/50 bg-slate-800/40 overflow-hidden">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map(hg => (
+              <TableRow key={hg.id} className="border-slate-700/50 hover:bg-transparent">
+                {hg.headers.map(h => (
+                  <TableHead key={h.id} className="text-slate-400 text-xs uppercase tracking-wide">
+                    {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow className="border-slate-700/50">
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-400 mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow className="border-slate-700/50">
+                <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500 text-sm">
+                  Aucun résultat
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map(row => (
+                <TableRow key={row.id} className="border-slate-700/40 hover:bg-slate-700/30 transition-colors">
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id} className="text-slate-300 text-sm py-2.5">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </motion.div>
+
+    </motion.div>
   )
 }
