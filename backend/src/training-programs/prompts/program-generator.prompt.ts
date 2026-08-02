@@ -1,4 +1,5 @@
 import type { UserAIContext } from 'src/workouts/services/user-context.service'
+import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
 
 export interface ProgramGenerationParams {
   program_type: string
@@ -45,9 +46,7 @@ function buildAthleteContextSection(context: UserAIContext): string {
     })
   }
 
-  if (context.equipment_available.length > 0) {
-    lines.push(`- Équipement disponible : ${context.equipment_available.join(', ')}`)
-  }
+  lines.push(`- Équipement disponible (box CrossFit) : ${EQUIPMENT_PRESETS.crossfit.join(', ')}`)
 
   if (Object.keys(context.global_goals).some((k) => context.global_goals[k])) {
     const goals = Object.entries(context.global_goals)
