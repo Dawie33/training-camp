@@ -9,7 +9,13 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-export function useGenerateWorkout() {
+interface UseGenerateWorkoutOptions {
+  /** Route vers laquelle rediriger après sauvegarde. `null` = rester sur place et réinitialiser le formulaire. */
+  redirectTo?: string | null
+}
+
+export function useGenerateWorkout(options?: UseGenerateWorkoutOptions) {
+  const redirectTo = options?.redirectTo === undefined ? '/workouts' : options.redirectTo
   const router = useRouter()
 
   // Form state
@@ -110,7 +116,12 @@ export function useGenerateWorkout() {
 
       await workoutsService.create(workoutData)
       toast.success('Workout généré et sauvegardé avec succès !')
-      router.push('/workouts')
+      if (redirectTo) {
+        router.push(redirectTo)
+      } else {
+        setGeneratedWorkout(null)
+        setIsEditing(false)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
     } finally {

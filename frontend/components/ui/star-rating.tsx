@@ -15,7 +15,7 @@ export function StarRating({ rating, onChange, allowDeselect = true }: StarRatin
         <button key={star} type="button" onClick={() => onChange(allowDeselect && star === rating ? 0 : star)}>
           <Star
             className={`w-6 h-6 transition-colors ${
-              star <= rating ? 'text-orange-400 fill-orange-400' : 'text-slate-600 hover:text-orange-300'
+              star <= rating ? 'text-primary fill-primary' : 'text-muted-foreground hover:text-primary/60'
             }`}
           />
         </button>

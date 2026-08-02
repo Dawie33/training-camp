@@ -50,15 +50,15 @@ import { toast } from 'sonner'
 const ITEMS_PER_PAGE = 10
 
 const DIFFICULTY_COLORS = {
-  beginner: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
-  intermediate: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
-  advanced: 'text-red-400 bg-red-500/20 border-red-500/30',
+  beginner: 'text-emerald-700 bg-emerald-100 border-emerald-200',
+  intermediate: 'text-amber-700 bg-amber-100 border-amber-200',
+  advanced: 'text-red-700 bg-red-100 border-red-200',
 } as const
 
 const STATUS_COLORS = {
-  draft: 'text-slate-400 bg-slate-500/20 border-slate-500/30',
-  published: 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30',
-  archived: 'text-orange-400 bg-orange-500/20 border-orange-500/30',
+  draft: 'text-muted-foreground bg-secondary border-border',
+  published: 'text-emerald-700 bg-emerald-100 border-emerald-200',
+  archived: 'text-primary bg-primary/10 border-primary/20',
 } as const
 
 export function WorkoutsCatalogTable() {
@@ -300,27 +300,27 @@ export function WorkoutsCatalogTable() {
     <motion.div className="space-y-6 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
       <div className="space-y-6">
         <motion.div variants={fadeInUp}>
-          <p className="text-xs text-slate-500">{total} workout{total !== 1 ? 's' : ''}</p>
+          <p className="eyebrow">{total} workout{total !== 1 ? 's' : ''}</p>
         </motion.div>
 
         {/* Filtres */}
         <motion.div variants={fadeInUp} className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher un workout..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-white/30"
+                className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <Select value={status} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="w-[150px] bg-card border-border text-foreground">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-white/10">
+              <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="published">Published</SelectItem>
@@ -329,10 +329,10 @@ export function WorkoutsCatalogTable() {
             </Select>
 
             <Select value={difficulty} onValueChange={handleDifficultyChange}>
-              <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="w-[150px] bg-card border-border text-foreground">
                 <SelectValue placeholder="Difficulté" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-white/10">
+              <SelectContent>
                 <SelectItem value="all">All Levels</SelectItem>
                 <SelectItem value="beginner">Beginner</SelectItem>
                 <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -341,10 +341,10 @@ export function WorkoutsCatalogTable() {
             </Select>
 
             <Select value={workoutType} onValueChange={handleWorkoutTypeChange}>
-              <SelectTrigger className="w-[150px] bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="w-[150px] bg-card border-border text-foreground">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-white/10">
+              <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="amrap">AMRAP</SelectItem>
                 <SelectItem value="emom">EMOM</SelectItem>
@@ -358,8 +358,8 @@ export function WorkoutsCatalogTable() {
               onClick={handleBenchmarkToggle}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
                 isBenchmark
-                  ? 'border-yellow-500 bg-yellow-500/20 text-yellow-300'
-                  : 'border-white/10 bg-white/5 text-slate-400 hover:border-yellow-500/40 hover:text-yellow-400'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-primary'
               }`}
             >
               <Trophy className="w-3.5 h-3.5" />
@@ -374,11 +374,11 @@ export function WorkoutsCatalogTable() {
               size="sm"
               onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
               disabled={pageIndex === 0}
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-50"
+              className="bg-card border-border text-foreground hover:bg-secondary disabled:opacity-50"
             >
               Précédent
             </Button>
-            <div className="text-sm font-medium text-slate-300">
+            <div className="text-sm font-medium text-muted-foreground">
               Page {pageIndex + 1} sur {pageCount || 1}
             </div>
             <Button
@@ -386,7 +386,7 @@ export function WorkoutsCatalogTable() {
               size="sm"
               onClick={() => setPageIndex((prev) => Math.min(pageCount - 1, prev + 1))}
               disabled={pageIndex >= pageCount - 1}
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-50"
+              className="bg-card border-border text-foreground hover:bg-secondary disabled:opacity-50"
             >
               Suivant
             </Button>
@@ -394,13 +394,13 @@ export function WorkoutsCatalogTable() {
         </motion.div>
 
         {/* Vue Desktop - Table */}
-        <motion.div variants={fadeInUp} className="hidden md:block rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+        <motion.div variants={fadeInUp} className="hidden md:block rounded-lg border border-border bg-card overflow-hidden">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="border-white/10 hover:bg-white/5">
+                <TableRow key={headerGroup.id} className="border-border hover:bg-transparent">
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="text-slate-300">
+                    <TableHead key={header.id} className="text-muted-foreground">
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
@@ -409,10 +409,10 @@ export function WorkoutsCatalogTable() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow className="border-white/10">
+                <TableRow className="border-border">
                   <TableCell colSpan={columns.length} className="h-24 text-center">
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -421,13 +421,13 @@ export function WorkoutsCatalogTable() {
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="cursor-pointer border-white/10 hover:bg-white/10 transition-colors"
+                    className="cursor-pointer border-border hover:bg-secondary/60 transition-colors"
                     onClick={() => { window.location.href = `/workout/${row.original.id}` }}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="text-slate-200"
+                        className="text-foreground"
                         onClick={(e) => { if (cell.column.id === 'actions') e.stopPropagation() }}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -436,8 +436,8 @@ export function WorkoutsCatalogTable() {
                   </TableRow>
                 ))
               ) : (
-                <TableRow className="border-white/10">
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-slate-400">
+                <TableRow className="border-border">
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
                     Aucun workout trouvé
                   </TableCell>
                 </TableRow>
@@ -449,20 +449,20 @@ export function WorkoutsCatalogTable() {
         {/* Vue Mobile - Cards */}
         <motion.div variants={fadeInUp} className="md:hidden space-y-3">
           {loading ? (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center">
+            <div className="bg-card border border-border rounded-lg p-6 text-center">
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             </div>
           ) : workouts.length === 0 ? (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center text-slate-400">
+            <div className="bg-card border border-border rounded-lg p-6 text-center text-muted-foreground">
               Aucun workout trouvé
             </div>
           ) : (
             workouts.map((workout) => (
               <motion.div
                 key={workout.id}
-                className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 space-y-3 cursor-pointer hover:bg-white/10 transition-all"
+                className="bg-card border border-border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-secondary/60 transition-all"
                 onClick={() => { window.location.href = `/workout/${workout.id}` }}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -470,29 +470,29 @@ export function WorkoutsCatalogTable() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-sm line-clamp-1 text-white">{workout.name}</h3>
+                      <h3 className="font-semibold text-sm line-clamp-1 text-foreground">{workout.name}</h3>
                       {workout.is_benchmark && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border border-yellow-500/50 bg-yellow-500/10 text-yellow-400 flex-shrink-0">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border border-primary/40 bg-primary/10 text-primary flex-shrink-0">
                           <Trophy className="w-2.5 h-2.5" />
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <Badge className="text-xs bg-white/10 text-slate-300 border-white/20">
+                      <Badge className="text-xs bg-secondary text-foreground border-border">
                         {workout.workout_type?.replace(/_/g, ' ') || 'N/A'}
                       </Badge>
                     </div>
                   </div>
                   <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Link href={`/workout/${workout.id}`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary">
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       onClick={() => handleDelete(workout.id, workout.name)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -500,26 +500,26 @@ export function WorkoutsCatalogTable() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500">Difficulté</p>
-                    <Badge variant="outline" className={`text-xs ${DIFFICULTY_COLORS[workout.difficulty as keyof typeof DIFFICULTY_COLORS] || 'bg-slate-500/20 text-slate-400'}`}>
+                    <p className="text-xs text-muted-foreground">Difficulté</p>
+                    <Badge variant="outline" className={`text-xs ${DIFFICULTY_COLORS[workout.difficulty as keyof typeof DIFFICULTY_COLORS] || 'bg-secondary text-muted-foreground'}`}>
                       {workout.difficulty}
                     </Badge>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500">Intensité</p>
-                    <p className="text-sm font-medium capitalize text-slate-200">{workout.intensity || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Intensité</p>
+                    <p className="text-sm font-medium capitalize text-foreground">{workout.intensity || 'N/A'}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500">Statut</p>
+                    <p className="text-xs text-muted-foreground">Statut</p>
                     <Badge variant="outline" className={`text-xs ${STATUS_COLORS[workout.status as keyof typeof STATUS_COLORS] || ''}`}>
                       {workout.status}
                     </Badge>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500">Date</p>
-                    <p className="text-sm font-medium text-slate-200">
+                    <p className="text-xs text-muted-foreground">Date</p>
+                    <p className="text-sm font-medium text-foreground">
                       {new Date(workout.created_at).toLocaleDateString()}
                     </p>
                   </div>

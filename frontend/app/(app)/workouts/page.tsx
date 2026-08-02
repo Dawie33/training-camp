@@ -7,20 +7,17 @@ import { motion } from 'framer-motion'
 export default function WorkoutsPage() {
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+      className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8"
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
     >
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-        <motion.div variants={fadeInUp}>
-          <h1 className="text-3xl sm:text-4xl font-bold">
-            <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Workouts</span>
-          </h1>
-        </motion.div>
+      <motion.div variants={fadeInUp}>
+        <div className="eyebrow mb-3">Catalogue · tous les workouts</div>
+        <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-none tracking-tight">Workouts</h1>
+      </motion.div>
 
-        <WorkoutsCatalogTable />
-      </div>
+      <WorkoutsCatalogTable />
     </motion.div>
   )
 }

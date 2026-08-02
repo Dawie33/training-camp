@@ -18,21 +18,21 @@ function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSecon
   const total = totalSeconds || zones.reduce((s, z) => s + z.seconds, 0)
   return (
     <div className="space-y-2 pt-1">
-      <p className="text-xs text-slate-400 font-medium">Zones de fréquence cardiaque</p>
+      <p className="text-xs text-muted-foreground font-medium">Zones de fréquence cardiaque</p>
       {zones.map((z, i) => {
         const pct = total > 0 ? Math.round((z.seconds / total) * 100) : 0
         const mm = Math.floor(z.seconds / 60)
         const ss = String(Math.floor(z.seconds % 60)).padStart(2, '0')
         return (
           <div key={z.zone} className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 w-20 shrink-0">{z.label}</span>
-            <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+            <span className="text-xs text-muted-foreground w-20 shrink-0">{z.label}</span>
+            <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${pct}%`, backgroundColor: ZONE_COLORS[i] }}
               />
             </div>
-            <span className="text-xs text-slate-400 w-16 text-right shrink-0">{mm}:{ss} ({pct}%)</span>
+            <span className="text-xs text-muted-foreground w-16 text-right shrink-0">{mm}:{ss} ({pct}%)</span>
           </div>
         )
       })}
@@ -274,33 +274,16 @@ function LogWorkoutContent() {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/crossfit"
-            className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
-          >
-            &larr;
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Enregistrer un WOD</span>
-            </h1>
-            <p className="text-slate-400 text-sm mt-1">Log un workout CrossFit réalisé</p>
-          </div>
-        </div>
-
+      <div className="max-w-3xl space-y-6">
         {/* Workout Selection */}
-        <div className="relative z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4 overflow-visible">
+        <div className="relative z-10 bg-card border border-border rounded-lg p-5 space-y-4 overflow-visible">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-white">Quel WOD as-tu fait ?</h2>
+            <h2 className="text-lg font-semibold text-foreground">Quel WOD as-tu fait ?</h2>
             <Link href="/crossfit/workouts">
-              <button className="p-3.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all">
+              <button className="px-3.5 py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all">
                 Ajouter un wod
               </button>
             </Link>
@@ -319,30 +302,30 @@ function LogWorkoutContent() {
               }}
               onFocus={() => setShowDropdown(true)}
               placeholder="Rechercher un workout..."
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 transition-all"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
             />
             {showDropdown && !selectedWorkout && (
-              <div className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto bg-slate-800 border border-slate-700/50 rounded-xl shadow-2xl">
+              <div className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto bg-card border border-border rounded-lg shadow-lg">
                 {loadingWorkouts ? (
-                  <div className="p-4 text-center text-slate-400">Chargement...</div>
+                  <div className="p-4 text-center text-muted-foreground">Chargement...</div>
                 ) : allWorkoutsList.length === 0 ? (
-                  <div className="p-4 text-center text-slate-400">Aucun workout trouvé</div>
+                  <div className="p-4 text-center text-muted-foreground">Aucun workout trouvé</div>
                 ) : (
                   allWorkoutsList.map((w, idx) => (
                     <button
                       key={`${w.personalized_id || w.id}-${idx}`}
-                      className="w-full text-left px-4 py-3 hover:bg-slate-700/50 transition-colors border-b border-slate-700/30 last:border-0"
+                      className="w-full text-left px-4 py-3 hover:bg-secondary/60 transition-colors border-b border-border last:border-0"
                       onClick={() => handleSelectWorkout(w)}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-white">{w.name}</span>
+                        <span className="font-medium text-foreground">{w.name}</span>
                         {w.personalized_id && (
-                          <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 text-[10px] font-semibold rounded">Perso</span>
+                          <span className="px-1.5 py-0.5 bg-secondary text-foreground text-[10px] font-semibold rounded border border-border">Perso</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        {w.workout_type && <span className="text-xs text-orange-400">{w.workout_type.replace(/_/g, ' ')}</span>}
-                        {w.estimated_duration && <span className="text-xs text-slate-500">{w.estimated_duration} min</span>}
+                        {w.workout_type && <span className="text-xs text-primary">{w.workout_type.replace(/_/g, ' ')}</span>}
+                        {w.estimated_duration && <span className="text-xs text-muted-foreground">{w.estimated_duration} min</span>}
                       </div>
                     </button>
                   ))
@@ -352,23 +335,23 @@ function LogWorkoutContent() {
           </div>
 
           {selectedWorkout && (
-            <div className="flex items-center gap-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
-              <div className="w-1.5 h-8 bg-orange-500 rounded-full" />
+            <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+              <div className="w-1.5 h-8 bg-primary rounded-full" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-white">{selectedWorkout.name}</p>
+                  <p className="font-semibold text-foreground">{selectedWorkout.name}</p>
                   {selectedWorkout.personalized_id && (
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 text-[10px] font-semibold rounded">Perso</span>
+                    <span className="px-1.5 py-0.5 bg-secondary text-foreground text-[10px] font-semibold rounded border border-border">Perso</span>
                   )}
                 </div>
                 <div className="flex gap-2 mt-0.5">
-                  {selectedWorkout.workout_type && <span className="text-xs text-orange-400">{selectedWorkout.workout_type.replace(/_/g, ' ')}</span>}
-                  {selectedWorkout.difficulty && <span className="text-xs text-slate-400">{selectedWorkout.difficulty}</span>}
+                  {selectedWorkout.workout_type && <span className="text-xs text-primary">{selectedWorkout.workout_type.replace(/_/g, ' ')}</span>}
+                  {selectedWorkout.difficulty && <span className="text-xs text-muted-foreground">{selectedWorkout.difficulty}</span>}
                 </div>
               </div>
               <button
                 onClick={() => { setSelectedWorkout(null); setSearch(''); setWeightsUsed({}) }}
-                className="text-slate-400 hover:text-white transition-colors text-lg"
+                className="text-muted-foreground hover:text-foreground transition-colors text-lg"
               >
                 &times;
               </button>
@@ -378,10 +361,10 @@ function LogWorkoutContent() {
 
         {/* Exercise Details */}
         {selectedWorkout && exercises.length > 0 && (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-white">Détails des exercices</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Poids, distance, scaling, variante...</p>
+              <h2 className="text-lg font-semibold text-foreground">Détails des exercices</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Poids, distance, scaling, variante...</p>
             </div>
             <div className="space-y-3">
               {exercises.map((exercise, idx) => {
@@ -395,21 +378,21 @@ function LogWorkoutContent() {
                 const placeholder = hints.length > 0 ? hints.join(' / ') : 'ex: 60kg, Scaled, 500m...'
                 return (
                   <div key={`${exercise.name}-${idx}`} className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center text-orange-400 font-bold text-sm flex-shrink-0 mt-0.5">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-sm flex-shrink-0 mt-0.5">
                       {idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{exercise.name}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{exercise.name}</p>
                       <div className="flex flex-wrap gap-1.5 mt-0.5">
-                        {exercise.reps && <span className="text-xs text-slate-500">{exercise.reps} reps</span>}
-                        {exercise.duration && <span className="text-xs text-slate-500">{exercise.duration}</span>}
+                        {exercise.reps && <span className="text-xs text-muted-foreground">{exercise.reps} reps</span>}
+                        {exercise.duration && <span className="text-xs text-muted-foreground">{exercise.duration}</span>}
                       </div>
                       <input
                         type="text"
                         value={exerciseNotes[idx] || ''}
                         onChange={(e) => handleExerciseNoteChange(idx, e.target.value)}
                         placeholder={placeholder}
-                        className="w-full mt-1.5 px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-all"
+                        className="w-full mt-1.5 px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
                       />
                     </div>
                   </div>
@@ -420,11 +403,11 @@ function LogWorkoutContent() {
         )}
 
         {/* Import Coros .fit */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
+        <div className="bg-card border border-border rounded-lg p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-white">Données Coros</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Optionnel — importe ton .fit pour enrichir le log</p>
+              <h2 className="text-lg font-semibold text-foreground">Données Coros</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Optionnel — importe ton .fit pour enrichir le log</p>
             </div>
             {fitData && (
               <button
@@ -434,7 +417,7 @@ function LogWorkoutContent() {
                   setTimeSeconds('')
                   if (fitInputRef.current) fitInputRef.current.value = ''
                 }}
-                className="text-slate-400 hover:text-white transition-colors text-xl leading-none"
+                className="text-muted-foreground hover:text-foreground transition-colors text-xl leading-none"
               >
                 &times;
               </button>
@@ -445,7 +428,7 @@ function LogWorkoutContent() {
             <button
               onClick={() => fitInputRef.current?.click()}
               disabled={isParsing}
-              className="w-full flex items-center justify-center gap-3 py-4 border border-dashed border-slate-600 hover:border-orange-500/50 hover:bg-white/5 rounded-xl transition-all text-slate-400 hover:text-white disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-3 py-4 border border-dashed border-border hover:border-primary/50 hover:bg-secondary/40 rounded-lg transition-all text-muted-foreground hover:text-foreground disabled:opacity-50"
             >
               <input
                 ref={fitInputRef}
@@ -457,13 +440,13 @@ function LogWorkoutContent() {
               />
               {isParsing ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm">Analyse en cours...</span>
                 </>
               ) : (
                 <div className="text-left">
                   <p className="text-sm font-medium">Importer des fichiers .fit</p>
-                  <p className="text-xs text-slate-500">1 fichier ou plusieurs (ex: Murph = course + muscu + course)</p>
+                  <p className="text-xs text-muted-foreground">1 fichier ou plusieurs (ex: Murph = course + muscu + course)</p>
                 </div>
               )}
             </button>
@@ -477,36 +460,36 @@ function LogWorkoutContent() {
                   ? `${Math.floor(activity.duration_seconds / 60)}:${String(Math.floor(activity.duration_seconds % 60)).padStart(2, '0')}`
                   : null
                 return (
-                  <div key={idx} className={`rounded-xl p-3 border ${isRun ? 'bg-green-500/5 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
+                  <div key={idx} className={`rounded-lg p-3 border ${isRun ? 'bg-emerald-50 border-emerald-200' : 'bg-secondary/40 border-border'}`}>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-sm font-semibold ${isRun ? 'text-green-300' : 'text-slate-200'}`}>{label}</span>
-                      {dur && <span className="ml-auto text-xs text-slate-400">{dur}</span>}
+                      <span className={`text-sm font-semibold ${isRun ? 'text-emerald-700' : 'text-foreground'}`}>{label}</span>
+                      {dur && <span className="ml-auto text-xs text-muted-foreground">{dur}</span>}
                     </div>
                     <div className="grid grid-cols-3 gap-1.5">
                       {isRun && activity.avg_pace_min_km && (
-                        <div className="bg-white/5 rounded-lg p-2 text-center col-span-1">
-                          <p className="text-sm font-bold text-green-400">
+                        <div className="bg-card rounded-lg p-2 text-center col-span-1">
+                          <p className="text-sm font-bold text-emerald-700">
                             {Math.floor(activity.avg_pace_min_km)}:{String(Math.round((activity.avg_pace_min_km % 1) * 60)).padStart(2, '0')}
                           </p>
-                          <p className="text-slate-500 text-xs">min/km</p>
+                          <p className="text-muted-foreground text-xs">min/km</p>
                         </div>
                       )}
                       {isRun && activity.distance_meters && activity.distance_meters > 0 && (
-                        <div className="bg-white/5 rounded-lg p-2 text-center">
-                          <p className="text-sm font-bold text-blue-400">{(activity.distance_meters / 1000).toFixed(2)} km</p>
-                          <p className="text-slate-500 text-xs">Distance</p>
+                        <div className="bg-card rounded-lg p-2 text-center">
+                          <p className="text-sm font-bold text-primary">{(activity.distance_meters / 1000).toFixed(2)} km</p>
+                          <p className="text-muted-foreground text-xs">Distance</p>
                         </div>
                       )}
                       {activity.avg_heart_rate && (
-                        <div className="bg-white/5 rounded-lg p-2 text-center">
-                          <p className="text-sm font-bold text-rose-400">{activity.avg_heart_rate} bpm</p>
-                          <p className="text-slate-500 text-xs">FC moy.</p>
+                        <div className="bg-card rounded-lg p-2 text-center">
+                          <p className="text-sm font-bold text-destructive">{activity.avg_heart_rate} bpm</p>
+                          <p className="text-muted-foreground text-xs">FC moy.</p>
                         </div>
                       )}
                       {activity.max_heart_rate && (
-                        <div className="bg-white/5 rounded-lg p-2 text-center">
-                          <p className="text-sm font-bold text-rose-300">{activity.max_heart_rate} bpm</p>
-                          <p className="text-slate-500 text-xs">FC max</p>
+                        <div className="bg-card rounded-lg p-2 text-center">
+                          <p className="text-sm font-bold text-destructive/80">{activity.max_heart_rate} bpm</p>
+                          <p className="text-muted-foreground text-xs">FC max</p>
                         </div>
                       )}
                     </div>
@@ -515,27 +498,27 @@ function LogWorkoutContent() {
               })}
 
               {/* Totaux */}
-              <div className="pt-1 border-t border-white/10">
-                <p className="text-xs text-slate-500 mb-2">Totaux</p>
+              <div className="pt-1 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-2">Totaux</p>
                 <div className="grid grid-cols-3 gap-2">
                   {fitData.totals.calories && (
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="text-lg font-bold text-orange-400">{fitData.totals.calories}</p>
-                      <p className="text-slate-500 text-xs mt-0.5">Calories</p>
+                    <div className="bg-secondary/40 rounded-lg p-3 text-center">
+                      <p className="text-lg font-bold text-primary">{fitData.totals.calories}</p>
+                      <p className="text-muted-foreground text-xs mt-0.5">Calories</p>
                     </div>
                   )}
                   {fitData.totals.distance_meters && fitData.totals.distance_meters > 0 && (
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="text-lg font-bold text-blue-400">{(fitData.totals.distance_meters / 1000).toFixed(2)} km</p>
-                      <p className="text-slate-500 text-xs mt-0.5">Distance</p>
+                    <div className="bg-secondary/40 rounded-lg p-3 text-center">
+                      <p className="text-lg font-bold text-primary">{(fitData.totals.distance_meters / 1000).toFixed(2)} km</p>
+                      <p className="text-muted-foreground text-xs mt-0.5">Distance</p>
                     </div>
                   )}
                   {fitData.totals.duration_seconds > 0 && (
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="text-lg font-bold text-slate-300">
+                    <div className="bg-secondary/40 rounded-lg p-3 text-center">
+                      <p className="text-lg font-bold text-foreground">
                         {Math.floor(fitData.totals.duration_seconds / 60)}:{String(Math.floor(fitData.totals.duration_seconds % 60)).padStart(2, '0')}
                       </p>
-                      <p className="text-slate-500 text-xs mt-0.5">Durée totale</p>
+                      <p className="text-muted-foreground text-xs mt-0.5">Durée totale</p>
                     </div>
                   )}
                 </div>
@@ -550,29 +533,29 @@ function LogWorkoutContent() {
         </div>
 
         {/* Results */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-5">
-          <h2 className="text-lg font-semibold text-white">Résultats</h2>
+        <div className="bg-card border border-border rounded-lg p-5 space-y-5">
+          <h2 className="text-lg font-semibold text-foreground">Résultats</h2>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Date et heure du WOD</label>
+            <label className="block text-sm text-muted-foreground mb-2">Date et heure du WOD</label>
             <input
               type="datetime-local"
               value={wodDate}
               onChange={(e) => setWodDate(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-orange-500/50 transition-all [color-scheme:dark]"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 transition-all"
             />
           </div>
 
           {!isAmrap && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="block text-sm text-slate-400">Temps réalisé</label>
+                <label className="block text-sm text-muted-foreground">Temps réalisé</label>
                 <button
                   onClick={() => setCapAtteint(!capAtteint)}
                   className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
                     capAtteint
-                      ? 'bg-red-500/20 border-red-500/50 text-red-400'
-                      : 'bg-slate-800 border-white/10 text-slate-400 hover:text-slate-200'
+                      ? 'bg-destructive/10 border-destructive/40 text-destructive'
+                      : 'bg-secondary border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   Cap atteint
@@ -586,16 +569,16 @@ function LogWorkoutContent() {
                   onSecondsChange={setTimeSeconds}
                 />
               ) : (
-                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
                   <input
                     type="number"
                     min="0"
                     value={capScore}
                     onChange={(e) => setCapScore(e.target.value)}
                     placeholder="0"
-                    className="w-24 bg-transparent text-white text-center text-xl font-mono outline-none"
+                    className="w-24 bg-transparent text-foreground text-center text-xl font-mono outline-none"
                   />
-                  <span className="text-red-400 text-sm">reps au cap (score officiel)</span>
+                  <span className="text-destructive text-sm">reps au cap (score officiel)</span>
                 </div>
               )}
             </div>
@@ -603,7 +586,7 @@ function LogWorkoutContent() {
 
           {isAmrap && (
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Score AMRAP</label>
+              <label className="block text-sm text-muted-foreground mb-2">Score AMRAP</label>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
@@ -611,35 +594,35 @@ function LogWorkoutContent() {
                   onChange={(e) => setRounds(e.target.value)}
                   placeholder="0"
                   min="0"
-                  className="w-28 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
+                  className="w-28 px-4 py-3 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
                 />
-                <span className="text-slate-400 font-semibold">rounds +</span>
+                <span className="text-muted-foreground font-semibold">rounds +</span>
                 <input
                   type="number"
                   value={bonusReps}
                   onChange={(e) => setBonusReps(e.target.value)}
                   placeholder="0"
                   min="0"
-                  className="w-28 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-orange-500/50 transition-all"
+                  className="w-28 px-4 py-3 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
                 />
-                <span className="text-slate-400">reps</span>
+                <span className="text-muted-foreground">reps</span>
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Comment tu t&apos;es senti ?</label>
+            <label className="block text-sm text-muted-foreground mb-2">Comment tu t&apos;es senti ?</label>
             <StarRating rating={rating} onChange={setRating} />
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Notes (optionnel)</label>
+            <label className="block text-sm text-muted-foreground mb-2">Notes (optionnel)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Comment s'est passé ton WOD ?"
               rows={3}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 resize-none focus:outline-none focus:border-orange-500/50 transition-all"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50 transition-all"
             />
           </div>
         </div>
@@ -648,14 +631,14 @@ function LogWorkoutContent() {
         <div className="flex gap-3 pb-20 sm:pb-8">
           <Link
             href="/crossfit"
-            className="flex-1 py-3.5 text-center border border-slate-700/50 bg-slate-800/50 text-slate-300 rounded-xl font-medium hover:bg-slate-700/50 transition-colors"
+            className="flex-1 py-3.5 text-center border border-border bg-card text-foreground rounded-lg font-medium hover:bg-secondary/60 transition-colors"
           >
             Annuler
           </Link>
           <button
             onClick={handleSave}
             disabled={isSaving || !selectedWorkout}
-            className="flex-1 py-3.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-3.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? 'Enregistrement...' : 'Enregistrer le WOD'}
           </button>
