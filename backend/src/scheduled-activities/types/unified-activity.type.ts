@@ -1,4 +1,4 @@
-export type ActivityModule = 'crossfit' | 'running' | 'strength' | 'skill'
+export type ActivityModule = 'crossfit' | 'running' | 'biking' | 'strength' | 'skill'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**
@@ -31,7 +31,7 @@ export interface UnifiedActivity {
   session_data?: unknown
 
   // Champs nouveaux modules (source: scheduled_activities)
-  activity_type?: 'running' | 'strength' | 'skill'
+  activity_type?: 'running' | 'biking' | 'strength' | 'skill'
   activity_id?: string
 
   // Champs Skill (source: scheduled_activities + skill_programs)

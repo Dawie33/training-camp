@@ -1,15 +1,18 @@
 'use client'
 
-import { BIKE_TYPE_LABELS, BikeType } from '@/services/biking'
+import { BIKE_TYPE_LABELS, BikeType, BikingSession } from '@/services/biking'
 import { Bike, Clock, Flame, Plus, Zap } from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
 import { BikingSessionCard } from './_components/BikingSessionCard'
+import { BikingSessionDetailModal } from './_components/BikingSessionDetailModal'
 import { useBikingDashboard } from './_hook/useBikingDashboard'
 
 const BIKE_TYPES: BikeType[] = ['endurance', 'sweet_spot', 'intervals', 'ftp_test', 'recovery', 'race']
 
 export default function BikingPage() {
     const { sessions, stats, loading, error, handleDelete, filter, setFilter } = useBikingDashboard()
+    const [selectedSession, setSelectedSession] = useState<BikingSession | null>(null)
 
     if (loading) {
         return (
@@ -108,10 +111,12 @@ export default function BikingPage() {
                 <div className="space-y-3">
                     <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Séances</h2>
                     {sessions.map(session => (
-                        <BikingSessionCard key={session.id} session={session} onDelete={handleDelete} />
+                        <BikingSessionCard key={session.id} session={session} onDelete={handleDelete} onClick={setSelectedSession} />
                     ))}
                 </div>
             )}
+
+            <BikingSessionDetailModal session={selectedSession} onClose={() => setSelectedSession(null)} />
         </div>
     )
 }

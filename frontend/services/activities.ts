@@ -1,6 +1,6 @@
 import { apiClient } from './index'
 
-export type ActivityModule = 'crossfit' | 'running' | 'strength' | 'skill'
+export type ActivityModule = 'crossfit' | 'running' | 'biking' | 'strength' | 'skill'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**

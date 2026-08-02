@@ -5,9 +5,10 @@ import { useState } from 'react'
 interface BikingSessionCardProps {
     session: BikingSession
     onDelete?: (id: string) => void
+    onClick?: (session: BikingSession) => void
 }
 
-export function BikingSessionCard({ session, onDelete }: BikingSessionCardProps) {
+export function BikingSessionCard({ session, onDelete, onClick }: BikingSessionCardProps) {
     const [confirming, setConfirming] = useState(false)
     const typeColor = BIKE_TYPE_COLORS[session.bike_type]
     const typeLabel = BIKE_TYPE_LABELS[session.bike_type]
@@ -19,7 +20,10 @@ export function BikingSessionCard({ session, onDelete }: BikingSessionCardProps)
     })
 
     return (
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/[0.07] transition-colors">
+        <div
+            onClick={() => onClick?.(session)}
+            className={`rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/[0.07] transition-colors ${onClick ? 'cursor-pointer' : ''}`}
+        >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
@@ -45,7 +49,7 @@ export function BikingSessionCard({ session, onDelete }: BikingSessionCardProps)
                     </span>
                     {onDelete && (
                         confirming ? (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                                 <button
                                     type="button"
                                     onClick={() => onDelete(session.id)}
@@ -65,7 +69,7 @@ export function BikingSessionCard({ session, onDelete }: BikingSessionCardProps)
                         ) : (
                             <button
                                 type="button"
-                                onClick={() => setConfirming(true)}
+                                onClick={e => { e.stopPropagation(); setConfirming(true) }}
                                 className="text-slate-600 hover:text-red-400 transition-colors p-1"
                                 aria-label="Supprimer la séance"
                             >

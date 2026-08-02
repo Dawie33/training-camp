@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { activitiesApi } from '@/services/activities'
-import { BIKE_TYPE_LABELS, BikeType } from '@/services/biking'
+import { BIKE_TYPE_LABELS, BikingSession, bikingService } from '@/services/biking'
 import { RUN_TYPE_LABELS, RunType } from '@/services/running'
 import { SESSION_GOAL_LABELS, StrengthSession, strengthService } from '@/services/strength'
 import { workoutsApi, workoutsService } from '@/services/workouts'
@@ -61,7 +61,6 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
 
   // Sport-specific state
   const [runType, setRunType] = useState<RunType>('easy')
-  const [bikeType, setBikeType] = useState<BikeType>('endurance')
 
   // Force
   const [strengthSessions, setStrengthSessions] = useState<StrengthSession[]>([])
@@ -69,6 +68,12 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
   const [selectedStrengthId, setSelectedStrengthId] = useState<string>('')
   const [strengthSearch, setStrengthSearch] = useState('')
   const [strengthGoalFilter, setStrengthGoalFilter] = useState<string>('')
+
+  // Vélo
+  const [bikingSessions, setBikingSessions] = useState<BikingSession[]>([])
+  const [loadingBiking, setLoadingBiking] = useState(false)
+  const [selectedBikingId, setSelectedBikingId] = useState<string>('')
+  const [bikingSearch, setBikingSearch] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -100,6 +105,16 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
     }
   }, [open, sportTab])
 
+  useEffect(() => {
+    if (open && sportTab === 'biking' && bikingSessions.length === 0) {
+      setLoadingBiking(true)
+      bikingService.getSessions({ limit: 30 })
+        .then(data => setBikingSessions(data.rows))
+        .catch(() => { })
+        .finally(() => setLoadingBiking(false))
+    }
+  }, [open, sportTab])
+
   const resetState = () => {
     setWorkouts([])
     setPersonalizedWorkouts([])
@@ -115,11 +130,13 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
     setShowFilters(false)
     setNotes('')
     setRunType('easy')
-    setBikeType('endurance')
     setStrengthSessions([])
     setSelectedStrengthId('')
     setStrengthSearch('')
     setStrengthGoalFilter('')
+    setBikingSessions([])
+    setSelectedBikingId('')
+    setBikingSearch('')
   }
 
   const handleSubmitSportActivity = async () => {
@@ -131,10 +148,13 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
     if (sportTab === 'crossfit') return
     setSubmitting(true)
     try {
+      const activityId = sportTab === 'strength' ? selectedStrengthId
+        : sportTab === 'biking' ? selectedBikingId
+          : undefined
       await activitiesApi.create({
         activity_type: activityTypeMap[sportTab],
         scheduled_date: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`,
-        activity_id: sportTab === 'strength' ? selectedStrengthId || undefined : undefined,
+        activity_id: activityId || undefined,
         notes: notes || undefined,
       })
       toast.success('Séance planifiée !')
@@ -290,21 +310,15 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
           </form>
         )}
 
-        {/* --- RUNNING / BIKING --- */}
-        {sportTab !== 'crossfit' && sportTab !== 'strength' && (
+        {/* --- RUNNING --- */}
+        {sportTab === 'running' && (
           <div className="flex flex-col gap-4 flex-1">
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Type de séance</label>
               <div className="grid grid-cols-2 gap-2">
-                {sportTab === 'running' && (Object.entries(RUN_TYPE_LABELS) as [RunType, string][]).map(([value, label]) => (
+                {(Object.entries(RUN_TYPE_LABELS) as [RunType, string][]).map(([value, label]) => (
                   <button key={value} type="button" onClick={() => setRunType(value)}
                     className={`px-3 py-2.5 rounded-md border text-sm text-left transition-all ${runType === value ? activeSport.activeColor + ' border' : 'bg-card border-border text-foreground hover:bg-muted/60'}`}>
-                    {label}
-                  </button>
-                ))}
-                {sportTab === 'biking' && (Object.entries(BIKE_TYPE_LABELS) as [BikeType, string][]).map(([value, label]) => (
-                  <button key={value} type="button" onClick={() => setBikeType(value)}
-                    className={`px-3 py-2.5 rounded-md border text-sm text-left transition-all ${bikeType === value ? activeSport.activeColor + ' border' : 'bg-card border-border text-foreground hover:bg-muted/60'}`}>
                     {label}
                   </button>
                 ))}
@@ -320,6 +334,75 @@ export function ScheduleWorkoutModal({ open, onOpenChange, selectedDate, onSched
               <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Annuler</button>
               <button type="button" onClick={handleSubmitSportActivity} disabled={submitting}
                 className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${submitting ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}>
+                {submitting ? 'Planification...' : 'Planifier'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --- VÉLO --- */}
+        {sportTab === 'biking' && (
+          <div className="flex flex-col gap-3 flex-1 overflow-hidden min-h-0">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Rechercher une séance..."
+                value={bikingSearch}
+                onChange={e => setBikingSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-600/30"
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-1 space-y-2 min-h-0" style={{ maxHeight: '280px' }}>
+              {loadingBiking ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+                </div>
+              ) : (() => {
+                const filtered = bikingSessions.filter(s => {
+                  const name = s.ai_plan?.name ?? ''
+                  return bikingSearch === '' ||
+                    name.toLowerCase().includes(bikingSearch.toLowerCase()) ||
+                    BIKE_TYPE_LABELS[s.bike_type].toLowerCase().includes(bikingSearch.toLowerCase())
+                })
+                if (bikingSessions.length === 0) return (
+                  <div className="text-center py-8 text-muted-foreground text-sm space-y-2">
+                    <Bike className="w-8 h-8 mx-auto text-muted-foreground" />
+                    <p>Aucune séance vélo créée.</p>
+                    <a href="/biking/generate" className="text-blue-700 hover:underline text-xs">Générer une séance →</a>
+                  </div>
+                )
+                if (filtered.length === 0) return (
+                  <p className="text-center py-6 text-muted-foreground text-sm">Aucun résultat</p>
+                )
+                return filtered.map(session => {
+                  const name = session.ai_plan?.name ?? BIKE_TYPE_LABELS[session.bike_type]
+                  const isSelected = selectedBikingId === session.id
+                  return (
+                    <button
+                      key={session.id}
+                      type="button"
+                      onClick={() => setSelectedBikingId(session.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-md border transition-all ${isSelected ? 'bg-blue-600/10 border-blue-600/30 text-blue-700' : 'bg-card border-border text-foreground hover:bg-muted/60'}`}
+                    >
+                      <p className="font-semibold text-sm">{name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{BIKE_TYPE_LABELS[session.bike_type]}</p>
+                    </button>
+                  )
+                })
+              })()}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes (optionnel)</label>
+              <textarea placeholder="Objectif, intensité..." value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-600/30 resize-none" />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1 border-t border-border">
+              <button type="button" onClick={() => { resetState(); onOpenChange(false) }} disabled={submitting} className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Annuler</button>
+              <button type="button" onClick={handleSubmitSportActivity} disabled={submitting || !selectedBikingId}
+                className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${submitting || !selectedBikingId ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-primary-foreground'}`}>
                 {submitting ? 'Planification...' : 'Planifier'}
               </button>
             </div>

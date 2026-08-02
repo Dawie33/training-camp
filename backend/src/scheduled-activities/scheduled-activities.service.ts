@@ -5,7 +5,7 @@ import { InjectModel } from 'nest-knexjs'
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
 import { UnifiedActivity } from './types/unified-activity.type'
 
-const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', strength: 'Force', skill: 'Skill' }
+const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', biking: 'Vélo', strength: 'Force', skill: 'Skill' }
 
 export interface SkillEnrichment {
   title: string
@@ -159,6 +159,17 @@ export class ScheduledActivitiesService {
         for (const s of linked) linkedStrengthMap.set(s.id, s)
       }
 
+      // Batch-fetch les biking_sessions liées pour enrichir les créneaux vélo planifiés
+      const bikingActivityIds = saRows
+        .filter(r => r.activity_type === 'biking' && r.activity_id)
+        .map(r => r.activity_id)
+
+      const linkedBikingMap = new Map<string, Record<string, unknown>>()
+      if (bikingActivityIds.length > 0) {
+        const linked = await this.knex('biking_sessions').whereIn('id', bikingActivityIds)
+        for (const s of linked) linkedBikingMap.set(s.id, s)
+      }
+
       // Batch-fetch les programmes de skill liés pour enrichir les créneaux skill planifiés
       const skillProgramIds = saRows
         .filter(r => r.activity_type === 'skill' && r.activity_id)
@@ -178,6 +189,12 @@ export class ScheduledActivitiesService {
             title = (aiPlan?.session_name as string) || 'Séance Force'
             target_muscles = Array.isArray(session.target_muscles) ? session.target_muscles : []
             session_goal = session.session_goal as string | undefined
+          }
+        } else if (row.activity_type === 'biking' && row.activity_id) {
+          const session = linkedBikingMap.get(row.activity_id)
+          if (session) {
+            const aiPlan = session.ai_plan as Record<string, unknown> | null
+            title = (aiPlan?.name as string) || ACTIVITY_LABELS.biking
           }
         } else if (row.activity_type === 'skill' && row.activity_id) {
           const skill = skillEnrichmentMap.get(row.activity_id)
@@ -319,6 +336,12 @@ export class ScheduledActivitiesService {
         target_muscles = Array.isArray(session.target_muscles) ? session.target_muscles : []
         session_goal = session.session_goal as string | undefined
       }
+    } else if (row.activity_type === 'biking' && row.activity_id) {
+      const session = await this.knex('biking_sessions').where('id', row.activity_id).first()
+      if (session) {
+        const aiPlan = session.ai_plan as Record<string, unknown> | null
+        title = (aiPlan?.name as string) || ACTIVITY_LABELS.biking
+      }
     } else if (row.activity_type === 'skill' && row.activity_id) {
       const skill = (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
       if (skill) {
@@ -404,6 +427,12 @@ export class ScheduledActivitiesService {
         updateTitle = (aiPlan?.session_name as string) || 'Séance Force'
         updateMuscles = Array.isArray(session.target_muscles) ? session.target_muscles : []
         updateGoal = session.session_goal as string | undefined
+      }
+    } else if (row.activity_type === 'biking' && row.activity_id) {
+      const session = await this.knex('biking_sessions').where('id', row.activity_id).first()
+      if (session) {
+        const aiPlan = session.ai_plan as Record<string, unknown> | null
+        updateTitle = (aiPlan?.name as string) || ACTIVITY_LABELS.biking
       }
     } else if (row.activity_type === 'skill' && row.activity_id) {
       const skill = (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
