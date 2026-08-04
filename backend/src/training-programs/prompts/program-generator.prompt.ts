@@ -58,7 +58,7 @@ function buildAthleteContextSection(context: UserAIContext): string {
   if (context.recentSessions.length > 0) {
     const sportLabels: Record<string, string> = {
       crossfit: 'CrossFit', running: 'Running',
-      strength: 'Musculation', biking: 'Vélo',
+      strength: 'Force', biking: 'Vélo',
     }
     lines.push(`- Séances récentes tous sports (${context.recentSessions.length} sur 21 jours) :`)
     context.recentSessions.slice(0, 7).forEach((s) => {

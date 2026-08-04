@@ -1,7 +1,7 @@
 export function buildStrengthSystemPrompt(): string {
-  return `Tu es un coach de force certifié (NSCA-CSCS) spécialisé dans la programmation de séances de musculation fonctionnelle et de force athlétique.
+  return `Tu es un coach de force certifié (NSCA-CSCS) spécialisé dans la programmation de séances de force fonctionnelle et de force athlétique.
 
-Ta mission est de générer une séance de musculation structurée, adaptée aux groupes musculaires ciblés, au matériel disponible, et aux objectifs de l'athlète, en format JSON.
+Ta mission est de générer une séance de force structurée, adaptée aux groupes musculaires ciblés, au matériel disponible, et aux objectifs de l'athlète, en format JSON.
 
 # STRUCTURE JSON REQUISE
 
@@ -107,7 +107,22 @@ IMPORTANT : utilise UNIQUEMENT ces 8 valeurs pour block_type : push, pull, hinge
 - Cohérence matériel : n'utiliser que les équipements listés dans la requête
 - Progression logique : du plus lourd/technique au plus léger/isolation
 - Sécurité : toujours noter les cues techniques essentiels dans coaching_notes
-- Variété : ne pas répéter le même exercice entre les blocs`
+- Variété : ne pas répéter le même exercice entre les blocs
+
+# STYLE STRONGMAN (si activé dans la requête utilisateur)
+
+Quand la requête précise "Style d'entraînement : STRONGMAN", privilégie ce répertoire de mouvements, en les rattachant TOUJOURS à un des 8 block_type existants (aucune nouvelle valeur) :
+- **carry** (portés/locomotion chargée) : yoke walk, farmer's walk, sandbag carry, suitcase carry, keg carry, sled push/pull, sled drag
+- **hinge** (charnière de hanche explosive) : atlas stone lift/carry, tire flip, sandbag clean, keg clean
+
+## Règle de repli obligatoire selon l'équipement disponible
+L'équipement strongman spécialisé est rarement présent dans une box CrossFit standard. Cherche les tokens suivants (ou variantes évidentes) dans la liste "Matériel disponible" du prompt utilisateur, et applique ce repli si absent — NE JAMAIS inventer un exercice nécessitant un équipement non listé :
+- Pas de "yoke" → remplacer par farmer's walk lourd (haltères ou kettlebells)
+- Pas de "sandbag" / "atlas-stone" / "stone" → remplacer par un clean/carry lourd à la kettlebell ou à l'haltère (ground-to-shoulder)
+- Pas de "tire" / "pneu" → si "sled" ou "prowler" disponible, utiliser sled push/pull ; sinon SUPPRIMER l'exercice, ne pas le remplacer par un ersatz artificiel
+- Pas de "sled" / "prowler" → repli sur farmer's walk lourd, ou suppression si aucune alternative crédible avec le matériel listé
+- Pas de "keg" → remplacer par sandbag carry ou haltère lourd en suitcase carry
+- Toujours vérifier la cohérence : ne propose un mouvement strongman que si son équipement (ou son repli) figure explicitement dans le matériel disponible`
 }
 
 export function buildStrengthUserPrompt(params: {
@@ -128,6 +143,8 @@ export function buildStrengthUserPrompt(params: {
   physicalLimitations?: Record<string, unknown>
   additionalContext?: string
   targetDurationMinutes?: number
+  bodyFocus?: 'upper_body' | 'lower_body' | 'full_body'
+  trainingStyle?: 'traditional' | 'strongman'
 }): string {
   const equipmentStr = params.availableEquipment.length > 0
     ? params.availableEquipment.join(', ')
@@ -176,12 +193,27 @@ export function buildStrengthUserPrompt(params: {
     ? `\nDurée cible : ${params.targetDurationMinutes} minutes — RESPECTE cette contrainte, ajuste le nombre de blocs et d'exercices en conséquence.`
     : ''
 
+  // Focus corporel : restreint les block_type autorisés
+  const BODY_FOCUS_BLOCK_TYPES: Record<'upper_body' | 'lower_body', string> = {
+    upper_body: 'push, pull, rotation, isolation, core',
+    lower_body: 'squat, hinge, carry',
+  }
+  const bodyFocusStr =
+    params.bodyFocus && params.bodyFocus !== 'full_body'
+      ? `\nFocus corporel : ${params.bodyFocus === 'upper_body' ? 'haut du corps' : 'bas du corps'}. Tu DOIS choisir block_type UNIQUEMENT parmi : ${BODY_FOCUS_BLOCK_TYPES[params.bodyFocus]}. N'utilise JAMAIS les autres valeurs pour cette séance.`
+      : ''
+
+  const trainingStyleStr =
+    params.trainingStyle === 'strongman'
+      ? `\nStyle d'entraînement : STRONGMAN. Applique la section STYLE STRONGMAN du system prompt, en respectant strictement les règles de repli équipement.`
+      : ''
+
   return `Génère une séance de force avec les paramètres suivants :
 
 Groupes musculaires ciblés : ${params.targetMuscles.join(', ')}
 Objectif : ${params.sessionGoal}
 Niveau de l'athlète : ${params.userLevel}
-Matériel disponible : ${equipmentStr}${durationStr}${recentStr}${historyStr}${maxStr}${safetyStr}${contextStr}
+Matériel disponible : ${equipmentStr}${durationStr}${bodyFocusStr}${trainingStyleStr}${recentStr}${historyStr}${maxStr}${safetyStr}${contextStr}
 
 Génère une séance complète et cohérente au format JSON demandé.`
 }

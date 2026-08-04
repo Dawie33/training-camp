@@ -4,6 +4,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import {
   CreateStrengthSessionDto,
   GenerateStrengthSessionDto,
+  ParseStrengthTextDto,
   StrengthSessionQueryDto,
   UpdateStrengthSessionDto,
 } from '../dto/strength.dto'
@@ -51,6 +52,14 @@ export class StrengthController {
     @Request() req: { user: { id: string } },
   ) {
     return this.aiGenerator.generateSession(req.user.id, dto)
+  }
+
+  // Extrait et structure une séance depuis du texte brut (ex: légende Instagram), sans sauvegarder
+  @Post('parse-text')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async parseText(@Body() dto: ParseStrengthTextDto) {
+    return this.aiGenerator.parseSessionText(dto.text)
   }
 
   // Sauvegarde après validation de l'utilisateur (plan existant passé pour éviter un second appel IA)

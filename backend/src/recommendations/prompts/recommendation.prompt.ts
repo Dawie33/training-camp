@@ -6,7 +6,7 @@ const SPORT_LABELS: Record<string, string> = {
   crossfit: 'CrossFit',
   running: 'Running',
   biking: 'Vélo',
-  strength: 'Musculation',
+  strength: 'Force',
 }
 
 export function buildRecommendationSystemPrompt(): string {

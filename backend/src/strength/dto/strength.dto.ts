@@ -1,5 +1,12 @@
-import { IsArray, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, IsNumber } from 'class-validator'
-import type { MuscleGroup, SessionGoal } from '../types/strength.types'
+import { IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, IsNumber } from 'class-validator'
+import {
+  BODY_FOCUS_VALUES,
+  TRAINING_STYLE_VALUES,
+  type BodyFocus,
+  type MuscleGroup,
+  type SessionGoal,
+  type TrainingStyle,
+} from '../types/strength.types'
 
 export class GenerateStrengthSessionDto {
   @IsArray()
@@ -12,6 +19,19 @@ export class GenerateStrengthSessionDto {
   @IsOptional()
   @IsEnum(['beginner', 'intermediate', 'advanced', 'elite'])
   userLevel?: string
+
+  @IsOptional()
+  @IsEnum(BODY_FOCUS_VALUES)
+  bodyFocus?: BodyFocus
+
+  @IsOptional()
+  @IsEnum(TRAINING_STYLE_VALUES)
+  trainingStyle?: TrainingStyle
+
+  // Adapte la séance au profil (1RMs, blessures, historique) — true par défaut
+  @IsOptional()
+  @IsBoolean()
+  personalized?: boolean
 
   @IsOptional()
   @IsArray()
@@ -35,6 +55,12 @@ export class GenerateStrengthSessionDto {
   existingPlan?: Record<string, unknown>
 }
 
+export class ParseStrengthTextDto {
+  @IsString()
+  @MinLength(10)
+  text!: string
+}
+
 export class CreateStrengthSessionDto {
   @IsString()
   session_date!: string
@@ -45,6 +71,14 @@ export class CreateStrengthSessionDto {
 
   @IsEnum(['strength', 'hypertrophy', 'endurance', 'power'])
   session_goal!: SessionGoal
+
+  @IsOptional()
+  @IsEnum(BODY_FOCUS_VALUES)
+  body_focus?: BodyFocus
+
+  @IsOptional()
+  @IsEnum(TRAINING_STYLE_VALUES)
+  training_style?: TrainingStyle
 
   @IsOptional()
   @IsArray()
@@ -112,6 +146,10 @@ export class StrengthSessionQueryDto {
   @IsOptional()
   @IsEnum(['strength', 'hypertrophy', 'endurance', 'power'])
   session_goal?: SessionGoal
+
+  @IsOptional()
+  @IsEnum(BODY_FOCUS_VALUES)
+  body_focus?: BodyFocus
 
   @IsOptional()
   @IsString()

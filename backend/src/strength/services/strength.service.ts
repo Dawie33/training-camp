@@ -18,13 +18,14 @@ export class StrengthService {
   ) {}
 
   async findAll(userId: string, query: StrengthSessionQueryDto) {
-    const { limit = '20', offset = '0', start_date, end_date, session_goal, target_muscle } = query
+    const { limit = '20', offset = '0', start_date, end_date, session_goal, body_focus, target_muscle } = query
 
     let q = this.knex('strength_sessions').where('user_id', userId)
 
     if (start_date) q = q.where('session_date', '>=', start_date)
     if (end_date) q = q.where('session_date', '<=', end_date)
     if (session_goal) q = q.where('session_goal', session_goal)
+    if (body_focus) q = q.where('body_focus', body_focus)
     if (target_muscle) q = q.whereRaw('? = ANY(target_muscles)', [target_muscle])
 
     const [rows, countResult] = await Promise.all([
@@ -53,6 +54,8 @@ export class StrengthService {
         session_date: new Date().toISOString().split('T')[0],
         target_muscles: dto.targetMuscles,
         session_goal: dto.sessionGoal,
+        body_focus: dto.bodyFocus ?? null,
+        training_style: dto.trainingStyle ?? 'traditional',
         equipment_used: JSON.stringify(equipmentUsed),
         source: 'ai_generated',
         ai_plan: JSON.stringify(aiPlan),
@@ -69,6 +72,8 @@ export class StrengthService {
         session_date: dto.session_date,
         target_muscles: dto.target_muscles,
         session_goal: dto.session_goal,
+        body_focus: dto.body_focus ?? null,
+        training_style: dto.training_style ?? 'traditional',
         equipment_used: dto.equipment_used ? JSON.stringify(dto.equipment_used) : null,
         source: 'manual',
         ai_plan: dto.ai_plan ? JSON.stringify(dto.ai_plan) : null,
