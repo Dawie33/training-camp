@@ -41,7 +41,7 @@ export function WeekNavigator({
             size="sm"
             onClick={onAddBonus}
             disabled={addingBonus}
-            className="rounded-full border-border text-foreground hover:border-primary hover:text-primary"
+            className="rounded-full border-border text-foreground hover:border-primary hover:text-white"
           >
             {addingBonus ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
             Séance bonus
@@ -55,7 +55,7 @@ export function WeekNavigator({
             className={
               showSchedule
                 ? 'rounded-full'
-                : 'rounded-full border-border text-foreground hover:border-primary hover:text-primary'
+                : 'rounded-full border-border text-foreground hover:border-primary hover:text-white'
             }
           >
             <CalendarPlus className="w-3.5 h-3.5 mr-1.5" />

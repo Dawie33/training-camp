@@ -1,7 +1,7 @@
 'use client'
 
 import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
-import { Exercise } from '@/domain/entities/workout-structure'
+import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout-structure'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
 import { parseFitFiles, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
@@ -13,6 +13,27 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 const ZONE_COLORS = ['#64748b', '#22c55e', '#3b82f6', '#f97316', '#ef4444']
+
+const CONDITIONING_SECTION_TYPES: SectionType[] = [
+  'metcon', 'amrap', 'emom', 'for_time', 'circuit', 'intervals', 'tabata', 'finisher'
+]
+
+const SECTION_TYPE_LABELS: Partial<Record<SectionType, string>> = {
+  strength: 'Force',
+  accessory: 'Accessoire',
+  skill_work: 'Technique',
+  core: 'Core',
+  mobility: 'Mobilité',
+  cardio: 'Cardio',
+  intervals: 'Cardio',
+  metcon: 'WOD',
+  amrap: 'WOD',
+  emom: 'WOD',
+  for_time: 'WOD',
+  circuit: 'WOD',
+  tabata: 'WOD',
+  finisher: 'Finisher',
+}
 
 function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSeconds: number }) {
   const total = totalSeconds || zones.reduce((s, z) => s + z.seconds, 0)
@@ -40,23 +61,37 @@ function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSecon
   )
 }
 
-function getAllExercises(workout: Workouts): Exercise[] {
-  const exercises: Exercise[] = []
-  const collectExercises = (sections: Workouts['blocks']['sections']) => {
+interface ExerciseGroup {
+  section: WorkoutSection
+  exercises: Exercise[]
+}
+
+function getExerciseGroups(workout: Workouts): ExerciseGroup[] {
+  const groups: ExerciseGroup[] = []
+  const walk = (sections: WorkoutSection[]) => {
     for (const section of sections) {
       if (section.type === 'warmup' || section.type === 'cooldown') continue
-      if (section.exercises) {
-        exercises.push(...section.exercises)
+      if (section.exercises?.length) {
+        groups.push({ section, exercises: section.exercises })
       }
       if (section.sections) {
-        collectExercises(section.sections)
+        walk(section.sections)
       }
     }
   }
   if (workout.blocks?.sections) {
-    collectExercises(workout.blocks.sections)
+    walk(workout.blocks.sections)
   }
-  return exercises
+  return groups
+}
+
+function hasConditioningSection(sections: WorkoutSection[]): boolean {
+  for (const section of sections) {
+    if (section.type === 'warmup' || section.type === 'cooldown') continue
+    if (CONDITIONING_SECTION_TYPES.includes(section.type)) return true
+    if (section.sections && hasConditioningSection(section.sections)) return true
+  }
+  return false
 }
 
 function LogWorkoutContent() {
@@ -148,9 +183,24 @@ function LogWorkoutContent() {
     return [...regular, ...fromPersonalized].sort((a, b) => b.created_at.localeCompare(a.created_at))
   }, [workouts, personalizedWorkouts])
 
-  const exercises = useMemo(() => {
+  const exerciseGroups = useMemo(() => {
     if (!selectedWorkout) return []
-    return getAllExercises(selectedWorkout)
+    let cursor = 0
+    return getExerciseGroups(selectedWorkout).map(group => {
+      const startIndex = cursor
+      cursor += group.exercises.length
+      return { ...group, startIndex }
+    })
+  }, [selectedWorkout])
+
+  const exercises = useMemo(
+    () => exerciseGroups.flatMap(g => g.exercises),
+    [exerciseGroups]
+  )
+
+  const hasConditioning = useMemo(() => {
+    if (!selectedWorkout?.blocks?.sections) return false
+    return hasConditioningSection(selectedWorkout.blocks.sections)
   }, [selectedWorkout])
 
   const isAmrap = useMemo(() => {
@@ -200,11 +250,11 @@ function LogWorkoutContent() {
 
   const handleSave = async () => {
     const totalSeconds = (parseInt(timeMinutes || '0') * 60) + parseInt(timeSeconds || '0')
-    if (!isAmrap && !capAtteint && totalSeconds === 0) {
+    if (hasConditioning && !isAmrap && !capAtteint && totalSeconds === 0) {
       toast.error('Saisis un temps ou coche "Cap atteint"')
       return
     }
-    if (isAmrap && !rounds && !bonusReps) {
+    if (hasConditioning && isAmrap && !rounds && !bonusReps) {
       toast.error('Saisis un score AMRAP')
       return
     }
@@ -263,7 +313,7 @@ function LogWorkoutContent() {
         results: resultPayload,
       })
 
-      toast.success('WOD enregistré !')
+      toast.success('Séance enregistrée !')
       router.push('/crossfit')
     } catch {
       toast.error('Erreur lors de l\'enregistrement')
@@ -281,7 +331,7 @@ function LogWorkoutContent() {
         {/* Workout Selection */}
         <div className="relative z-10 bg-card border border-border rounded-lg p-5 space-y-4 overflow-visible">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-foreground">Quel WOD as-tu fait ?</h2>
+            <h2 className="text-lg font-semibold text-foreground">Quelle séance as-tu faite ?</h2>
             <Link href="/crossfit/workouts">
               <button className="px-3.5 py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all">
                 Ajouter un wod
@@ -366,38 +416,50 @@ function LogWorkoutContent() {
               <h2 className="text-lg font-semibold text-foreground">Détails des exercices</h2>
               <p className="text-xs text-muted-foreground mt-0.5">Poids, distance, scaling, variante...</p>
             </div>
-            <div className="space-y-3">
-              {exercises.map((exercise, idx) => {
-                const hints: string[] = []
-                if (exercise.weight) hints.push(exercise.weight)
-                if (exercise.distance) hints.push(exercise.distance)
-                if (exercise.details) {
-                  const scaledMatch = exercise.details.match(/Scaled:\s*([^|]+)/i)
-                  if (scaledMatch) hints.push(`Scaled: ${scaledMatch[1].trim()}`)
-                }
-                const placeholder = hints.length > 0 ? hints.join(' / ') : 'ex: 60kg, Scaled, 500m...'
-                return (
-                  <div key={`${exercise.name}-${idx}`} className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-sm flex-shrink-0 mt-0.5">
-                      {idx + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{exercise.name}</p>
-                      <div className="flex flex-wrap gap-1.5 mt-0.5">
-                        {exercise.reps && <span className="text-xs text-muted-foreground">{exercise.reps} reps</span>}
-                        {exercise.duration && <span className="text-xs text-muted-foreground">{exercise.duration}</span>}
-                      </div>
-                      <input
-                        type="text"
-                        value={exerciseNotes[idx] || ''}
-                        onChange={(e) => handleExerciseNoteChange(idx, e.target.value)}
-                        placeholder={placeholder}
-                        className="w-full mt-1.5 px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
-                      />
-                    </div>
+            <div className="space-y-5">
+              {exerciseGroups.map((group, groupIdx) => (
+                <div key={`${group.section.title}-${groupIdx}`} className="space-y-3">
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                    {SECTION_TYPE_LABELS[group.section.type]
+                      ? `${SECTION_TYPE_LABELS[group.section.type]} — ${group.section.title}`
+                      : group.section.title}
+                  </p>
+                  <div className="space-y-3">
+                    {group.exercises.map((exercise, i) => {
+                      const idx = group.startIndex + i
+                      const hints: string[] = []
+                      if (exercise.weight) hints.push(exercise.weight)
+                      if (exercise.distance) hints.push(exercise.distance)
+                      if (exercise.details) {
+                        const scaledMatch = exercise.details.match(/Scaled:\s*([^|]+)/i)
+                        if (scaledMatch) hints.push(`Scaled: ${scaledMatch[1].trim()}`)
+                      }
+                      const placeholder = hints.length > 0 ? hints.join(' / ') : 'ex: 60kg, Scaled, 500m...'
+                      return (
+                        <div key={`${exercise.name}-${idx}`} className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-sm flex-shrink-0 mt-0.5">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{exercise.name}</p>
+                            <div className="flex flex-wrap gap-1.5 mt-0.5">
+                              {exercise.reps && <span className="text-xs text-muted-foreground">{exercise.reps} reps</span>}
+                              {exercise.duration && <span className="text-xs text-muted-foreground">{exercise.duration}</span>}
+                            </div>
+                            <input
+                              type="text"
+                              value={exerciseNotes[idx] || ''}
+                              onChange={(e) => handleExerciseNoteChange(idx, e.target.value)}
+                              placeholder={placeholder}
+                              className="w-full mt-1.5 px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -537,7 +599,7 @@ function LogWorkoutContent() {
           <h2 className="text-lg font-semibold text-foreground">Résultats</h2>
 
           <div>
-            <label className="block text-sm text-muted-foreground mb-2">Date et heure du WOD</label>
+            <label className="block text-sm text-muted-foreground mb-2">Date et heure de la séance</label>
             <input
               type="datetime-local"
               value={wodDate}
@@ -546,7 +608,7 @@ function LogWorkoutContent() {
             />
           </div>
 
-          {!isAmrap && (
+          {hasConditioning && !isAmrap && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="block text-sm text-muted-foreground">Temps réalisé</label>
@@ -584,7 +646,7 @@ function LogWorkoutContent() {
             </div>
           )}
 
-          {isAmrap && (
+          {hasConditioning && isAmrap && (
             <div>
               <label className="block text-sm text-muted-foreground mb-2">Score AMRAP</label>
               <div className="flex items-center gap-3">
@@ -640,7 +702,7 @@ function LogWorkoutContent() {
             disabled={isSaving || !selectedWorkout}
             className="flex-1 py-3.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? 'Enregistrement...' : 'Enregistrer le WOD'}
+            {isSaving ? 'Enregistrement...' : 'Enregistrer la séance'}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { ProgramSessionDetail } from '@/components/program/ProgramSessionDetail'
 import type { ProgramSession } from '@/services/training-programs'
 import { ChevronDown, ChevronUp, Clock } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 
 const FOCUS_LABEL: Record<string, string> = {
@@ -57,6 +58,14 @@ export function WeekSessionCard({ session, num }: { session: ProgramSession; num
       {open && (
         <div className="px-4 pb-4 pt-1 border-t border-border">
           <ProgramSessionDetail session={session} />
+          {session.schedule_id && session.status !== 'completed' && (
+            <Link
+              href={`/training-programs/log-session?scheduleId=${session.schedule_id}`}
+              className="mt-3 inline-flex items-center justify-center w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-all"
+            >
+              Logger la séance
+            </Link>
+          )}
         </div>
       )}
     </div>

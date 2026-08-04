@@ -54,6 +54,8 @@ export interface ProgramSession {
     deload: boolean
     intensity_delta: number
   }
+  schedule_id?: string
+  status?: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 }
 
 export interface WeekSessions {

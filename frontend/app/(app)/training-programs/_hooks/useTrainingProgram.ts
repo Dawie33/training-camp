@@ -149,6 +149,7 @@ export function useTrainingProgram() {
       const count = res?.scheduled?.length ?? 0
       toast.success(`${count} séance${count > 1 ? 's' : ''} planifiée${count > 1 ? 's' : ''} dans le calendrier`)
       setShowSchedule(false)
+      await fetchWeek(enrollment.id, viewWeek)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       toast.error(msg && msg.length < 120 ? msg : 'Impossible de planifier cette semaine')

@@ -77,7 +77,7 @@ export function ProgramHeader({ enrollment, actionLoading, onStart, onPause, onA
             variant="outline"
             onClick={onStart}
             disabled={actionLoading}
-            className="rounded-full border-border text-foreground hover:border-primary hover:text-primary"
+            className="rounded-full border-border text-foreground hover:border-primary hover:text-white"
           >
             <Play className="w-4 h-4 mr-2" /> Démarrer
           </Button>
@@ -87,7 +87,7 @@ export function ProgramHeader({ enrollment, actionLoading, onStart, onPause, onA
             variant="outline"
             onClick={onPause}
             disabled={actionLoading}
-            className="rounded-full border-border text-foreground hover:border-primary hover:text-primary"
+            className="rounded-full border-border text-foreground hover:border-primary hover:text-white"
           >
             <Pause className="w-4 h-4 mr-2" /> Pause
           </Button>
@@ -97,7 +97,7 @@ export function ProgramHeader({ enrollment, actionLoading, onStart, onPause, onA
             variant="outline"
             onClick={onStart}
             disabled={actionLoading}
-            className="rounded-full border-border text-foreground hover:border-primary hover:text-primary"
+            className="rounded-full border-border text-foreground hover:border-primary hover:text-white"
           >
             <Play className="w-4 h-4 mr-2" /> Reprendre
           </Button>
@@ -106,9 +106,9 @@ export function ProgramHeader({ enrollment, actionLoading, onStart, onPause, onA
           variant="ghost"
           onClick={onAbandon}
           disabled={actionLoading}
-          className="ml-auto text-muted-foreground hover:text-primary"
+          className="ml-auto text-muted-foreground hover:text-primary hover:text-white rounded-full"
         >
-          <XCircle className="w-4 h-4 mr-2" /> Abandonner
+          <XCircle className="w-4 h-4 " /> Abandonner
         </Button>
       </div>
     </div>

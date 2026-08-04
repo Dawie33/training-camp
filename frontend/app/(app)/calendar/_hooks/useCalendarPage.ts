@@ -33,14 +33,6 @@ export function useCalendarPage() {
   const [parseBoxWodMode, setParseBoxWodMode] = useState<'instagram' | 'search'>('instagram')
   const [weeklyPlannerOpen, setWeeklyPlannerOpen] = useState(false)
   const [scheduleSkillOpen, setScheduleSkillOpen] = useState(false)
-  const [logModalOpen, setLogModalOpen] = useState(false)
-  const [logModalData, setLogModalData] = useState<{
-    scheduleId: string
-    workoutId?: string
-    workoutName: string
-    workoutType?: string
-    defaultLocation?: 'box' | 'maison'
-  } | null>(null)
   const [googleConnected, setGoogleConnected] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [printWorkoutData, setPrintWorkoutData] = useState<Workouts | null>(null)
@@ -92,8 +84,6 @@ export function useCalendarPage() {
         .toISOString()
         .split('T')[0]
 
-      const isBoxSession = schedule.session_type === 'box_session'
-
       return {
         id: schedule.id,
         title: schedule.title,
@@ -127,17 +117,6 @@ export function useCalendarPage() {
             setSelectedEvent(null)
           }
         },
-        _onLog: (schedule.workout_id || isBoxSession) ? () => {
-          setLogModalData({
-            scheduleId: schedule.id,
-            workoutId: schedule.workout_id ?? undefined,
-            workoutName: isBoxSession ? 'Séance Box' : schedule.title,
-            workoutType: schedule.workout_type,
-            defaultLocation: isBoxSession ? 'box' : 'maison',
-          })
-          setSelectedEvent(null)
-          setLogModalOpen(true)
-        } : undefined,
         _onPrint: schedule.workout_id ? () => {
           setSelectedEvent(null)
           workoutsService.getById(schedule.workout_id!).then((w) => {
@@ -245,8 +224,6 @@ export function useCalendarPage() {
     parseBoxWodOpen, setParseBoxWodOpen, parseBoxWodMode, setParseBoxWodMode,
     weeklyPlannerOpen, setWeeklyPlannerOpen,
     scheduleSkillOpen, setScheduleSkillOpen,
-    logModalOpen, setLogModalOpen,
-    logModalData,
     // Google
     googleConnected, googleLoading,
     handleGoogleConnect, handleGoogleDisconnect,

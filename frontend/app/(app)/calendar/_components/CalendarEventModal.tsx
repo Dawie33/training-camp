@@ -14,6 +14,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const onPrint = calendarEvent._onPrint as (() => void) | undefined
   const isStrength = module === 'strength'
   const isSkill = module === 'skill'
+  const isProgramSession = calendarEvent.session_type === 'program_session'
   const targetMuscles = calendarEvent.target_muscles as string[] | undefined
   const sessionGoal = calendarEvent.session_goal as string | undefined
   const skillStepTitle = calendarEvent.skill_step_title as string | undefined
@@ -132,7 +133,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
         {status === 'scheduled' && (
           <>
-            {onComplete && (
+            {onComplete && !isProgramSession && (
               <Button
                 size="sm"
                 onClick={onComplete}
@@ -150,6 +151,18 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
               >
                 <SkipForward className="w-3.5 h-3.5 mr-1" />
                 Sauté
+              </Button>
+            )}
+            {isProgramSession && (
+              <Button
+                size="sm"
+                asChild
+                className={c.complete}
+              >
+                <a href={`/training-programs/log-session?scheduleId=${calendarEvent.id as string}`}>
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                  Logger la séance
+                </a>
               </Button>
             )}
           </>

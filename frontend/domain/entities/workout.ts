@@ -121,6 +121,7 @@ export interface WorkoutSessionResults {
     metrics?: WorkoutSessionMetrics
     block_progress?: Record<string, boolean>
     elapsed_time_seconds?: number
+    session_title?: string
     [key: string]: unknown
 }
 

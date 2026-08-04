@@ -272,9 +272,23 @@ export class TrainingProgramsService {
         _bonus: true,
       }))
 
+    const scheduledRows = await this.knex('user_workout_schedule')
+      .where({ user_id: userId, program_enrollment_id: enrollmentId })
+      .whereRaw(`session_data->>'week_num' = ?`, [String(weekNum)])
+      .select('id', 'status', this.knex.raw(`(session_data->>'session_in_week')::int as session_in_week`))
+
+    const scheduleByPosition = new Map(
+      scheduledRows.map((r) => [r.session_in_week as number, { schedule_id: r.id as string, status: r.status as string }]),
+    )
+
+    const allSessions = [...progressedSessions, ...bonusSessions].map((s) => {
+      const match = scheduleByPosition.get(s.session_in_week)
+      return match ? { ...s, schedule_id: match.schedule_id, status: match.status } : s
+    })
+
     return {
       phase: { ...phase, sessions: undefined },
-      sessions: [...progressedSessions, ...bonusSessions],
+      sessions: allSessions,
       weekNum,
     }
   }
@@ -370,7 +384,7 @@ export class TrainingProgramsService {
             scheduled_date: assignment.date,
             session_type: 'program_session',
             program_enrollment_id: enrollmentId,
-            session_data: JSON.stringify(session),
+            session_data: JSON.stringify({ ...session, week_num: dto.week_num }),
             status: 'scheduled',
           })
           .returning('*')
@@ -423,7 +437,7 @@ export class TrainingProgramsService {
           scheduled_date: date,
           session_type: 'program_session',
           program_enrollment_id: enrollmentId,
-          session_data: JSON.stringify(session),
+          session_data: JSON.stringify({ ...session, week_num: dto.week_num }),
           status: 'scheduled',
         })
         .returning('*')
@@ -503,7 +517,7 @@ export class TrainingProgramsService {
     // Si la semaine est déjà planifiée, mettre à jour le session_data du row correspondant
     const scheduledEntry = await this.knex('user_workout_schedule')
       .where({ user_id: userId, program_enrollment_id: enrollmentId })
-      .whereRaw(`session_data->>'session_in_week' = ?`, [String(sessionInWeek)])
+      .whereRaw(`session_data->>'session_in_week' = ? AND session_data->>'week_num' = ?`, [String(sessionInWeek), String(weekNum)])
       .first()
 
     if (scheduledEntry) {

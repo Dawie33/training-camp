@@ -64,7 +64,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
   }
 
   const handleAnalyze = async (session: WorkoutSession) => {
-    setAnalysisWorkoutName(session.workout_name ?? 'WOD')
+    setAnalysisWorkoutName(session.workout_name ?? session.results?.session_title ?? 'WOD')
     setAnalysisSessionId(session.id)
     setAnalysis(null)
     setAnalysisOpen(true)
@@ -186,7 +186,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                 return (
                   <tr key={session.id} className="border-b border-border hover:bg-secondary/60 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-foreground">{session.workout_name ?? '—'}</p>
+                      <p className="text-sm font-medium text-foreground">{session.workout_name ?? session.results?.session_title ?? '—'}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(session.started_at)}</p>
                     </td>
                     <td className="px-4 py-3">
@@ -295,7 +295,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                       </span>
                     </div>
                     <p className="text-sm font-medium mt-1 text-foreground">
-                      {session.workout_name ?? '—'}
+                      {session.workout_name ?? session.results?.session_title ?? '—'}
                     </p>
                     <p className="text-xs text-muted-foreground">{formatDate(session.started_at)}</p>
                   </div>
