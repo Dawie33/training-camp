@@ -3,7 +3,15 @@
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { MUSCLE_LABELS, SESSION_GOAL_LABELS, SessionGoal, strengthService, StrengthSession } from '@/services/strength'
+import {
+  BODY_FOCUS_LABELS,
+  BodyFocus,
+  MUSCLE_LABELS,
+  SESSION_GOAL_LABELS,
+  SessionGoal,
+  strengthService,
+  StrengthSession,
+} from '@/services/strength'
 import { ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from '@tanstack/react-table'
 import { motion } from 'framer-motion'
 import { ArrowUpDown, Search, Trash2 } from 'lucide-react'
@@ -13,12 +21,14 @@ import { toast } from 'sonner'
 import { StrengthSessionDetailModal } from './_components/StrengthSessionDetailModal'
 
 const GOALS: SessionGoal[] = ['strength', 'hypertrophy', 'endurance', 'power']
+const BODY_FOCUSES: BodyFocus[] = ['upper_body', 'lower_body', 'full_body']
 
-export default function MusculationPage() {
+export default function ForcePage() {
   const [sessions, setSessions] = useState<StrengthSession[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [goalFilter, setGoalFilter] = useState('')
+  const [bodyFocusFilter, setBodyFocusFilter] = useState('')
   const [sorting, setSorting] = useState<SortingState>([])
   const [selectedSession, setSelectedSession] = useState<StrengthSession | null>(null)
 
@@ -54,6 +64,7 @@ export default function MusculationPage() {
 
   const filtered = useMemo(() => sessions.filter(s => {
     if (goalFilter && s.session_goal !== goalFilter) return false
+    if (bodyFocusFilter && s.body_focus !== bodyFocusFilter) return false
     if (search) {
       const q = search.toLowerCase()
       const name = (s.ai_plan?.session_name ?? '').toLowerCase()
@@ -61,13 +72,13 @@ export default function MusculationPage() {
       if (!name.includes(q) && !muscles) return false
     }
     return true
-  }), [sessions, goalFilter, search])
+  }), [sessions, goalFilter, bodyFocusFilter, search])
 
   const columns = useMemo<ColumnDef<StrengthSession>[]>(() => [
     {
       id: 'name',
       header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Séance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
-      accessorFn: row => row.ai_plan?.session_name ?? 'Séance de musculation',
+      accessorFn: row => row.ai_plan?.session_name ?? 'Séance de force',
       cell: ({ getValue }) => <span className="font-medium text-white">{getValue() as string}</span>,
     },
     {
@@ -120,7 +131,7 @@ export default function MusculationPage() {
     return (
       <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl px-4 py-10 text-center">
         <p className="text-slate-500 mb-3 text-sm">Aucune séance enregistrée</p>
-        <Link href="/musculation/log" className="text-sm text-violet-400 hover:text-violet-300 underline underline-offset-2">
+        <Link href="/force/log" className="text-sm text-violet-400 hover:text-violet-300 underline underline-offset-2">
           Enregistrer ma première séance
         </Link>
       </div>
@@ -150,6 +161,14 @@ export default function MusculationPage() {
               </button>
             ))}
           </div>
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          <button onClick={() => setBodyFocusFilter('')} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${bodyFocusFilter === '' ? 'bg-orange-500/20 border-orange-500/40 text-orange-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>Tous</button>
+          {BODY_FOCUSES.map(focus => (
+            <button key={focus} onClick={() => setBodyFocusFilter(focus)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${bodyFocusFilter === focus ? 'bg-orange-500/20 border-orange-500/40 text-orange-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>
+              {BODY_FOCUS_LABELS[focus]}
+            </button>
+          ))}
         </div>
         <p className="text-xs text-slate-500">{loading ? '...' : `${filtered.length} séance${filtered.length !== 1 ? 's' : ''}`}</p>
       </motion.div>

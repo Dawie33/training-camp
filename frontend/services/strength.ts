@@ -3,6 +3,25 @@ import { apiClient } from './index'
 export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'forearms' | 'legs' | 'glutes' | 'core'
 export type SessionGoal = 'strength' | 'hypertrophy' | 'endurance' | 'power'
 export type BlockType = 'push' | 'pull' | 'hinge' | 'squat' | 'carry' | 'rotation' | 'isolation' | 'core'
+export type BodyFocus = 'upper_body' | 'lower_body' | 'full_body'
+export type TrainingStyle = 'traditional' | 'strongman'
+
+export const BODY_FOCUS_LABELS: Record<BodyFocus, string> = {
+  upper_body: 'Haut du corps',
+  lower_body: 'Bas du corps',
+  full_body: 'Full body',
+}
+
+export const BODY_FOCUS_COLORS: Record<BodyFocus, string> = {
+  upper_body: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+  lower_body: 'bg-lime-500/20 text-lime-400 border-lime-500/30',
+  full_body: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+}
+
+export const TRAINING_STYLE_LABELS: Record<TrainingStyle, string> = {
+  traditional: 'Traditionnel',
+  strongman: 'Strongman',
+}
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
   'chest', 'back', 'shoulders', 'arms', 'forearms', 'legs', 'glutes', 'core',
@@ -109,6 +128,8 @@ export interface StrengthSession {
   session_date: string
   target_muscles: string[]
   session_goal: SessionGoal
+  body_focus?: BodyFocus
+  training_style?: TrainingStyle
   equipment_used?: string[]
   source: 'manual' | 'ai_generated'
   ai_plan?: GeneratedStrengthSession
@@ -145,6 +166,9 @@ export interface GenerateStrengthDto {
   availableEquipment?: string[]
   additionalContext?: string
   targetDurationMinutes?: number
+  bodyFocus?: BodyFocus
+  trainingStyle?: TrainingStyle
+  personalized?: boolean
   existingPlan?: GeneratedStrengthSession
 }
 
@@ -167,6 +191,10 @@ export const strengthService = {
 
   async generateAndSave(data: GenerateStrengthDto) {
     return apiClient.post<StrengthSession>('/strength/generate/save', data)
+  },
+
+  async parseText(text: string) {
+    return apiClient.post<GeneratedStrengthSession>('/strength/parse-text', { text })
   },
 
   async create(data: Partial<StrengthSession>) {

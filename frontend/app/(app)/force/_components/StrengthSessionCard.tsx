@@ -2,11 +2,14 @@
 
 import {
   BLOCK_TYPE_LABELS,
+  BODY_FOCUS_COLORS,
+  BODY_FOCUS_LABELS,
   MUSCLE_COLORS,
   MUSCLE_LABELS,
   SESSION_GOAL_COLORS,
   SESSION_GOAL_LABELS,
   StrengthSession,
+  TRAINING_STYLE_LABELS,
 } from '@/services/strength'
 import { Calendar, Clock, RotateCcw, Trash2, Zap } from 'lucide-react'
 import { useState } from 'react'
@@ -42,6 +45,16 @@ export function StrengthSessionCard({ session, onDelete }: Props) {
             <span className={`text-xs px-2 py-0.5 rounded-md border font-medium ${SESSION_GOAL_COLORS[session.session_goal]}`}>
               {SESSION_GOAL_LABELS[session.session_goal]}
             </span>
+            {session.body_focus && (
+              <span className={`text-xs px-2 py-0.5 rounded-md border font-medium ${BODY_FOCUS_COLORS[session.body_focus]}`}>
+                {BODY_FOCUS_LABELS[session.body_focus]}
+              </span>
+            )}
+            {session.training_style === 'strongman' && (
+              <span className="text-xs px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                {TRAINING_STYLE_LABELS.strongman}
+              </span>
+            )}
             {session.source === 'ai_generated' && (
               <span className="text-xs px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-400 border border-violet-500/30">IA</span>
             )}

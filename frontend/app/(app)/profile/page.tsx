@@ -3,16 +3,14 @@
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { useState } from 'react'
 import { EquipmentTab } from './_components/EquipmentTab'
-import { OneRepMaxTab } from './_components/OneRepMaxTab'
 import { ProfileTab } from './_components/ProfileTab'
 import { useProfileForm } from './_hooks/useProfileForm'
 
-type Tab = 'profile' | 'equipment' | '1rms'
+type Tab = 'profile' | 'equipment'
 
 const tabs: { key: Tab; label: string }[] = [
   { key: 'profile', label: 'Profil' },
   { key: 'equipment', label: 'Équipement' },
-  { key: '1rms', label: '1RMs' },
 ]
 
 function ProfilePage() {
@@ -27,7 +25,6 @@ function ProfilePage() {
     bodyFat, setBodyFat,
     savingProfile, handleSaveProfile,
     equipment, savingEquipment, toggleEquipment, setEquipment, handleSaveEquipment,
-    oneRepMaxes, liftValues, savingLift, setLiftEntry, handleSaveLift,
   } = useProfileForm()
 
   return (
@@ -86,15 +83,6 @@ function ProfilePage() {
           />
         )}
 
-        {activeTab === '1rms' && (
-          <OneRepMaxTab
-            oneRepMaxes={oneRepMaxes}
-            liftValues={liftValues}
-            savingLift={savingLift}
-            onSetEntry={setLiftEntry}
-            onSave={handleSaveLift}
-          />
-        )}
       </div>
     </div>
   )

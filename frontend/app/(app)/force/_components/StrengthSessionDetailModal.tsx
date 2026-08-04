@@ -10,6 +10,8 @@ import {
   MUSCLE_LABELS,
   BLOCK_TYPE_LABELS,
   BLOCK_TYPE_COLORS,
+  BODY_FOCUS_LABELS,
+  TRAINING_STYLE_LABELS,
   strengthService,
   MuscleGroup,
 } from '@/services/strength'
@@ -154,6 +156,8 @@ export function StrengthSessionDetailModal({ session, onClose, onUpdate }: Props
               {new Date(session.session_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
               {' · '}
               {SESSION_GOAL_LABELS[session.session_goal]}
+              {session.body_focus && ` · ${BODY_FOCUS_LABELS[session.body_focus]}`}
+              {session.training_style === 'strongman' && ` · ${TRAINING_STYLE_LABELS.strongman}`}
             </p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">

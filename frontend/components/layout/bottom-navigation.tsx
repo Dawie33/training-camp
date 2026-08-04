@@ -24,7 +24,7 @@ const sportItems: NavItem[] = [
   { href: '/crossfit', label: 'CrossFit', icon: Activity },
   { href: '/running', label: 'Running', icon: Footprints },
   { href: '/biking', label: 'Vélo', icon: Bike },
-  { href: '/musculation', label: 'Musculation', icon: Dumbbell },
+  { href: '/force', label: 'Force', icon: Dumbbell },
 ]
 
 export function BottomNavigation() {

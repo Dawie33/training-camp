@@ -57,7 +57,7 @@ export function getSportLabel(sport: string | null, index: number, totalActiviti
   const isRun = sport?.toLowerCase().includes('run')
   const isBike = sport?.toLowerCase().includes('cycl') || sport?.toLowerCase().includes('bik')
   if (isBike) return 'Vélo'
-  if (!isRun) return 'Musculation / Mouvements'
+  if (!isRun) return 'Force / Mouvements'
   const runActivities = Array.from({ length: totalActivities })
   const runIndex = runActivities
     .map((_, i) => i)

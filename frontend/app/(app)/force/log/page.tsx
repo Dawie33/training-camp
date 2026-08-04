@@ -67,7 +67,7 @@ export default function StrengthLogPage() {
         ...(fitData && { ai_plan: { coros: { activities: fitData.activities, totals: fitData.totals } } as unknown as GeneratedStrengthSession }),
       })
       toast.success('Séance enregistrée !')
-      router.push('/musculation')
+      router.push('/force')
     } catch {
       toast.error('Erreur lors de l\'enregistrement')
     } finally {
@@ -168,7 +168,7 @@ export default function StrengthLogPage() {
       </motion.div>
 
       <motion.div variants={fadeInUp} className="flex gap-3">
-        <Link href="/musculation" className="flex-1 py-3.5 text-center border border-slate-700/50 bg-slate-800/50 text-slate-300 rounded-xl font-medium hover:bg-slate-700/50 transition-colors">
+        <Link href="/force" className="flex-1 py-3.5 text-center border border-slate-700/50 bg-slate-800/50 text-slate-300 rounded-xl font-medium hover:bg-slate-700/50 transition-colors">
           Annuler
         </Link>
         <button onClick={handleSave} disabled={saving}

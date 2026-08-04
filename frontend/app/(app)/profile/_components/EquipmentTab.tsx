@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 const EQUIPMENT_CATEGORIES = [
   {
     category: 'Basique',
@@ -165,6 +167,13 @@ export function EquipmentTab({ equipment, saving, onToggle, onPreset, onClear, o
       >
         {saving ? 'Sauvegarde...' : "Sauvegarder l'équipement"}
       </button>
+
+      <p className="text-xs text-slate-500 text-center">
+        Tu cherches tes 1RM ? Ils se gèrent maintenant dans{' '}
+        <Link href="/force/rm" className="text-orange-400 hover:underline">
+          Force → Mes RM
+        </Link>
+      </p>
     </div>
   )
 }

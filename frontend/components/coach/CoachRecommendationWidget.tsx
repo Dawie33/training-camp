@@ -19,7 +19,7 @@ const SPORT_CONFIG: Record<RecommendedSport, {
   crossfit: { label: 'CrossFit', icon: <Zap className="w-4 h-4" />, href: '/workouts/generate-ai' },
   running: { label: 'Running', icon: <Activity className="w-4 h-4" />, href: '/running/generate' },
   biking: { label: 'Vélo', icon: <Bike className="w-4 h-4" />, href: '/biking/generate' },
-  strength: { label: 'Musculation', icon: <Dumbbell className="w-4 h-4" />, href: '/musculation/generate' },
+  strength: { label: 'Force', icon: <Dumbbell className="w-4 h-4" />, href: '/force/generate' },
   rest: { label: 'Récupération', icon: <Heart className="w-4 h-4" />, href: '#' },
 }
 
