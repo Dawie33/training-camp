@@ -133,7 +133,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
         {status === 'scheduled' && (
           <>
-            {onComplete && !isProgramSession && (
+            {onComplete && !isProgramSession && (isStrength || isSkill) && (
               <Button
                 size="sm"
                 onClick={onComplete}
@@ -162,6 +162,24 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
                 <a href={`/training-programs/log-session?scheduleId=${calendarEvent.id as string}`}>
                   <Check className="w-3.5 h-3.5 mr-1" />
                   Logger la séance
+                </a>
+              </Button>
+            )}
+            {!isProgramSession && !isStrength && !isSkill && (
+              <Button
+                size="sm"
+                asChild
+                className={c.complete}
+              >
+                <a
+                  href={`/crossfit/log-workout?scheduleId=${calendarEvent.id as string}${
+                    calendarEvent.workout_id ? `&workoutId=${calendarEvent.workout_id as string}` : ''
+                  }${
+                    calendarEvent.personalized_workout_id ? `&personalizedWorkoutId=${calendarEvent.personalized_workout_id as string}` : ''
+                  }`}
+                >
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                  Logger le workout
                 </a>
               </Button>
             )}

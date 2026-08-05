@@ -5,7 +5,7 @@ import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
 import { parseFitFiles, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
-import { sessionService, workoutsService } from '@/services'
+import { scheduleApi, sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -312,6 +312,11 @@ function LogWorkoutContent() {
         notes: notes || undefined,
         results: resultPayload,
       })
+
+      const scheduleId = searchParams.get('scheduleId')
+      if (scheduleId) {
+        await scheduleApi.markAsCompleted(scheduleId, session.id)
+      }
 
       toast.success('Séance enregistrée !')
       router.push('/crossfit')
