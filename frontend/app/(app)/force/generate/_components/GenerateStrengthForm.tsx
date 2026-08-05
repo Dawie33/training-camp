@@ -1,22 +1,22 @@
 'use client'
 
 import {
-  BODY_FOCUS_LABELS,
-  BodyFocus,
+  LOWER_BODY_MUSCLES,
   MUSCLE_LABELS,
   MuscleGroup,
   SESSION_GOAL_LABELS,
   SessionGoal,
   TRAINING_STYLE_LABELS,
   TrainingStyle,
+  UPPER_BODY_MUSCLES,
 } from '@/services/strength'
 import { CheckCircle2, Clock, Dumbbell, Loader2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 const BODY_PARTS = {
-  upper: { label: 'Haut du corps', icon: '💪', muscles: ['chest', 'back', 'shoulders', 'arms', 'forearms'] as MuscleGroup[] },
-  lower: { label: 'Bas du corps', icon: '🦵', muscles: ['legs', 'glutes', 'core'] as MuscleGroup[] },
+  upper: { label: 'Haut du corps', icon: '💪', muscles: UPPER_BODY_MUSCLES },
+  lower: { label: 'Bas du corps', icon: '🦵', muscles: LOWER_BODY_MUSCLES },
 }
 
 const GOALS: { value: SessionGoal; description: string; reps: string }[] = [
@@ -26,14 +26,6 @@ const GOALS: { value: SessionGoal; description: string; reps: string }[] = [
   { value: 'power', description: 'Mouvements explosifs', reps: '3-5 reps · RPE 7-8' },
 ]
 
-const GOAL_ACCENT: Record<SessionGoal, string> = {
-  strength: 'data-[active=true]:bg-red-50 data-[active=true]:border-red-400 data-[active=true]:text-red-700',
-  hypertrophy: 'data-[active=true]:bg-purple-50 data-[active=true]:border-purple-400 data-[active=true]:text-purple-700',
-  endurance: 'data-[active=true]:bg-emerald-50 data-[active=true]:border-emerald-400 data-[active=true]:text-emerald-700',
-  power: 'data-[active=true]:bg-amber-50 data-[active=true]:border-amber-400 data-[active=true]:text-amber-700',
-}
-
-const BODY_FOCUS_OPTIONS: BodyFocus[] = ['upper_body', 'lower_body', 'full_body']
 const TRAINING_STYLE_OPTIONS: TrainingStyle[] = ['traditional', 'strongman']
 
 const CROSSFIT_BOX_EQUIPMENT = [
@@ -56,8 +48,6 @@ interface GenerateStrengthFormProps {
   toggleMuscle: (m: MuscleGroup) => void
   sessionGoal: SessionGoal
   setSessionGoal: (v: SessionGoal) => void
-  bodyFocus: BodyFocus
-  setBodyFocus: (v: BodyFocus) => void
   trainingStyle: TrainingStyle
   setTrainingStyle: (v: TrainingStyle) => void
   targetDurationMinutes: number | undefined
@@ -77,7 +67,6 @@ interface GenerateStrengthFormProps {
 export function GenerateStrengthForm({
   selectedMuscles, setSelectedMuscles, toggleMuscle,
   sessionGoal, setSessionGoal,
-  bodyFocus, setBodyFocus,
   trainingStyle, setTrainingStyle,
   targetDurationMinutes, setTargetDurationMinutes,
   equipment, setEquipment, profileEquipment, loadingProfile,
@@ -206,28 +195,11 @@ export function GenerateStrengthForm({
               key={value}
               data-active={sessionGoal === value}
               onClick={() => setSessionGoal(value)}
-              className={`text-left p-3 rounded-md border border-border bg-card transition-all hover:border-foreground/30 ${GOAL_ACCENT[value]}`}
+              className="text-left p-3 rounded-md border bg-secondary/40 border-border text-muted-foreground transition-all data-[active=true]:bg-primary/10 data-[active=true]:border-primary data-[active=true]:text-primary hover:border-foreground/30"
             >
-              <p className="font-semibold text-sm text-foreground">{SESSION_GOAL_LABELS[value]}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{reps}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Focus corporel */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-3">Focus corporel</label>
-        <div className="grid grid-cols-3 gap-2">
-          {BODY_FOCUS_OPTIONS.map((value) => (
-            <button
-              key={value}
-              data-active={bodyFocus === value}
-              onClick={() => setBodyFocus(value)}
-              className="text-center p-2.5 rounded-md border bg-secondary/40 border-border text-muted-foreground transition-all data-[active=true]:bg-primary/10 data-[active=true]:border-primary data-[active=true]:text-primary hover:border-foreground/30"
-            >
-              <p className="font-semibold text-sm">{BODY_FOCUS_LABELS[value]}</p>
+              <p className="font-semibold text-sm">{SESSION_GOAL_LABELS[value]}</p>
+              <p className="text-[11px] mt-0.5 opacity-70">{description}</p>
+              <p className="text-[10px] mt-0.5 opacity-60">{reps}</p>
             </button>
           ))}
         </div>

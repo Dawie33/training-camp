@@ -1,5 +1,5 @@
 import {
-  BodyFocus,
+  deriveBodyFocus,
   GeneratedStrengthSession,
   GenerateStrengthDto,
   MuscleGroup,
@@ -9,7 +9,7 @@ import {
 } from '@/services/strength'
 import { usersService } from '@/services/users'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 export function useGenerateStrengthSession() {
@@ -18,7 +18,7 @@ export function useGenerateStrengthSession() {
   // Formulaire IA
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([])
   const [sessionGoal, setSessionGoal] = useState<SessionGoal>('hypertrophy')
-  const [bodyFocus, setBodyFocus] = useState<BodyFocus>('full_body')
+  const bodyFocus = useMemo(() => deriveBodyFocus(selectedMuscles), [selectedMuscles])
   const [trainingStyle, setTrainingStyle] = useState<TrainingStyle>('traditional')
   const [equipment, setEquipment] = useState<string[]>([])
   const [profileEquipment, setProfileEquipment] = useState<string[]>([])
@@ -110,7 +110,7 @@ export function useGenerateStrengthSession() {
   return {
     selectedMuscles, setSelectedMuscles, toggleMuscle,
     sessionGoal, setSessionGoal,
-    bodyFocus, setBodyFocus,
+    bodyFocus,
     trainingStyle, setTrainingStyle,
     equipment, setEquipment, profileEquipment, loadingProfile,
     additionalContext, setAdditionalContext,

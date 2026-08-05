@@ -49,8 +49,6 @@ export default function GenerateStrengthPage() {
             toggleMuscle={s.toggleMuscle}
             sessionGoal={s.sessionGoal}
             setSessionGoal={s.setSessionGoal}
-            bodyFocus={s.bodyFocus}
-            setBodyFocus={s.setBodyFocus}
             trainingStyle={s.trainingStyle}
             setTrainingStyle={s.setTrainingStyle}
             targetDurationMinutes={s.targetDurationMinutes}

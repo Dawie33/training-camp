@@ -50,11 +50,26 @@ export default function StrengthLogPage() {
       return
     }
 
-    const notesParts = [form.session_plan.trim(), form.notes.trim()].filter(Boolean)
-    const notes = notesParts.length > 0 ? notesParts.join('\n\n---\n\n') : undefined
-
     setSaving(true)
     try {
+      let ai_plan: GeneratedStrengthSession | undefined
+      let notes = form.notes.trim() || undefined
+
+      const planText = form.session_plan.trim()
+      if (planText) {
+        try {
+          ai_plan = await strengthService.parseText(planText)
+        } catch {
+          toast.error("Impossible d'analyser le plan collé, il est enregistré tel quel")
+          const notesParts = [planText, form.notes.trim()].filter(Boolean)
+          notes = notesParts.length > 0 ? notesParts.join('\n\n---\n\n') : undefined
+        }
+      }
+
+      if (!ai_plan && fitData) {
+        ai_plan = { coros: { activities: fitData.activities, totals: fitData.totals } } as unknown as GeneratedStrengthSession
+      }
+
       await strengthService.create({
         session_date: form.session_date,
         session_goal: form.session_goal,
@@ -62,7 +77,7 @@ export default function StrengthLogPage() {
         duration_minutes: form.duration_minutes ? Number(form.duration_minutes) : undefined,
         perceived_effort: form.perceived_effort ? Number(form.perceived_effort) : undefined,
         notes,
-        ...(fitData && { ai_plan: { coros: { activities: fitData.activities, totals: fitData.totals } } as unknown as GeneratedStrengthSession }),
+        ...(ai_plan && { ai_plan }),
       })
       toast.success('Séance enregistrée !')
       router.push('/force')
@@ -141,7 +156,10 @@ export default function StrengthLogPage() {
         </div>
 
         <div>
-          <label className="block text-sm text-muted-foreground mb-2">Plan de séance (optionnel)</label>
+          <label className="block text-sm text-muted-foreground mb-2">
+            Plan de séance (optionnel)
+            <span className="text-xs text-muted-foreground/70"> — analysé automatiquement par l'IA à l'enregistrement</span>
+          </label>
           <textarea
             rows={10}
             placeholder={"Colle ici le plan généré par l'IA…\n\nEx :\nBloc 1 — Compound lourd\n① Squat talon surélevé — 4 × 8\n…"}
@@ -170,7 +188,9 @@ export default function StrengthLogPage() {
         <button onClick={handleSave} disabled={saving}
           className="flex-1 py-3.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? 'Enregistrement...' : 'Enregistrer la séance'}
+          {saving
+            ? (form.session_plan.trim() ? 'Analyse et enregistrement...' : 'Enregistrement...')
+            : 'Enregistrer la séance'}
         </button>
       </div>
 
