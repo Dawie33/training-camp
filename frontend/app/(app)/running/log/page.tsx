@@ -3,7 +3,7 @@
 import { CorosImport } from '@/components/fit-import/CorosImport'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { MultiActivityFitData } from '@/services/fit-import'
-import { runningService, RunningSession, RunType, RUN_TYPE_LABELS } from '@/services/running'
+import { RUN_TYPE_LABELS, runningService, RunningSession, RunType } from '@/services/running'
 import { motion } from 'framer-motion'
 import { ChevronDown, Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
@@ -12,15 +12,6 @@ import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 const RUN_TYPES: RunType[] = ['easy', 'tempo', 'intervals', 'long_run', 'fartlek', 'recovery', 'race']
-const RUN_TYPE_COLORS: Record<RunType, string> = {
-  easy: 'bg-green-500/20 border-green-500/40 text-green-400',
-  tempo: 'bg-orange-500/20 border-orange-500/40 text-orange-400',
-  intervals: 'bg-red-500/20 border-red-500/40 text-red-400',
-  long_run: 'bg-blue-500/20 border-blue-500/40 text-blue-400',
-  fartlek: 'bg-purple-500/20 border-purple-500/40 text-purple-400',
-  recovery: 'bg-slate-500/20 border-slate-500/40 text-slate-400',
-  race: 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400',
-}
 
 export default function RunningLogPage() {
   const router = useRouter()
@@ -47,7 +38,7 @@ export default function RunningLogPage() {
   useEffect(() => {
     runningService.getSessions({ limit: 50 })
       .then(res => setAiPlans(res.rows.filter(s => s.source === 'ai_generated')))
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   useEffect(() => {
@@ -151,24 +142,24 @@ export default function RunningLogPage() {
     <motion.div className="space-y-6 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
 
       {/* Sélection d'un plan IA */}
-      <motion.div variants={fadeInUp} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5">
-        <h2 className="text-base font-semibold text-white mb-3">Séance planifiée (optionnel)</h2>
+      <motion.div variants={fadeInUp} className="bg-card border border-border rounded-lg p-5">
+        <h2 className="text-base font-semibold text-foreground mb-3">Séance planifiée (optionnel)</h2>
         <div className="relative" ref={dropdownRef}>
           {selectedPlan ? (
-            <div className="flex items-center justify-between px-4 py-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
+            <div className="flex items-center justify-between px-4 py-3 bg-primary/10 border border-primary/30 rounded-lg">
               <div className="flex items-center gap-2 min-w-0">
-                <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                <Sparkles className="w-4 h-4 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {selectedPlan.ai_plan?.name ?? RUN_TYPE_LABELS[selectedPlan.run_type]}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {selectedPlan.ai_plan?.total_distance_km && `${selectedPlan.ai_plan.total_distance_km} km · `}
                     {selectedPlan.ai_plan?.estimated_duration_minutes && `${selectedPlan.ai_plan.estimated_duration_minutes} min`}
                   </p>
                 </div>
               </div>
-              <button onClick={handleClearPlan} className="ml-2 text-slate-400 hover:text-white transition-colors shrink-0">
+              <button onClick={handleClearPlan} className="ml-2 text-muted-foreground hover:text-foreground transition-colors shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -181,25 +172,25 @@ export default function RunningLogPage() {
                   onChange={e => { setSearch(e.target.value); setShowDropdown(true) }}
                   onFocus={() => setShowDropdown(true)}
                   placeholder="Sélectionner un plan généré par l'IA..."
-                  className="w-full px-4 py-3 pr-10 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all"
+                  className="w-full px-4 py-3 pr-10 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
                 />
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               </div>
               {showDropdown && (
-                <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
                   {filteredPlans.length === 0 ? (
-                    <p className="px-4 py-3 text-sm text-slate-500">Aucun plan trouvé</p>
+                    <p className="px-4 py-3 text-sm text-muted-foreground">Aucun plan trouvé</p>
                   ) : (
                     filteredPlans.map(plan => (
                       <button
                         key={plan.id}
                         onClick={() => handleSelectPlan(plan)}
-                        className="w-full text-left px-4 py-3 hover:bg-slate-700/50 transition-colors border-b border-slate-700/50 last:border-0"
+                        className="w-full text-left px-4 py-3 hover:bg-secondary/60 transition-colors border-b border-border last:border-0"
                       >
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {plan.ai_plan?.name ?? RUN_TYPE_LABELS[plan.run_type]}
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {new Date(plan.session_date).toLocaleDateString('fr-FR')}
                           {plan.ai_plan?.total_distance_km && ` · ${plan.ai_plan.total_distance_km} km`}
                           {plan.ai_plan?.estimated_duration_minutes && ` · ${plan.ai_plan.estimated_duration_minutes} min`}
@@ -214,28 +205,25 @@ export default function RunningLogPage() {
         </div>
       </motion.div>
 
-      <motion.div variants={fadeInUp} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 space-y-4">
-        <h2 className="text-base font-semibold text-white">Sortie</h2>
+      <motion.div variants={fadeInUp} className="bg-card border border-border rounded-lg p-5 space-y-4">
+        <h2 className="text-base font-semibold text-foreground">Sortie</h2>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Date</label>
+          <label className="block text-sm text-muted-foreground mb-2">Date</label>
           <input type="date" value={form.session_date}
             onChange={e => setForm(f => ({ ...f, session_date: e.target.value }))}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-all [color-scheme:dark]"
+            className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 transition-all"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Type de sortie</label>
+          <label className="block text-sm text-muted-foreground mb-2">Type de sortie</label>
           <div className="flex gap-2 flex-wrap">
             {RUN_TYPES.map(type => (
               <button key={type} type="button"
+                data-active={form.run_type === type}
                 onClick={() => setForm(f => ({ ...f, run_type: type }))}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                  form.run_type === type
-                    ? RUN_TYPE_COLORS[type]
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                }`}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium border bg-secondary/40 border-border text-muted-foreground transition-all data-[active=true]:bg-primary/10 data-[active=true]:border-primary data-[active=true]:text-primary hover:border-foreground/30"
               >
                 {RUN_TYPE_LABELS[type]}
               </button>
@@ -245,25 +233,25 @@ export default function RunningLogPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Distance (km)</label>
+            <label className="block text-sm text-muted-foreground mb-2">Distance (km)</label>
             <input type="number" min="0" step="0.01" placeholder="10.00"
               value={form.distance_km}
               onChange={e => setForm(f => ({ ...f, distance_km: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 transition-all placeholder:text-muted-foreground"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">FC moyenne (bpm)</label>
+            <label className="block text-sm text-muted-foreground mb-2">FC moyenne (bpm)</label>
             <input type="number" min="40" max="220" placeholder="150"
               value={form.avg_heart_rate}
               onChange={e => setForm(f => ({ ...f, avg_heart_rate: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 transition-all placeholder:text-muted-foreground"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Durée</label>
+          <label className="block text-sm text-muted-foreground mb-2">Durée</label>
           <div className="flex items-center gap-2">
             {[
               { key: 'hours', label: 'hh', max: 9 },
@@ -271,26 +259,26 @@ export default function RunningLogPage() {
               { key: 'seconds', label: 'ss', max: 59 },
             ].map(({ key, label, max }, i) => (
               <div key={key} className="flex items-center gap-2">
-                {i > 0 && <span className="text-slate-500 font-bold text-lg">:</span>}
+                {i > 0 && <span className="text-muted-foreground font-bold text-lg">:</span>}
                 <input type="number" min="0" max={max} placeholder={label}
                   value={form[key as 'hours' | 'minutes' | 'seconds']}
                   onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                  className="w-16 px-2 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white text-center text-xl font-mono focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600"
+                  className="w-16 px-2 py-3 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all placeholder:text-muted-foreground"
                 />
               </div>
             ))}
             {paceDisplay && (
-              <span className="ml-2 text-sm text-cyan-400 font-mono">{paceDisplay}</span>
+              <span className="ml-2 text-sm text-primary font-mono">{paceDisplay}</span>
             )}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Notes (optionnel)</label>
+          <label className="block text-sm text-muted-foreground mb-2">Notes (optionnel)</label>
           <textarea rows={3} placeholder="Sensations, conditions météo, itinéraire..."
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 resize-none focus:outline-none focus:border-cyan-500/50 transition-all"
+            className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50 transition-all"
           />
         </div>
       </motion.div>
@@ -300,11 +288,11 @@ export default function RunningLogPage() {
       </motion.div>
 
       <motion.div variants={fadeInUp} className="flex gap-3">
-        <Link href="/running" className="flex-1 py-3.5 text-center border border-slate-700/50 bg-slate-800/50 text-slate-300 rounded-xl font-medium hover:bg-slate-700/50 transition-colors">
+        <Link href="/running" className="flex-1 py-3.5 text-center border border-border bg-card text-foreground rounded-lg font-medium hover:bg-secondary/60 transition-colors">
           Annuler
         </Link>
         <button onClick={handleSave} disabled={saving}
-          className="flex-1 py-3.5 bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-500 transition-all disabled:opacity-50"
+          className="flex-1 py-3.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all disabled:opacity-50"
         >
           {saving ? 'Enregistrement...' : 'Enregistrer la sortie'}
         </button>

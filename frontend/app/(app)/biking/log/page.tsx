@@ -1,8 +1,8 @@
 'use client'
 
 import { CorosImport } from '@/components/fit-import/CorosImport'
-import { MultiActivityFitData } from '@/services/fit-import'
 import { BIKE_LOCATION_LABELS, BIKE_TYPE_LABELS, BikeLocationType, BikeType, bikingService, CreateBikingSessionDto } from '@/services/biking'
+import { MultiActivityFitData } from '@/services/fit-import'
 import { Home, MapPin } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -76,28 +76,28 @@ export default function BikingLogPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
             {/* Date */}
             <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
+                <label className="eyebrow block mb-1.5">Date</label>
                 <input
                     type="date"
                     value={form.session_date}
                     onChange={e => set('session_date', e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
             </div>
 
             {/* Type */}
             <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Type de séance</label>
+                <label className="eyebrow block mb-1.5">Type de séance</label>
                 <div className="grid grid-cols-2 gap-2">
                     {BIKE_TYPES.map(type => (
                         <button
                             key={type}
                             type="button"
                             onClick={() => set('bike_type', type)}
-                            className={`px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${form.bike_type === type
-                                ? 'bg-blue-500/20 border-blue-500/40 text-blue-300 font-medium'
-                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                            className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-all ${form.bike_type === type
+                                ? 'bg-primary/10 border-primary text-primary font-medium'
+                                : 'bg-card border-border text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             {BIKE_TYPE_LABELS[type]}
@@ -108,16 +108,16 @@ export default function BikingLogPage() {
 
             {/* Intérieur / Extérieur */}
             <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Lieu</label>
+                <label className="eyebrow block mb-1.5">Lieu</label>
                 <div className="grid grid-cols-2 gap-2">
                     {BIKE_LOCATIONS.map(location => (
                         <button
                             key={location}
                             type="button"
                             onClick={() => setLocationType(location)}
-                            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm transition-all ${form.location_type === location
-                                ? 'bg-blue-500/20 border-blue-500/40 text-blue-300 font-medium'
-                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm transition-all ${form.location_type === location
+                                ? 'bg-primary/10 border-primary text-primary font-medium'
+                                : 'bg-card border-border text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             {location === 'indoor' ? <Home className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
@@ -130,19 +130,19 @@ export default function BikingLogPage() {
             {/* Durée + Distance */}
             <div className={`grid gap-3 ${isIndoor ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Durée (min)</label>
+                    <label className="eyebrow block mb-1.5">Durée (min)</label>
                     <input
                         type="number"
                         min={1}
                         placeholder="60"
                         value={form.duration_seconds ? Math.round(form.duration_seconds / 60) : ''}
                         onChange={e => set('duration_seconds', e.target.value ? Number(e.target.value) * 60 : undefined)}
-                        className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                 </div>
                 {!isIndoor && (
                     <div>
-                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Distance (km)</label>
+                        <label className="eyebrow block mb-1.5">Distance (km)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -150,7 +150,7 @@ export default function BikingLogPage() {
                             placeholder="25.5"
                             value={form.distance_km ?? ''}
                             onChange={e => set('distance_km', e.target.value ? Number(e.target.value) : undefined)}
-                            className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                         />
                     </div>
                 )}
@@ -159,25 +159,25 @@ export default function BikingLogPage() {
             {/* Puissance + FTP */}
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Puissance moy. (W)</label>
+                    <label className="eyebrow block mb-1.5">Puissance moy. (W)</label>
                     <input
                         type="number"
                         min={0}
                         placeholder="200"
                         value={form.avg_power_watts ?? ''}
                         onChange={e => set('avg_power_watts', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">FTP (W)</label>
+                    <label className="eyebrow block mb-1.5">FTP (W)</label>
                     <input
                         type="number"
                         min={50}
                         placeholder="250"
                         value={form.ftp_watts ?? ''}
                         onChange={e => set('ftp_watts', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                 </div>
             </div>
@@ -185,32 +185,32 @@ export default function BikingLogPage() {
             {/* FC */}
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">FC moy. (bpm)</label>
+                    <label className="eyebrow block mb-1.5">FC moy. (bpm)</label>
                     <input
                         type="number"
                         min={30}
                         placeholder="140"
                         value={form.avg_heart_rate ?? ''}
                         onChange={e => set('avg_heart_rate', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Calories</label>
+                    <label className="eyebrow block mb-1.5">Calories</label>
                     <input
                         type="number"
                         min={0}
                         placeholder="500"
                         value={form.calories ?? ''}
                         onChange={e => set('calories', e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                 </div>
             </div>
 
             {/* Effort perçu */}
             <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="eyebrow block mb-1.5">
                     Effort perçu {form.perceived_effort ? `— ${form.perceived_effort}/10` : ''}
                 </label>
                 <input
@@ -220,9 +220,9 @@ export default function BikingLogPage() {
                     step={1}
                     value={form.perceived_effort ?? 5}
                     onChange={e => set('perceived_effort', Number(e.target.value))}
-                    className="w-full accent-blue-500"
+                    className="w-full accent-primary"
                 />
-                <div className="flex justify-between text-xs text-slate-600 mt-0.5">
+                <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
                     <span>Très facile</span>
                     <span>Maximal</span>
                 </div>
@@ -230,13 +230,13 @@ export default function BikingLogPage() {
 
             {/* Notes */}
             <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Notes</label>
+                <label className="eyebrow block mb-1.5">Notes</label>
                 <textarea
                     placeholder="Sensations, conditions, objectifs atteints..."
                     rows={3}
                     value={form.notes ?? ''}
                     onChange={e => set('notes', e.target.value || undefined)}
-                    className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 resize-none"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
                 />
             </div>
 
@@ -245,7 +245,7 @@ export default function BikingLogPage() {
             <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-sm transition-colors"
+                className="w-full py-3 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-semibold text-sm transition-colors"
             >
                 {submitting ? 'Enregistrement...' : 'Enregistrer la séance'}
             </button>

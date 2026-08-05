@@ -1,16 +1,16 @@
-import { BIKE_LOCATION_LABELS, BIKE_TYPE_LABELS, BikingSession, formatDuration } from '@/services/biking'
-import { Clock, X, Zap } from 'lucide-react'
+import { formatDuration, formatPace, RUN_TYPE_LABELS, RunningSession } from '@/services/running'
+import { Clock, MapPin, X } from 'lucide-react'
 
 interface Props {
-    session: BikingSession | null
+    session: RunningSession | null
     onClose: () => void
 }
 
-export function BikingSessionDetailModal({ session, onClose }: Props) {
+export function RunningSessionDetailModal({ session, onClose }: Props) {
     if (!session) return null
 
     const plan = session.ai_plan
-    const typeLabel = BIKE_TYPE_LABELS[session.bike_type]
+    const typeLabel = RUN_TYPE_LABELS[session.run_type]
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -25,8 +25,6 @@ export function BikingSessionDetailModal({ session, onClose }: Props) {
                             {new Date(session.session_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                             {' · '}
                             {typeLabel}
-                            {' · '}
-                            {BIKE_LOCATION_LABELS[session.location_type]}
                         </p>
                     </div>
                     <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -47,14 +45,19 @@ export function BikingSessionDetailModal({ session, onClose }: Props) {
                                 {session.distance_km} km
                             </span>
                         )}
-                        {session.avg_power_watts && (
+                        {session.avg_pace_seconds_per_km && (
                             <span className="px-2 py-1 rounded-md text-xs bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
-                                <Zap className="w-3 h-3" /> {session.avg_power_watts}W moy.
+                                <MapPin className="w-3 h-3" /> {formatPace(session.avg_pace_seconds_per_km)}
                             </span>
                         )}
                         {session.avg_heart_rate && (
                             <span className="px-2 py-1 rounded-md text-xs bg-secondary text-muted-foreground">
                                 {session.avg_heart_rate} bpm
+                            </span>
+                        )}
+                        {session.elevation_gain_m && (
+                            <span className="px-2 py-1 rounded-md text-xs bg-secondary text-muted-foreground">
+                                D+ {session.elevation_gain_m} m
                             </span>
                         )}
                         {session.calories && (
@@ -83,31 +86,29 @@ export function BikingSessionDetailModal({ session, onClose }: Props) {
                                         <Clock className="w-3.5 h-3.5" />
                                         {plan.estimated_duration_minutes} min
                                     </span>
-                                    {plan.tss_estimate && (
-                                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                            <Zap className="w-3.5 h-3.5" />
-                                            TSS ~{plan.tss_estimate}
-                                        </span>
-                                    )}
+                                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                        <MapPin className="w-3.5 h-3.5" />
+                                        {plan.total_distance_km} km
+                                    </span>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                {plan.structure.map((block, i) => (
+                                {plan.structure.map((phase, i) => (
                                     <div key={i} className="flex gap-3 items-start">
                                         <div className="w-1 self-stretch rounded-full bg-primary/40 flex-shrink-0 mt-1" />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm font-semibold text-foreground">{block.label}</span>
-                                                <span className="text-xs text-muted-foreground">{block.duration_minutes} min</span>
-                                                <span className="text-xs text-primary font-medium">{block.power_target}</span>
+                                                <span className="text-sm font-semibold text-foreground">{phase.label}</span>
+                                                <span className="text-xs text-muted-foreground">{phase.duration_minutes} min</span>
+                                                <span className="text-xs text-primary font-medium">{phase.pace_description}</span>
                                             </div>
-                                            {block.intervals && block.intervals.length > 0 && (
+                                            {phase.intervals && phase.intervals.length > 0 && (
                                                 <div className="mt-1 text-xs text-muted-foreground">
-                                                    {block.intervals[0].repetitions}× {block.intervals[0].effort_duration} @ {block.intervals[0].power_description} / {block.intervals[0].recovery_duration} récup.
+                                                    {phase.intervals[0].repetitions}× {phase.intervals[0].effort_duration} @ {phase.intervals[0].pace_description} / {phase.intervals[0].recovery_duration} récup.
                                                 </div>
                                             )}
-                                            {block.notes && <p className="mt-0.5 text-xs text-muted-foreground italic">{block.notes}</p>}
+                                            {phase.notes && <p className="mt-0.5 text-xs text-muted-foreground italic">{phase.notes}</p>}
                                         </div>
                                     </div>
                                 ))}

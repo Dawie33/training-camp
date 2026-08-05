@@ -1,122 +1,213 @@
 'use client'
 
-import { BIKE_TYPE_LABELS, BikeType, BikingSession } from '@/services/biking'
-import { Bike, Clock, Flame, Plus, Zap } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { BIKE_TYPE_LABELS, BikeType, bikingService, BikingSession, formatDuration } from '@/services/biking'
+import { ColumnDef, flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from '@tanstack/react-table'
+import { motion } from 'framer-motion'
+import { ArrowUpDown, Search, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
-import { BikingSessionCard } from './_components/BikingSessionCard'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { BikingSessionDetailModal } from './_components/BikingSessionDetailModal'
-import { useBikingDashboard } from './_hook/useBikingDashboard'
 
 const BIKE_TYPES: BikeType[] = ['endurance', 'sweet_spot', 'intervals', 'ftp_test', 'recovery', 'race']
 
 export default function BikingPage() {
-    const { sessions, stats, loading, error, handleDelete, filter, setFilter } = useBikingDashboard()
+    const [sessions, setSessions] = useState<BikingSession[]>([])
+    const [loading, setLoading] = useState(true)
+    const [search, setSearch] = useState('')
+    const [typeFilter, setTypeFilter] = useState('')
+    const [sorting, setSorting] = useState<SortingState>([])
     const [selectedSession, setSelectedSession] = useState<BikingSession | null>(null)
 
-    if (loading) {
+    const fetchSessions = useCallback(async () => {
+        setLoading(true)
+        try {
+            const data = await bikingService.getSessions({ limit: 200 })
+            setSessions(data.rows)
+        } catch {
+            toast.error('Impossible de charger les séances')
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { fetchSessions() }, [fetchSessions])
+
+    const handleDelete = useCallback(async (id: string) => {
+        if (!confirm('Supprimer cette séance ?')) return
+        try {
+            await bikingService.delete(id)
+            setSessions(prev => prev.filter(s => s.id !== id))
+            toast.success('Séance supprimée')
+        } catch {
+            toast.error('Erreur lors de la suppression')
+        }
+    }, [])
+
+    const filtered = useMemo(() => sessions.filter(s => {
+        if (typeFilter && s.bike_type !== typeFilter) return false
+        if (search) {
+            const q = search.toLowerCase()
+            const name = (s.ai_plan?.name ?? BIKE_TYPE_LABELS[s.bike_type]).toLowerCase()
+            if (!name.includes(q)) return false
+        }
+        return true
+    }), [sessions, typeFilter, search])
+
+    const columns = useMemo<ColumnDef<BikingSession>[]>(() => [
+        {
+            id: 'name',
+            header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-muted-foreground hover:text-foreground px-0">Séance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+            accessorFn: row => row.ai_plan?.name ?? BIKE_TYPE_LABELS[row.bike_type],
+            cell: ({ getValue }) => <span className="font-medium text-foreground">{getValue() as string}</span>,
+        },
+        {
+            accessorKey: 'session_date',
+            header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-muted-foreground hover:text-foreground px-0">Date <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+            cell: ({ row }) => new Date(row.getValue('session_date')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+        },
+        {
+            accessorKey: 'bike_type',
+            header: 'Type',
+            cell: ({ row }) => <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">{BIKE_TYPE_LABELS[row.getValue('bike_type') as BikeType]}</span>,
+        },
+        {
+            accessorKey: 'distance_km',
+            header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-muted-foreground hover:text-foreground px-0">Distance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+            cell: ({ row }) => {
+                const d = row.getValue('distance_km')
+                return d != null ? `${Number(d).toFixed(1)} km` : '—'
+            },
+        },
+        {
+            accessorKey: 'duration_seconds',
+            header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-muted-foreground hover:text-foreground px-0">Durée <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+            cell: ({ row }) => {
+                const s = row.getValue('duration_seconds') as number | null
+                return s ? <span className="font-mono text-primary">{formatDuration(s)}</span> : '—'
+            },
+        },
+        {
+            accessorKey: 'avg_power_watts',
+            header: 'Puissance moy.',
+            cell: ({ row }) => {
+                const p = row.getValue('avg_power_watts') as number | null
+                return p ? `${p} W` : '—'
+            },
+        },
+        {
+            accessorKey: 'avg_heart_rate',
+            header: 'FC moy.',
+            cell: ({ row }) => {
+                const hr = row.getValue('avg_heart_rate') as number | null
+                return hr ? `${hr} bpm` : '—'
+            },
+        },
+        {
+            id: 'actions',
+            cell: ({ row }) => (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={e => { e.stopPropagation(); handleDelete(row.original.id) }}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+            ),
+        },
+    ], [handleDelete])
+
+    const table = useReactTable({ data: filtered, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() })
+
+    if (!loading && sessions.length === 0) {
         return (
-            <div className="space-y-3">
-                {[1, 2, 3].map(i => (
-                    <div key={i} className="h-24 rounded-xl bg-white/5 animate-pulse" />
-                ))}
+            <div className="bg-card border border-border rounded-lg px-4 py-10 text-center">
+                <p className="text-muted-foreground mb-3 text-sm">Aucune séance enregistrée</p>
+                <Link href="/biking/log" className="text-sm text-primary hover:underline underline-offset-2">
+                    Enregistrer ma première séance
+                </Link>
             </div>
         )
     }
 
-    if (error) {
-        return <p className="text-red-400 text-sm">{error}</p>
-    }
-
     return (
-        <div className="space-y-6">
-            {/* Stats */}
-            {stats && stats.total_sessions > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-xs text-slate-500 mb-1">Séances</p>
-                        <p className="text-2xl font-bold text-white">{stats.total_sessions}</p>
+        <>
+            <motion.div className="space-y-4 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
+
+                <motion.div variants={fadeInUp} className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative flex-1 min-w-[200px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Rechercher..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                            />
+                        </div>
+                        <div className="flex gap-1.5 flex-wrap">
+                            <button onClick={() => setTypeFilter('')} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${typeFilter === '' ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}>Tous</button>
+                            {BIKE_TYPES.map(type => (
+                                <button key={type} onClick={() => setTypeFilter(type)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${typeFilter === type ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}>
+                                    {BIKE_TYPE_LABELS[type]}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            <p className="text-xs">Heures</p>
-                        </div>
-                        <p className="text-2xl font-bold text-white">{stats.total_hours}h</p>
-                    </div>
-                    {stats.avg_power_watts && (
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-                                <Zap className="w-3.5 h-3.5" />
-                                <p className="text-xs">Puissance moy.</p>
-                            </div>
-                            <p className="text-2xl font-bold text-white">{stats.avg_power_watts}W</p>
-                        </div>
-                    )}
-                    {stats.total_km > 0 && (
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-                                <Flame className="w-3.5 h-3.5" />
-                                <p className="text-xs">Distance totale</p>
-                            </div>
-                            <p className="text-2xl font-bold text-white">{stats.total_km} km</p>
-                        </div>
-                    )}
-                </div>
-            )}
+                    <p className="text-xs text-muted-foreground">{loading ? '...' : `${filtered.length} séance${filtered.length !== 1 ? 's' : ''}`}</p>
+                </motion.div>
 
-            {/* Actions rapides */}
-            <div className="flex gap-2">
-                <Link href="/biking/log"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 text-sm font-medium hover:bg-blue-500/30 transition-colors">
-                    <Plus className="w-4 h-4" />
-                    Enregistrer une séance
-                </Link>
-                <Link href="/biking/generate"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/10 transition-colors">
-                    <Zap className="w-4 h-4" />
-                    Générer avec l'IA
-                </Link>
-            </div>
+                <motion.div variants={fadeInUp} className="rounded-lg border border-border bg-card overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            {table.getHeaderGroups().map(hg => (
+                                <TableRow key={hg.id} className="border-border hover:bg-transparent">
+                                    {hg.headers.map(h => (
+                                        <TableHead key={h.id} className="text-muted-foreground text-xs uppercase tracking-wide">
+                                            {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow className="border-border">
+                                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : filtered.length === 0 ? (
+                                <TableRow className="border-border">
+                                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground text-sm">
+                                        Aucun résultat
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                table.getRowModel().rows.map(row => (
+                                    <TableRow
+                                        key={row.id}
+                                        className="border-border hover:bg-secondary/60 transition-colors cursor-pointer"
+                                        onClick={() => setSelectedSession(row.original)}
+                                    >
+                                        {row.getVisibleCells().map(cell => (
+                                            <TableCell key={cell.id} className="text-foreground text-sm py-2.5">
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </motion.div>
 
-            {/* Filtres */}
-            <div className="flex flex-wrap gap-1.5">
-                <button
-                    onClick={() => setFilter('')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filter === '' ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                        }`}
-                >
-                    Tous
-                </button>
-                {BIKE_TYPES.map(type => (
-                    <button
-                        key={type}
-                        onClick={() => setFilter(type)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filter === type ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-                            }`}
-                    >
-                        {BIKE_TYPE_LABELS[type]}
-                    </button>
-                ))}
-            </div>
+            </motion.div>
 
-            {/* Liste des séances */}
-            {sessions.length === 0 ? (
-                <div className="text-center py-16 space-y-3">
-                    <Bike className="w-12 h-12 text-slate-600 mx-auto" />
-                    <p className="text-slate-400 font-medium">{filter ? 'Aucune séance trouvée' : "Aucune séance pour l'instant"}</p>
-                    {!filter && <p className="text-slate-500 text-sm">Enregistre ta première sortie ou génère un plan IA</p>}
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Séances</h2>
-                    {sessions.map(session => (
-                        <BikingSessionCard key={session.id} session={session} onDelete={handleDelete} onClick={setSelectedSession} />
-                    ))}
-                </div>
-            )}
-
-            <BikingSessionDetailModal session={selectedSession} onClose={() => setSelectedSession(null)} />
-        </div>
+            <BikingSessionDetailModal
+                session={selectedSession}
+                onClose={() => setSelectedSession(null)}
+            />
+        </>
     )
 }
