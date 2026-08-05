@@ -61,6 +61,7 @@ export interface WorkoutSection {
   // Structure répétitive
   rounds?: number
   rest_between_rounds?: number
+  between_rounds_task?: string
 
   // Exercices
   exercises?: Exercise[]

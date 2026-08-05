@@ -128,6 +128,11 @@ export function RichSectionDisplay({ section }: { section: WorkoutSection }) {
                 Rest: {section.rest_between_rounds}s entre rounds
               </span>
             )}
+            {section.between_rounds_task && (
+              <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
+                Après chaque round : {section.between_rounds_task}
+              </span>
+            )}
             {section.focus && (
               <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs text-slate-300">
                 Focus: {section.focus}

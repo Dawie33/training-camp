@@ -166,6 +166,7 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
         "format": "AMRAP|EMOM|For Time|Tabata|E2MOM|etc.",
         "rounds": 5,
         "rest_between_rounds": 60,
+        "between_rounds_task": "30 Double-Unders (à faire après chaque round, en plus des exercices ci-dessous)",
         "exercises": [
           {
             "name": "Nom de l'exercice (nomenclature CrossFit standard)",
@@ -242,6 +243,11 @@ Varie et combine ces modalités selon le type de workout :
 - Liste longue d'exercices (8-12) à faire une fois
 - For Time avec cap
 - Exemple : 50-40-30-20-10 de différents mouvements
+
+### Ladder (rep scheme différent par mouvement, montant et/ou descendant)
+- Chaque exercice peut avoir SA PROPRE séquence de reps sur le champ "reps" (ex: "6-5-4-3-2-1" pour l'un, "1-2-3-4-5-6" pour l'autre) — les séquences doivent avoir le MÊME NOMBRE d'étapes (= le nombre de rounds), chaque étape correspondant au même round pour tous les exercices de la section
+- "rounds" = nombre d'étapes de la séquence (ex: 6 pour "6-5-4-3-2-1")
+- Exemple : For Time - 6-5-4-3-2-1 Thrusters (52/75kg) + 1-2-3-4-5-6 Wall Walks (round 1 = 6 thrusters + 1 wall walk, round 2 = 5 thrusters + 2 wall walks, etc.)
 
 ## 3. STRUCTURE TYPE PAR WORKOUT TYPE
 
@@ -388,6 +394,7 @@ Exemple :
 5. **Cohérence** : Le workout doit être cohérent avec le workout_type choisi
 6. **Durée réaliste** : Total 30-60 minutes incluant warmup/cooldown
 7. **Format OBLIGATOIRE** : Le champ \`format\` est **obligatoire** pour toutes les sections autres que \`warmup\` et \`cooldown\`. Valeurs acceptées : \`"AMRAP Xmin"\`, \`"EMOM Xmin"\`, \`"For Time (cap Xmin)"\`, \`"Tabata"\`, \`"Chipper"\`, \`"Straight Sets"\`, \`"E2MOM Xmin"\`, \`"Circuit"\`, \`"Build to Heavy"\`. Pour \`warmup\` et \`cooldown\` uniquement : \`null\`.
+8. **Tâche insérée entre les rounds** : si le WOD comporte un mouvement fixe à répéter après CHAQUE round (buy-in/cash-out du type "Perform 30 double-unders after each round"), ne l'ajoute PAS comme exercice classique du round ni dans \`rest_between_rounds\` (qui est un temps de repos passif en secondes). Utilise le champ \`"between_rounds_task"\` de la section pour le décrire en texte libre.
 
 ## 9. PROTOCOLES VO2MAX
 

@@ -264,6 +264,17 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                   </div>
 
                   <div>
+                    <label className="text-xs font-medium text-slate-400 block mb-1">Tâche après chaque round</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      value={section.between_rounds_task || ''}
+                      onChange={(e) => updateSection(sectionIndex, { between_rounds_task: e.target.value || undefined })}
+                      placeholder="ex: 30 Double-Unders"
+                    />
+                  </div>
+
+                  <div>
                     <label className="text-xs font-medium text-slate-400 block mb-1">Description</label>
                     <textarea
                       className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all resize-none"

@@ -72,7 +72,11 @@ export function SectionDisplay({
 
       <SectionMeta format={section.format} goal={section.goal} focus={section.focus} />
 
-      <SectionInstructions rounds={section.rounds} rest_between_rounds={section.rest_between_rounds} />
+      <SectionInstructions
+        rounds={section.rounds}
+        rest_between_rounds={section.rest_between_rounds}
+        between_rounds_task={section.between_rounds_task}
+      />
 
       {section.exercises && section.exercises.length > 0 && (
         <SectionExercisesList

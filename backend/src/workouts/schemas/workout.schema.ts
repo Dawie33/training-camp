@@ -98,6 +98,7 @@ export const WorkoutSectionSchema = z.object({
   format: z.string().nullable().optional(),
   rounds: z.number().int().positive().nullable().optional(),
   rest_between_rounds: z.number().nonnegative().nullable().optional(),
+  between_rounds_task: z.string().nullable().optional(),
   exercises: z.array(ExerciseSchema).nullable().optional(),
 })
 
