@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import {
@@ -77,13 +78,13 @@ export default function ForcePage() {
   const columns = useMemo<ColumnDef<StrengthSession>[]>(() => [
     {
       id: 'name',
-      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Séance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-muted-foreground hover:text-foreground px-0">Séance <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
       accessorFn: row => row.ai_plan?.session_name ?? 'Séance de force',
-      cell: ({ getValue }) => <span className="font-medium text-white">{getValue() as string}</span>,
+      cell: ({ getValue }) => <span className="font-medium text-foreground">{getValue() as string}</span>,
     },
     {
       accessorKey: 'session_date',
-      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-slate-400 hover:text-white px-0">Date <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
+      header: ({ column }) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')} className="text-muted-foreground hover:text-foreground px-0">Date <ArrowUpDown className="ml-1 h-3 w-3" /></Button>,
       cell: ({ row }) => new Date(row.getValue('session_date')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
     },
     {
@@ -91,14 +92,14 @@ export default function ForcePage() {
       header: 'Objectif',
       cell: ({ row }) => {
         const goal = row.getValue('session_goal') as SessionGoal
-        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-violet-500/15 text-violet-400">{SESSION_GOAL_LABELS[goal]}</span>
+        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">{SESSION_GOAL_LABELS[goal]}</span>
       },
     },
     {
       id: 'muscles',
       header: 'Muscles',
       accessorFn: row => row.target_muscles.slice(0, 2).map(m => MUSCLE_LABELS[m as keyof typeof MUSCLE_LABELS] ?? m).join(', '),
-      cell: ({ getValue }) => <span className="text-slate-300 text-sm">{getValue() as string || '—'}</span>,
+      cell: ({ getValue }) => <span className="text-muted-foreground text-sm">{getValue() as string || '—'}</span>,
     },
     {
       accessorKey: 'duration_minutes',
@@ -116,7 +117,7 @@ export default function ForcePage() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={e => { e.stopPropagation(); handleDelete(row.original.id) }}
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -129,9 +130,9 @@ export default function ForcePage() {
 
   if (!loading && sessions.length === 0) {
     return (
-      <div className="bg-slate-800/40 border border-slate-700/50 rounded-xl px-4 py-10 text-center">
-        <p className="text-slate-500 mb-3 text-sm">Aucune séance enregistrée</p>
-        <Link href="/force/log" className="text-sm text-violet-400 hover:text-violet-300 underline underline-offset-2">
+      <div className="bg-card border border-border rounded-lg px-4 py-10 text-center">
+        <p className="text-muted-foreground mb-3 text-sm">Aucune séance enregistrée</p>
+        <Link href="/force/log" className="text-sm text-primary hover:underline underline-offset-2">
           Enregistrer ma première séance
         </Link>
       </div>
@@ -145,41 +146,41 @@ export default function ForcePage() {
       <motion.div variants={fadeInUp} className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
               placeholder="Rechercher..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500"
+              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            <button onClick={() => setGoalFilter('')} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${goalFilter === '' ? 'bg-violet-500/20 border-violet-500/40 text-violet-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>Tous</button>
+            <button onClick={() => setGoalFilter('')} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${goalFilter === '' ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}>Tous</button>
             {GOALS.map(goal => (
-              <button key={goal} onClick={() => setGoalFilter(goal)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${goalFilter === goal ? 'bg-violet-500/20 border-violet-500/40 text-violet-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>
+              <button key={goal} onClick={() => setGoalFilter(goal)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${goalFilter === goal ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}>
                 {SESSION_GOAL_LABELS[goal]}
               </button>
             ))}
           </div>
         </div>
         <div className="flex gap-1.5 flex-wrap">
-          <button onClick={() => setBodyFocusFilter('')} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${bodyFocusFilter === '' ? 'bg-orange-500/20 border-orange-500/40 text-orange-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>Tous</button>
+          <button onClick={() => setBodyFocusFilter('')} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${bodyFocusFilter === '' ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}>Tous</button>
           {BODY_FOCUSES.map(focus => (
-            <button key={focus} onClick={() => setBodyFocusFilter(focus)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${bodyFocusFilter === focus ? 'bg-orange-500/20 border-orange-500/40 text-orange-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}>
+            <button key={focus} onClick={() => setBodyFocusFilter(focus)} className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${bodyFocusFilter === focus ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border text-muted-foreground hover:text-foreground'}`}>
               {BODY_FOCUS_LABELS[focus]}
             </button>
           ))}
         </div>
-        <p className="text-xs text-slate-500">{loading ? '...' : `${filtered.length} séance${filtered.length !== 1 ? 's' : ''}`}</p>
+        <p className="text-xs text-muted-foreground">{loading ? '...' : `${filtered.length} séance${filtered.length !== 1 ? 's' : ''}`}</p>
       </motion.div>
 
-      <motion.div variants={fadeInUp} className="rounded-xl border border-slate-700/50 bg-slate-800/40 overflow-hidden">
+      <motion.div variants={fadeInUp} className="rounded-lg border border-border bg-card overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(hg => (
-              <TableRow key={hg.id} className="border-slate-700/50 hover:bg-transparent">
+              <TableRow key={hg.id} className="border-border hover:bg-transparent">
                 {hg.headers.map(h => (
-                  <TableHead key={h.id} className="text-slate-400 text-xs uppercase tracking-wide">
+                  <TableHead key={h.id} className="text-muted-foreground text-xs uppercase tracking-wide">
                     {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
                   </TableHead>
                 ))}
@@ -188,14 +189,14 @@ export default function ForcePage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow className="border-slate-700/50">
+              <TableRow className="border-border">
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-violet-400 mx-auto" />
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto" />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow className="border-slate-700/50">
-                <TableCell colSpan={columns.length} className="h-24 text-center text-slate-500 text-sm">
+              <TableRow className="border-border">
+                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground text-sm">
                   Aucun résultat
                 </TableCell>
               </TableRow>
@@ -203,11 +204,11 @@ export default function ForcePage() {
               table.getRowModel().rows.map(row => (
                 <TableRow
                   key={row.id}
-                  className="border-slate-700/40 hover:bg-slate-700/30 transition-colors cursor-pointer"
+                  className="border-border hover:bg-secondary/60 transition-colors cursor-pointer"
                   onClick={() => setSelectedSession(row.original)}
                 >
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="text-slate-300 text-sm py-2.5">
+                    <TableCell key={cell.id} className="text-foreground text-sm py-2.5">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

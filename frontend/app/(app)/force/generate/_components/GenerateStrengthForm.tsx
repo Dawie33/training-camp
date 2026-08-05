@@ -1,6 +1,5 @@
 'use client'
 
-import { fadeInUp } from '@/lib/animations'
 import {
   BODY_FOCUS_LABELS,
   BodyFocus,
@@ -11,7 +10,6 @@ import {
   TRAINING_STYLE_LABELS,
   TrainingStyle,
 } from '@/services/strength'
-import { motion } from 'framer-motion'
 import { CheckCircle2, Clock, Dumbbell, Loader2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -28,11 +26,11 @@ const GOALS: { value: SessionGoal; description: string; reps: string }[] = [
   { value: 'power', description: 'Mouvements explosifs', reps: '3-5 reps · RPE 7-8' },
 ]
 
-const GOAL_COLORS: Record<SessionGoal, string> = {
-  strength: 'border-red-500/40 data-[active=true]:bg-red-500/20 data-[active=true]:border-red-500',
-  hypertrophy: 'border-purple-500/40 data-[active=true]:bg-purple-500/20 data-[active=true]:border-purple-500',
-  endurance: 'border-green-500/40 data-[active=true]:bg-green-500/20 data-[active=true]:border-green-500',
-  power: 'border-yellow-500/40 data-[active=true]:bg-yellow-500/20 data-[active=true]:border-yellow-500',
+const GOAL_ACCENT: Record<SessionGoal, string> = {
+  strength: 'data-[active=true]:bg-red-50 data-[active=true]:border-red-400 data-[active=true]:text-red-700',
+  hypertrophy: 'data-[active=true]:bg-purple-50 data-[active=true]:border-purple-400 data-[active=true]:text-purple-700',
+  endurance: 'data-[active=true]:bg-emerald-50 data-[active=true]:border-emerald-400 data-[active=true]:text-emerald-700',
+  power: 'data-[active=true]:bg-amber-50 data-[active=true]:border-amber-400 data-[active=true]:text-amber-700',
 }
 
 const BODY_FOCUS_OPTIONS: BodyFocus[] = ['upper_body', 'lower_body', 'full_body']
@@ -45,6 +43,12 @@ const CROSSFIT_BOX_EQUIPMENT = [
 ]
 
 type EquipmentMode = 'saved' | 'bodyweight' | 'crossfit'
+
+const EQUIPMENT_MODES: { id: EquipmentMode; label: string; description: string }[] = [
+  { id: 'saved', label: 'Mon équipement', description: 'Profil utilisateur' },
+  { id: 'bodyweight', label: 'Poids du corps', description: 'Aucun équipement' },
+  { id: 'crossfit', label: 'Box CrossFit', description: 'Tout le matériel' },
+]
 
 interface GenerateStrengthFormProps {
   selectedMuscles: MuscleGroup[]
@@ -106,23 +110,25 @@ export function GenerateStrengthForm({
     BODY_PARTS[part].muscles.some(m => selectedMuscles.includes(m)) && !isBodyPartFull(part)
 
   return (
-    <motion.div variants={fadeInUp} className="space-y-5">
+    <div className="bg-card rounded-lg p-4 lg:p-6 border border-border space-y-4 lg:space-y-5">
+      <h2 className="text-lg lg:text-xl font-bold text-foreground">Paramètres de la séance</h2>
+
       {/* Mode coach personnalisé */}
-      <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+      <div className="flex items-center justify-between p-3 rounded-md bg-secondary/40 border border-border">
         <div>
-          <p className="text-sm font-semibold text-white">Mode coach personnalisé</p>
-          <p className="text-xs text-slate-400 mt-0.5">Adapte la séance à ton profil, tes 1RMs et ton historique</p>
+          <p className="text-sm font-semibold text-foreground">Mode coach personnalisé</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Adapte la séance à ton profil, tes 1RMs et ton historique</p>
         </div>
         <div className="flex items-center gap-2">
           {personalized && (
-            <span className="px-2 py-0.5 bg-violet-500/20 text-violet-400 text-xs font-medium rounded-full border border-violet-500/30">
+            <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/30">
               Basé sur ton profil
             </span>
           )}
           <button
             type="button"
             onClick={() => setPersonalized(!personalized)}
-            className={`relative w-11 h-6 rounded-full transition-colors ${personalized ? 'bg-violet-500' : 'bg-slate-700'}`}
+            className={`relative w-11 h-6 rounded-full transition-colors ${personalized ? 'bg-primary' : 'bg-muted'}`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${personalized ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
@@ -131,10 +137,10 @@ export function GenerateStrengthForm({
 
       {/* Groupes musculaires */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-3">
+        <label className="block text-sm font-medium text-foreground mb-3">
           Groupes musculaires ciblés
           {selectedMuscles.length > 0 && (
-            <span className="ml-2 text-violet-400 font-normal">({selectedMuscles.length} sélectionnés)</span>
+            <span className="ml-2 text-primary font-normal">({selectedMuscles.length} sélectionnés)</span>
           )}
         </label>
 
@@ -144,20 +150,20 @@ export function GenerateStrengthForm({
             <button
               key={key}
               onClick={() => toggleBodyPart(key)}
-              className={`p-3 rounded-xl border transition-all text-left ${
+              className={`p-3 rounded-md border transition-all text-left ${
                 isBodyPartFull(key)
-                  ? 'bg-violet-500/20 border-violet-500 text-white'
+                  ? 'bg-primary/10 border-primary text-foreground'
                   : isBodyPartPartial(key)
-                    ? 'bg-violet-500/10 border-violet-500/50 text-white'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                    ? 'bg-primary/5 border-primary/50 text-foreground'
+                    : 'bg-secondary/40 border-border text-muted-foreground hover:border-foreground/30'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm">{part.label}</span>
-                {isBodyPartFull(key) && <CheckCircle2 className="w-4 h-4 text-violet-400" />}
-                {isBodyPartPartial(key) && <span className="text-xs text-violet-400">{BODY_PARTS[key].muscles.filter(m => selectedMuscles.includes(m)).length}/{part.muscles.length}</span>}
+                {isBodyPartFull(key) && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                {isBodyPartPartial(key) && <span className="text-xs text-primary">{BODY_PARTS[key].muscles.filter(m => selectedMuscles.includes(m)).length}/{part.muscles.length}</span>}
               </div>
-              <p className="text-[11px] mt-0.5 opacity-60">
+              <p className="text-[11px] mt-0.5 opacity-70">
                 {part.muscles.map(m => MUSCLE_LABELS[m]).join(', ')}
               </p>
             </button>
@@ -175,10 +181,10 @@ export function GenerateStrengthForm({
                     <button
                       key={m}
                       onClick={() => toggleMuscle(m)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                         selectedMuscles.includes(m)
-                          ? 'bg-violet-500/20 border-violet-500/60 text-violet-300'
-                          : 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300'
+                          ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/30'
+                          : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground'
                       }`}
                     >
                       {MUSCLE_LABELS[m]}
@@ -193,18 +199,18 @@ export function GenerateStrengthForm({
 
       {/* Objectif */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-3">Objectif</label>
+        <label className="block text-sm font-medium text-foreground mb-3">Objectif</label>
         <div className="grid grid-cols-2 gap-2">
           {GOALS.map(({ value, description, reps }) => (
             <button
               key={value}
               data-active={sessionGoal === value}
               onClick={() => setSessionGoal(value)}
-              className={`text-left p-3 rounded-xl border bg-white/5 transition-all ${GOAL_COLORS[value]}`}
+              className={`text-left p-3 rounded-md border border-border bg-card transition-all hover:border-foreground/30 ${GOAL_ACCENT[value]}`}
             >
-              <p className="font-semibold text-sm text-white">{SESSION_GOAL_LABELS[value]}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">{description}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5">{reps}</p>
+              <p className="font-semibold text-sm text-foreground">{SESSION_GOAL_LABELS[value]}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{reps}</p>
             </button>
           ))}
         </div>
@@ -212,16 +218,16 @@ export function GenerateStrengthForm({
 
       {/* Focus corporel */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-3">Focus corporel</label>
+        <label className="block text-sm font-medium text-foreground mb-3">Focus corporel</label>
         <div className="grid grid-cols-3 gap-2">
           {BODY_FOCUS_OPTIONS.map((value) => (
             <button
               key={value}
               data-active={bodyFocus === value}
               onClick={() => setBodyFocus(value)}
-              className="text-center p-2.5 rounded-xl border bg-white/5 border-white/10 transition-all data-[active=true]:bg-violet-500/20 data-[active=true]:border-violet-500 hover:border-white/20"
+              className="text-center p-2.5 rounded-md border bg-secondary/40 border-border text-muted-foreground transition-all data-[active=true]:bg-primary/10 data-[active=true]:border-primary data-[active=true]:text-primary hover:border-foreground/30"
             >
-              <p className="font-semibold text-sm text-white">{BODY_FOCUS_LABELS[value]}</p>
+              <p className="font-semibold text-sm">{BODY_FOCUS_LABELS[value]}</p>
             </button>
           ))}
         </div>
@@ -229,18 +235,18 @@ export function GenerateStrengthForm({
 
       {/* Style d'entraînement */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-3">Style d'entraînement</label>
+        <label className="block text-sm font-medium text-foreground mb-3">Style d'entraînement</label>
         <div className="grid grid-cols-2 gap-2">
           {TRAINING_STYLE_OPTIONS.map((value) => (
             <button
               key={value}
               data-active={trainingStyle === value}
               onClick={() => setTrainingStyle(value)}
-              className="text-left p-3 rounded-xl border bg-white/5 border-white/10 transition-all data-[active=true]:bg-orange-500/20 data-[active=true]:border-orange-500 hover:border-white/20"
+              className="text-left p-3 rounded-md border bg-secondary/40 border-border text-muted-foreground transition-all data-[active=true]:bg-primary/10 data-[active=true]:border-primary data-[active=true]:text-primary hover:border-foreground/30"
             >
-              <p className="font-semibold text-sm text-white">{TRAINING_STYLE_LABELS[value]}</p>
+              <p className="font-semibold text-sm">{TRAINING_STYLE_LABELS[value]}</p>
               {value === 'strongman' && (
-                <p className="text-[11px] mt-0.5 opacity-60">
+                <p className="text-[11px] mt-0.5 opacity-70">
                   L'IA privilégie yoke walk, atlas stone, sled, farmer's walk… adaptés à ton matériel
                 </p>
               )}
@@ -251,10 +257,10 @@ export function GenerateStrengthForm({
 
       {/* Durée cible */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-3 flex items-center gap-1.5">
-          <Clock className="w-4 h-4 text-slate-400" />Durée cible
+        <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-1.5">
+          <Clock className="w-4 h-4 text-muted-foreground" />Durée cible
           {targetDurationMinutes === undefined && (
-            <span className="ml-1 text-slate-500 font-normal text-xs">(libre)</span>
+            <span className="ml-1 text-muted-foreground font-normal text-xs">(libre)</span>
           )}
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -263,9 +269,9 @@ export function GenerateStrengthForm({
               key={duration ?? 'libre'}
               onClick={() => setTargetDurationMinutes(duration)}
               data-active={targetDurationMinutes === duration}
-              className="text-center p-2.5 rounded-xl border bg-white/5 border-white/10 transition-all data-[active=true]:bg-violet-500/20 data-[active=true]:border-violet-500 hover:border-white/20"
+              className="text-center p-2.5 rounded-md border bg-secondary/40 border-border text-muted-foreground transition-all data-[active=true]:bg-primary/10 data-[active=true]:border-primary data-[active=true]:text-primary hover:border-foreground/30"
             >
-              <p className="font-semibold text-sm text-white">
+              <p className="font-semibold text-sm">
                 {duration === undefined ? 'Libre' : `${duration} min`}
               </p>
             </button>
@@ -275,56 +281,31 @@ export function GenerateStrengthForm({
 
       {/* Équipement */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-3 flex items-center gap-1.5">
-          <Dumbbell className="w-4 h-4 text-slate-400" />Équipement disponible
+        <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-1.5">
+          <Dumbbell className="w-4 h-4 text-muted-foreground" />Équipement disponible
         </label>
         <div className="grid grid-cols-3 gap-2 mb-3">
-          <button
-            onClick={() => setEquipmentMode('saved')}
-            className={`text-left p-3 rounded-xl border transition-all ${
-              equipmentMode === 'saved'
-                ? 'bg-violet-500/20 border-violet-500 text-violet-400'
-                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-            }`}
-          >
-            <div className="mb-0.5">
-              <p className="font-semibold text-sm">Mon équipement</p>
-            </div>
-            <p className="text-[11px] mt-0.5 opacity-70">Profil utilisateur</p>
-          </button>
-          <button
-            onClick={() => setEquipmentMode('bodyweight')}
-            className={`text-left p-3 rounded-xl border transition-all ${
-              equipmentMode === 'bodyweight'
-                ? 'bg-slate-500/20 border-slate-400 text-slate-300'
-                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-            }`}
-          >
-            <div className="mb-0.5">
-              <p className="font-semibold text-sm">Poids du corps</p>
-            </div>
-            <p className="text-[11px] mt-0.5 opacity-70">Aucun équipement</p>
-          </button>
-          <button
-            onClick={() => setEquipmentMode('crossfit')}
-            className={`text-left p-3 rounded-xl border transition-all ${
-              equipmentMode === 'crossfit'
-                ? 'bg-orange-500/20 border-orange-500 text-orange-400'
-                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-            }`}
-          >
-            <div className="mb-0.5">
-              <p className="font-semibold text-sm">Box CrossFit</p>
-            </div>
-            <p className="text-[11px] mt-0.5 opacity-70">Tout le matériel</p>
-          </button>
+          {EQUIPMENT_MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setEquipmentMode(m.id)}
+              className={`text-left p-3 rounded-md border transition-all ${
+                equipmentMode === m.id
+                  ? 'bg-primary/10 border-primary/60 text-primary'
+                  : 'bg-secondary/40 border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+              }`}
+            >
+              <p className="font-semibold text-sm">{m.label}</p>
+              <p className="text-[11px] mt-0.5 opacity-70">{m.description}</p>
+            </button>
+          ))}
         </div>
 
         {equipmentMode === 'crossfit' && (
-          <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 mb-3">
+          <div className="rounded-md border border-border bg-secondary/40 p-3">
             <div className="flex flex-wrap gap-1.5">
               {CROSSFIT_BOX_EQUIPMENT.map((e) => (
-                <span key={e} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                <span key={e} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-secondary text-foreground border border-border">
                   <CheckCircle2 className="w-3 h-3" />{e}
                 </span>
               ))}
@@ -333,21 +314,21 @@ export function GenerateStrengthForm({
         )}
 
         {equipmentMode === 'saved' && (
-          <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+          <div className="rounded-md border border-border bg-secondary/40 p-3">
             {loadingProfile ? (
-              <p className="text-xs text-slate-500">Chargement...</p>
+              <p className="text-xs text-muted-foreground">Chargement...</p>
             ) : equipment.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {equipment.map((e) => (
-                  <span key={e} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                  <span key={e} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-secondary text-foreground border border-border">
                     <CheckCircle2 className="w-3 h-3" />{e}
                   </span>
                 ))}
               </div>
             ) : (
               <>
-                <p className="text-xs text-slate-400">Aucun équipement enregistré → poids du corps.</p>
-                <Link href="/profile" className="text-xs text-violet-400 hover:underline mt-1 inline-block">
+                <p className="text-xs text-muted-foreground">Aucun équipement enregistré → poids du corps.</p>
+                <Link href="/profile" className="text-xs text-primary hover:underline mt-1 inline-block">
                   Configurer mon équipement →
                 </Link>
               </>
@@ -358,7 +339,7 @@ export function GenerateStrengthForm({
 
       {/* Contexte */}
       <div>
-        <label className="block text-sm font-semibold text-slate-300 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           Contexte / instructions (optionnel)
         </label>
         <textarea
@@ -366,20 +347,20 @@ export function GenerateStrengthForm({
           onChange={(e) => setAdditionalContext(e.target.value)}
           rows={2}
           placeholder="ex : j'ai mal au coude gauche, éviter les extensions triceps..."
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500 resize-none"
+          className="w-full bg-secondary/40 border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors resize-none"
         />
       </div>
 
       <button
         onClick={onGenerate}
         disabled={loading || selectedMuscles.length === 0}
-        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/30 rounded-xl hover:from-violet-500/30 hover:to-purple-500/30 transition-all font-semibold disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md font-semibold transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
       >
         {loading
           ? <><Loader2 className="w-4 h-4 animate-spin" /> Génération en cours...</>
           : <><Sparkles className="w-4 h-4" /> Générer la séance</>
         }
       </button>
-    </motion.div>
+    </div>
   )
 }

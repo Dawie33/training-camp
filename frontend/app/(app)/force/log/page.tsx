@@ -1,10 +1,8 @@
 'use client'
 
 import { CorosImport } from '@/components/fit-import/CorosImport'
-import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { MultiActivityFitData } from '@/services/fit-import'
 import { GeneratedStrengthSession, MUSCLE_GROUPS, MUSCLE_LABELS, SESSION_GOAL_LABELS, SessionGoal, strengthService } from '@/services/strength'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -12,10 +10,10 @@ import { toast } from 'sonner'
 
 const GOALS: SessionGoal[] = ['strength', 'hypertrophy', 'endurance', 'power']
 const GOAL_COLORS: Record<SessionGoal, string> = {
-  strength: 'bg-red-500/20 border-red-500/40 text-red-400',
-  hypertrophy: 'bg-purple-500/20 border-purple-500/40 text-purple-400',
-  endurance: 'bg-green-500/20 border-green-500/40 text-green-400',
-  power: 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400',
+  strength: 'bg-red-50 border-red-400 text-red-700',
+  hypertrophy: 'bg-purple-50 border-purple-400 text-purple-700',
+  endurance: 'bg-emerald-50 border-emerald-400 text-emerald-700',
+  power: 'bg-amber-50 border-amber-400 text-amber-700',
 }
 
 export default function StrengthLogPage() {
@@ -76,27 +74,27 @@ export default function StrengthLogPage() {
   }
 
   return (
-    <motion.div className="space-y-6 pb-8" initial="hidden" animate="visible" variants={staggerContainer}>
+    <div className="max-w-3xl space-y-6">
 
-      <motion.div variants={fadeInUp} className="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 space-y-4">
-        <h2 className="text-base font-semibold text-white">Séance</h2>
+      <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Séance</h2>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Date</label>
+          <label className="block text-sm text-muted-foreground mb-2">Date</label>
           <input type="date" value={form.session_date}
             onChange={e => setForm(f => ({ ...f, session_date: e.target.value }))}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-violet-500/50 transition-all [color-scheme:dark]"
+            className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 transition-all"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Objectif</label>
+          <label className="block text-sm text-muted-foreground mb-2">Objectif</label>
           <div className="flex gap-2 flex-wrap">
             {GOALS.map(goal => (
               <button key={goal} type="button"
                 onClick={() => setForm(f => ({ ...f, session_goal: goal }))}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                  form.session_goal === goal ? GOAL_COLORS[goal] : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  form.session_goal === goal ? GOAL_COLORS[goal] : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {SESSION_GOAL_LABELS[goal]}
@@ -106,15 +104,15 @@ export default function StrengthLogPage() {
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Groupes musculaires travaillés</label>
+          <label className="block text-sm text-muted-foreground mb-2">Groupes musculaires travaillés</label>
           <div className="flex gap-2 flex-wrap">
             {MUSCLE_GROUPS.map(muscle => (
               <button key={muscle} type="button"
                 onClick={() => toggleMuscle(muscle)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
                   form.target_muscles.includes(muscle)
-                    ? 'bg-violet-500/20 border-violet-500/40 text-violet-400'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                    ? 'bg-primary/10 border-primary text-primary'
+                    : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {MUSCLE_LABELS[muscle]}
@@ -125,59 +123,57 @@ export default function StrengthLogPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm text-slate-400 mb-2">Durée (min)</label>
+            <label className="block text-sm text-muted-foreground mb-2">Durée (min)</label>
             <input type="number" min="1" max="300" placeholder="60"
               value={form.duration_minutes}
               onChange={e => setForm(f => ({ ...f, duration_minutes: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-violet-500/50 transition-all placeholder:text-slate-600"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 transition-all placeholder:text-muted-foreground"
             />
           </div>
           <div>
-            <label className="block text-sm text-slate-400 mb-2">RPE (1-10)</label>
+            <label className="block text-sm text-muted-foreground mb-2">RPE (1-10)</label>
             <input type="number" min="1" max="10" placeholder="7"
               value={form.perceived_effort}
               onChange={e => setForm(f => ({ ...f, perceived_effort: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-violet-500/50 transition-all placeholder:text-slate-600"
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:border-primary/50 transition-all placeholder:text-muted-foreground"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Plan de séance (optionnel)</label>
+          <label className="block text-sm text-muted-foreground mb-2">Plan de séance (optionnel)</label>
           <textarea
             rows={10}
             placeholder={"Colle ici le plan généré par l'IA…\n\nEx :\nBloc 1 — Compound lourd\n① Squat talon surélevé — 4 × 8\n…"}
             value={form.session_plan}
             onChange={e => setForm(f => ({ ...f, session_plan: e.target.value }))}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-600 resize-y focus:outline-none focus:border-violet-500/50 transition-all text-sm font-mono leading-relaxed"
+            className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground resize-y focus:outline-none focus:border-primary/50 transition-all text-sm font-mono leading-relaxed"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-2">Notes personnelles (optionnel)</label>
+          <label className="block text-sm text-muted-foreground mb-2">Notes personnelles (optionnel)</label>
           <textarea rows={3} placeholder="Sensations, charges utilisées, remarques…"
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 resize-none focus:outline-none focus:border-violet-500/50 transition-all"
+            className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50 transition-all"
           />
         </div>
-      </motion.div>
+      </div>
 
-      <motion.div variants={fadeInUp}>
-        <CorosImport accentColor="violet" onImport={handleCorosImport} onClear={() => setFitData(null)} />
-      </motion.div>
+      <CorosImport accentColor="orange" onImport={handleCorosImport} onClear={() => setFitData(null)} />
 
-      <motion.div variants={fadeInUp} className="flex gap-3">
-        <Link href="/force" className="flex-1 py-3.5 text-center border border-slate-700/50 bg-slate-800/50 text-slate-300 rounded-xl font-medium hover:bg-slate-700/50 transition-colors">
+      <div className="flex gap-3 pb-20 sm:pb-8">
+        <Link href="/force" className="flex-1 py-3.5 text-center border border-border bg-card text-foreground rounded-lg font-medium hover:bg-secondary/60 transition-colors">
           Annuler
         </Link>
         <button onClick={handleSave} disabled={saving}
-          className="flex-1 py-3.5 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-500 transition-all disabled:opacity-50"
+          className="flex-1 py-3.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? 'Enregistrement...' : 'Enregistrer la séance'}
         </button>
-      </motion.div>
+      </div>
 
-    </motion.div>
+    </div>
   )
 }
