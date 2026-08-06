@@ -134,9 +134,9 @@ frontend/
 ```
 
 - `'use client'` pour les composants interactifs, Server Components pour les layouts/pages statiques
-- Appels API directs au backend via `apiClient` (jamais de routes Next.js API)
+- Appels API via la réécriture Next.js (`/api` → backend, voir `next.config.ts`) pour que les requêtes soient same-origin et que le cookie JWT httpOnly soit toujours transmis (y compris sur mobile)
 - Pattern page : `page.tsx` → `_hooks/` → `_components/` (co-localisation dans le dossier de la page)
-- Token JWT dans `localStorage` (`access_token`), injecté automatiquement par `apiClient` — ⚠️ vulnérable au XSS, migration vers httpOnly cookies à prévoir
+- Token JWT dans un cookie **httpOnly** (`access_token`, 7 jours), posé par le backend à la connexion — non accessible en JavaScript, `apiClient` n'a rien à gérer. Voir [docs/auth-securite.md](docs/auth-securite.md).
 
 ### Services frontend
 
@@ -146,10 +146,9 @@ frontend/
 
 Un fichier service par domaine : `workouts.ts`, `sessions.ts`, `skills.ts`, `schedule.ts`, `one-rep-maxes.ts`, etc.
 
-### Deux flux de log de workout distincts
+### Log de séance : une page dédiée par sport
 
-- **`LogWorkoutModal`** (`components/calendar/`) — log depuis le calendrier, appelle l'API backend (`sessionService` + `scheduleApi`). Supporte for_time (avec cap atteint), amrap, libre.
-- **`WorkoutResultModal`** (`components/workout/`) — log depuis le timer intégré, utilise `WorkoutHistoryService` (localStorage). Flow séparé, non connecté à l'API sessions.
+Pas de modale de log — chaque sport a sa propre page (`/crossfit/log-workout`, `/training-programs/log-session`, `/running/log`, `/biking/log`, `/force/log`). Cross-training et programmes partagent `workout_sessions` + `sessionService` et sont reliés au calendrier via `scheduleId` + `scheduleApi`. Les autres sports ont leur propre table et service (`running_sessions`/`runningService`, etc.) et sont visibles au calendrier via le registre en lecture `scheduled_activities`. Détails dans [docs/flux-log-workout.md](docs/flux-log-workout.md).
 
 ## Base de données — tables principales
 
