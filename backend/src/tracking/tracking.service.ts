@@ -444,7 +444,7 @@ ${this.jsonInstructions(true)}`
 
   private async callAI(prompt: string, isGlobal = false): Promise<Omit<ProgressionReport, 'sport' | 'period_months' | 'generated_at'>> {
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: isGlobal ? 2000 : 2500,

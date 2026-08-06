@@ -23,7 +23,7 @@ Monorepo npm workspaces :
 - NestJS 11, TypeScript 5.7
 - PostgreSQL 15 via Knex.js (query builder + migrations)
 - JWT (Passport.js), class-validator/class-transformer (DTOs)
-- OpenAI API (`gpt-4o`, `json_object`, Zod validation)
+- OpenAI API (`gpt-4.1`, `json_object`, Zod validation)
 - `@nestjs/throttler` — rate limiting global + par route
 - Préfixe API : `/api`
 
@@ -108,7 +108,7 @@ Trois services OpenAI distincts, chacun avec son fichier de prompt et son schém
 - `ai-skill-generator.service.ts` — génère les programmes de compétences (dans `SkillsModule`)
 - `workout-analysis.service.ts` — analyse les sessions post-workout (dans `WorkoutSessionsModule`)
 
-Toutes les interactions OpenAI utilisent `model: 'gpt-4o'`, `response_format: json_object`, et valident la réponse avec Zod. Si l'IA retourne `{"error": "UNKNOWN_WOD"}` sur un lookup de WOD, lever une `BadRequestException`.
+Toutes les interactions OpenAI utilisent `model: 'gpt-4.1'`, `response_format: json_object`, et valident la réponse avec Zod. Si l'IA retourne `{"error": "UNKNOWN_WOD"}` sur un lookup de WOD, lever une `BadRequestException`.
 
 ### UserContextService
 
@@ -187,5 +187,5 @@ En production, le backend est déployé sur Render (`https://training-camp.onren
 - `npm run dev` lance frontend + backend via `concurrently`. Ne pas laisser tourner un backend séparé en parallèle (conflit port 3001).
 - `turbopack: { root: '../' }` dans `next.config.ts` provoque des redémarrages intempestifs du backend en watch mode — ne pas le remettre.
 - Les migrations Knex sont dans `backend/src/database/migrations/` (pas `backend/database/`).
-- GPT-4o ne connaît pas les workouts CrossFit Open postérieurs à début 2025. Utiliser le champ `referenceData` du endpoint `POST /workouts/lookup` pour injecter les détails exacts.
+- GPT-4.1 ne connaît pas les workouts CrossFit Open postérieurs à début 2025. Utiliser le champ `referenceData` du endpoint `POST /workouts/lookup` pour injecter les détails exacts.
 - La DB écoute sur le port **5432** (standard PostgreSQL — dans le monorepo, utiliser le docker-compose racine).

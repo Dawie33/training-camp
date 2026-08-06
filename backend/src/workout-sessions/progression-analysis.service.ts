@@ -90,7 +90,7 @@ export class ProgressionAnalysisService {
     const prompt = this.buildPrompt(aggregated, oneRepMaxes, profile, months)
 
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 1200,

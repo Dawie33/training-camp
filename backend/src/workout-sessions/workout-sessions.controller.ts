@@ -11,6 +11,7 @@ import {
     Req,
     UseGuards,
 } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { Request } from 'express'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from './dto/session.dto'
@@ -100,6 +101,7 @@ export class WorkoutSessionsController {
     }
 
     @Post(':id/analyze')
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     async analyze(
         @Req() req: AuthenticatedRequest,
         @Param('id') sessionId: string,

@@ -11,11 +11,13 @@ export class EquipmentsController {
     ) { }
 
     @Get()
+    @UseGuards(JwtAuthGuard)
     async findAll(@Query() query: EquipmentQueryDto) {
         return await this.service.findAll(query)
     }
 
     @Get(':id')
+    @UseGuards(JwtAuthGuard)
     async findOne(@Param('id') id: string) {
         return this.service.findOne(id)
     }

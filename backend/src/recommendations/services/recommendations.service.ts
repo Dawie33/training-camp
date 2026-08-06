@@ -35,7 +35,7 @@ export class RecommendationsService {
       const stats = this.computeSessionStats(ctx)
 
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4.1',
         messages: [
           { role: 'system', content: buildRecommendationSystemPrompt() },
           { role: 'user', content: buildRecommendationUserPrompt(ctx, stats, programContext) },

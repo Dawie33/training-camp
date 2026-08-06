@@ -10,16 +10,19 @@ export class ExercisesController {
     ) { }
 
     @Get()
+    @UseGuards(JwtAuthGuard)
     async findAll(@Query() query: ExerciseQueryDto) {
         return await this.service.findAll(query)
     }
 
     @Get('by-name/:name')
+    @UseGuards(JwtAuthGuard)
     async findByName(@Param('name') name: string) {
         return this.service.findByName(name)
     }
 
     @Get(':id')
+    @UseGuards(JwtAuthGuard)
     async findOne(@Param('id') id: string) {
         return this.service.findOne(id)
     }

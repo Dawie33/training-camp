@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Request, UseGuards } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { AIProgramGeneratorService } from './ai-program-generator.service'
 import { CreateProgramDto } from './dto/create-program.dto'
@@ -21,6 +22,7 @@ export class TrainingProgramsController {
    * Génère un programme avec l'IA (aperçu sans sauvegarde)
    */
   @Post('generate-ai')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async generateWithAI(@Request() req: { user: { id: string } }, @Body() dto: GenerateProgramDto) {
     return this.aiGenerator.generateProgram(req.user.id, dto)
   }

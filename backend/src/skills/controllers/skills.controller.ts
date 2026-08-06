@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import {
   CreateSkillProgramDto,
@@ -47,8 +48,12 @@ export class SkillsController {
 
   @Post('generate-ai')
   @UseGuards(JwtAuthGuard)
-  async generateWithAI(@Body() dto: GenerateSkillProgramDto) {
-    return this.aiGenerator.generateSkillProgram(dto)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async generateWithAI(
+    @Body() dto: GenerateSkillProgramDto,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.aiGenerator.generateSkillProgram(req.user.id, dto)
   }
 
   @Post('progress')

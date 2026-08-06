@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import OpenAI from 'openai'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { GenerateSkillProgramDto } from '../dto/skill.dto'
 import {
@@ -12,7 +13,7 @@ import { GeneratedSkillProgramSchema, GeneratedSkillProgramValidated } from '../
 export class AISkillGeneratorService {
   private openai: OpenAI
 
-  constructor() {
+  constructor(private readonly userContextService: UserContextService) {
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
@@ -20,16 +21,20 @@ export class AISkillGeneratorService {
     this.openai = new OpenAI({ apiKey })
   }
 
-  async generateSkillProgram(params: GenerateSkillProgramDto): Promise<GeneratedSkillProgramValidated> {
+  async generateSkillProgram(userId: string, params: GenerateSkillProgramDto): Promise<GeneratedSkillProgramValidated> {
     try {
+      const ctx = await this.userContextService.getUserAIContext(userId)
+
       const systemPrompt = buildSkillProgressionSystemPrompt()
       const userPrompt = buildSkillProgressionUserPrompt({
         skillName: params.skillName,
         skillCategory: params.skillCategory,
         currentCapabilities: params.currentCapabilities,
         constraints: params.constraints,
-        userLevel: params.userLevel,
-        availableEquipment: params.availableEquipment,
+        userLevel: params.userLevel ?? ctx.sport_level,
+        availableEquipment: params.availableEquipment?.length ? params.availableEquipment : ctx.equipment_available,
+        injuries: ctx.injuries,
+        physicalLimitations: ctx.physical_limitations,
       })
 
       const completion = await this.openai.chat.completions.create({

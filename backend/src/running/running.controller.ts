@@ -11,6 +11,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import type { Response } from 'express'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import {
@@ -68,6 +69,7 @@ export class RunningController {
    * Prévisualise un plan sans le sauvegarder
    */
   @Post('generate/preview')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async generatePreview(@Req() req, @Body() data: GenerateRunningSessionDto) {
     return this.runningService.generatePreview(req.user.id, data)
   }
@@ -76,6 +78,7 @@ export class RunningController {
    * Génère et sauvegarde directement la séance
    */
   @Post('generate/save')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async generateAndSave(@Req() req, @Body() data: GenerateRunningSessionDto) {
     return this.runningService.generateAndSave(req.user.id, data)
   }

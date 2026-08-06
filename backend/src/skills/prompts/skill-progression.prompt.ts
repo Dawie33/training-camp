@@ -131,10 +131,12 @@ export interface SkillProgressionParams {
   constraints?: string
   userLevel?: string
   availableEquipment?: string[]
+  injuries?: Record<string, unknown>
+  physicalLimitations?: Record<string, unknown>
 }
 
 export function buildSkillProgressionUserPrompt(params: SkillProgressionParams): string {
-  const { skillName, skillCategory, currentCapabilities, constraints, userLevel, availableEquipment } = params
+  const { skillName, skillCategory, currentCapabilities, constraints, userLevel, availableEquipment, injuries, physicalLimitations } = params
 
   const categoryLabels: Record<string, string> = {
     gymnastics: 'Gymnastique CrossFit',
@@ -143,6 +145,9 @@ export function buildSkillProgressionUserPrompt(params: SkillProgressionParams):
     mobility: 'Mobilite',
   }
 
+  const hasInjuries = injuries && Object.keys(injuries).length > 0
+  const hasPhysicalLimitations = physicalLimitations && Object.keys(physicalLimitations).length > 0
+
   let prompt = `Genere un programme de progression pour le skill suivant :
 
 **Skill** : ${skillName}
@@ -150,6 +155,8 @@ export function buildSkillProgressionUserPrompt(params: SkillProgressionParams):
 ${userLevel ? `**Niveau actuel** : ${userLevel}` : ''}
 ${currentCapabilities ? `**Capacites actuelles** : ${currentCapabilities}` : ''}
 ${constraints ? `**Contraintes / limitations** : ${constraints}` : ''}
+${hasInjuries ? `**Blessures a prendre en compte** : ${JSON.stringify(injuries)}\n\nIMPORTANT : Adapte la progression et exclus toute etape ou exercice qui aggraverait ces blessures.` : ''}
+${hasPhysicalLimitations ? `**Limitations physiques** : ${JSON.stringify(physicalLimitations)}` : ''}
 ${availableEquipment && availableEquipment.length > 0 ? `**Equipement disponible** : ${availableEquipment.join(', ')}\n\nIMPORTANT : Utilise UNIQUEMENT l'equipement liste ci-dessus. Ne propose AUCUN exercice necessitant du materiel que l'utilisateur n'a pas. Si un exercice classique necessite du materiel indisponible, propose une alternative avec l'equipement disponible ou au poids du corps.` : ''}
 `
 
