@@ -19,6 +19,7 @@ import {
   Dumbbell,
   Footprints,
   Home,
+  PersonStanding,
   Target,
   TrendingUp,
 } from 'lucide-react'
@@ -72,6 +73,7 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
         { href: '/running', label: 'Running', icon: <Footprints className="w-5 h-5" /> },
         { href: '/biking', label: 'Vélo', icon: <Bike className="w-5 h-5" /> },
         { href: '/force', label: 'Force', icon: <Dumbbell className="w-5 h-5" /> },
+        { href: '/mobility', label: 'Mobilité', icon: <PersonStanding className="w-5 h-5" /> },
       ],
     },
   ]

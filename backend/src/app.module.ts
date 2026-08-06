@@ -12,6 +12,7 @@ import { ExercisesModule } from './exercises/exercises.module'
 import { FitImportModule } from './fit-import/fit-import.module'
 import { GoogleCalendarModule } from './google-calendar/google-calendar.module'
 import { HealthcheckModule } from './healthcheck/healthcheck.module'
+import { MobilityModule } from './mobility/mobility.module'
 import { OneRepMaxesModule } from './one-rep-maxes/one-rep-maxes.module'
 import { RecommendationsModule } from './recommendations/recommendations.module'
 import { RunningModule } from './running/running.module'
@@ -51,6 +52,7 @@ import { WorkoutsModule } from './workouts/workouts.module'
     RunningModule,
     BikingModule,
     StrengthModule,
+    MobilityModule,
     FitImportModule,
     TrackingModule,
     RecommendationsModule,
