@@ -8,7 +8,7 @@ import { ScheduleSkillModal } from '@/components/calendar/ScheduleSkillModal'
 import { ScheduleWorkoutModal } from '@/components/calendar/ScheduleWorkoutModal'
 import { WeeklyPlannerModal } from '@/components/calendar/WeeklyPlannerModal'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { WorkoutPrintView } from '@/components/workout/WorkoutPrintView'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { ScheduleXCalendar } from '@schedule-x/react'
@@ -177,6 +177,7 @@ function CalendarContent() {
 
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null) }}>
         <DialogContent className="sm:max-w-[460px] max-h-[85vh] overflow-y-auto bg-card border-border text-foreground p-0">
+          <DialogTitle className="sr-only">{(selectedEvent?.title as string) || 'Détail de la séance'}</DialogTitle>
           {selectedEvent && <CustomEventModal calendarEvent={selectedEvent} />}
         </DialogContent>
       </Dialog>
