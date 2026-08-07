@@ -20,12 +20,13 @@ export const MobilityBlockSchema = z.object({
 
 export const GeneratedMobilityPlanSchema = z.object({
     name: z.string().min(1),
-    focus_area: z.enum(['hips', 'shoulders', 'hips_shoulders', 'wrists', 'ankles', 'thoracic_spine', 'full_body']),
+    // Tableau car un mouvement technique sollicite souvent plusieurs zones à la fois (ex: handstand = poignets + épaules + t-spine).
+    focus_areas: z.array(z.enum(['hips', 'shoulders', 'wrists', 'ankles', 'thoracic_spine', 'full_body'])).min(1),
     goal: z.enum(['crossfit_technique', 'relaxation', 'recovery']),
     estimated_duration_minutes: z.number().int().positive(),
     difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'elite']),
     description: z.string(),
-    target_skill: z.string().optional(),
+    target_skill: z.enum(['snatch', 'overhead_squat', 'clean', 'jerk', 'thruster', 'handstand_hspu']).optional(),
     structure: z.array(MobilityBlockSchema).min(1),
     coaching_tips: z.string(),
     relaxation_notes: z.string(),

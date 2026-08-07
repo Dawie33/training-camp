@@ -3,6 +3,7 @@ import { apiClient } from './index'
 export type MobilityFocusArea = 'hips' | 'shoulders' | 'hips_shoulders' | 'wrists' | 'ankles' | 'thoracic_spine' | 'full_body'
 export type MobilityGoal = 'crossfit_technique' | 'relaxation' | 'recovery'
 export type MobilityPhase = 'activation' | 'mobilization' | 'stretch' | 'integration'
+export type MobilityTargetSkill = 'snatch' | 'overhead_squat' | 'clean' | 'jerk' | 'thruster' | 'handstand_hspu'
 
 export const MOBILITY_FOCUS_AREA_LABELS: Record<MobilityFocusArea, string> = {
     hips: 'Hanches',
@@ -18,6 +19,15 @@ export const MOBILITY_GOAL_LABELS: Record<MobilityGoal, string> = {
     crossfit_technique: 'Technique CrossFit',
     relaxation: 'Détente',
     recovery: 'Récupération',
+}
+
+export const MOBILITY_TARGET_SKILL_LABELS: Record<MobilityTargetSkill, string> = {
+    snatch: 'Snatch',
+    overhead_squat: 'Overhead squat',
+    clean: 'Clean',
+    jerk: 'Jerk / Split jerk',
+    thruster: 'Thruster',
+    handstand_hspu: 'Handstand / HSPU',
 }
 
 export const MOBILITY_PHASE_LABELS: Record<MobilityPhase, string> = {
@@ -47,22 +57,24 @@ export interface MobilityBlock {
 
 export interface GeneratedMobilityPlan {
     name: string
-    focus_area: MobilityFocusArea
+    focus_areas: MobilityFocusArea[]
     goal: MobilityGoal
     estimated_duration_minutes: number
     difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
     description: string
-    target_skill?: string
+    target_skill?: MobilityTargetSkill
     structure: MobilityBlock[]
     coaching_tips: string
     relaxation_notes: string
 }
 
 export interface GenerateMobilityDto {
-    focus_area: MobilityFocusArea
     goal: MobilityGoal
     duration_minutes: number
-    target_skill?: string
+    // Requis si goal=relaxation/recovery
+    focus_area?: MobilityFocusArea
+    // Requis si goal=crossfit_technique
+    target_skill?: MobilityTargetSkill
     level?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
     additional_instructions?: string
 }

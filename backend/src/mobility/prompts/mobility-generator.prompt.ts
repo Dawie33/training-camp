@@ -11,9 +11,18 @@ const FOCUS_AREA_DESCRIPTIONS: Record<string, string> = {
 }
 
 const GOAL_DESCRIPTIONS: Record<string, string> = {
-    crossfit_technique: 'Préparer un mouvement technique CrossFit précis (ex: overhead squat, snatch, muscle-up, pistol) — mobilité spécifique aux amplitudes requises',
+    crossfit_technique: 'Préparer un mouvement technique CrossFit précis — mobilité spécifique aux amplitudes requises',
     relaxation: 'Détente et relâchement musculaire — rythme lent, respiration, confort avant tout',
     recovery: 'Récupération post-entraînement — réduire les tensions et courbatures',
+}
+
+const TARGET_SKILL_LABELS: Record<string, string> = {
+    snatch: 'Snatch (arraché)',
+    overhead_squat: 'Overhead squat',
+    clean: 'Clean (épaulé)',
+    jerk: 'Jerk / Split jerk',
+    thruster: 'Thruster',
+    handstand_hspu: 'Handstand / HSPU',
 }
 
 export function buildMobilitySystemPrompt(): string {
@@ -23,7 +32,7 @@ Ta mission est de générer des routines de mobilité personnalisées et détail
 
 # CORRESPONDANCE MOUVEMENT → ZONES PRIORITAIRES (haltérophilie / gymnastique CrossFit)
 
-Quand target_skill correspond à l'un de ces mouvements, priorise les zones et positions suivantes :
+Quand goal=crossfit_technique, target_skill désigne le mouvement technique visé. Détermine TOI-MÊME la ou les zones (focus_areas) à travailler à partir de ce mouvement — l'utilisateur ne choisit pas de zone dans ce cas, c'est à toi de la déduire. Un mouvement sollicite souvent plusieurs zones à la fois : liste-les toutes dans focus_areas.
 
 - **Snatch (arraché)** : épaules (flexion overhead complète + rotation externe, prise large), poignets (stabilisation de la barre overhead sans bascule), hanches + chevilles (squat overhead = position la plus profonde et instable), t-spine (extension pour garder la barre au-dessus du milieu du pied).
 - **Overhead squat** : priorité absolue chevilles (dorsiflexion) et épaules (flexion overhead + t-spine associée) — c'est un test diagnostic de mobilité globale. Si échec, orienter vers le "test mur" (dos/fesses/épaules/mains au mur, lever les bras sans décoller le bas du dos).
@@ -37,12 +46,12 @@ Quand target_skill correspond à l'un de ces mouvements, priorise les zones et p
 \`\`\`json
 {
   "name": "Nom court et descriptif de la routine",
-  "focus_area": "hips|shoulders|hips_shoulders|wrists|ankles|thoracic_spine|full_body",
+  "focus_areas": ["hips", "ankles"],
   "goal": "crossfit_technique|relaxation|recovery",
   "estimated_duration_minutes": 20,
   "difficulty": "beginner|intermediate|advanced|elite",
   "description": "Objectif de la routine et bénéfices attendus (2-3 phrases)",
-  "target_skill": "overhead squat (optionnel, uniquement si goal=crossfit_technique)",
+  "target_skill": "overhead_squat (uniquement si goal=crossfit_technique, doit reprendre exactement la valeur reçue)",
   "structure": [
     {
       "phase": "activation|mobilization|stretch|integration",
@@ -69,8 +78,8 @@ Quand target_skill correspond à l'un de ces mouvements, priorise les zones et p
 
 # RÈGLES IMPORTANTES
 - Phases : activation (réveil articulaire, 3-5min), mobilization (mouvements dynamiques d'amplitude, 5-10min), stretch (étirements statiques/PNF tenus 30-90s), integration (mouvement fonctionnel reproduisant le geste ciblé, uniquement si goal=crossfit_technique)
-- Si goal=relaxation : privilégier les phases stretch, rythme lent, respiration guidée, pas d'intégration fonctionnelle
-- Si goal=crossfit_technique et target_skill fourni : la phase "integration" doit reproduire des positions du mouvement visé (ex: squat overhead tenu, rack position)
+- Si goal=relaxation ou recovery : focus_areas doit reprendre exactement la zone fournie par l'utilisateur (ou les deux zones si "hips_shoulders"). Privilégier les phases stretch, rythme lent, respiration guidée, pas d'intégration fonctionnelle.
+- Si goal=crossfit_technique : détermine focus_areas toi-même à partir de target_skill (voir table de correspondance ci-dessus, plusieurs zones possibles) ; la phase "integration" doit reproduire des positions du mouvement visé (ex: squat overhead tenu, rack position)
 - side=bilateral pour les mouvements symétriques, left_right pour les mouvements unilatéraux (préciser dans instructions de faire les deux côtés)
 - Adapter aux limitations physiques et blessures signalées par l'utilisateur — proposer des alternatives sûres, jamais de mouvement qui aggraverait une blessure
 - La somme des duration_minutes des blocs doit être proche de estimated_duration_minutes
@@ -100,13 +109,16 @@ export function buildMobilityUserPrompt(params: MobilityUserPromptParams): strin
 
     const lines: string[] = [
         `Génère une routine de mobilité de ${duration_minutes} minutes.`,
-        `Zone ciblée : ${FOCUS_AREA_DESCRIPTIONS[focus_area]}`,
         `Objectif : ${GOAL_DESCRIPTIONS[goal]}`,
         `Niveau : ${level || userLevel || 'intermediate'}`,
     ]
 
-    if (target_skill) {
-        lines.push(`Mouvement technique visé : ${target_skill} — cible les amplitudes et positions spécifiques à ce mouvement.`)
+    if (goal === 'crossfit_technique' && target_skill) {
+        lines.push(
+            `Mouvement technique visé : ${TARGET_SKILL_LABELS[target_skill] || target_skill} (target_skill="${target_skill}") — déduis toi-même les zones (focus_areas) à travailler à partir de la table de correspondance mouvement → zones, et cible les amplitudes et positions spécifiques à ce mouvement.`,
+        )
+    } else if (focus_area) {
+        lines.push(`Zone ciblée : ${FOCUS_AREA_DESCRIPTIONS[focus_area]}`)
     }
 
     const injuryEntries = injuries ? Object.entries(injuries).filter(([, v]) => v) : []

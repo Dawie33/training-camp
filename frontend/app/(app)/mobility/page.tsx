@@ -7,8 +7,10 @@ import {
     MOBILITY_FOCUS_AREA_LABELS,
     MOBILITY_GOAL_LABELS,
     MOBILITY_PHASE_LABELS,
+    MOBILITY_TARGET_SKILL_LABELS,
     MobilityFocusArea,
     MobilityGoal,
+    MobilityTargetSkill,
     mobilityService,
 } from '@/services/mobility'
 import { Clock, Sparkles } from 'lucide-react'
@@ -17,11 +19,12 @@ import { toast } from 'sonner'
 
 const FOCUS_AREAS: MobilityFocusArea[] = ['hips', 'shoulders', 'hips_shoulders', 'wrists', 'ankles', 'thoracic_spine', 'full_body']
 const GOALS: MobilityGoal[] = ['crossfit_technique', 'relaxation', 'recovery']
+const TARGET_SKILLS: MobilityTargetSkill[] = ['snatch', 'overhead_squat', 'clean', 'jerk', 'thruster', 'handstand_hspu']
 
 export default function MobilityPage() {
     const [form, setForm] = useState<GenerateMobilityDto>({
-        focus_area: 'hips',
         goal: 'crossfit_technique',
+        target_skill: 'snatch',
         duration_minutes: 15,
     })
     const [plan, setPlan] = useState<GeneratedMobilityPlan | null>(null)
@@ -29,6 +32,14 @@ export default function MobilityPage() {
 
     const set = (key: keyof GenerateMobilityDto, value: string | number | undefined) =>
         setForm(prev => ({ ...prev, [key]: value }))
+
+    const setGoal = (goal: MobilityGoal) =>
+        setForm(prev => ({
+            ...prev,
+            goal,
+            focus_area: goal === 'crossfit_technique' ? undefined : prev.focus_area || 'hips',
+            target_skill: goal === 'crossfit_technique' ? prev.target_skill || 'snatch' : undefined,
+        }))
 
     const handleGenerate = async () => {
         setGenerating(true)
@@ -56,26 +67,6 @@ export default function MobilityPage() {
                 <div className="rounded-lg border border-border bg-card p-5 space-y-5">
                     <h2 className="eyebrow">Paramètres de la séance</h2>
 
-                    {/* Zone */}
-                    <div>
-                        <label className="block text-xs text-muted-foreground mb-1.5">Zone ciblée</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {FOCUS_AREAS.map(area => (
-                                <button
-                                    key={area}
-                                    type="button"
-                                    onClick={() => set('focus_area', area)}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-all ${form.focus_area === area
-                                        ? 'bg-primary/10 border-primary text-primary font-medium'
-                                        : 'bg-card border-border text-muted-foreground hover:text-foreground'
-                                        }`}
-                                >
-                                    {MOBILITY_FOCUS_AREA_LABELS[area]}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* Objectif */}
                     <div>
                         <label className="block text-xs text-muted-foreground mb-1.5">Objectif</label>
@@ -84,7 +75,7 @@ export default function MobilityPage() {
                                 <button
                                     key={goal}
                                     type="button"
-                                    onClick={() => set('goal', goal)}
+                                    onClick={() => setGoal(goal)}
                                     className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-all ${form.goal === goal
                                         ? 'bg-primary/10 border-primary text-primary font-medium'
                                         : 'bg-card border-border text-muted-foreground hover:text-foreground'
@@ -96,28 +87,59 @@ export default function MobilityPage() {
                         </div>
                     </div>
 
-                    {/* Durée + Skill */}
-                    <div className="grid grid-cols-2 gap-3">
+                    {form.goal === 'crossfit_technique' ? (
+                        /* Mouvement technique : les zones à travailler sont déduites par l'IA à partir du mouvement */
                         <div>
-                            <label className="block text-xs text-muted-foreground mb-1.5">Durée (min)</label>
-                            <input
-                                type="number"
-                                value={form.duration_minutes}
-                                min={5}
-                                max={90}
-                                onChange={e => set('duration_minutes', Number(e.target.value))}
-                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                            />
+                            <label className="block text-xs text-muted-foreground mb-1.5">Mouvement technique</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {TARGET_SKILLS.map(skill => (
+                                    <button
+                                        key={skill}
+                                        type="button"
+                                        onClick={() => set('target_skill', skill)}
+                                        className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-all ${form.target_skill === skill
+                                            ? 'bg-primary/10 border-primary text-primary font-medium'
+                                            : 'bg-card border-border text-muted-foreground hover:text-foreground'
+                                            }`}
+                                    >
+                                        {MOBILITY_TARGET_SKILL_LABELS[skill]}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
+                    ) : (
+                        /* Détente/récupération : pas de mouvement précis, l'utilisateur choisit directement la zone */
                         <div>
-                            <label className="block text-xs text-muted-foreground mb-1.5">Compétence ciblée (optionnel)</label>
-                            <input
-                                type="text"
-                                placeholder="ex: overhead squat"
-                                onChange={e => set('target_skill', e.target.value || undefined)}
-                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                            />
+                            <label className="block text-xs text-muted-foreground mb-1.5">Zone ciblée</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {FOCUS_AREAS.map(area => (
+                                    <button
+                                        key={area}
+                                        type="button"
+                                        onClick={() => set('focus_area', area)}
+                                        className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-all ${form.focus_area === area
+                                            ? 'bg-primary/10 border-primary text-primary font-medium'
+                                            : 'bg-card border-border text-muted-foreground hover:text-foreground'
+                                            }`}
+                                    >
+                                        {MOBILITY_FOCUS_AREA_LABELS[area]}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
+                    )}
+
+                    {/* Durée */}
+                    <div>
+                        <label className="block text-xs text-muted-foreground mb-1.5">Durée (min)</label>
+                        <input
+                            type="number"
+                            value={form.duration_minutes}
+                            min={5}
+                            max={90}
+                            onChange={e => set('duration_minutes', Number(e.target.value))}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        />
                     </div>
 
                     {/* Instructions additionnelles */}
@@ -153,6 +175,20 @@ export default function MobilityPage() {
                                 <Clock className="w-3.5 h-3.5" />
                                 {plan.estimated_duration_minutes} min
                             </span>
+                        </div>
+
+                        {/* Zones travaillées (déduites du mouvement si goal=crossfit_technique) */}
+                        <div className="flex flex-wrap gap-1.5">
+                            {plan.target_skill && (
+                                <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-medium">
+                                    {MOBILITY_TARGET_SKILL_LABELS[plan.target_skill]}
+                                </span>
+                            )}
+                            {plan.focus_areas.map(area => (
+                                <span key={area} className="px-2 py-0.5 rounded-full bg-card border border-border text-muted-foreground text-xs">
+                                    {MOBILITY_FOCUS_AREA_LABELS[area]}
+                                </span>
+                            ))}
                         </div>
 
                         {/* Structure */}
