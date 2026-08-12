@@ -11,7 +11,7 @@ export const EQUIPMENT = [
   'bodyweight', 'mat', 'band',
 
   // Free weights
-  'barbell', 'plates', 'bumper-plates', 'rack', 'bench', 'dumbbell', 'kettlebell', 'trap-bar',
+  'barbell', 'plates', 'bumper-plates', 'rack', 'bench', 'dumbbell', 'kettlebell', 'trap-bar', 'landmine',
 
   // CrossFit/Functional
   'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'bike-erg', 'ski-erg', 'sled', 'wall-ball',
@@ -48,7 +48,7 @@ export const EQUIPMENT_PRESETS = {
   crossfit: ['bodyweight', 'mat', 'band', 'barbell', 'bumper-plates', 'rack', 'bench', 'dumbbell', 'kettlebell',
     'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'bike-erg', 'ski-erg', 'sled', 'wall-ball',
     'rings', 'parallettes', 'ghd', 'medicine-ball', 'battle-ropes', 'slam-ball', 'sandbag',
-    'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles'],
+    'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles', 'landmine'],
   gym: EQUIPMENT.filter(e => !['rings', 'parallettes', 'ghd', 'ski-erg', 'assault-bike', 'wall-ball'].includes(e)),
   full: [...EQUIPMENT],
 } as const

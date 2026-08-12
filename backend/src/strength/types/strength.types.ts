@@ -2,7 +2,7 @@ export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'forearms' |
 
 export type SessionGoal = 'strength' | 'hypertrophy' | 'endurance' | 'power'
 
-export type BlockType = 'push' | 'pull' | 'hinge' | 'squat' | 'carry' | 'rotation' | 'isolation' | 'core'
+export type BlockType = 'push' | 'pull' | 'hinge' | 'squat' | 'carry' | 'rotation' | 'isolation' | 'core' | 'isometric'
 
 export type BodyFocus = 'upper_body' | 'lower_body' | 'full_body'
 

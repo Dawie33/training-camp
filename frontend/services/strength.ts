@@ -2,7 +2,7 @@ import { apiClient } from './index'
 
 export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'forearms' | 'legs' | 'glutes' | 'core'
 export type SessionGoal = 'strength' | 'hypertrophy' | 'endurance' | 'power'
-export type BlockType = 'push' | 'pull' | 'hinge' | 'squat' | 'carry' | 'rotation' | 'isolation' | 'core'
+export type BlockType = 'push' | 'pull' | 'hinge' | 'squat' | 'carry' | 'rotation' | 'isolation' | 'core' | 'isometric'
 export type BodyFocus = 'upper_body' | 'lower_body' | 'full_body'
 export type TrainingStyle = 'traditional' | 'strongman'
 
@@ -84,6 +84,7 @@ export const BLOCK_TYPE_COLORS: Record<BlockType, string> = {
   rotation: 'border-l-cyan-500',
   isolation: 'border-l-slate-400',
   core: 'border-l-emerald-500',
+  isometric: 'border-l-red-600',
 }
 
 export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
@@ -95,6 +96,7 @@ export const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   rotation: 'Rotation / Anti-rotation',
   isolation: 'Isolation',
   core: 'Core / Gainage',
+  isometric: 'Isométrie / Tenue statique',
 }
 
 export interface StrengthExercise {

@@ -20,6 +20,7 @@ const EQUIPMENT_CATEGORIES = [
       { value: 'kettlebell', label: 'Kettlebell' },
       { value: 'ez-bar', label: 'Barre EZ' },
       { value: 'trap-bar', label: 'Trap bar' },
+      { value: 'landmine', label: 'Landmine' },
     ],
   },
   {

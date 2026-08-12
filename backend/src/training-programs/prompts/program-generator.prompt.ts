@@ -100,7 +100,9 @@ function buildAthleteContextSection(context: UserAIContext): string {
 export function buildProgramGeneratorSystemPrompt(programType?: string): string {
   const isStrengthOnly = programType === 'strength_building'
   const complementaryRule = isStrengthOnly
-    ? `- Programme ORIENTE FORCE : chaque seance commence par le travail de force / halterophilie (squat, deadlift, presses, olympic lifts + accessoires cibles) comme PIECE MAITRESSE (~35-45 min).
+    ? `- Programme ORIENTE FORCE BRUTE : chaque seance commence par le travail de force comme PIECE MAITRESSE (~35-45 min) — squat, deadlift, presses, tirages, portes lourds (farmer's carry, sandbag carry) et tenues isometriques (dead hang, top/bottom hold) + accessoires cibles. PAS de technique d'halterophilie olympique (clean/snatch/jerk) par defaut : voir la section REPERTOIRE STRENGTH_WORK.
+- REGLE OBLIGATOIRE (non negociable, a respecter meme si cela reduit la place des mouvements barre classiques) : sur l'ensemble du programme, AU MOINS UNE seance sur TROIS (arrondi au superieur, donc au minimum 1 par phase) doit inclure, dans "strength_work.movements", au moins un mouvement de PORTE LOURD (farmer's carry ou sandbag carry) ET au moins un mouvement ISOMETRIQUE (dead hang, top/bottom hold, ou zercher/bear hug hold au sandbag). Ce n'est pas un bonus optionnel : verifie cette regle avant de finaliser le JSON, quitte a remplacer un exercice d'accessoire classique (curl, extension) par un de ces mouvements.
+- REGLE OBLIGATOIRE LANDMINE (non negociable) : "landmine" fait partie de l'equipement disponible (voir section Equipement du contexte athlete) — AU MOINS UNE seance sur TROIS sur l'ensemble du programme (minimum 1 par phase) doit inclure, dans "strength_work.movements", au moins un mouvement landmine (landmine press unilateral, landmine row un bras / Meadows row, ou landmine squat to press) a la place d'un mouvement barre droite equivalent pour ce bloc. Verifie cette regle avant de finaliser le JSON.
 - APRES la force, ajoute TOUJOURS un WOD CrossFit COURT (8-15 min) dans le champ "conditioning", cible sur la MEME zone / le meme patron musculaire que la force du jour :
   - force bas du corps -> finisher bas du corps (ex: air squats, walking lunges, box jumps, KB swings, wall balls),
   - force haut du corps (press/tirage) -> finisher haut du corps (ex: push-ups, DB shoulder press, pull-ups, ring rows),
@@ -179,6 +181,20 @@ Tu dois TOUJOURS retourner UNIQUEMENT ce JSON, sans texte avant ni apres :
 6. Les champs "reps" peuvent etre un nombre (10) ou une chaine ("8-12", "max").
 7. JAMAIS de texte hors JSON.
 8. Pour strength_work, conditioning et skill_work : mets la valeur null si le bloc ne s'applique pas. N'emets JAMAIS un objet vide {} ni un objet partiel. Si tu inclus skill_work, il DOIT contenir "name" et "description" non vides.
+
+# REPERTOIRE STRENGTH_WORK (mouvements de force)
+
+Le champ "strength_work.movements" doit piocher dans un repertoire de FORCE BRUTE, pas uniquement des levers d'halterophilie olympique classiques :
+- Squat : back squat, front squat, box squat, goblet squat
+- Hinge : deadlift, RDL, good morning, sumo deadlift
+- Push : bench press, overhead press, push press, dips lestes, landmine press unilateral (si "landmine" dispo)
+- Pull : weighted pull-up, row (barre/haltere), rack pull, landmine row un bras / Meadows row (si "landmine" dispo)
+- Squat : ajouter landmine squat to press si "landmine" dispo
+- Portes lourds : farmer's carry (haltere/kettlebell ou "farmer-walk-handles" si dispo), sandbag carry / bear hug carry (si "sandbag" dispo), tire flip/drag (si "tire" dispo)
+- Si "landmine" est disponible dans l'equipement : integre au moins un mouvement landmine par semaine dans un programme oriente force. Le landmine offre une tension quasi continue sur toute l'amplitude (moins de point mort qu'une barre droite) et un profil unilateral/anti-rotation qui muscle le tronc en profondeur — privilegie-le pour les mouvements de poussee/tirage lourds au haut du corps, en complement des mouvements barre classiques.
+- Tenues isometriques : dead hang leste (si "pull-up-bar" dispo), top hold ou bottom hold sur squat/deadlift (blocage sous charge lourde), zercher hold ou bear hug hold au sandbag. Pour ces mouvements : "reps" = duree de la tenue (ex: "20-30s" ou "8-10s" pour une tenue proche du max absolu), "intensity" = charge quasi-max tenable sur cette duree, "rest" = repos long (2-3min).
+- Mouvements techniques d'halterophilie olympique (clean, snatch, jerk et variantes : power clean, hang snatch, split jerk...) : a reserver aux programmes program_type="competition_prep" ou si le focus declare de l'athlete le demande explicitement. NE PAS les utiliser par defaut dans un programme "strength_building" generique.
+- Utilise au moins une fois par semaine, dans un programme oriente force, l'equipement de force brute reellement liste (sandbag, farmer-walk-handles, tire, sledgehammer) pour un mouvement de strength_work — pas seulement en conditioning.
 
 # METHODOLOGIE
 
@@ -279,7 +295,11 @@ Retourne UNIQUEMENT cet objet JSON (une seule seance), sans texte avant ni apres
 3. strength_work et conditioning peuvent etre null selon le focus.
 4. "reps" peut etre un nombre ou une chaine.
 5. JAMAIS de texte hors JSON.
-6. Pour strength_work, conditioning et skill_work : mets null si le bloc ne s'applique pas. N'emets JAMAIS un objet vide {} ni partiel. Si skill_work est present, "name" et "description" doivent etre non vides.`
+6. Pour strength_work, conditioning et skill_work : mets null si le bloc ne s'applique pas. N'emets JAMAIS un objet vide {} ni partiel. Si skill_work est present, "name" et "description" doivent etre non vides.
+
+# REPERTOIRE STRENGTH_WORK (mouvements de force)
+
+Si "strength_work" est renseigne, piochez dans un repertoire de FORCE BRUTE, pas uniquement des levers d'halterophilie olympique : squat (back/front/box/goblet), hinge (deadlift, RDL, good morning), push (bench, overhead press), pull (weighted pull-up, row, rack pull), portes lourds (farmer's carry, sandbag carry si "sandbag" dispo), et tenues isometriques (dead hang leste, top/bottom hold squat/deadlift, zercher ou bear hug hold au sandbag — pour ces mouvements "reps" = duree de la tenue ex "20-30s", "intensity" = charge quasi-max). Les mouvements techniques d'halterophilie olympique (clean/snatch/jerk) restent possibles mais ne doivent pas etre le choix par defaut pour un programme oriente force.`
 }
 
 export function buildBonusSessionUserPrompt(params: BonusSessionParams, context: UserAIContext): string {

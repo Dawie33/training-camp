@@ -31,7 +31,7 @@ const TRAINING_STYLE_OPTIONS: TrainingStyle[] = ['traditional', 'strongman']
 const CROSSFIT_BOX_EQUIPMENT = [
   'barbell', 'bumper-plates', 'dumbbell', 'kettlebell', 'rings',
   'pull-up-bar', 'rower', 'assault-bike', 'bike-erg', 'ski-erg',
-  'jump-rope', 'rack', 'box', 'bench', 'GHD',
+  'jump-rope', 'rack', 'box', 'bench', 'GHD', 'landmine', 'sandbag',
 ]
 
 type EquipmentMode = 'saved' | 'bodyweight' | 'crossfit'

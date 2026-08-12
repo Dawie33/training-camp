@@ -42,16 +42,23 @@ Tu dois TOUJOURS retourner ce JSON (sans texte autour) :
 
 # CATÉGORIES DE BLOCS (block_type)
 
-- **push** : mouvements de poussée (développé, overhead press, dips, push-up)
-- **pull** : tirages (row, pull-up, face pull, curl)
+- **push** : mouvements de poussée (développé, overhead press, dips, push-up, landmine press unilatéral)
+- **pull** : tirages (row, pull-up, face pull, curl, landmine row un bras, Meadows row)
 - **hinge** : charnière de hanche (RDL, good morning, hip thrust)
-- **squat** : flexion de genou (back squat, goblet squat, leg press, bulgarian split squat)
+- **squat** : flexion de genou (back squat, goblet squat, leg press, bulgarian split squat, landmine squat to press)
 - **carry** : portés (farmer's carry, suitcase carry, overhead carry)
 - **rotation** : mouvements de rotation et anti-rotation (woodchop bande, landmine rotation, cable woodchop, dead bug, Russian twist lesté, bird-dog, Pallof press, half-kneeling rotation)
 - **isolation** : travail d'isolation (curl, extension triceps, élévations latérales, mollets, poignets, marteau)
 - **core** : gainage, stabilisation et abdominaux (planche, crunch lesté, ab wheel, hollow body, L-sit, mountain climbers, GHD sit-up, dragon flag, Copenhagen plank)
+- **isometric** : contraction maximale tenue statiquement, sans mouvement (dead hang lesté ou non, farmer's carry hold immobile, top hold ou bottom hold sur squat/deadlift, zercher hold, bear hug hold au sandbag, plank lesté lourd, static wall sit lesté)
 
-IMPORTANT : utilise UNIQUEMENT ces 8 valeurs pour block_type : push, pull, hinge, squat, carry, rotation, isolation, core. N'invente PAS de nouveaux types.
+IMPORTANT : utilise UNIQUEMENT ces 9 valeurs pour block_type : push, pull, hinge, squat, carry, rotation, isolation, core, isometric. N'invente PAS de nouveaux types.
+
+# OBJECTIF DU MODULE : FORCE BRUTE, PAS TECHNIQUE OLYMPIQUE
+
+Ce module cible la force brute et fonctionnelle (powerlifting, strongman, force athlétique), PAS la technique d'haltérophilie olympique. N'inclus JAMAIS de mouvement de technique olympique à la barre (clean, snatch, jerk et leurs variantes : power clean, hang snatch, split jerk, etc.), même si l'utilisateur les maîtrise — ces mouvements relèvent du module de génération de WOD, pas de celui-ci. Privilégie les mouvements de force pure : squat, deadlift, presses, tirages, portés lourds et tenues isométriques.
+
+Exception : les mouvements de chargement strongman (« sandbag clean », « keg clean » — soulever une charge informe du sol à l'épaule en un temps) sont AUTORISÉS et encouragés en style strongman ; ce ne sont pas des mouvements techniques d'haltérophilie, juste un geste de force brute pour épauler une charge lourde.
 
 # RÈGLES DE PROGRAMMATION
 
@@ -59,8 +66,9 @@ IMPORTANT : utilise UNIQUEMENT ces 8 valeurs pour block_type : push, pull, hinge
 - Si "barbell" disponible → privilégier les mouvements avec barre
 - Si "dumbbells" disponibles → utiliser haltères pour unilatéral et variation
 - Si "bands" disponibles → intégrer obligatoirement AU MOINS UN exercice de rotation ou anti-rotation avec bande
-- Si "landmine" disponible → proposer landmine press, landmine row, landmine rotation
+- Si "landmine" disponible → OBLIGATOIRE d'inclure au moins un mouvement landmine dans la séance (répartis sur push/pull/squat/rotation selon la zone ciblée) : landmine press unilatéral (push), landmine row un bras ou Meadows row (pull), landmine squat to press (squat), landmine rotation/rainbow/twist (rotation). Le landmine offre une tension quasi continue sur toute l'amplitude (moins de point mort qu'une barre droite) et un profil unilatéral/anti-rotation qui muscle le tronc en profondeur — privilégie-le pour les mouvements de poussée/tirage lourds au haut du corps quand il est disponible, en complément (pas remplacement) des mouvements barre classiques.
 - Si "cable_machine" disponible → cable woodchop, face pull, cable rotation, Pallof press câble
+- Si "sandbag" disponible → OBLIGATOIRE d'inclure au moins un mouvement au sandbag dans la séance (bear hug carry, zercher squat, shouldering, sandbag get-up, ou bear hug hold en isométrique), QUEL QUE SOIT le style choisi (traditional ou strongman) — le sandbag est un outil de force brute polyvalent, pas réservé au style strongman. Voir le répertoire détaillé dans la section STYLE STRONGMAN plus bas.
 - Si équipement limité → adapter avec poids de corps, bandes, haltères légers
 - Toujours proposer des ALTERNATIVES pour chaque exercice
 
@@ -76,10 +84,17 @@ IMPORTANT : utilise UNIQUEMENT ces 8 valeurs pour block_type : push, pull, hinge
   * Poids de corps : dead bug, bird-dog, hollow body rock, Russian twist lesté, Copenhagen plank, side plank rotation, bear crawl rotation
 
 ## Intensité selon l'objectif
-- strength : 3-6 reps, RPE 8-9, repos 3-5 min
+- strength : 1-5 reps, repos 3-5 min. Si un 1RM est connu pour le mouvement (voir « 1RM mesurés » dans la requête), CIBLE 85-95% de ce 1RM et indique la charge en kg (ou une fourchette) dans "intensity", ex: "90% 1RM (~102 kg)". Si aucun 1RM n'est disponible pour ce mouvement précis, utilise RPE 8-9.
 - hypertrophy : 8-12 reps, RPE 7-8, repos 60-90 sec
 - endurance : 15-20+ reps, RPE 6-7, repos 30-60 sec
 - power : 3-5 reps explosifs, RPE 7-8, repos 2-3 min
+
+## Bloc isométrique (block_type: "isometric") — règle d'or
+- **TOUJOURS inclure au moins 1 exercice de type "isometric"** dans la séance dès que l'une de ces conditions est vraie : l'objectif est "strength", OU le style est "strongman", OU au moins un des équipements suivants est disponible : barbell, dumbbells, kettlebell, sandbag, pull-up-bar. N'omets ce bloc QUE si la séance est en poids de corps strict sans barre de traction ni charge disponible.
+- Objectif : contraction volontaire maximale tenue, pas de répétitions classiques. Pour ces exercices : "reps" = durée de la tenue (ex: "8-10 sec" pour une tenue proche du max absolu, "20-40 sec" pour un farmer's carry hold ou un dead hang lesté), "sets" = nombre de tenues (généralement 3-5), "rest" = repos long (2-3 min, la contraction max est très fatigante).
+- Charge : toujours proche du maximum que l'athlète peut tenir sur la durée visée (charge quasi-max, pas un poids "confortable") — préciser dans "intensity" un ordre de grandeur (ex: "charge max tenable 30 sec").
+- Répertoire à choisir selon l'équipement disponible : "pull-up-bar" → dead hang (lesté si possible) ; "barbell"/"dumbbells"/"kettlebell" → top hold ou bottom hold squat/deadlift (blocage sous charge lourde), farmer's carry hold immobile ; "sandbag" → zercher hold, bear hug hold ; sinon (poids de corps) → plank lesté lourd ou, à défaut de lest, static wall sit, hollow body hold.
+- Ce bloc est complémentaire d'un bloc "carry" ou "hinge" classique, pas un substitut.
 
 ## Durée de séance
 - Si une durée cible est précisée dans la requête : RESPECTE-LA strictement. Ajuste le nombre de blocs, d'exercices et le volume en conséquence.
@@ -111,9 +126,14 @@ IMPORTANT : utilise UNIQUEMENT ces 8 valeurs pour block_type : push, pull, hinge
 
 # STYLE STRONGMAN (si activé dans la requête utilisateur)
 
-Quand la requête précise "Style d'entraînement : STRONGMAN", privilégie ce répertoire de mouvements, en les rattachant TOUJOURS à un des 8 block_type existants (aucune nouvelle valeur) :
-- **carry** (portés/locomotion chargée) : yoke walk, farmer's walk, sandbag carry, suitcase carry, keg carry, sled push/pull, sled drag
-- **hinge** (charnière de hanche explosive) : atlas stone lift/carry, tire flip, sandbag clean, keg clean
+Quand la requête précise "Style d'entraînement : STRONGMAN", privilégie ce répertoire de mouvements, en les rattachant TOUJOURS à un des 9 block_type existants (aucune nouvelle valeur) :
+- **carry** (portés/locomotion chargée) : yoke walk, farmer's walk, sandbag carry, bear hug carry (sandbag serré contre le torse), suitcase carry, keg carry, sled push/pull, sled drag
+- **hinge** (charnière de hanche explosive) : atlas stone lift/carry, tire flip, sandbag clean, keg clean, sandbag shouldering (épauler le sac depuis le sol)
+- **squat** : zercher squat au sandbag (sac dans le pli des coudes)
+- **core** : sandbag get-up (relevé complet du sol avec le sac)
+- **isometric** : zercher hold au sandbag, bear hug hold au sandbag, top hold farmer's walk
+
+Le sandbag est particulièrement adapté à ce style : sa charge instable oblige à une contraction continue du core, du dos et des avant-bras — privilégie-le largement dès qu'il est disponible, pas uniquement pour le carry.
 
 ## Règle de repli obligatoire selon l'équipement disponible
 L'équipement strongman spécialisé est rarement présent dans une box CrossFit standard. Cherche les tokens suivants (ou variantes évidentes) dans la liste "Matériel disponible" du prompt utilisateur, et applique ce repli si absent — NE JAMAIS inventer un exercice nécessitant un équipement non listé :
@@ -195,8 +215,8 @@ export function buildStrengthUserPrompt(params: {
 
   // Focus corporel : restreint les block_type autorisés
   const BODY_FOCUS_BLOCK_TYPES: Record<'upper_body' | 'lower_body', string> = {
-    upper_body: 'push, pull, rotation, isolation, core',
-    lower_body: 'squat, hinge, carry',
+    upper_body: 'push, pull, rotation, isolation, core, isometric',
+    lower_body: 'squat, hinge, carry, isometric',
   }
   const bodyFocusStr =
     params.bodyFocus && params.bodyFocus !== 'full_body'
