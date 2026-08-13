@@ -26,7 +26,11 @@ export const GeneratedMobilityPlanSchema = z.object({
     estimated_duration_minutes: z.number().int().positive(),
     difficulty: z.enum(['beginner', 'intermediate', 'advanced', 'elite']),
     description: z.string(),
-    target_skill: z.enum(['snatch', 'overhead_squat', 'clean', 'jerk', 'thruster', 'handstand_hspu']).optional(),
+    // L'IA renvoie parfois une chaîne vide plutôt que d'omettre le champ quand il ne s'applique pas (goal != crossfit_technique).
+    target_skill: z.preprocess(
+        v => (v === '' ? undefined : v),
+        z.enum(['snatch', 'overhead_squat', 'clean', 'jerk', 'thruster', 'handstand_hspu']).optional(),
+    ),
     structure: z.array(MobilityBlockSchema).min(1),
     coaching_tips: z.string(),
     relaxation_notes: z.string(),

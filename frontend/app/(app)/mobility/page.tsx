@@ -42,6 +42,7 @@ export default function MobilityPage() {
         const sourceSport = searchParams.get('source_sport')
         const sourceWorkoutType = searchParams.get('source_workout_type')
         const sourceFocusAreasText = searchParams.get('source_focus_areas_text')
+        const sourceExerciseNames = searchParams.get('source_exercise_names')
 
         setForm(prev => ({
             ...prev,
@@ -53,6 +54,7 @@ export default function MobilityPage() {
                 source_sport: 'crossfit' as const,
                 source_workout_type: sourceWorkoutType ?? undefined,
                 source_focus_areas_text: sourceFocusAreasText ? sourceFocusAreasText.split(',').filter(Boolean) : undefined,
+                source_exercise_names: sourceExerciseNames ? sourceExerciseNames.split(',').filter(Boolean) : undefined,
             }),
         }))
     }, [searchParams])
@@ -70,6 +72,7 @@ export default function MobilityPage() {
             source_sport: goal === 'recovery' ? prev.source_sport : undefined,
             source_workout_type: goal === 'recovery' ? prev.source_workout_type : undefined,
             source_focus_areas_text: goal === 'recovery' ? prev.source_focus_areas_text : undefined,
+            source_exercise_names: goal === 'recovery' ? prev.source_exercise_names : undefined,
         }))
 
     const handleGenerate = async () => {
@@ -146,9 +149,10 @@ export default function MobilityPage() {
                                     <p className="font-medium text-foreground mb-1">Zones déduites automatiquement de ton WOD</p>
                                     <p>
                                         {form.source_workout_type && `Format : ${form.source_workout_type}. `}
-                                        {form.source_focus_areas_text?.length
-                                            ? `Zones mentionnées : ${form.source_focus_areas_text.join(', ')}.`
-                                            : "Aucune zone précisée — l'IA choisira en fonction du format de la séance."}
+                                        {!!form.source_focus_areas_text?.length && `Zones mentionnées : ${form.source_focus_areas_text.join(', ')}. `}
+                                        {form.source_exercise_names?.length
+                                            ? `Mouvements : ${form.source_exercise_names.join(', ')}.`
+                                            : !form.source_focus_areas_text?.length && "Aucun détail exploitable — l'IA choisira en fonction du format de la séance."}
                                     </p>
                                 </div>
                             )}

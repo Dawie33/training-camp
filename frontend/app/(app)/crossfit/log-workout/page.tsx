@@ -323,6 +323,7 @@ function LogWorkoutContent() {
         sport: 'crossfit',
         workoutType: selectedWorkout?.workout_type,
         focusAreasText: selectedWorkout?.focus_area ? [selectedWorkout.focus_area] : undefined,
+        exerciseNames: exercises.map(e => e.name),
       }))))
       router.push('/crossfit')
     } catch {

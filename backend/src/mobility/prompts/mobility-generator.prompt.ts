@@ -103,6 +103,7 @@ export function buildMobilityUserPrompt(params: MobilityUserPromptParams): strin
         source_sport,
         source_workout_type,
         source_focus_areas_text,
+        source_exercise_names,
         level,
         additional_instructions,
         userLevel,
@@ -126,10 +127,14 @@ export function buildMobilityUserPrompt(params: MobilityUserPromptParams): strin
     } else if (source_sport === 'crossfit') {
         lines.push(
             `Contexte : séance CrossFit effectuée aujourd'hui${source_workout_type ? ` (${source_workout_type})` : ''}` +
-                `${source_focus_areas_text?.length ? `, zones mentionnées dans le WOD : ${source_focus_areas_text.join(', ')}` : ''}. ` +
+                `${source_focus_areas_text?.length ? `, zones mentionnées dans le WOD : ${source_focus_areas_text.join(', ')}` : ''}` +
+                `${source_exercise_names?.length ? `, mouvements effectués : ${source_exercise_names.join(', ')}` : ''}. ` +
                 `Aucune zone n'a été choisie manuellement — déduis toi-même les focus_areas les plus pertinentes pour LA RÉCUPÉRATION ` +
-                `post-séance (pas la préparation technique). Si aucune indication exploitable, cible une récupération générale ` +
-                `adaptée au format (ex: AMRAP/For Time = cardio + jambes + épaules → full_body ou hips_shoulders).`,
+                `post-séance (pas la préparation technique), en priorité à partir des mouvements effectués listés ci-dessus ` +
+                `(même logique que la table de correspondance mouvement → zones ci-dessus : ex. squats/box jumps/wall balls → ` +
+                `hanches/chevilles, pull-ups/toes-to-bar/snatch → épaules/poignets, deadlifts/kettlebell swings → hanches/rachis). ` +
+                `Si aucun mouvement n'est listé, cible une récupération générale adaptée au format ` +
+                `(ex: AMRAP/For Time = cardio + jambes + épaules → full_body ou hips_shoulders).`,
         )
     }
 

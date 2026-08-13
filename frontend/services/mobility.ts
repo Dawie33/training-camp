@@ -83,6 +83,7 @@ export interface GenerateMobilityDto {
     source_sport?: MobilitySourceSport
     source_workout_type?: string
     source_focus_areas_text?: string[]
+    source_exercise_names?: string[]
 }
 
 // Mapping déterministe groupe musculaire (module strength) → zone de mobilité, utilisé pour pré-remplir le CTA post-log Force.
@@ -109,7 +110,7 @@ type RecoveryMobilityContext =
     | { sport: 'strength'; targetMuscles: string[] }
     | { sport: 'running' }
     | { sport: 'biking' }
-    | { sport: 'crossfit'; workoutType?: string; focusAreasText?: string[] }
+    | { sport: 'crossfit'; workoutType?: string; focusAreasText?: string[]; exerciseNames?: string[] }
 
 /** Construit l'URL /mobility?... pré-remplie (goal=recovery) à partir du contexte de la séance qui vient d'être loggée. */
 export function buildRecoveryMobilityUrl(ctx: RecoveryMobilityContext): string {
@@ -136,6 +137,11 @@ export function buildRecoveryMobilityUrl(ctx: RecoveryMobilityContext): string {
             params.set('source_sport', 'crossfit')
             if (ctx.workoutType) params.set('source_workout_type', ctx.workoutType)
             if (ctx.focusAreasText?.length) params.set('source_focus_areas_text', ctx.focusAreasText.join(','))
+            if (ctx.exerciseNames?.length) {
+                // Dédoublonne et limite pour garder une URL raisonnable (un WOD dépasse rarement 10-15 mouvements distincts).
+                const uniqueNames = [...new Set(ctx.exerciseNames)].slice(0, 20)
+                params.set('source_exercise_names', uniqueNames.join(','))
+            }
             break
     }
     return `/mobility?${params.toString()}`

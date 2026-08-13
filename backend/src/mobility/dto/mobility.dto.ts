@@ -36,6 +36,13 @@ export class GenerateMobilitySessionDto {
     @IsString({ each: true })
     source_focus_areas_text?: string[]
 
+    // Noms des exercices du WOD (ex: "Thrusters", "Pull-ups") — permet à l'IA de déduire les zones à partir des
+    // mouvements réellement effectués, pas seulement du format de la séance.
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    source_exercise_names?: string[]
+
     @IsInt()
     @Min(5)
     @Max(90)
