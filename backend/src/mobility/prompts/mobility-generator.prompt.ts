@@ -79,6 +79,7 @@ Quand goal=crossfit_technique, target_skill désigne le mouvement technique vis�
 # RÈGLES IMPORTANTES
 - Phases : activation (réveil articulaire, 3-5min), mobilization (mouvements dynamiques d'amplitude, 5-10min), stretch (étirements statiques/PNF tenus 30-90s), integration (mouvement fonctionnel reproduisant le geste ciblé, uniquement si goal=crossfit_technique)
 - Si goal=relaxation ou recovery : focus_areas doit reprendre exactement la zone fournie par l'utilisateur (ou les deux zones si "hips_shoulders"). Privilégier les phases stretch, rythme lent, respiration guidée, pas d'intégration fonctionnelle.
+- Cas particulier goal=recovery sans zone fournie manuellement, avec un contexte de séance CrossFit du jour (source_sport=crossfit) : détermine TOI-MÊME les focus_areas les plus pertinentes pour la récupération, à partir du format et du contenu du WOD indiqués — même logique que pour crossfit_technique/target_skill, mais orientée récupération (relâchement, pas préparation technique).
 - Si goal=crossfit_technique : détermine focus_areas toi-même à partir de target_skill (voir table de correspondance ci-dessus, plusieurs zones possibles) ; la phase "integration" doit reproduire des positions du mouvement visé (ex: squat overhead tenu, rack position)
 - side=bilateral pour les mouvements symétriques, left_right pour les mouvements unilatéraux (préciser dans instructions de faire les deux côtés)
 - Adapter aux limitations physiques et blessures signalées par l'utilisateur — proposer des alternatives sûres, jamais de mouvement qui aggraverait une blessure
@@ -99,6 +100,9 @@ export function buildMobilityUserPrompt(params: MobilityUserPromptParams): strin
         goal,
         duration_minutes,
         target_skill,
+        source_sport,
+        source_workout_type,
+        source_focus_areas_text,
         level,
         additional_instructions,
         userLevel,
@@ -119,6 +123,14 @@ export function buildMobilityUserPrompt(params: MobilityUserPromptParams): strin
         )
     } else if (focus_area) {
         lines.push(`Zone ciblée : ${FOCUS_AREA_DESCRIPTIONS[focus_area]}`)
+    } else if (source_sport === 'crossfit') {
+        lines.push(
+            `Contexte : séance CrossFit effectuée aujourd'hui${source_workout_type ? ` (${source_workout_type})` : ''}` +
+                `${source_focus_areas_text?.length ? `, zones mentionnées dans le WOD : ${source_focus_areas_text.join(', ')}` : ''}. ` +
+                `Aucune zone n'a été choisie manuellement — déduis toi-même les focus_areas les plus pertinentes pour LA RÉCUPÉRATION ` +
+                `post-séance (pas la préparation technique). Si aucune indication exploitable, cible une récupération générale ` +
+                `adaptée au format (ex: AMRAP/For Time = cardio + jambes + épaules → full_body ou hips_shoulders).`,
+        )
     }
 
     const injuryEntries = injuries ? Object.entries(injuries).filter(([, v]) => v) : []

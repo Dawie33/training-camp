@@ -3,6 +3,7 @@
 import { CorosImport } from '@/components/fit-import/CorosImport'
 import { BIKE_LOCATION_LABELS, BIKE_TYPE_LABELS, BikeLocationType, BikeType, bikingService, CreateBikingSessionDto } from '@/services/biking'
 import { MultiActivityFitData } from '@/services/fit-import'
+import { buildRecoveryMobilityUrl, recoveryToastOptions } from '@/services/mobility'
 import { Home, MapPin } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -63,7 +64,7 @@ export default function BikingLogPage() {
         setSubmitting(true)
         try {
             await bikingService.create(form)
-            toast.success('Séance enregistrée !')
+            toast.success('Séance enregistrée !', recoveryToastOptions(() => router.push(buildRecoveryMobilityUrl({ sport: 'biking' }))))
             router.push('/biking')
         } catch {
             toast.error('Erreur lors de l\'enregistrement')

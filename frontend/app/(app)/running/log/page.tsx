@@ -3,6 +3,7 @@
 import { CorosImport } from '@/components/fit-import/CorosImport'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { MultiActivityFitData } from '@/services/fit-import'
+import { buildRecoveryMobilityUrl, recoveryToastOptions } from '@/services/mobility'
 import { RUN_TYPE_LABELS, runningService, RunningSession, RunType } from '@/services/running'
 import { motion } from 'framer-motion'
 import { ChevronDown, Sparkles, X } from 'lucide-react'
@@ -117,7 +118,7 @@ export default function RunningLogPage() {
         avg_heart_rate: form.avg_heart_rate ? Number(form.avg_heart_rate) : undefined,
         notes: form.notes || undefined,
       })
-      toast.success('Sortie enregistrée !')
+      toast.success('Sortie enregistrée !', recoveryToastOptions(() => router.push(buildRecoveryMobilityUrl({ sport: 'running' }))))
       router.push('/running')
     } catch {
       toast.error('Erreur lors de l\'enregistrement')

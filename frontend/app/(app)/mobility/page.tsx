@@ -14,7 +14,8 @@ import {
     mobilityService,
 } from '@/services/mobility'
 import { Clock, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 const FOCUS_AREAS: MobilityFocusArea[] = ['hips', 'shoulders', 'hips_shoulders', 'wrists', 'ankles', 'thoracic_spine', 'full_body']
@@ -22,6 +23,8 @@ const GOALS: MobilityGoal[] = ['crossfit_technique', 'relaxation', 'recovery']
 const TARGET_SKILLS: MobilityTargetSkill[] = ['snatch', 'overhead_squat', 'clean', 'jerk', 'thruster', 'handstand_hspu']
 
 export default function MobilityPage() {
+    const searchParams = useSearchParams()
+
     const [form, setForm] = useState<GenerateMobilityDto>({
         goal: 'crossfit_technique',
         target_skill: 'snatch',
@@ -29,6 +32,30 @@ export default function MobilityPage() {
     })
     const [plan, setPlan] = useState<GeneratedMobilityPlan | null>(null)
     const [generating, setGenerating] = useState(false)
+
+    // Pré-remplissage depuis le CTA "étirements de récupération" post-log (voir buildRecoveryMobilityUrl dans services/mobility.ts)
+    useEffect(() => {
+        const goal = searchParams.get('goal') as MobilityGoal | null
+        if (!goal) return
+        const focusArea = searchParams.get('focus_area') as MobilityFocusArea | null
+        const additionalInstructions = searchParams.get('additional_instructions')
+        const sourceSport = searchParams.get('source_sport')
+        const sourceWorkoutType = searchParams.get('source_workout_type')
+        const sourceFocusAreasText = searchParams.get('source_focus_areas_text')
+
+        setForm(prev => ({
+            ...prev,
+            goal,
+            focus_area: focusArea ?? undefined,
+            target_skill: goal === 'crossfit_technique' ? prev.target_skill : undefined,
+            additional_instructions: additionalInstructions ?? prev.additional_instructions,
+            ...(sourceSport === 'crossfit' && {
+                source_sport: 'crossfit' as const,
+                source_workout_type: sourceWorkoutType ?? undefined,
+                source_focus_areas_text: sourceFocusAreasText ? sourceFocusAreasText.split(',').filter(Boolean) : undefined,
+            }),
+        }))
+    }, [searchParams])
 
     const set = (key: keyof GenerateMobilityDto, value: string | number | undefined) =>
         setForm(prev => ({ ...prev, [key]: value }))
@@ -39,6 +66,10 @@ export default function MobilityPage() {
             goal,
             focus_area: goal === 'crossfit_technique' ? undefined : prev.focus_area || 'hips',
             target_skill: goal === 'crossfit_technique' ? prev.target_skill || 'snatch' : undefined,
+            // Le contexte auto ne s'applique qu'à la récupération : on l'efface si l'utilisateur change d'objectif.
+            source_sport: goal === 'recovery' ? prev.source_sport : undefined,
+            source_workout_type: goal === 'recovery' ? prev.source_workout_type : undefined,
+            source_focus_areas_text: goal === 'recovery' ? prev.source_focus_areas_text : undefined,
         }))
 
     const handleGenerate = async () => {
@@ -110,6 +141,17 @@ export default function MobilityPage() {
                     ) : (
                         /* Détente/récupération : pas de mouvement précis, l'utilisateur choisit directement la zone */
                         <div>
+                            {form.source_sport === 'crossfit' && !form.focus_area && (
+                                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground mb-3">
+                                    <p className="font-medium text-foreground mb-1">Zones déduites automatiquement de ton WOD</p>
+                                    <p>
+                                        {form.source_workout_type && `Format : ${form.source_workout_type}. `}
+                                        {form.source_focus_areas_text?.length
+                                            ? `Zones mentionnées : ${form.source_focus_areas_text.join(', ')}.`
+                                            : "Aucune zone précisée — l'IA choisira en fonction du format de la séance."}
+                                    </p>
+                                </div>
+                            )}
                             <label className="block text-xs text-muted-foreground mb-1.5">Zone ciblée</label>
                             <div className="grid grid-cols-2 gap-2">
                                 {FOCUS_AREAS.map(area => (
