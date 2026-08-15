@@ -93,6 +93,7 @@ export function WodCaptureForm({ mode, selectedDate, onSchedule, onSaved, onCanc
         tags: parsedWorkout.tags,
         isPublic: false,
         status: 'published',
+        is_benchmark: mode === 'search',
         ...({ ai_generated: true } as object),
       } as Parameters<typeof workoutsApi.create>[0])
 
