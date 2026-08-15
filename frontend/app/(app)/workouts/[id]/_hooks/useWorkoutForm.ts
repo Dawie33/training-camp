@@ -98,7 +98,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
           isActive: data.isActive !== undefined ? data.isActive : true,
           isFeatured: data.isFeatured || false,
           isPublic: data.isPublic !== undefined ? data.isPublic : true,
-          is_benchmark: false,
+          is_benchmark: data.is_benchmark || false,
           ai_generated: data.ai_generated || false,
           blocks: data.blocks ? JSON.stringify(data.blocks, null, 2) : '',
           tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
@@ -171,6 +171,7 @@ export function useWorkoutForm(id: string, isNewMode: boolean) {
         isActive: true,
         isFeatured: formData.isFeatured,
         isPublic: true,
+        is_benchmark: formData.is_benchmark,
         scheduled_date: formData.scheduled_date || undefined,
         tags: parseJsonOrArray(formData.tags),
         blocks: (() => {

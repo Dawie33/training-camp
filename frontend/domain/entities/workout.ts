@@ -56,6 +56,7 @@ export interface CreateWorkoutDTO {
     isActive?: boolean
     isFeatured?: boolean
     isPublic?: boolean
+    is_benchmark?: boolean
     scheduled_date?: string
     tags?: string[]
     image_url?: string

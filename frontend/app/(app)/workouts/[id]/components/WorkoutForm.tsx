@@ -65,6 +65,18 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
           onChange={(value) => setFormData({ ...formData, tags: value })}
           placeholder="cardio, strength, endurance..."
         />
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="w-5 h-5 rounded border-slate-700 bg-slate-900/50 text-orange-500 focus:ring-orange-500/50"
+            checked={formData.is_benchmark}
+            onChange={(e) => setFormData({ ...formData, is_benchmark: e.target.checked })}
+          />
+          <span className="text-sm font-medium text-slate-300">
+            Marquer comme benchmark (WOD de référence à retester dans le temps)
+          </span>
+        </label>
       </div>
 
       {/* Bloc RM - visible uniquement pour les types Force */}

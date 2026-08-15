@@ -274,7 +274,7 @@ export class WorkoutQueryDto {
   workout_type?: string
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true' ? true : value === 'false' ? false : undefined)
+  @Transform(({ obj, key }) => obj[key] === 'true' ? true : obj[key] === 'false' ? false : undefined)
   @IsBoolean()
   is_benchmark?: boolean
 }
