@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 
 @Injectable()
 export class OneRepMaxesService {
-  constructor(@InjectModel() private readonly knex: Knex) {}
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly userContextService: UserContextService
+  ) {}
 
   async findAllByUser(userId: string) {
     return this.knex('one_rep_maxes').where({ user_id: userId }).orderBy('lift')
@@ -24,6 +28,8 @@ export class OneRepMaxesService {
       source,
       measured_at: this.knex.fn.now(),
     })
+
+    this.userContextService.invalidateCache(userId)
 
     return row
   }

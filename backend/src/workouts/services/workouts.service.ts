@@ -6,12 +6,14 @@ import { safeJsonStringify } from 'src/common/utils/utils'
 import { SaveBenchmarkResultDto } from 'src/workouts/dto/workout.dto'
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { calculateLevelFromBenchmarks } from '../workout.utils'
+import { UserContextService } from './user-context.service'
 
 
 @Injectable()
 export class WorkoutsService {
   constructor(
-    @InjectModel() private readonly knex: Knex
+    @InjectModel() private readonly knex: Knex,
+    private readonly userContextService: UserContextService
   ) { }
 
   /**
@@ -455,6 +457,8 @@ export class WorkoutsService {
         sport_level: calculatedLevel,
         updated_at: new Date()
       })
+
+    this.userContextService.invalidateCache(user_id)
 
     return {
       success: true,

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 import { BikingSessionQueryDto, CreateBikingSessionDto, GenerateBikingSessionDto, UpdateBikingSessionDto } from '../dto/biking.dto'
 import { GeneratedBikingPlanValidated } from '../schemas/biking.schema'
 import { AIBikingGeneratorService } from './ai-biking-generator.service'
@@ -11,6 +12,7 @@ export class BikingService {
     constructor(
         @InjectModel() private readonly knex: Knex,
         private readonly aiGenerator: AIBikingGeneratorService,
+        private readonly userContextService: UserContextService,
     ) { }
 
     async findAll(userId: string, query: BikingSessionQueryDto) {
@@ -75,6 +77,7 @@ export class BikingService {
         const [session] = await this.knex('biking_sessions')
             .insert({ user_id: userId, source: 'manual', ...data })
             .returning('*')
+        this.userContextService.invalidateCache(userId)
         return session
     }
 
@@ -90,6 +93,7 @@ export class BikingService {
                 scheduled_activity_id: scheduledActivityId || null,
             })
             .returning('*')
+        this.userContextService.invalidateCache(userId)
         return session
     }
 
@@ -108,12 +112,14 @@ export class BikingService {
             .where({ id, user_id: userId })
             .update({ ...data, updated_at: new Date() })
             .returning('*')
+        this.userContextService.invalidateCache(userId)
         return updated
     }
 
     async delete(id: string, userId: string) {
         const deleted = await this.knex('biking_sessions').where({ id, user_id: userId }).delete()
         if (deleted === 0) throw new NotFoundException('Séance vélo non trouvée')
+        this.userContextService.invalidateCache(userId)
         return { success: true }
     }
 }

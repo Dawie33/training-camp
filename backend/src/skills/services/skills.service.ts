@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 import {
   CreateSkillProgramDto,
   CreateSkillProgressLogDto,
@@ -10,7 +11,10 @@ import {
 
 @Injectable()
 export class SkillsService {
-  constructor(@InjectModel() private readonly knex: Knex) {}
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly userContextService: UserContextService
+  ) {}
 
   async findAll(userId: string, status?: string) {
     let query = this.knex('skill_programs')
@@ -98,6 +102,8 @@ export class SkillsService {
       const steps = await trx('skill_program_steps')
         .insert(stepsToInsert)
         .returning('*')
+
+      this.userContextService.invalidateCache(userId)
 
       return { ...program, steps }
     })
@@ -194,6 +200,8 @@ export class SkillsService {
       }
     }
 
+    this.userContextService.invalidateCache(userId)
+
     return updatedStep
   }
 
@@ -207,6 +215,7 @@ export class SkillsService {
     }
 
     await this.knex('skill_programs').where({ id }).delete()
+    this.userContextService.invalidateCache(userId)
     return { success: true }
   }
 
@@ -229,6 +238,8 @@ export class SkillsService {
         session_notes: data.session_notes || null,
       })
       .returning('*')
+
+    this.userContextService.invalidateCache(userId)
 
     return log
   }

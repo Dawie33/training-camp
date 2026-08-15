@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto, WorkoutSession } from './dto/session.dto'
 
 export interface RunningSegment {
@@ -18,7 +19,10 @@ export interface RunningSegment {
 
 @Injectable()
 export class WorkoutSessionsService {
-    constructor(@InjectConnection() private readonly knex: Knex) { }
+    constructor(
+        @InjectConnection() private readonly knex: Knex,
+        private readonly userContextService: UserContextService
+    ) { }
 
     /**
     * Récupère toutes les sessions d'un utilisateur
@@ -94,6 +98,8 @@ export class WorkoutSessionsService {
             .insert(insertData)
             .returning('*')
 
+        this.userContextService.invalidateCache(userId)
+
         return session
     }
 
@@ -117,6 +123,8 @@ export class WorkoutSessionsService {
             })
             .returning('*')
 
+        this.userContextService.invalidateCache(userId)
+
         return session || null
     }
 
@@ -130,6 +138,10 @@ export class WorkoutSessionsService {
         const deletedCount = await this.knex('workout_sessions')
             .where({ id: sessionId, user_id: userId })
             .delete()
+
+        if (deletedCount > 0) {
+            this.userContextService.invalidateCache(userId)
+        }
 
         return deletedCount > 0
     }

@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcryptjs'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 import { AuthResponseDto, LoginDto, SignupDto } from './dto/auth.dto'
 import { UpdateProfileDto } from './dto/update-profile.dto'
 
@@ -10,7 +11,8 @@ import { UpdateProfileDto } from './dto/update-profile.dto'
 export class AuthService {
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private readonly userContextService: UserContextService
   ) { }
 
   /**
@@ -198,6 +200,7 @@ export class AuthService {
       }
 
       await trx.commit()
+      this.userContextService.invalidateCache(userId)
       return user
     } catch (error) {
       await trx.rollback()

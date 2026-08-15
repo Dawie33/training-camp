@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 import {
   CreateStrengthSessionDto,
   GenerateStrengthSessionDto,
@@ -15,6 +16,7 @@ export class StrengthService {
   constructor(
     @InjectModel() private readonly knex: Knex,
     private readonly aiGenerator: AIStrengthGeneratorService,
+    private readonly userContextService: UserContextService,
   ) {}
 
   async findAll(userId: string, query: StrengthSessionQueryDto) {
@@ -62,6 +64,8 @@ export class StrengthService {
       })
       .returning('*')
 
+    this.userContextService.invalidateCache(userId)
+
     return session
   }
 
@@ -84,6 +88,8 @@ export class StrengthService {
       })
       .returning('*')
 
+    this.userContextService.invalidateCache(userId)
+
     return session
   }
 
@@ -101,12 +107,15 @@ export class StrengthService {
       })
       .returning('*')
 
+    this.userContextService.invalidateCache(userId)
+
     return updated
   }
 
   async delete(id: string, userId: string) {
     await this.findOne(id, userId)
     await this.knex('strength_sessions').where({ id, user_id: userId }).delete()
+    this.userContextService.invalidateCache(userId)
     return { deleted: true }
   }
 

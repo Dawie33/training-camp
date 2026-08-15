@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import OpenAI from 'openai'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 
 export interface WodAnalysis {
   summary: string
@@ -16,7 +17,10 @@ export interface WodAnalysis {
 export class WorkoutAnalysisService {
   private openai: OpenAI
 
-  constructor(@InjectConnection() private readonly knex: Knex) {
+  constructor(
+    @InjectConnection() private readonly knex: Knex,
+    private readonly userContextService: UserContextService
+  ) {
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
     this.openai = new OpenAI({ apiKey })
@@ -116,6 +120,8 @@ Réponds en JSON avec exactement cette structure :
     await this.knex('workout_sessions')
       .where({ id: sessionId })
       .update({ ai_analysis: JSON.stringify(analysis) })
+
+    this.userContextService.invalidateCache(userId)
 
     return analysis
   }

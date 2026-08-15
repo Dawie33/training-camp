@@ -1,13 +1,15 @@
 import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
+import { UserContextService } from "src/workouts/services/user-context.service"
 import { UpdateUserDto, UserProfile, UserQueryDto } from "./dto"
 
 @Injectable()
 
 export class UsersService {
     constructor(
-        @InjectModel() private readonly knex: Knex
+        @InjectModel() private readonly knex: Knex,
+        private readonly userContextService: UserContextService
     ) { }
 
     private sanitizeUser(user: Record<string, unknown>): Omit<UserProfile, 'stats'> {
@@ -200,6 +202,8 @@ export class UsersService {
             .returning('*')
 
         if (!row) return null
+
+        this.userContextService.invalidateCache(id)
 
         return this.sanitizeUser(row)
     }

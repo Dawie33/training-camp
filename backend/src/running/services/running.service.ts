@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 import {
   CreateRunningSessionDto,
   GenerateRunningSessionDto,
@@ -15,6 +16,7 @@ export class RunningService {
   constructor(
     @InjectModel() private readonly knex: Knex,
     private readonly aiGenerator: AIRunningGeneratorService,
+    private readonly userContextService: UserContextService,
   ) { }
 
   async findAll(userId: string, query: RunningSessionQueryDto) {
@@ -79,6 +81,7 @@ export class RunningService {
     const [session] = await this.knex('running_sessions')
       .insert({ user_id: userId, source: 'manual', ...data })
       .returning('*')
+    this.userContextService.invalidateCache(userId)
     return session
   }
 
@@ -95,6 +98,7 @@ export class RunningService {
         scheduled_activity_id: scheduledActivityId || null,
       })
       .returning('*')
+    this.userContextService.invalidateCache(userId)
     return session
   }
 
@@ -115,12 +119,15 @@ export class RunningService {
       .update({ ...data, updated_at: new Date() })
       .returning('*')
 
+    this.userContextService.invalidateCache(userId)
+
     return updated ?? existing
   }
 
   async delete(id: string, userId: string) {
     const deleted = await this.knex('running_sessions').where({ id, user_id: userId }).delete()
     if (deleted === 0) throw new NotFoundException('Séance running non trouvée')
+    this.userContextService.invalidateCache(userId)
     return { success: true }
   }
 }

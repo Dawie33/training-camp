@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import OpenAI from 'openai'
+import { UserContextService } from 'src/workouts/services/user-context.service'
 
 export type SportType = 'crossfit' | 'running' | 'biking' | 'global'
 
@@ -43,7 +44,10 @@ export interface ProgressionReport {
 export class TrackingService {
   private openai: OpenAI
 
-  constructor(@InjectConnection() private readonly knex: Knex) {
+  constructor(
+    @InjectConnection() private readonly knex: Knex,
+    private readonly userContextService: UserContextService
+  ) {
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
     this.openai = new OpenAI({ apiKey })
@@ -60,6 +64,7 @@ export class TrackingService {
     else report = await this.generateBikingReport(userId, months, since)
 
     await this.saveReport(userId, sport, months, report)
+    this.userContextService.invalidateCache(userId)
     return report
   }
 
