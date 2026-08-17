@@ -1,9 +1,9 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { format } from 'date-fns'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { safeJsonStringify } from 'src/common/utils/utils'
-import { SaveBenchmarkResultDto } from 'src/workouts/dto/workout.dto'
+import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/workout.dto'
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { calculateLevelFromBenchmarks } from '../workout.utils'
 import { UserContextService } from './user-context.service'
@@ -426,9 +426,53 @@ export class WorkoutsService {
   async saveBenchmarkResult(user_id: string, data: SaveBenchmarkResultDto) {
     const { workoutId, workoutName, result } = data
 
+    // Vérifier que le workout ciblé est bien un benchmark
+    const workout = await this.knex('workouts')
+      .where({ id: workoutId })
+      .first()
+
+    if (!workout) {
+      throw new NotFoundException('Workout introuvable')
+    }
+    if (!workout.is_benchmark) {
+      throw new BadRequestException('Ce workout n\'est pas un benchmark')
+    }
+
+    const { level, benchmark_results } = await this.recordBenchmarkResult(
+      user_id,
+      workoutId,
+      workoutName,
+      result,
+      'manual'
+    )
+
+    return {
+      success: true,
+      level,
+      benchmark_results
+    }
+  }
+
+  /**
+   * Calcule le niveau à partir d'un résultat de benchmark, met à jour le profil utilisateur
+   * et historise le résultat. Réutilisé par `saveBenchmarkResult` (formulaire dédié) et par
+   * `WorkoutSessionsService.update` (log de séance classique sur un WOD benchmark).
+   * @param userId ID de l'utilisateur
+   * @param workoutId ID du workout benchmark
+   * @param workoutName Nom du workout benchmark
+   * @param result Résultat structuré (time_seconds/rounds/reps/weight)
+   * @param source Origine du résultat ('manual' | 'scheduled_test')
+   */
+  async recordBenchmarkResult(
+    userId: string,
+    workoutId: string,
+    workoutName: string,
+    result: BenchmarkResultDto,
+    source: 'manual' | 'scheduled_test'
+  ) {
     // Récupérer le profil utilisateur
     const user = await this.knex('users')
-      .where({ id: user_id })
+      .where({ id: userId })
       .first()
 
     const existingResults = user?.benchmark_results || {}
@@ -451,20 +495,78 @@ export class WorkoutsService {
 
     // Mettre à jour directement dans la table users
     await this.knex('users')
-      .where({ id: user_id })
+      .where({ id: userId })
       .update({
         benchmark_results: JSON.stringify(updatedResults),
         sport_level: calculatedLevel,
         updated_at: new Date()
       })
 
-    this.userContextService.invalidateCache(user_id)
+    // Historiser le résultat pour pouvoir suivre la progression dans le temps
+    let scoreType: string | null = null
+    let scoreValue: number | null = null
+    let extraReps: number | null = null
+
+    if (result.time_seconds !== undefined) {
+      scoreType = 'time_seconds'
+      scoreValue = result.time_seconds
+    } else if (result.rounds !== undefined) {
+      scoreType = 'rounds'
+      scoreValue = result.rounds
+      extraReps = result.reps ?? null
+    } else if (result.weight !== undefined) {
+      scoreType = 'weight'
+      scoreValue = result.weight
+    }
+
+    if (scoreType && scoreValue !== null) {
+      await this.knex('benchmark_history').insert({
+        user_id: userId,
+        workout_id: workoutId,
+        workout_name: workoutName,
+        score_type: scoreType,
+        score_value: scoreValue,
+        extra_reps: extraReps,
+        calculated_level: calculatedLevel,
+        source,
+      })
+    }
+
+    this.userContextService.invalidateCache(userId)
 
     return {
-      success: true,
       level: calculatedLevel,
       benchmark_results: updatedResults
     }
+  }
+
+  /**
+   * Récupère l'historique des résultats de benchmark d'un utilisateur, groupé par workout.
+   * @param userId ID de l'utilisateur
+   */
+  async getBenchmarkHistory(userId: string) {
+    const rows = await this.knex('benchmark_history')
+      .where({ user_id: userId })
+      .orderBy('measured_at', 'asc')
+      .select('workout_name', 'score_type', 'score_value', 'extra_reps', 'calculated_level', 'measured_at')
+
+    const grouped: Record<
+      string,
+      { score_type: string; score_value: number; extra_reps: number | null; calculated_level: string; measured_at: string }[]
+    > = {}
+
+    for (const row of rows) {
+      if (!grouped[row.workout_name]) grouped[row.workout_name] = []
+      grouped[row.workout_name].push({
+        score_type: row.score_type,
+        score_value: Number(row.score_value),
+        extra_reps: row.extra_reps,
+        calculated_level: row.calculated_level,
+        measured_at: row.measured_at,
+      })
+    }
+
+    return grouped
   }
 
   async remove(id: string) {

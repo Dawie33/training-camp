@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { UserContextService } from 'src/workouts/services/user-context.service'
+import { WorkoutsService } from 'src/workouts/services/workouts.service'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto, WorkoutSession } from './dto/session.dto'
 
 export interface RunningSegment {
@@ -21,7 +22,8 @@ export interface RunningSegment {
 export class WorkoutSessionsService {
     constructor(
         @InjectConnection() private readonly knex: Knex,
-        private readonly userContextService: UserContextService
+        private readonly userContextService: UserContextService,
+        private readonly workoutsService: WorkoutsService
     ) { }
 
     /**
@@ -123,9 +125,43 @@ export class WorkoutSessionsService {
             })
             .returning('*')
 
+        if (session?.workout_id && data.results) {
+            await this.recordBenchmarkIfApplicable(userId, session.workout_id, data.results)
+        }
+
         this.userContextService.invalidateCache(userId)
 
         return session || null
+    }
+
+    /**
+     * Si le workout loggué est un benchmark, extrait le score depuis les résultats de la
+     * séance (format utilisé par les pages de log par sport) et historise le résultat.
+     * @param userId ID de l'utilisateur
+     * @param workoutId ID du workout loggué
+     * @param results Résultats de la séance (elapsed_time_seconds / rounds / reps...)
+     */
+    private async recordBenchmarkIfApplicable(
+        userId: string,
+        workoutId: string,
+        results: Record<string, unknown>
+    ): Promise<void> {
+        const workout = await this.knex('workouts').where({ id: workoutId }).first()
+        if (!workout?.is_benchmark) return
+
+        const timeSeconds = results.elapsed_time_seconds as number | undefined
+        const rounds = results.rounds as number | undefined
+        const reps = results.reps as number | undefined
+
+        if (timeSeconds === undefined && rounds === undefined) return
+
+        await this.workoutsService.recordBenchmarkResult(
+            userId,
+            workoutId,
+            workout.name,
+            { time_seconds: timeSeconds, rounds, reps },
+            'manual'
+        )
     }
 
     /**

@@ -37,6 +37,12 @@ export class WorkoutsController {
     return await this.service.getBenchmarkWorkouts()
   }
 
+  @Get('benchmark-history')
+  @UseGuards(JwtAuthGuard)
+  async getBenchmarkHistory(@Request() req: { user: { id: string } }) {
+    return await this.service.getBenchmarkHistory(req.user.id)
+  }
+
   @Get('personalized')
   @UseGuards(JwtAuthGuard)
   async getPersonalizedWorkouts(
