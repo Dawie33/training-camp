@@ -110,7 +110,8 @@ function LogWorkoutContent() {
   const [timeMinutes, setTimeMinutes] = useState('')
   const [timeSeconds, setTimeSeconds] = useState('')
   const [capAtteint, setCapAtteint] = useState(false)
-  const [capScore, setCapScore] = useState('')
+  const [capRounds, setCapRounds] = useState('')
+  const [capNote, setCapNote] = useState('')
   const [rounds, setRounds] = useState('')
   const [bonusReps, setBonusReps] = useState('')
   const [rating, setRating] = useState<number>(0)
@@ -218,7 +219,8 @@ function LogWorkoutContent() {
     setShowDropdown(false)
     setWeightsUsed({})
     setCapAtteint(false)
-    setCapScore('')
+    setCapRounds('')
+    setCapNote('')
   }, [])
 
   const handleFitFiles = async (files: FileList) => {
@@ -302,7 +304,8 @@ function LogWorkoutContent() {
       if (!isAmrap) {
         if (capAtteint) {
           resultPayload.cap_reached = true
-          if (capScore) resultPayload.reps_at_cap = parseInt(capScore, 10)
+          if (capRounds) resultPayload.rounds_completed = parseInt(capRounds, 10)
+          if (capNote) resultPayload.partial_note = capNote
         } else if (totalSeconds > 0) {
           resultPayload.elapsed_time_seconds = totalSeconds
         }
@@ -642,16 +645,25 @@ function LogWorkoutContent() {
                   onSecondsChange={setTimeSeconds}
                 />
               ) : (
-                <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
+                <div className="space-y-2 bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={capRounds}
+                      onChange={(e) => setCapRounds(e.target.value)}
+                      placeholder="0"
+                      className="w-24 bg-transparent text-foreground text-center text-xl font-mono outline-none"
+                    />
+                    <span className="text-destructive text-sm">tours complets</span>
+                  </div>
                   <input
-                    type="number"
-                    min="0"
-                    value={capScore}
-                    onChange={(e) => setCapScore(e.target.value)}
-                    placeholder="0"
-                    className="w-24 bg-transparent text-foreground text-center text-xl font-mono outline-none"
+                    type="text"
+                    value={capNote}
+                    onChange={(e) => setCapNote(e.target.value)}
+                    placeholder="Et ensuite : ex. 400m de course, 10 thrusters..."
+                    className="w-full px-3 py-2 bg-background/60 border border-destructive/20 rounded-lg text-foreground text-sm placeholder:text-muted-foreground outline-none"
                   />
-                  <span className="text-destructive text-sm">reps au cap (score officiel)</span>
                 </div>
               )}
             </div>
