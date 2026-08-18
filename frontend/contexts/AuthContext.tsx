@@ -1,9 +1,18 @@
 'use client'
 
-import { authService } from '@/services'
+import { apiClient, authService } from '@/services'
 import type { LoginDto, SignupDto, User } from '@/domain/entities/auth'
 import { AuthContext } from '@/hooks/useAuth'
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+
+/**
+ * Vérifie silencieusement si le bilan CrossFit du mois a été généré, et le régénère
+ * sinon. Fire-and-forget : pas de cron serveur, ce check "au login" est plus robuste
+ * en dev/Render où le backend n'est pas toujours up en continu.
+ */
+function checkMonthlyReport() {
+  apiClient.get('/tracking/report/check-monthly?sport=crossfit').catch(() => {})
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -16,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await authService.getMe()
         setUser(currentUser)
         localStorage.setItem('user', JSON.stringify(currentUser))
+        checkMonthlyReport()
       } catch {
         // 401 = pas connecté, on nettoie juste le localStorage
         localStorage.removeItem('user')
@@ -31,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (data: LoginDto) => {
     const response = await authService.login(data)
     setUser(response.user)
+    checkMonthlyReport()
   }, [])
 
   const signup = useCallback(async (data: SignupDto) => {

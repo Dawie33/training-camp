@@ -104,10 +104,28 @@ export class TrackingService {
     return (typeof row.report === 'string' ? JSON.parse(row.report) : row.report) as ProgressionReport
   }
 
+  /**
+   * Régénère le bilan d'un sport s'il n'a pas encore été généré ce mois-ci.
+   * Appelé silencieusement à la connexion (voir AuthContext frontend) pour éviter
+   * de dépendre d'un cron serveur (backend Render pas toujours up en continu).
+   */
+  async checkAndGenerateMonthlyReport(userId: string, sport: SportType): Promise<{ generated: boolean }> {
+    const existing = await this.knex('tracking_reports').where({ user_id: userId, sport }).first()
+    const now = new Date()
+    const sameMonth = existing &&
+      new Date(existing.generated_at).getMonth() === now.getMonth() &&
+      new Date(existing.generated_at).getFullYear() === now.getFullYear()
+
+    if (sameMonth) return { generated: false }
+
+    await this.generateReport(userId, sport, 1)
+    return { generated: true }
+  }
+
   // ─── CrossFit ─────────────────────────────────────────────────────────────
 
   private async generateCrossfitReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const [sessions, oneRepMaxes, ormHistory, profile] = await Promise.all([
+    const [sessions, oneRepMaxes, ormHistory, benchmarkHistory, profile] = await Promise.all([
       this.knex('workout_sessions as ws')
         .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
         .select('ws.started_at', 'ws.completed_at', 'ws.results', 'w.name as workout_name', 'w.workout_type')
@@ -121,19 +139,24 @@ export class TrackingService {
         .where('user_id', userId)
         .where('measured_at', '>=', since.toISOString())
         .orderBy('measured_at', 'asc'),
+      this.knex('benchmark_history')
+        .select('workout_name', 'score_type', 'score_value', 'calculated_level', 'measured_at')
+        .where('user_id', userId)
+        .where('measured_at', '>=', since.toISOString())
+        .orderBy('measured_at', 'asc'),
       this.knex('users').select('sport_level', 'global_goals').where('id', userId).first(),
     ])
 
     if (sessions.length < 3) return this.notEnoughData('crossfit', months, sessions.length)
 
-    const agg = this.aggregateCrossfit(sessions, ormHistory)
+    const agg = this.aggregateCrossfit(sessions, ormHistory, benchmarkHistory)
     const prompt = this.buildCrossfitPrompt(agg, oneRepMaxes, profile, months)
     const parsed = await this.callAI(prompt)
 
     return { sport: 'crossfit', period_months: months, ...parsed, generated_at: new Date().toISOString() }
   }
 
-  private aggregateCrossfit(sessions: any[], ormHistory: any[]) {
+  private aggregateCrossfit(sessions: any[], ormHistory: any[], benchmarkHistory: any[]) {
     const total = sessions.length
     const weekSpan = this.computeWeekSpan(sessions)
     const avgPerWeek = (total / weekSpan).toFixed(1)
@@ -177,7 +200,31 @@ export class TrackingService {
         gain: entries[entries.length - 1].value - entries[0].value,
       }))
 
-    return { total, avgPerWeek, weekSpan, consistencyPct, typeStats, namedWorkouts, ormProgression }
+    const benchByWorkout: Record<string, { score_type: string; score_value: number; calculated_level: string }[]> = {}
+    for (const b of benchmarkHistory) {
+      if (!benchByWorkout[b.workout_name]) benchByWorkout[b.workout_name] = []
+      benchByWorkout[b.workout_name].push({
+        score_type: b.score_type,
+        score_value: Number(b.score_value),
+        calculated_level: b.calculated_level,
+      })
+    }
+    const benchmarkProgression = Object.entries(benchByWorkout).map(([name, entries]) => ({
+      name,
+      count: entries.length,
+      firstLevel: entries[0].calculated_level,
+      lastLevel: entries[entries.length - 1].calculated_level,
+      lastScore: this.formatScoreValue(entries[entries.length - 1].score_type, entries[entries.length - 1].score_value),
+    }))
+
+    return { total, avgPerWeek, weekSpan, consistencyPct, typeStats, namedWorkouts, ormProgression, benchmarkProgression }
+  }
+
+  private formatScoreValue(scoreType: string, value: number): string {
+    if (scoreType === 'time_seconds') return `${Math.floor(value / 60)}:${String(Math.round(value % 60)).padStart(2, '0')}`
+    if (scoreType === 'rounds') return `${value} rounds`
+    if (scoreType === 'weight') return `${value}kg`
+    return String(value)
   }
 
   private buildCrossfitPrompt(agg: any, orms: any[], profile: any, months: number): string {
@@ -196,6 +243,12 @@ export class TrackingService {
     const ormProgressionLines = agg.ormProgression.length
       ? agg.ormProgression.map((o: any) => `- ${o.lift}: ${o.start}kg → ${o.end}kg (${o.gain > 0 ? '+' : ''}${o.gain}kg)`).join('\n')
       : '- Aucun nouveau PR de force enregistré sur la période'
+
+    const benchmarkProgressionLines = agg.benchmarkProgression.length
+      ? agg.benchmarkProgression
+        .map((b: any) => `- ${b.name} : ${b.firstLevel} → ${b.lastLevel} (${b.count} test${b.count > 1 ? 's' : ''}, dernier score : ${b.lastScore})`)
+        .join('\n')
+      : '- Aucun benchmark testé sur la période'
 
     return `Tu es un coach CrossFit expert et analytique. Génère un bilan de progression CrossFit approfondi sur ${months} mois.
 
@@ -216,6 +269,9 @@ ${namedLines}
 
 Progression des charges / 1RMs sur la période :
 ${ormProgressionLines}
+
+Progression sur les benchmarks testés (niveau calculé automatiquement) :
+${benchmarkProgressionLines}
 
 Analyse ces données précisément. Cite des résultats concrets (noms de workouts, temps, charges) dans tes commentaires. Sois un vrai coach — pas de conseils génériques.
 

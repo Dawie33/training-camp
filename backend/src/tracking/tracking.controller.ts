@@ -29,6 +29,16 @@ export class TrackingController {
     return this.trackingService.getSavedReport(userId, validSport)
   }
 
+  @Get('report/check-monthly')
+  async checkMonthlyReport(
+    @Req() req: AuthenticatedRequest,
+    @Query('sport') sport?: string,
+  ) {
+    const userId = req.user.id
+    const validSport: SportType = VALID_SPORTS.includes(sport as SportType) ? (sport as SportType) : 'crossfit'
+    return this.trackingService.checkAndGenerateMonthlyReport(userId, validSport)
+  }
+
   @Get('report')
   async getReport(
     @Req() req: AuthenticatedRequest,
