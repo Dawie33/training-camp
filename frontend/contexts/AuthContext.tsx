@@ -14,6 +14,14 @@ function checkMonthlyReport() {
   apiClient.get('/tracking/report/check-monthly?sport=crossfit').catch(() => {})
 }
 
+/**
+ * Vérifie silencieusement si un benchmark CrossFit a déjà été planifié ce mois-ci,
+ * et sinon planifie automatiquement le moins testé récemment. Même pattern fire-and-forget.
+ */
+function checkMonthlyBenchmark() {
+  apiClient.get('/workouts/check-monthly-benchmark').catch(() => {})
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -26,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentUser)
         localStorage.setItem('user', JSON.stringify(currentUser))
         checkMonthlyReport()
+        checkMonthlyBenchmark()
       } catch {
         // 401 = pas connecté, on nettoie juste le localStorage
         localStorage.removeItem('user')

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { format } from 'date-fns'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
@@ -7,13 +7,15 @@ import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/wor
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { calculateLevelFromBenchmarks } from '../workout.utils'
 import { UserContextService } from './user-context.service'
+import { WorkoutScheduleService } from './workout-schedule.service'
 
 
 @Injectable()
 export class WorkoutsService {
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private readonly userContextService: UserContextService
+    private readonly userContextService: UserContextService,
+    private readonly scheduleService: WorkoutScheduleService
   ) { }
 
   /**
@@ -567,6 +569,66 @@ export class WorkoutsService {
     }
 
     return grouped
+  }
+
+  /**
+   * Planifie automatiquement, une fois par mois calendaire, le benchmark CrossFit
+   * le moins testé récemment (voire jamais testé) dans le calendrier de l'utilisateur.
+   * Appelé silencieusement à la connexion (voir AuthContext frontend), même pattern
+   * que `TrackingService.checkAndGenerateMonthlyReport`.
+   */
+  async checkAndScheduleMonthlyBenchmark(userId: string): Promise<{ scheduled: boolean; workoutName?: string }> {
+    const now = new Date()
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+
+    const benchmarks = await this.knex('workouts').where({ is_benchmark: true }).select('id', 'name')
+    const benchmarkIds = benchmarks.map(b => b.id)
+
+    // Déjà un benchmark planifié ce mois-ci (auto ou manuel) → on ne double pas
+    const alreadyScheduled = await this.knex('user_workout_schedule')
+      .where('user_id', userId)
+      .whereIn('workout_id', benchmarkIds)
+      .whereBetween('scheduled_date', [monthStart, monthEnd])
+      .first()
+    if (alreadyScheduled) return { scheduled: false }
+
+    // Dernier test connu par benchmark (jamais testé = priorité absolue)
+    const lastTests = await this.knex('benchmark_history')
+      .select('workout_id')
+      .max('measured_at as last_measured_at')
+      .whereIn('workout_id', benchmarkIds)
+      .where('user_id', userId)
+      .groupBy('workout_id')
+    const lastByWorkout = new Map(lastTests.map(r => [r.workout_id, r.last_measured_at]))
+
+    const target = [...benchmarks].sort((a, b) => {
+      const la = lastByWorkout.get(a.id)
+      const lb = lastByWorkout.get(b.id)
+      if (!la && !lb) return 0
+      if (!la) return -1
+      if (!lb) return 1
+      return new Date(la).getTime() - new Date(lb).getTime()
+    })[0]
+
+    // Cherche un jour libre à partir de J+3 (laisse le temps de voir la planif avant le jour J)
+    const candidate = new Date(now)
+    candidate.setDate(candidate.getDate() + 3)
+    for (let i = 0; i < 14; i++) {
+      const dateStr = candidate.toISOString().slice(0, 10)
+      try {
+        await this.scheduleService.create(userId, {
+          workout_id: target.id,
+          scheduled_date: dateStr,
+          notes: 'Test benchmark mensuel automatique',
+        })
+        return { scheduled: true, workoutName: target.name }
+      } catch (e) {
+        if (!(e instanceof ConflictException)) throw e
+        candidate.setDate(candidate.getDate() + 1)
+      }
+    }
+    return { scheduled: false }
   }
 
   async remove(id: string) {
