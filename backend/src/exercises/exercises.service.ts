@@ -113,6 +113,40 @@ export class ExercisesService {
         return exercise || null
     }
 
+    async findForProgram({
+        difficulty,
+        equipment = [],
+        categories,
+    }: {
+        difficulty?: string
+        equipment?: string[]
+        categories?: string[]
+    }) {
+        let query = this.knex('exercises').where('isActive', true)
+
+        if (difficulty) {
+            query = query.whereIn('difficulty', this.allowedDifficulties(difficulty))
+        }
+
+        if (categories && categories.length > 0) {
+            query = query.whereIn('category', categories)
+        }
+
+        if (equipment.length > 0) {
+            query = query.whereRaw(`COALESCE(equipment_required, '[]'::json) <@ ?::json`, [JSON.stringify(equipment)])
+        } else {
+            query = query.whereRaw(`COALESCE(equipment_required, '[]'::json) = '[]'::json`)
+        }
+
+        return query.orderBy('name', 'asc')
+    }
+
+    private allowedDifficulties(difficulty: string): string[] {
+        const levels = ['beginner', 'intermediate', 'advanced']
+        const index = levels.indexOf(difficulty)
+        return index >= 0 ? levels.slice(0, index + 1) : [difficulty]
+    }
+
     /**
      * Crée un nouvel exercice.
      * @param {object} data - Informations de l'exercice à créer.

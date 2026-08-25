@@ -17,6 +17,8 @@ function createKnexBuilderMock(terminal: {
         // chaînage → renvoient le builder
         select: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
+        whereIn: jest.fn().mockReturnThis(),
+        whereRaw: jest.fn().mockReturnThis(),
         orWhere: jest.fn().mockReturnThis(),
         count: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
@@ -214,6 +216,33 @@ describe('ExercisesService.findByName', () => {
         // enlève le "s" final : "Air Squat"
         expect(fallbackBuilder.where).toHaveBeenCalledWith('name', 'ilike', 'Air Squat')
         expect(fallbackBuilder.orWhere).toHaveBeenCalledWith('name', 'ilike', 'Air Squats')
+    })
+})
+
+describe('ExercisesService.findForProgram', () => {
+    it('filtre par niveau, catégorie et équipement disponibles', async () => {
+        // Arrange
+        const rows = [{ id: '1', name: 'Clean' }]
+        const builder = createKnexBuilderMock({ orderBy: rows })
+        const knexMock: any = jest.fn().mockReturnValue(builder)
+        const service = await buildService(knexMock)
+
+        // Act
+        const result = await service.findForProgram({
+            difficulty: 'intermediate',
+            categories: ['olympic_lifting'],
+            equipment: ['barbell', 'plates'],
+        })
+
+        // Assert
+        expect(result).toEqual(rows)
+        expect(builder.where).toHaveBeenCalledWith('isActive', true)
+        expect(builder.whereIn).toHaveBeenCalledWith('difficulty', ['beginner', 'intermediate'])
+        expect(builder.whereIn).toHaveBeenCalledWith('category', ['olympic_lifting'])
+        expect(builder.whereRaw).toHaveBeenCalledWith(
+            expect.stringContaining('equipment_required'),
+            [JSON.stringify(['barbell', 'plates'])],
+        )
     })
 })
 
