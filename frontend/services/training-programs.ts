@@ -30,6 +30,7 @@ export interface ProgramPhase {
 }
 
 export interface ProgramSession {
+  week?: number
   session_in_week: number
   title: string
   focus: 'strength' | 'conditioning' | 'skill' | 'mixed' | 'recovery'

@@ -107,13 +107,16 @@ function TrainingProgramsContent() {
         ) : weekData ? (
           <div className="space-y-3">
             {weekData.phase && (
-              <p className="text-xs text-muted-foreground px-1 mb-2">
+              <div className="text-xs text-muted-foreground px-1 mb-2">
                 <span className="text-foreground font-medium">
                   Phase {weekData.phase.phase_number} — {weekData.phase.name}
                 </span>
                 {' · '}
                 {weekData.phase.description}
-              </p>
+                {(weekData.sessions.some((session) => session.week === viewWeek)) && (
+                  <span className="ml-2 text-primary">Semaine spécifique</span>
+                )}
+              </div>
             )}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {weekData.sessions.map((session, i) => (

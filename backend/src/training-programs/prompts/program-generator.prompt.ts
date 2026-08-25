@@ -236,7 +236,7 @@ Tu dois TOUJOURS retourner UNIQUEMENT ce JSON, sans texte avant ni apres :
               { "name": "Box Jumps", "reps": 10 },
               { "name": "KB Swings", "reps": 12, "weight": "24kg" }
             ],
-            "score_type": "rounds_and_reps|time|weight|calories|reps",
+            "score_type": "rounds_and_reps",
             "scaling_notes": "Reduire charge ou reps si necessaire"
           },
           "skill_work": null,
@@ -369,7 +369,7 @@ Retourne UNIQUEMENT cet objet JSON (une seule seance), sans texte avant ni apres
     "duration_minutes": 12,
     "rounds": null,
     "movements": [ { "name": "Row", "calories": 12 }, { "name": "Burpees", "reps": 10 } ],
-    "score_type": "rounds_and_reps|time|weight|calories|reps",
+    "score_type": "rounds_and_reps",
     "scaling_notes": "..."
   },
   "skill_work": null,

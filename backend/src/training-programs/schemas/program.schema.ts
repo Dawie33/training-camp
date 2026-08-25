@@ -23,9 +23,16 @@ export const ConditioningSchema = z.object({
   duration_minutes: z.number().positive().optional().nullable(),
   rounds: z.number().int().positive().optional().nullable(),
   movements: z.array(ConditioningMovementSchema).min(1),
-  score_type: z.enum(['rounds_and_reps', 'time', 'weight', 'calories', 'reps']).optional().nullable(),
+  score_type: z.preprocess((value) => normalizeScoreType(value), z.enum(['rounds_and_reps', 'time', 'weight', 'calories', 'reps']).optional().nullable()),
   scaling_notes: z.string().optional().nullable(),
 })
+
+function normalizeScoreType(value: unknown): unknown {
+  if (typeof value !== 'string' || !value.includes('|')) return value
+
+  const allowedValues = ['rounds_and_reps', 'time', 'weight', 'calories', 'reps']
+  return value.split('|').map((part) => part.trim()).find((part) => allowedValues.includes(part)) ?? value
+}
 
 export const SkillWorkSchema = z.object({
   name: z.string().min(1),

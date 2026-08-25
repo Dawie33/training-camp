@@ -63,7 +63,7 @@ export function ProgramPreview({
                   Phase {phase.phase_number} — {phase.name}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Semaines {phase.weeks.join(', ')} · {phase.sessions.length} séances/sem.
+                  Semaines {phase.weeks.join(', ')} · {sessionsPerPhase(phase, sessions)}
                 </p>
               </div>
               {expandedPhase === pi ? (
@@ -76,9 +76,20 @@ export function ProgramPreview({
             {expandedPhase === pi && (
               <div className="px-5 pb-5 space-y-3 border-t border-border pt-4">
                 <p className="text-sm text-muted-foreground">{phase.description}</p>
-                {phase.sessions.map((session, si) => (
-                  <SessionPreviewCard key={si} session={session} />
-                ))}
+                {phase.sessions.some((session) => session.week !== undefined) ? (
+                  phase.weeks.map((week) => (
+                    <div key={week} className="space-y-2">
+                      <p className="eyebrow text-primary">Semaine {week}</p>
+                      {phase.sessions
+                        .filter((session) => session.week === week)
+                        .map((session, si) => (
+                          <SessionPreviewCard key={`${week}-${si}`} session={session} />
+                        ))}
+                    </div>
+                  ))
+                ) : (
+                  phase.sessions.map((session, si) => <SessionPreviewCard key={si} session={session} />)
+                )}
               </div>
             )}
           </div>
@@ -108,4 +119,10 @@ export function ProgramPreview({
       </div>
     </div>
   )
+}
+
+function sessionsPerPhase(phase: GeneratedProgram['phases'][number], expectedPerWeek: number): string {
+  const sessionsWithWeek = phase.sessions.filter((session) => session.week !== undefined)
+  if (sessionsWithWeek.length > 0) return `${expectedPerWeek} séances/sem.`
+  return `${phase.sessions.length} séances`
 }
