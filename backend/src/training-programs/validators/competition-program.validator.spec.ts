@@ -7,7 +7,7 @@ function session(title: string, duration = 45, sets = 3): ProgramSession {
     return {
         title,
         session_in_week: 1,
-        focus: 'mixed',
+        focus: 'strength',
         estimated_duration: duration,
         strength_work: {
             movements: [{ name: title, sets, reps: 5 }],
@@ -44,5 +44,26 @@ describe('validateCompetitionProgram', () => {
         }))
 
         expect(() => validateCompetitionProgram(plans, generatedWeeks, 3)).toThrow('volume de la semaine taper')
+    })
+
+    it('rejette une séance non recovery qui ne contient que des notes', () => {
+        const plans = buildCompetitionWeeklyPlan(4)
+        const generatedWeeks = plans.map((plan) => ({
+            week: plan.week,
+            sessions: [
+                { ...session(`Session ${plan.week} A`), session_in_week: 1 },
+                { ...session(`Session ${plan.week} B`), session_in_week: 2 },
+                {
+                    ...session(`Session ${plan.week} C`),
+                    session_in_week: 3,
+                    strength_work: null,
+                    conditioning: null,
+                    skill_work: null,
+                    focus: 'mixed' as const,
+                },
+            ],
+        }))
+
+        expect(() => validateCompetitionProgram(plans, generatedWeeks, 3)).toThrow('pas assez de contenu')
     })
 })

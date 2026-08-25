@@ -16,7 +16,7 @@ function weeklyResponse(week: number, taper: boolean) {
         sessions: [1, 2, 3].map((sessionInWeek) => ({
             session_in_week: sessionInWeek,
             title: `Semaine ${week} séance ${sessionInWeek}`,
-            focus: 'mixed',
+            focus: 'strength',
             estimated_duration: duration,
             strength_work: {
                 movements: [{ name: `Mouvement ${week}-${sessionInWeek}`, sets, reps: 5 }],

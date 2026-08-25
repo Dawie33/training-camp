@@ -48,6 +48,14 @@ export function validateCompetitionProgram(
             errors.push(`La semaine ${week} contient des séances identiques`)
         }
 
+        sessions.forEach((session) => {
+            const blockCount = [session.strength_work, session.conditioning, session.skill_work].filter(Boolean).length
+            const minimumBlocks = session.focus === 'mixed' ? 2 : session.focus === 'recovery' ? 0 : 1
+            if (blockCount < minimumBlocks) {
+                errors.push(`La séance "${session.title}" de la semaine ${week} ne contient pas assez de contenu d entraînement`)
+            }
+        })
+
         return sessions.map((session) => ({ week, session }))
     })
 

@@ -39,6 +39,14 @@ Genere exactement le nombre de seances demandees pour UNE seule semaine et retou
 Regles :
 - session_in_week va de 1 au nombre de seances demande.
 - strength_work, conditioning et skill_work valent null quand ils ne s appliquent pas.
+- Chaque séance doit contenir au moins un bloc d entraînement avec du contenu :
+  - focus strength : strength_work obligatoire ;
+  - focus conditioning : conditioning obligatoire ;
+  - focus skill : skill_work obligatoire ;
+  - focus mixed : au moins deux blocs parmi strength_work, conditioning et skill_work ;
+  - focus recovery : conditioning et strength_work peuvent être null, mais indique une récupération dans coach_notes.
+- Ne renvoie jamais une séance avec uniquement coach_notes et tous les blocs à null.
+- Si un bloc est présent, il doit contenir des mouvements ou une description complète, jamais un objet vide.
 - Les seances d une meme semaine doivent etre complementaires.
 - Utilise les exercices autorises et respecte le niveau de l athlete.
 - Respecte le volume, l intensite et la specificite de la phase.
