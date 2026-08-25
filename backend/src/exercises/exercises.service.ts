@@ -133,9 +133,12 @@ export class ExercisesService {
         }
 
         if (equipment.length > 0) {
-            query = query.whereRaw(`COALESCE(equipment_required, '[]'::json) <@ ?::json`, [JSON.stringify(equipment)])
+            query = query.whereRaw(
+                `COALESCE(equipment_required::jsonb, '[]'::jsonb) <@ ?::jsonb`,
+                [JSON.stringify(equipment)],
+            )
         } else {
-            query = query.whereRaw(`COALESCE(equipment_required, '[]'::json) = '[]'::json`)
+            query = query.whereRaw(`COALESCE(equipment_required::jsonb, '[]'::jsonb) = '[]'::jsonb`)
         }
 
         return query.orderBy('name', 'asc')
