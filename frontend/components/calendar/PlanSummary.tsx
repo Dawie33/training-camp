@@ -8,18 +8,20 @@ interface PlanSummaryProps {
 
 export function PlanSummary({ dayConfigs }: PlanSummaryProps) {
   const boxCount = dayConfigs.filter(d => d.isBox).length
-  const crossfitCount = dayConfigs.filter(d => d.sports.includes('crossfit')).length
-  const runningCount = dayConfigs.filter(d => d.sports.includes('running')).length
-  const bikingCount = dayConfigs.filter(d => d.sports.includes('biking')).length
-  const total = boxCount + crossfitCount + runningCount + bikingCount
+  const wodCount = dayConfigs.filter(d => d.types.includes('wod')).length
+  const conditioningCount = dayConfigs.filter(d => d.types.includes('conditioning')).length
+  const mobilityCount = dayConfigs.filter(d => d.types.includes('mobility')).length
+  const forceCount = dayConfigs.filter(d => d.types.includes('force')).length
+  const total = boxCount + wodCount + conditioningCount + mobilityCount + forceCount
 
   return (
     <div className="p-3 rounded-md bg-muted/60 border border-border text-sm text-muted-foreground">
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        {crossfitCount > 0 && <span className="text-primary font-medium">{crossfitCount} CrossFit IA</span>}
+        {wodCount > 0 && <span className="text-primary font-medium">{wodCount} WOD</span>}
+        {conditioningCount > 0 && <span className="text-orange-700 font-medium">{conditioningCount} Conditioning</span>}
         {boxCount > 0 && <span className="text-blue-700 font-medium">{boxCount} jour{boxCount > 1 ? 's' : ''} Box</span>}
-        {runningCount > 0 && <span className="text-green-700 font-medium">{runningCount} Running</span>}
-        {bikingCount > 0 && <span className="text-blue-700 font-medium">{bikingCount} Vélo</span>}
+        {mobilityCount > 0 && <span className="text-green-700 font-medium">{mobilityCount} Mobilité</span>}
+        {forceCount > 0 && <span className="text-blue-700 font-medium">{forceCount} Force</span>}
         {total === 0 && <span>Sélectionne des jours pour commencer</span>}
       </div>
     </div>

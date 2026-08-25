@@ -12,6 +12,7 @@ export interface WorkoutSchedule {
   session_type?: SessionType
   status: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
   completed_session_id?: string
+  location?: 'home' | 'box'
   notes?: string
   session_data?: Record<string, unknown>
   created_at: string
@@ -30,6 +31,7 @@ export interface CreateScheduleDto {
   program_enrollment_id?: string
   scheduled_date: string
   session_type?: SessionType
+  location?: 'home' | 'box'
   notes?: string
 }
 
@@ -37,6 +39,7 @@ export interface UpdateScheduleDto {
   scheduled_date?: string
   status?: 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
   completed_session_id?: string
+  location?: 'home' | 'box'
   notes?: string
 }
 
@@ -119,9 +122,11 @@ export const scheduleApi = {
   },
 
   /**
-   * Suggère une configuration de semaine basée sur l'historique
+   * Suggère une configuration de semaine basée sur l'historique (aucun appel IA)
    */
-  async getWeekSuggestion(weekStart: string): Promise<{ days: { date: string; type: string }[]; weeks_analyzed: number }> {
+  async getWeekSuggestion(
+    weekStart: string
+  ): Promise<{ days: { date: string; isBox: boolean; isRest: boolean; types: string[] }[]; weeks_analyzed: number }> {
     return apiClient.get('/workout-schedule/week-suggestion', { params: { weekStart } })
   },
 
@@ -132,6 +137,7 @@ export const scheduleApi = {
     const response = await apiClient.post<WorkoutSchedule>('/workout-schedule', {
       scheduled_date: date,
       session_type: 'box_session',
+      location: 'box',
       notes: notes || null,
     })
     return response

@@ -4,15 +4,17 @@ import type { SkillProgram } from '@/domain/entities/skill'
 import { skillsService } from '@/services/skills'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Loader2, Target } from 'lucide-react'
+import { Building2, Home, Loader2, Target } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+
+type SessionLocation = 'home' | 'box'
 
 interface ScheduleSkillModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedDate: Date
-  onSchedule: (skillProgramId: string, notes?: string) => Promise<void>
+  onSchedule: (skillProgramId: string, notes?: string, location?: SessionLocation) => Promise<void>
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -26,9 +28,11 @@ export function ScheduleSkillModal({ open, onOpenChange, selectedDate, onSchedul
   const [programs, setPrograms] = useState<SkillProgram[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [location, setLocation] = useState<SessionLocation | undefined>(undefined)
 
   useEffect(() => {
     if (!open) return
+    setLocation(undefined)
     setLoading(true)
     skillsService
       .getAll('active')
@@ -40,7 +44,7 @@ export function ScheduleSkillModal({ open, onOpenChange, selectedDate, onSchedul
   const handleSelect = async (programId: string) => {
     try {
       setSaving(true)
-      await onSchedule(programId)
+      await onSchedule(programId, undefined, location)
       onOpenChange(false)
     } catch {
       // toast déjà géré en amont
@@ -61,6 +65,25 @@ export function ScheduleSkillModal({ open, onOpenChange, selectedDate, onSchedul
             {format(selectedDate, 'EEEE dd MMMM', { locale: fr })}
           </p>
         </DialogHeader>
+
+        <div className="flex gap-1.5 pt-2">
+          <button
+            type="button"
+            onClick={() => setLocation(location === 'home' ? undefined : 'home')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium border transition-all ${location === 'home' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
+          >
+            <Home className="h-3.5 w-3.5" />
+            Maison
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation(location === 'box' ? undefined : 'box')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium border transition-all ${location === 'box' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            Box
+          </button>
+        </div>
 
         <div className="pt-2">
           {loading ? (

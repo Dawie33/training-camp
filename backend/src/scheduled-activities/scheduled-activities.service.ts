@@ -1,11 +1,11 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
-import { GoogleCalendarService } from '../google-calendar/google-calendar.service'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { GoogleCalendarService } from '../google-calendar/google-calendar.service'
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
 import { UnifiedActivity } from './types/unified-activity.type'
 
-const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', biking: 'Vélo', strength: 'Force', skill: 'Skill' }
+const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', biking: 'Vélo', strength: 'Force', skill: 'Skill', mobility: 'Mobilité', wod: 'WOD', conditioning: 'Conditioning' }
 
 export interface SkillEnrichment {
   title: string
@@ -21,7 +21,7 @@ export class ScheduledActivitiesService {
   constructor(
     @InjectModel() private readonly knex: Knex,
     private readonly googleCalendarService: GoogleCalendarService,
-  ) {}
+  ) { }
 
   /**
    * Enrichit un lot de programmes de skill : nom, catégorie, étape en cours et % de progression.
@@ -118,6 +118,7 @@ export class ScheduledActivitiesService {
           status: row.status,
           title,
           notes: row.notes,
+          location: row.location,
           created_at: row.created_at,
           updated_at: row.updated_at,
           workout_id: row.workout_id,
@@ -220,6 +221,7 @@ export class ScheduledActivitiesService {
           status: row.status,
           title,
           notes: row.notes,
+          location: row.location,
           created_at: row.created_at,
           updated_at: row.updated_at,
           activity_type: row.activity_type,
@@ -313,6 +315,7 @@ export class ScheduledActivitiesService {
         activity_type: data.activity_type,
         activity_id: data.activity_id || null,
         status: 'scheduled',
+        location: data.location || null,
         notes: data.notes || null,
       })
       .returning('*')
@@ -366,6 +369,7 @@ export class ScheduledActivitiesService {
       status: row.status,
       title,
       notes: row.notes,
+      location: row.location,
       created_at: row.created_at,
       updated_at: row.updated_at,
       activity_type: row.activity_type,
@@ -410,6 +414,7 @@ export class ScheduledActivitiesService {
         scheduled_date: data.scheduled_date ?? existing.scheduled_date,
         status: data.status ?? existing.status,
         activity_id: data.activity_id ?? existing.activity_id,
+        location: data.location ?? existing.location,
         notes: data.notes ?? existing.notes,
         updated_at: new Date(),
       })
@@ -458,6 +463,7 @@ export class ScheduledActivitiesService {
       status: row.status,
       title: updateTitle,
       notes: row.notes,
+      location: row.location,
       created_at: row.created_at,
       updated_at: row.updated_at,
       activity_type: row.activity_type,

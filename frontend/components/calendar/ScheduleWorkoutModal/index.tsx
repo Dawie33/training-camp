@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { activitiesApi } from '@/services/activities'
 import { RunType } from '@/services/running'
+import { Building2, Home } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { BikingTab } from './BikingTab'
@@ -15,11 +16,13 @@ import { usePersonalizedWorkouts } from './usePersonalizedWorkouts'
 import { useStrengthSessions } from './useStrengthSessions'
 import { useWorkoutLibrary } from './useWorkoutLibrary'
 
+type SessionLocation = 'home' | 'box'
+
 interface ScheduleWorkoutModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedDate: Date
-  onSchedule: (payload: { workout_id?: string; personalized_workout_id?: string }, notes?: string) => Promise<void>
+  onSchedule: (payload: { workout_id?: string; personalized_workout_id?: string }, notes?: string, location?: SessionLocation) => Promise<void>
   onActivityScheduled?: () => void
 }
 
@@ -36,6 +39,7 @@ export function ScheduleWorkoutModal({
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [runType, setRunType] = useState<RunType>('easy')
+  const [location, setLocation] = useState<SessionLocation | undefined>(undefined)
 
   const library = useWorkoutLibrary(open, activeTab === 'library')
   const personalized = usePersonalizedWorkouts(open, activeTab === 'personalized')
@@ -53,6 +57,7 @@ export function ScheduleWorkoutModal({
       setSportTab('crossfit')
       setNotes('')
       setRunType('easy')
+      setLocation(undefined)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
@@ -72,9 +77,9 @@ export function ScheduleWorkoutModal({
     try {
       setSubmitting(true)
       if (activeTab === 'library') {
-        await onSchedule({ workout_id: selectedWorkoutId }, notes || undefined)
+        await onSchedule({ workout_id: selectedWorkoutId }, notes || undefined, location)
       } else {
-        await onSchedule({ personalized_workout_id: selectedWorkoutId }, notes || undefined)
+        await onSchedule({ personalized_workout_id: selectedWorkoutId }, notes || undefined, location)
       }
       closeModal()
     } catch (error) {
@@ -98,6 +103,7 @@ export function ScheduleWorkoutModal({
         activity_type: activityTypeMap[sportTab],
         scheduled_date: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`,
         activity_id: activityId || undefined,
+        location,
         notes: notes || undefined,
       })
       toast.success('Séance planifiée !')
@@ -121,6 +127,25 @@ export function ScheduleWorkoutModal({
             {selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            onClick={() => setLocation(location === 'home' ? undefined : 'home')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium border transition-all ${location === 'home' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
+          >
+            <Home className="h-3.5 w-3.5" />
+            Maison
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation(location === 'box' ? undefined : 'box')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium border transition-all ${location === 'box' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            Box
+          </button>
+        </div>
 
         <div className="flex gap-1 bg-muted/60 rounded-md p-1">
           {SPORT_TABS.map(tab => {

@@ -19,6 +19,10 @@ export class CreateScheduleDto {
   session_type?: 'workout' | 'box_session'
 
   @IsOptional()
+  @IsEnum(['home', 'box'])
+  location?: 'home' | 'box'
+
+  @IsOptional()
   @IsString()
   notes?: string
 }
@@ -35,6 +39,10 @@ export class UpdateScheduleDto {
   @IsOptional()
   @IsUUID()
   completed_session_id?: string
+
+  @IsOptional()
+  @IsEnum(['home', 'box'])
+  location?: 'home' | 'box'
 
   @IsOptional()
   @IsString()

@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { activitiesApi } from '@/services/activities'
 import { scheduleApi } from '@/services/schedule'
-import { workoutsService } from '@/services/workouts'
 import { addDays, addWeeks, format } from 'date-fns'
 import { Calendar, Loader2, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { DayConfig, DayConfigGrid, SportType, TechFocus } from './DayConfigGrid'
+import { DayConfig, DayConfigGrid, DayType } from './DayConfigGrid'
 import { PlanResultList } from './PlanResultList'
 import { PlanSummary } from './PlanSummary'
 import { WeekNavigation } from './WeekNavigation'
@@ -24,14 +23,13 @@ interface WeeklyPlannerModalProps {
 type Phase = 'config' | 'loading' | 'result'
 
 interface PlanResult {
-  workouts: { date: string; workout_name: string; schedule_id: string }[]
   boxDays: string[]
   skipped: string[]
   activities: { date: string; type: string }[]
 }
 
 function defaultDayConfig(date: string): DayConfig {
-  return { date, isBox: false, isRest: false, sports: [], crossfitFocus: '' }
+  return { date, isBox: false, isRest: false, types: [] }
 }
 
 export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }: WeeklyPlannerModalProps) {
@@ -60,12 +58,13 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
           setDayConfigs(
             days.map(d => {
               const date = format(d, 'yyyy-MM-dd')
-              const suggested = suggestion.days.find((s: { date: string; type: string }) => s.date === date)
-              const raw = suggested?.type ?? 'repos'
-              const isBox = raw === 'box'
-              const isRest = raw === 'repos' || raw === 'rest'
-              const sports: SportType[] = (!isBox && !isRest && raw === 'maison') ? ['crossfit'] : []
-              return { date, isBox, isRest, sports, crossfitFocus: '' as TechFocus }
+              const suggested = suggestion.days.find(s => s.date === date)
+              return {
+                date,
+                isBox: suggested?.isBox ?? false,
+                isRest: suggested?.isRest ?? true,
+                types: (suggested?.types ?? []) as DayType[],
+              }
             })
           )
         }
@@ -77,25 +76,28 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
     setDayConfigs(prev => prev.map((c, i) => i === idx ? { ...c, ...patch } : c))
 
   const handleToggleBox = (idx: number) =>
-    updateDay(idx, { isBox: !dayConfigs[idx].isBox, isRest: false, sports: [] })
+    updateDay(idx, { isBox: !dayConfigs[idx].isBox, isRest: false, types: [] })
 
   const handleToggleRest = (idx: number) =>
-    updateDay(idx, { isRest: !dayConfigs[idx].isRest, isBox: false, sports: [] })
+    updateDay(idx, { isRest: !dayConfigs[idx].isRest, isBox: false, types: [] })
 
-  const handleToggleSport = (idx: number, sport: SportType) => {
-    const current = dayConfigs[idx].sports
-    const sports = current.includes(sport)
-      ? current.filter(s => s !== sport)
-      : [...current, sport]
-    updateDay(idx, { sports })
+  const handleToggleType = (idx: number, type: DayType) => {
+    const current = dayConfigs[idx].types
+    let types: DayType[]
+    if (current.includes(type)) {
+      types = current.filter(t => t !== type)
+    } else if (type === 'wod' || type === 'conditioning') {
+      // WOD et Conditioning occupent le même créneau CrossFit du jour — mutuellement exclusifs
+      types = [...current.filter(t => t !== 'wod' && t !== 'conditioning'), type]
+    } else {
+      types = [...current, type]
+    }
+    updateDay(idx, { types })
   }
 
-  const handleCrossfitFocusChange = (idx: number, focus: TechFocus) =>
-    updateDay(idx, { crossfitFocus: focus })
-
   const boxDays = dayConfigs.filter(d => d.isBox)
-  const activeSportDays = dayConfigs.filter(d => !d.isBox && !d.isRest && d.sports.length > 0)
-  const totalActiveDays = boxDays.length + activeSportDays.length
+  const activeDays = dayConfigs.filter(d => !d.isBox && !d.isRest && d.types.length > 0)
+  const totalActiveDays = boxDays.length + activeDays.length
 
   const handleGenerate = async () => {
     if (totalActiveDays === 0) {
@@ -105,56 +107,50 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
 
     setPhase('loading')
     try {
-      // CrossFit (maison AI + box)
-      const crossfitHomeDays = activeSportDays.filter(d => d.sports.includes('crossfit'))
-      let crossfitResult = {
-        scheduled: [] as { date: string; workout_name: string; schedule_id: string }[],
-        box_days: [] as string[],
-        skipped: [] as string[],
+      // Jours Box — simple tag "Jour Box" côté planification CrossFit, pas de contenu généré
+      const boxResults = await Promise.allSettled(
+        boxDays.map(d => scheduleApi.createBoxSession(d.date))
+      )
+      const savedBoxDays = boxDays
+        .filter((_, i) => boxResults[i].status === 'fulfilled')
+        .map(d => d.date)
+      const skippedBoxDays = boxDays
+        .filter((_, i) => boxResults[i].status === 'rejected')
+        .map(d => d.date)
+
+      // WOD / Conditioning / Mobilité / Force : simple tag, contenu généré ensuite depuis la page dédiée
+      const activities: { date: string; type: string }[] = []
+      const activityTypeByDayType: Record<DayType, 'wod' | 'conditioning' | 'mobility' | 'strength'> = {
+        wod: 'wod',
+        conditioning: 'conditioning',
+        mobility: 'mobility',
+        force: 'strength',
       }
+      const labels: Record<DayType, string> = { wod: 'WOD', conditioning: 'Conditioning', mobility: 'Mobilité', force: 'Force' }
 
-      const crossfitPayload = [
-        ...crossfitHomeDays.map(d => ({
-          date: d.date,
-          type: 'perso' as const,
-          focus: d.crossfitFocus || undefined,
-        })),
-        ...boxDays.map(d => ({ date: d.date, type: 'box' as const })),
-      ]
-
-      if (crossfitPayload.length > 0) {
-        crossfitResult = await workoutsService.generateWeeklyPlan(crossfitPayload)
-      }
-
-      // Autres sports via activitiesApi
-      const sportActivities: { date: string; type: string }[] = []
-      const sportRequests: Promise<unknown>[] = []
-
-      for (const day of activeSportDays) {
-        for (const sport of day.sports) {
-          if (sport === 'crossfit') continue
-          sportRequests.push(
-            activitiesApi.create({ activity_type: sport, scheduled_date: day.date })
+      const tagRequests: Promise<unknown>[] = []
+      for (const day of activeDays) {
+        for (const type of day.types) {
+          tagRequests.push(
+            activitiesApi.create({ activity_type: activityTypeByDayType[type], scheduled_date: day.date })
           )
-          const labels: Record<string, string> = { running: 'Running', biking: 'Vélo' }
-          sportActivities.push({ date: day.date, type: labels[sport] })
+          activities.push({ date: day.date, type: labels[type] })
         }
       }
 
-      if (sportRequests.length > 0) {
-        await Promise.all(sportRequests)
+      if (tagRequests.length > 0) {
+        await Promise.all(tagRequests)
       }
 
       setResult({
-        workouts: crossfitResult.scheduled,
-        boxDays: crossfitResult.box_days,
-        skipped: crossfitResult.skipped,
-        activities: sportActivities,
+        boxDays: savedBoxDays,
+        skipped: skippedBoxDays,
+        activities,
       })
       setPhase('result')
       if (totalActiveDays > 0) onPlanned()
     } catch {
-      toast.error('Erreur lors de la génération. Veuillez réessayer.')
+      toast.error('Erreur lors de la planification. Veuillez réessayer.')
       setPhase('config')
     }
   }
@@ -181,7 +177,7 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
             />
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Box / Repos = jours bloqués · Sinon, sélectionne un ou plusieurs sports par jour
+            Box / Repos = jours bloqués · Sinon, sélectionne un ou plusieurs types par jour
           </DialogDescription>
         </DialogHeader>
 
@@ -199,8 +195,7 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
               dayConfigs={dayConfigs}
               onToggleBox={handleToggleBox}
               onToggleRest={handleToggleRest}
-              onToggleSport={handleToggleSport}
-              onCrossfitFocusChange={handleCrossfitFocusChange}
+              onToggleType={handleToggleType}
             />
 
             <PlanSummary dayConfigs={dayConfigs} />
@@ -214,7 +209,7 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
                 disabled={totalActiveDays === 0}
               >
                 <Zap className="w-4 h-4 mr-2" />
-                Générer le plan
+                Planifier la semaine
               </Button>
             </div>
           </div>
@@ -224,12 +219,8 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
           <div className="flex flex-col items-center justify-center flex-1 gap-4 py-16">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
             <div className="text-center">
-              <p className="text-foreground font-medium">Génération en cours...</p>
-              <p className="text-muted-foreground text-sm mt-1">
-                {activeSportDays.filter(d => d.sports.includes('crossfit')).length > 1
-                  ? `${activeSportDays.filter(d => d.sports.includes('crossfit')).length} workouts CrossFit IA en parallèle — 30-60s`
-                  : 'Quelques secondes...'}
-              </p>
+              <p className="text-foreground font-medium">Planification en cours...</p>
+              <p className="text-muted-foreground text-sm mt-1">Quelques secondes...</p>
             </div>
           </div>
         )}

@@ -1,11 +1,6 @@
 import { WorkoutSection } from '@/domain/entities/workout-structure'
 import { ExerciseDisplay } from './ExerciseDisplay'
 import { ExerciseSlider } from './ExerciseSlider'
-import { AMRAPTimer } from '@/app/(app)/timer/timers/AMRAPTimer'
-import { EMOMTimer } from '@/app/(app)/timer/timers/EMOMTimer'
-import { ForTimeTimer } from '@/app/(app)/timer/timers/ForTimeTimer'
-import { StrengthRestTimer } from '@/app/(app)/timer/timers/StrengthRestTimer'
-import { TabataTimer } from '@/app/(app)/timer/timers/TabataTimer'
 import { Check, X } from 'lucide-react'
 
 interface SectionActiveModeProps {
@@ -24,34 +19,6 @@ export function SectionActiveMode({
   const isAMRAP = section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')
   const isStrengthWithRest = !isAMRAP && !!section.rounds && section.rounds > 1 && !!section.rest_between_rounds
 
-  const renderTimer = () => {
-    if ((section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')) && section.duration_min) {
-      return <AMRAPTimer duration={section.duration_min} />
-    }
-    if (section.type === 'for_time' || section.format?.toLowerCase().includes('for time')) {
-      return <ForTimeTimer capMin={section.duration_min} />
-    }
-    if (
-      section.type === 'emom' ||
-      section.format?.toLowerCase().includes('emom') ||
-      /e\d+mom/.test(section.format?.toLowerCase() || '')
-    ) {
-      const formatLower = section.format?.toLowerCase() || ''
-      const intervalMatch = formatLower.match(/e(\d+)mom/)
-      const intervalMin = intervalMatch ? parseInt(intervalMatch[1]) : 1
-      const durationMin = section.rounds ? section.rounds * intervalMin : section.duration_min
-      if (!durationMin) return null
-      return <EMOMTimer durationMin={durationMin} intervalMin={intervalMin} />
-    }
-    if (section.type === 'tabata' || section.format?.toLowerCase().includes('tabata')) {
-      return <TabataTimer rounds={section.rounds} workSeconds={20} restSeconds={10} />
-    }
-    if (section.rounds && section.rounds > 1 && section.rest_between_rounds) {
-      return <StrengthRestTimer rounds={section.rounds} restSeconds={section.rest_between_rounds} />
-    }
-    return null
-  }
-
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-auto">
       <div className="min-h-screen p-4 pb-20">
@@ -68,8 +35,6 @@ export function SectionActiveMode({
         </div>
 
         {section.description && <p className="text-sm text-slate-400 mb-4">{section.description}</p>}
-
-        {isAMRAP || isStrengthWithRest ? <div className="mb-4">{renderTimer()}</div> : renderTimer()}
 
         <div className="mt-4">
           {isAMRAP || isStrengthWithRest ? (

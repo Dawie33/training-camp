@@ -1,16 +1,16 @@
 'use client'
 
+import { printWorkout } from '@/components/workout/WorkoutPrintView'
+import type { Workouts } from '@/domain/entities/workout'
 import { workoutsService } from '@/services'
+import type { UnifiedActivity } from '@/services/activities'
 import { activitiesApi } from '@/services/activities'
 import { googleCalendarApi } from '@/services/google-calendar'
 import { scheduleApi } from '@/services/schedule'
-import type { UnifiedActivity } from '@/services/activities'
 import { createViewDay, createViewMonthGrid, createViewWeek } from '@schedule-x/calendar'
 import { createDragAndDropPlugin } from '@schedule-x/drag-and-drop'
 import { createEventsServicePlugin } from '@schedule-x/events-service'
 import { useCalendarApp } from '@schedule-x/react'
-import type { Workouts } from '@/domain/entities/workout'
-import { printWorkout } from '@/components/workout/WorkoutPrintView'
 import { format } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -19,10 +19,13 @@ import { useWorkoutSchedule } from './useWorkoutSchedule'
 
 const MODULE_COLORS: Record<string, string> = {
   crossfit: '',
+  wod: '',
+  conditioning: 'conditioning',
   running: 'running',
   biking: 'biking',
   strength: 'strength',
   skill: 'skill',
+  mobility: 'mobility',
 }
 
 export function useCalendarPage() {
@@ -86,12 +89,13 @@ export function useCalendarPage() {
 
       return {
         id: schedule.id,
-        title: schedule.title,
+        title: schedule.location === 'home' ? `🏠 ${schedule.title}` : schedule.location === 'box' ? `🥊 ${schedule.title}` : schedule.title,
         start: Temporal.PlainDate.from(dateStr),
         end: Temporal.PlainDate.from(dateStr),
         status: schedule.status,
         module: schedule.module,
         moduleColor: MODULE_COLORS[schedule.module] || '',
+        location: schedule.location,
         session_type: schedule.session_type,
         workout_type: schedule.workout_type,
         difficulty: schedule.difficulty,
@@ -171,12 +175,14 @@ export function useCalendarPage() {
 
   const handleScheduleWorkout = async (
     payload: { workout_id?: string; personalized_workout_id?: string },
-    notes?: string
+    notes?: string,
+    location?: 'home' | 'box'
   ) => {
     await createSchedule({
       ...payload,
       scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
       notes,
+      location,
     })
   }
 
@@ -193,13 +199,14 @@ export function useCalendarPage() {
     }
   }
 
-  const handleScheduleSkill = async (skillProgramId: string, notes?: string) => {
+  const handleScheduleSkill = async (skillProgramId: string, notes?: string, location?: 'home' | 'box') => {
     try {
       await activitiesApi.create({
         activity_type: 'skill',
         activity_id: skillProgramId,
         scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
         notes,
+        location,
       })
       await refetch()
       toast.success(`Skill planifié pour le ${format(selectedDate, 'dd/MM/yyyy')}`)

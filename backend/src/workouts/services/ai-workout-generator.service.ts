@@ -1,14 +1,14 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common'
 import OpenAI from 'openai'
+import { ZodError } from 'zod'
 import {
   buildCrossFitSystemPrompt,
   buildCrossFitWorkoutPrompt
 } from '../prompts/crossfit-generator.prompt'
 import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../schemas/workout.schema'
-import { ZodError } from 'zod'
-import { UserContextService, ActiveSkillContext } from './user-context.service'
-import { WorkoutsService } from './workouts.service'
+import { ActiveSkillContext, UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
+import { WorkoutsService } from './workouts.service'
 
 /**
  * Type pour la structure du workout généré par l'IA
@@ -36,7 +36,7 @@ export interface WorkoutGenerationParams {
   focus?: string | string[]
   additionalInstructions?: string
   skipSkillBlock?: boolean
-  techniqueFocus?: string // 'skills' | 'altero' | 'force' | '' (auto)
+  techniqueFocus?: string // 'skills' | 'altero' | 'conditioning' | '' (auto)
 }
 
 @Injectable()
@@ -177,12 +177,12 @@ ${header}
 2) TECHNIQUE HALTÉROPHILIE (25-30 min) — snatch ou clean & jerk selon l'équipement. Complexes techniques progressifs ou travail de force spécifique (ex: 6x2 à 70%, puis 4x1 à 80%). Temps de repos complet entre les séries (2-3 min). Adapte les charges au niveau.
 3) RENFORCEMENT COMPLÉMENTAIRE (10 min) — overhead squat, RDL, press derrière la nuque, ou autre exercice spécifique haltérophilie adapté à l'équipement
 ${core}`,
-      force: `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance force pure :
+      conditioning: `STRUCTURE OBLIGATOIRE — vrai WOD/MetCon conditioning, PAS de séance technique isolée :
 ${header}
-1) WARMUP (10 min) — mobilité et activation musculaire ciblée
-2) FORCE PRINCIPALE (25-30 min) — un grand mouvement adapté à l'équipement : back squat, deadlift, bench press ou overhead press. 5 séries progressives (ex: 5x5 ou 5/3/1). Temps de repos complet (2-3 min). Adapte les charges au niveau.
-3) ACCESSOIRE (10 min) — 2-3 exercices complémentaires ciblant les muscles synergistes, adaptés à l'équipement disponible
-${core}`,
+1) WARMUP (8-10 min) — activation cardio-respiratoire et mobilité générale
+2) METCON (20-30 min) — un vrai WOD qui MÉLANGE du monostructural (course, rameur, bike/assault bike, double-unders) ET des mouvements fonctionnels à haute intensité (burpees, devil press, box jump, wall balls, kettlebell swings, thrusters...). Format libre adapté à l'équipement disponible : AMRAP, For Time, EMOM, ou intervalles. Charges/volumes adaptés au niveau.
+3) FINISHER optionnel (5 min) — core/gainage léger si le temps le permet
+Objectif : séance cardio-intense, essoufflante, PAS une séance de technique pure.`,
     }
 
     if (map[focus]) return map[focus]

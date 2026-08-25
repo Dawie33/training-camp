@@ -194,6 +194,7 @@ export class WorkoutScheduleService {
         personalized_workout_id: data.personalized_workout_id || null,
         scheduled_date: data.scheduled_date,
         session_type: data.session_type || 'workout',
+        location: data.location || null,
         notes: data.notes || null,
         status: 'scheduled',
       })
@@ -252,6 +253,7 @@ export class WorkoutScheduleService {
         scheduled_date: data.scheduled_date ?? existing.scheduled_date,
         status: data.status ?? existing.status,
         completed_session_id: data.completed_session_id ?? existing.completed_session_id,
+        location: data.location ?? existing.location,
         notes: data.notes ?? existing.notes,
         updated_at: new Date(),
       })
@@ -303,67 +305,101 @@ export class WorkoutScheduleService {
   }
 
   /**
-   * Suggère une configuration de semaine basée sur l'historique des 3 dernières semaines
+   * Suggère une configuration de semaine basée sur l'historique des 3 dernières semaines.
+   * Lit à la fois les jours Box (`user_workout_schedule`) et les tags de séance
+   * WOD/Conditioning/Mobilité/Force (`scheduled_activities`) pour reconstituer, par jour
+   * de la semaine, ce qui revient le plus souvent (aucun appel IA).
    */
-  async suggestWeek(userId: string, weekStart: string): Promise<{ days: { date: string; type: string }[]; weeks_analyzed: number }> {
+  async suggestWeek(
+    userId: string,
+    weekStart: string
+  ): Promise<{ days: { date: string; isBox: boolean; isRest: boolean; types: string[] }[]; weeks_analyzed: number }> {
     const weekStartDate = new Date(weekStart + 'T00:00:00Z')
     const historyStartDate = new Date(weekStartDate)
     historyStartDate.setUTCDate(historyStartDate.getUTCDate() - 21)
     const historyStart = historyStartDate.toISOString().split('T')[0]
 
-    const rows = await this.knex('user_workout_schedule')
-      .select('scheduled_date', 'session_type')
-      .where('user_id', userId)
-      .where('scheduled_date', '>=', historyStart)
-      .where('scheduled_date', '<', weekStart)
-      .orderBy('scheduled_date', 'asc')
+    const [boxRows, activityRows] = await Promise.all([
+      this.knex('user_workout_schedule')
+        .select('scheduled_date')
+        .where('user_id', userId)
+        .where('session_type', 'box_session')
+        .where('scheduled_date', '>=', historyStart)
+        .where('scheduled_date', '<', weekStart),
+      this.knex('scheduled_activities')
+        .select('scheduled_date', 'activity_type')
+        .where('user_id', userId)
+        .whereIn('activity_type', ['wod', 'conditioning', 'mobility', 'strength'])
+        .where('scheduled_date', '>=', historyStart)
+        .where('scheduled_date', '<', weekStart),
+    ])
 
-    const makeDays = (typeByIndex: (i: number) => string) =>
+    const makeDays = (fn: (i: number) => { isBox: boolean; isRest: boolean; types: string[] }) =>
       Array.from({ length: 7 }, (_, i) => {
         const d = new Date(weekStartDate)
         d.setUTCDate(d.getUTCDate() + i)
-        return { date: d.toISOString().split('T')[0], type: typeByIndex(i) }
+        return { date: d.toISOString().split('T')[0], ...fn(i) }
       })
 
-    if (rows.length === 0) {
-      return { days: makeDays(() => 'rest'), weeks_analyzed: 0 }
+    if (boxRows.length === 0 && activityRows.length === 0) {
+      return { days: makeDays(() => ({ isBox: false, isRest: true, types: [] })), weeks_analyzed: 0 }
     }
 
-    const sessionTypeToDay = (sessionType: string): string => {
-      if (sessionType === 'box_session') return 'box'
-      return 'perso'
-    }
-
-    // Group by weekday (0=Monday, 6=Sunday)
-    const weekdayTypes: Record<number, string[]> = {}
-    for (let i = 0; i < 7; i++) weekdayTypes[i] = []
-    const distinctWeeks = new Set<string>()
-
-    for (const row of rows as { scheduled_date: string | Date; session_type: string }[]) {
-      // pg may return date columns as Date objects or 'YYYY-MM-DD' strings
-      const dateStr =
-        typeof row.scheduled_date === 'string'
-          ? row.scheduled_date.slice(0, 10)
-          : new Date(row.scheduled_date).toISOString().slice(0, 10)
+    // pg peut renvoyer les colonnes date en objets Date ou en chaînes 'YYYY-MM-DD'
+    const toDateStr = (value: string | Date) => (typeof value === 'string' ? value.slice(0, 10) : new Date(value).toISOString().slice(0, 10))
+    const dowOf = (dateStr: string) => (new Date(dateStr + 'T00:00:00Z').getUTCDay() + 6) % 7 // 0=Monday
+    const mondayOf = (dateStr: string) => {
       const d = new Date(dateStr + 'T00:00:00Z')
-      const dow = (d.getUTCDay() + 6) % 7 // 0=Monday
-      weekdayTypes[dow].push(sessionTypeToDay(row.session_type))
-      // Track distinct weeks
-      const monday = new Date(d)
-      monday.setUTCDate(d.getUTCDate() - dow)
-      distinctWeeks.add(monday.toISOString().split('T')[0])
+      d.setUTCDate(d.getUTCDate() - dowOf(dateStr))
+      return d.toISOString().split('T')[0]
     }
 
-    const getMode = (types: string[]): string => {
-      if (types.length === 0) return 'rest'
-      const counts: Record<string, number> = {}
-      for (const t of types) counts[t] = (counts[t] || 0) + 1
-      return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
+    const distinctWeeks = new Set<string>()
+    // Par jour de semaine : semaines (lundi) où un jour Box a eu lieu
+    const boxWeeksByWeekday: Record<number, Set<string>> = {}
+    // Par jour de semaine puis type d'activité : semaines où ce type a été planifié
+    const activityWeeksByWeekday: Record<number, Record<string, Set<string>>> = {}
+    for (let i = 0; i < 7; i++) {
+      boxWeeksByWeekday[i] = new Set()
+      activityWeeksByWeekday[i] = {}
     }
+
+    for (const row of boxRows as { scheduled_date: string | Date }[]) {
+      const dateStr = toDateStr(row.scheduled_date)
+      const dow = dowOf(dateStr)
+      const monday = mondayOf(dateStr)
+      boxWeeksByWeekday[dow].add(monday)
+      distinctWeeks.add(monday)
+    }
+
+    for (const row of activityRows as { scheduled_date: string | Date; activity_type: string }[]) {
+      const dateStr = toDateStr(row.scheduled_date)
+      const dow = dowOf(dateStr)
+      const monday = mondayOf(dateStr)
+      if (!activityWeeksByWeekday[dow][row.activity_type]) {
+        activityWeeksByWeekday[dow][row.activity_type] = new Set()
+      }
+      activityWeeksByWeekday[dow][row.activity_type].add(monday)
+      distinctWeeks.add(monday)
+    }
+
+    const weeksAnalyzed = distinctWeeks.size
+    // Un type est suggéré s'il est revenu au moins une semaine sur deux
+    const majorityThreshold = Math.max(1, Math.ceil(weeksAnalyzed / 2))
+    const activityTypeToDayType: Record<string, string> = { wod: 'wod', conditioning: 'conditioning', mobility: 'mobility', strength: 'force' }
 
     return {
-      days: makeDays((i) => getMode(weekdayTypes[i])),
-      weeks_analyzed: distinctWeeks.size,
+      days: makeDays((i) => {
+        const isBox = boxWeeksByWeekday[i].size >= majorityThreshold
+        if (isBox) return { isBox: true, isRest: false, types: [] }
+
+        const types = Object.entries(activityWeeksByWeekday[i])
+          .filter(([, weeks]) => weeks.size >= majorityThreshold)
+          .map(([activityType]) => activityTypeToDayType[activityType])
+
+        return { isBox: false, isRest: types.length === 0, types }
+      }),
+      weeks_analyzed: weeksAnalyzed,
     }
   }
 }

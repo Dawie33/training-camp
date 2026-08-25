@@ -3,28 +3,20 @@
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-export type SportType = 'crossfit' | 'running' | 'biking'
-export type TechFocus = '' | 'skills' | 'altero' | 'force'
+export type DayType = 'wod' | 'conditioning' | 'mobility' | 'force'
 
 export interface DayConfig {
   date: string
   isBox: boolean
   isRest: boolean
-  sports: SportType[]
-  crossfitFocus: TechFocus
+  types: DayType[]
 }
 
-const SPORTS: { type: SportType; label: string; activeClass: string; hoverClass: string }[] = [
-  { type: 'crossfit', label: 'CrossFit', activeClass: 'border-primary bg-primary/10 text-primary', hoverClass: 'hover:border-primary hover:text-primary' },
-  { type: 'running', label: 'Running', activeClass: 'border-green-600/30 bg-green-600/10 text-green-700', hoverClass: 'hover:border-green-600/40 hover:text-green-700' },
-  { type: 'biking', label: 'Vélo', activeClass: 'border-blue-600/30 bg-blue-600/10 text-blue-700', hoverClass: 'hover:border-blue-600/40 hover:text-blue-700' },
-]
-
-const TECH_OPTIONS: { value: TechFocus; label: string }[] = [
-  { value: '', label: 'Auto' },
-  { value: 'skills', label: 'Skills' },
-  { value: 'altero', label: 'Altéro' },
-  { value: 'force', label: 'Force' },
+const DAY_TYPES: { type: DayType; label: string; activeClass: string; hoverClass: string }[] = [
+  { type: 'wod', label: 'WOD', activeClass: 'border-primary bg-primary/10 text-primary', hoverClass: 'hover:border-primary hover:text-primary' },
+  { type: 'conditioning', label: 'Conditioning', activeClass: 'border-orange-600/30 bg-orange-600/10 text-orange-700', hoverClass: 'hover:border-orange-600/40 hover:text-orange-700' },
+  { type: 'mobility', label: 'Mobilité', activeClass: 'border-green-600/30 bg-green-600/10 text-green-700', hoverClass: 'hover:border-green-600/40 hover:text-green-700' },
+  { type: 'force', label: 'Force', activeClass: 'border-blue-600/30 bg-blue-600/10 text-blue-700', hoverClass: 'hover:border-blue-600/40 hover:text-blue-700' },
 ]
 
 interface DayConfigGridProps {
@@ -32,29 +24,27 @@ interface DayConfigGridProps {
   dayConfigs: DayConfig[]
   onToggleBox: (idx: number) => void
   onToggleRest: (idx: number) => void
-  onToggleSport: (idx: number, sport: SportType) => void
-  onCrossfitFocusChange: (idx: number, focus: TechFocus) => void
+  onToggleType: (idx: number, type: DayType) => void
 }
 
-export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onToggleSport, onCrossfitFocusChange }: DayConfigGridProps) {
+export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onToggleType }: DayConfigGridProps) {
   return (
     <div className="space-y-1.5">
       {days.map((day, idx) => {
         const config = dayConfigs[idx]
         const isBlocked = config.isBox || config.isRest
-        const hasSports = config.sports.length > 0
-        const hasCrossFit = config.sports.includes('crossfit')
+        const hasTypes = config.types.length > 0
 
         return (
           <div
             key={idx}
             className={`rounded-md border transition-all ${config.isRest
-                ? 'border-border bg-muted/60 opacity-60'
-                : config.isBox
-                  ? 'border-blue-600/30 bg-blue-600/10'
-                  : hasSports
-                    ? 'border-border bg-muted/60'
-                    : 'border-border bg-card'
+              ? 'border-border bg-muted/60 opacity-60'
+              : config.isBox
+                ? 'border-blue-600/30 bg-blue-600/10'
+                : hasTypes
+                  ? 'border-border bg-muted/60'
+                  : 'border-border bg-card'
               }`}
           >
             <div className="flex items-center px-3 py-2.5">
@@ -73,12 +63,12 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
               {/* Sport pills */}
               {!isBlocked ? (
                 <div className="flex flex-wrap gap-1.5 flex-1">
-                  {SPORTS.map(({ type, label, activeClass, hoverClass }) => {
-                    const selected = config.sports.includes(type)
+                  {DAY_TYPES.map(({ type, label, activeClass, hoverClass }) => {
+                    const selected = config.types.includes(type)
                     return (
                       <button
                         key={type}
-                        onClick={() => onToggleSport(idx, type)}
+                        onClick={() => onToggleType(idx, type)}
                         className={`px-2.5 py-1 text-xs rounded-md border transition-all ${selected ? activeClass : `border-border text-muted-foreground ${hoverClass}`
                           }`}
                       >
@@ -98,8 +88,8 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
                 <button
                   onClick={() => onToggleBox(idx)}
                   className={`px-2.5 py-1 text-xs rounded-md border transition-all ${config.isBox
-                      ? 'border-blue-600/30 bg-blue-600/10 text-blue-700 font-medium'
-                      : 'border-border text-muted-foreground hover:border-blue-600/40 hover:text-foreground'
+                    ? 'border-blue-600/30 bg-blue-600/10 text-blue-700 font-medium'
+                    : 'border-border text-muted-foreground hover:border-blue-600/40 hover:text-foreground'
                     }`}
                 >
                   Box
@@ -107,33 +97,14 @@ export function DayConfigGrid({ days, dayConfigs, onToggleBox, onToggleRest, onT
                 <button
                   onClick={() => onToggleRest(idx)}
                   className={`px-2.5 py-1 text-xs rounded-md border transition-all ${config.isRest
-                      ? 'border-border bg-muted text-foreground font-medium'
-                      : 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
+                    ? 'border-border bg-muted text-foreground font-medium'
+                    : 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
                     }`}
                 >
                   Repos
                 </button>
               </div>
             </div>
-
-            {/* Focus CrossFit — sous-ligne */}
-            {!isBlocked && hasCrossFit && (
-              <div className="flex items-center gap-2 px-3 pb-2 border-t border-border pt-1.5 ml-[calc(4rem+1rem+85px+1rem)]">
-                <span className="text-[10px] text-muted-foreground">Focus :</span>
-                {TECH_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => onCrossfitFocusChange(idx, opt.value)}
-                    className={`px-2 py-0.5 text-[10px] rounded border transition-all ${config.crossfitFocus === opt.value
-                        ? 'border-primary/60 bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:text-foreground hover:border-primary'
-                      }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         )
       })}
