@@ -9,8 +9,8 @@ type CompletionResponse = {
 }
 
 function weeklyResponse(week: number, taper: boolean) {
-    const duration = taper ? 30 : 45
-    const sets = taper ? 2 : 3
+    const duration = taper ? 60 : 45
+    const sets = taper ? 3 : 3
 
     return JSON.stringify({
         sessions: [1, 2, 3].map((sessionInWeek) => ({

@@ -45,7 +45,7 @@ export class AIProgramGeneratorService {
       })
 
       if (params.program_type === 'competition_prep') {
-        return this.generateCompetitionProgram(params, context, availableExercises)
+        return await this.generateCompetitionProgram(params, context, availableExercises)
       }
 
       const systemPrompt = buildProgramGeneratorSystemPrompt(params.program_type)
@@ -181,7 +181,39 @@ export class AIProgramGeneratorService {
         `La semaine ${weeklyPlan.week} contient ${parsed.sessions.length} séances au lieu de ${params.sessions_per_week}`,
       )
     }
-    return parsed.sessions.map((session, index) => ({ ...session, week: weeklyPlan.week, session_in_week: index + 1 }))
+    return parsed.sessions.map((session, index) => ({
+      ...this.applyTaperReduction(session, weeklyPlan.taper),
+      week: weeklyPlan.week,
+      session_in_week: index + 1,
+    }))
+  }
+
+  private applyTaperReduction(session: ProgramSession, taper: boolean): ProgramSession {
+    if (!taper) return session
+
+    return {
+      ...session,
+      estimated_duration: Math.max(20, Math.round(session.estimated_duration * 0.6)),
+      strength_work: session.strength_work
+        ? {
+          movements: session.strength_work.movements.map((movement) => ({
+            ...movement,
+            sets: Math.max(1, movement.sets - 1),
+          })),
+        }
+        : session.strength_work,
+      conditioning: session.conditioning
+        ? {
+          ...session.conditioning,
+          duration_minutes: session.conditioning.duration_minutes
+            ? Math.max(5, Math.round(session.conditioning.duration_minutes * 0.6))
+            : session.conditioning.duration_minutes,
+          rounds: session.conditioning.rounds
+            ? Math.max(1, Math.round(session.conditioning.rounds * 0.6))
+            : session.conditioning.rounds,
+        }
+        : session.conditioning,
+    }
   }
 
   private phaseName(phase: WeeklyPlan['phase']): string {
