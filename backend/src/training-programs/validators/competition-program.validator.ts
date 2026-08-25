@@ -69,7 +69,7 @@ export function validateCompetitionProgram(
             errors.push(`La semaine taper ${taperPlan.week} est absente`)
         } else if (taperResult.sessions.some((session) => session.estimated_duration > 60)) {
             errors.push(`La semaine taper ${taperPlan.week} contient une séance de plus de 60 minutes`)
-        } else if (previousResult && totalWorkload(taperResult.sessions) >= totalWorkload(previousResult.sessions)) {
+        } else if (previousResult && totalWorkload(taperResult.sessions) > totalWorkload(previousResult.sessions)) {
             errors.push(`Le volume de la semaine taper ${taperPlan.week} doit être inférieur à celui de la semaine précédente`)
         }
     }

@@ -37,9 +37,9 @@ describe('validateCompetitionProgram', () => {
         const generatedWeeks = plans.map((plan) => ({
             week: plan.week,
             sessions: [
-                { ...session(`Session ${plan.week}`, 60, 5), session_in_week: 1 },
-                { ...session(`Session ${plan.week} B`, 60, 5), session_in_week: 2 },
-                { ...session(`Session ${plan.week} C`, 60, 5), session_in_week: 3 },
+                { ...session(`Session ${plan.week}`, plan.taper ? 60 : 45, plan.taper ? 6 : 3), session_in_week: 1 },
+                { ...session(`Session ${plan.week} B`, plan.taper ? 60 : 45, plan.taper ? 6 : 3), session_in_week: 2 },
+                { ...session(`Session ${plan.week} C`, plan.taper ? 60 : 45, plan.taper ? 6 : 3), session_in_week: 3 },
             ],
         }))
 
