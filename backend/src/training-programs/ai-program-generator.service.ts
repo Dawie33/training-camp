@@ -87,7 +87,8 @@ export class AIProgramGeneratorService {
         throw error
       }
 
-      throw new BadRequestException(`Échec de la génération du programme : ${(error as Error).message}`)
+      const message = error instanceof Error ? error.message : 'Erreur inconnue'
+      throw new BadRequestException(`Échec de la génération du programme : ${message}`)
     }
   }
 
