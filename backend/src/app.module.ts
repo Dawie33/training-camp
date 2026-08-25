@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { KnexModule } from 'nest-knexjs'
 import { AuthModule } from './auth/auth.module'
 import { BikingModule } from './biking/biking.module'
+import { AiModule } from './common/ai/ai.module'
 import { envValidationSchema } from './common/config/env.validation'
 import knexConfig from './database/knexfile'
 import { EquipmentsModule } from './equipments/equipments.module'
@@ -30,6 +31,7 @@ import { WorkoutsModule } from './workouts/workouts.module'
       isGlobal: true,
       validationSchema: envValidationSchema,
     }),
+    AiModule,
     ThrottlerModule.forRoot([
       {
         name: 'default',

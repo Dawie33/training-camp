@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import OpenAI from 'openai'
-import { ZodError } from 'zod'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
+import { ZodError } from 'zod'
 import { GenerateProgramDto } from './dto/generate-program.dto'
 import {
+  BonusSessionParams,
   buildBonusSessionSystemPrompt,
   buildBonusSessionUserPrompt,
-  BonusSessionParams,
   buildProgramGeneratorSystemPrompt,
   buildProgramGeneratorUserPrompt,
 } from './prompts/program-generator.prompt'
@@ -19,15 +19,10 @@ import {
 
 @Injectable()
 export class AIProgramGeneratorService {
-  private openai: OpenAI
-
-  constructor(private readonly userContextService: UserContextService) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
-    this.openai = new OpenAI({ apiKey })
-  }
+  constructor(
+    private readonly userContextService: UserContextService,
+    private readonly openAIClient: OpenAIClientService,
+  ) { }
 
   async generateProgram(userId: string, params: GenerateProgramDto): Promise<GeneratedProgramValidated> {
     try {
@@ -36,7 +31,7 @@ export class AIProgramGeneratorService {
       const systemPrompt = buildProgramGeneratorSystemPrompt(params.program_type)
       const userPrompt = buildProgramGeneratorUserPrompt(params, context)
 
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.openAIClient.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },
@@ -83,7 +78,7 @@ export class AIProgramGeneratorService {
       const systemPrompt = buildBonusSessionSystemPrompt()
       const userPrompt = buildBonusSessionUserPrompt(params, context)
 
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.openAIClient.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },
