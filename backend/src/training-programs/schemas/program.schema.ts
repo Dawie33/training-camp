@@ -46,16 +46,17 @@ export const StrengthWorkSchema = z.object({
  */
 const nullifyEmptyBlock =
   (isValid: (o: Record<string, unknown>) => boolean) =>
-  (v: unknown): unknown => {
-    if (v == null) return null
-    if (typeof v !== 'object') return v
-    return isValid(v as Record<string, unknown>) ? v : null
-  }
+    (v: unknown): unknown => {
+      if (v == null) return null
+      if (typeof v !== 'object') return v
+      return isValid(v as Record<string, unknown>) ? v : null
+    }
 
 const hasMovements = (o: Record<string, unknown>): boolean =>
   Array.isArray(o.movements) && o.movements.length > 0
 
 export const ProgramSessionSchema = z.object({
+  week: z.number().int().positive().optional(),
   session_in_week: z.number().int().min(1),
   title: z.string().min(1),
   focus: z.enum(['strength', 'conditioning', 'skill', 'mixed', 'recovery']),
@@ -83,6 +84,10 @@ export const GeneratedProgramSchema = z.object({
   phases: z.array(ProgramPhaseSchema).min(1),
   progression_notes: z.string(),
   coach_notes: z.string().optional().nullable(),
+})
+
+export const GeneratedWeeklySessionsSchema = z.object({
+  sessions: z.array(ProgramSessionSchema),
 })
 
 export type StrengthMovement = z.infer<typeof StrengthMovementSchema>

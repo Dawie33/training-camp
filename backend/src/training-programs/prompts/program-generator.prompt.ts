@@ -1,5 +1,6 @@
 import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
 import type { UserAIContext } from 'src/workouts/services/user-context.service'
+import type { WeeklyPlan } from '../planning/competition-planner'
 
 export interface ProgramGenerationParams {
   program_type: string
@@ -14,6 +15,78 @@ interface ProgramExerciseReference {
   name: string
   category: string
   difficulty: string
+}
+
+export function buildWeeklySessionSystemPrompt(): string {
+  return `Tu es un coach CrossFit specialise dans la preparation a la competition.
+
+Genere exactement le nombre de seances demandees pour UNE seule semaine et retourne uniquement ce JSON :
+{
+  "sessions": [
+    {
+      "session_in_week": 1,
+      "title": "Titre de la seance",
+      "focus": "strength|conditioning|skill|mixed|recovery",
+      "estimated_duration": 60,
+      "strength_work": null,
+      "conditioning": null,
+      "skill_work": null,
+      "coach_notes": "Conseils de execution et de recuperation"
+    }
+  ]
+}
+
+Regles :
+- session_in_week va de 1 au nombre de seances demande.
+- strength_work, conditioning et skill_work valent null quand ils ne s appliquent pas.
+- Les seances d une meme semaine doivent etre complementaires.
+- Utilise les exercices autorises et respecte le niveau de l athlete.
+- Respecte le volume, l intensite et la specificite de la phase.
+- En taper, reduis nettement le volume sans supprimer tous les rappels techniques.`
+}
+
+export function buildWeeklySessionUserPrompt(
+  params: ProgramGenerationParams,
+  context: UserAIContext,
+  weeklyPlan: WeeklyPlan,
+  availableExercises: ProgramExerciseReference[],
+  previousSessions: ProgramSessionReference[] = [],
+): string {
+  const exercises = availableExercises.length > 0
+    ? availableExercises.map((exercise) => `- ${exercise.name} [${exercise.category}, ${exercise.difficulty}]`).join('\n')
+    : '- Aucun exercice du referentiel disponible : utilise uniquement le poids du corps.'
+  const previous = previousSessions.length > 0
+    ? previousSessions.map((session) => `- Semaine ${session.week}, seance ${session.session_in_week} : ${session.title} (${session.focus}) — ${session.movements.join(', ')}`).join('\n')
+    : '- Aucune seance precedente.'
+
+  return `Genere les ${params.sessions_per_week} seances de la semaine ${weeklyPlan.week} d un programme de ${params.duration_weeks} semaines.
+
+Phase : ${weeklyPlan.phase}
+Objectif : ${weeklyPlan.objective}
+Cible de volume : ${weeklyPlan.volume_target}
+Cible d intensite : ${weeklyPlan.intensity_target}
+Specificite competition : ${weeklyPlan.competition_specificity}
+Simulation : ${weeklyPlan.simulation ? 'oui' : 'non'}
+Taper : ${weeklyPlan.taper ? 'oui' : 'non'}
+Niveau athlete : ${params.target_level}
+
+${buildAthleteContextSection(context)}
+
+Exercices autorises :
+${exercises}
+
+Seances deja generees, a ne pas recopier :
+${previous}
+
+Retourne exactement ${params.sessions_per_week} seances complementaires en JSON.`
+}
+
+export interface ProgramSessionReference {
+  week: number
+  session_in_week: number
+  title: string
+  focus: string
+  movements: string[]
 }
 
 const PROGRAM_TYPE_LABELS: Record<string, string> = {

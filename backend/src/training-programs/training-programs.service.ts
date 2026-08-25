@@ -91,7 +91,7 @@ export class TrainingProgramsService {
   constructor(
     @InjectModel() private readonly knex: Knex,
     private readonly aiGenerator: AIProgramGeneratorService,
-  ) {}
+  ) { }
 
   /**
    * Crée un programme IA et inscrit l'utilisateur
@@ -226,35 +226,37 @@ export class TrainingProgramsService {
       type: string
       replacement: Record<string, unknown>
     }> = Array.isArray(enrollment.customizations_applied)
-      ? enrollment.customizations_applied
-      : JSON.parse(enrollment.customizations_applied || '[]')
+        ? enrollment.customizations_applied
+        : JSON.parse(enrollment.customizations_applied || '[]')
 
-    const sessions = phase.sessions.map((session: ProgramSession) => {
-      const swap = customizations.find(
-        (c) => c.week === weekNum && c.session_in_week === session.session_in_week,
-      )
-      if (!swap) return session
+    const sessions = phase.sessions
+      .filter((session: ProgramSession) => session.week === undefined || session.week === weekNum)
+      .map((session: ProgramSession) => {
+        const swap = customizations.find(
+          (c) => c.week === weekNum && c.session_in_week === session.session_in_week,
+        )
+        if (!swap) return session
 
-      if (swap.type === 'workout') {
-        return { ...session, _swapped: true, _swap_workout_id: swap.replacement.workout_id }
-      }
-      if (swap.type === 'exercise' && swap.replacement.movement_name) {
-        // Remplacer l'exercice dans strength_work
-        const updatedStrengthWork = session.strength_work
-          ? {
+        if (swap.type === 'workout') {
+          return { ...session, _swapped: true, _swap_workout_id: swap.replacement.workout_id }
+        }
+        if (swap.type === 'exercise' && swap.replacement.movement_name) {
+          // Remplacer l'exercice dans strength_work
+          const updatedStrengthWork = session.strength_work
+            ? {
               movements: session.strength_work.movements.map((m) =>
                 m.name === swap.replacement.movement_name
                   ? { ...m, ...(swap.replacement.exercise as object) }
                   : m,
               ),
             }
-          : session.strength_work
+            : session.strength_work
 
-        return { ...session, strength_work: updatedStrengthWork, _has_exercise_swap: true }
-      }
+          return { ...session, strength_work: updatedStrengthWork, _has_exercise_swap: true }
+        }
 
-      return { ...session, ...swap.replacement, _swapped: true }
-    })
+        return { ...session, ...swap.replacement, _swapped: true }
+      })
 
     const sortedWeeks = [...phase.weeks].sort((a, b) => a - b)
     const weekInPhase = sortedWeeks.indexOf(weekNum) + 1
@@ -507,7 +509,7 @@ export class TrainingProgramsService {
       }
     }
 
-    ;(filtered as unknown[]).push(newSwap)
+    ; (filtered as unknown[]).push(newSwap)
 
     await this.knex('user_program_enrollments').where({ id: enrollmentId }).update({
       customizations_applied: JSON.stringify(filtered),
