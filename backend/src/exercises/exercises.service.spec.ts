@@ -240,8 +240,8 @@ describe('ExercisesService.findForProgram', () => {
         expect(builder.whereIn).toHaveBeenCalledWith('difficulty', ['beginner', 'intermediate'])
         expect(builder.whereIn).toHaveBeenCalledWith('category', ['olympic_lifting'])
         expect(builder.whereRaw).toHaveBeenCalledWith(
-            expect.stringContaining('equipment_required'),
-            [JSON.stringify(['barbell', 'plates'])],
+            expect.stringContaining('jsonb_array_elements_text'),
+            [['barbell', 'plates']],
         )
     })
 })

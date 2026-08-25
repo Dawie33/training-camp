@@ -134,8 +134,12 @@ export class ExercisesService {
 
         if (equipment.length > 0) {
             query = query.whereRaw(
-                `COALESCE(equipment_required::jsonb, '[]'::jsonb) <@ ?::jsonb`,
-                [JSON.stringify(equipment)],
+                `NOT EXISTS (
+                    SELECT 1
+                    FROM jsonb_array_elements_text(COALESCE(equipment_required::jsonb, '[]'::jsonb)) AS required_equipment(value)
+                    WHERE NOT (required_equipment.value = ANY(?::text[]))
+                )`,
+                [equipment],
             )
         } else {
             query = query.whereRaw(`COALESCE(equipment_required::jsonb, '[]'::jsonb) = '[]'::jsonb`)
