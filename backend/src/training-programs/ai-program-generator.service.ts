@@ -23,6 +23,7 @@ import {
   ProgramSession,
   ProgramSessionSchema,
 } from './schemas/program.schema'
+import { validateCompetitionProgram } from './validators/competition-program.validator'
 
 @Injectable()
 export class AIProgramGeneratorService {
@@ -114,6 +115,15 @@ export class AIProgramGeneratorService {
         ],
       })))
     }
+
+    validateCompetitionProgram(
+      weeklyPlans,
+      weeklyPlans.map((weeklyPlan) => ({
+        week: weeklyPlan.week,
+        sessions: generatedByWeek.get(weeklyPlan.week) ?? [],
+      })),
+      params.sessions_per_week,
+    )
 
     const phases = weeklyPlans.reduce<Array<GeneratedProgramValidated['phases'][number]>>((result, weeklyPlan) => {
       const existingPhase = result.find((phase) => phase.phase_number === weeklyPlan.phase_number)

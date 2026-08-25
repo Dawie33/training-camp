@@ -1,6 +1,9 @@
 export type TrainingPhase = 'accumulation' | 'intensification' | 'specific' | 'simulation' | 'taper'
 export type TrainingTarget = 'low' | 'medium' | 'high'
 
+/**
+ * Objectifs et contraintes d'une semaine de préparation à la compétition.
+ */
 export interface WeeklyPlan {
     week: number
     phase: TrainingPhase
@@ -211,6 +214,13 @@ const COMPETITION_PHASES: Record<number, Array<{ weeks: number[]; definition: Ph
     ],
 }
 
+/**
+ * Construit le calendrier de phases d'une préparation CrossFit compétition.
+ *
+ * @param durationWeeks Durée supportée du programme : 4, 6, 8 ou 12 semaines.
+ * @returns Un plan dans l'ordre chronologique, avec une entrée par semaine.
+ * @throws {Error} Si la durée demandée n'est pas supportée.
+ */
 export function buildCompetitionWeeklyPlan(durationWeeks: number): WeeklyPlan[] {
     const phases = COMPETITION_PHASES[durationWeeks]
     if (!phases) {
