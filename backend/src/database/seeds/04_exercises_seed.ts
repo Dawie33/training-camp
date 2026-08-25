@@ -16,7 +16,7 @@ const additionalCrossfitExercises = [
   ['Burpee Pull-Up', 'burpee-pull-up', 'gymnastics', 'intermediate', ['pull-up-bar'], true, 'reps'],
   ['Glute Bridge', 'glute-bridge', 'strength', 'beginner', [], true, 'reps'],
   ['Russian Twist', 'russian-twist', 'strength', 'beginner', [], true, 'reps'],
-  ['Bear Crawl', 'bear-crawl', 'conditioning', 'beginner', [], true, 'distance'],
+  ['Bear Crawl', 'bear-crawl', 'cardio', 'beginner', [], true, 'distance'],
   ['Box Step-Over', 'box-step-over', 'strength', 'beginner', ['box'], true, 'reps'],
   ['Plank to Push-Up', 'plank-to-push-up', 'strength', 'intermediate', [], true, 'reps'],
   ['Shuttle Run', 'shuttle-run', 'cardio', 'beginner', [], true, 'distance'],
