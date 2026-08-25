@@ -1,5 +1,5 @@
-import type { UserAIContext } from 'src/workouts/services/user-context.service'
 import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
+import type { UserAIContext } from 'src/workouts/services/user-context.service'
 
 export interface ProgramGenerationParams {
   program_type: string
@@ -8,6 +8,12 @@ export interface ProgramGenerationParams {
   target_level: string
   focus?: string
   box_days_per_week?: number
+}
+
+interface ProgramExerciseReference {
+  name: string
+  category: string
+  difficulty: string
 }
 
 const PROGRAM_TYPE_LABELS: Record<string, string> = {
@@ -206,13 +212,22 @@ ${complementaryRule}
 - Adapter au niveau de l'athlete et a son contexte CrossFit box`
 }
 
-export function buildProgramGeneratorUserPrompt(params: ProgramGenerationParams, context: UserAIContext): string {
+export function buildProgramGeneratorUserPrompt(
+  params: ProgramGenerationParams,
+  context: UserAIContext,
+  availableExercises: ProgramExerciseReference[] = [],
+): string {
   const programTypeLabel = PROGRAM_TYPE_LABELS[params.program_type] || params.program_type
   const levelLabel = LEVEL_LABELS[params.target_level] || params.target_level
 
   const phases = computePhaseCount(params.duration_weeks)
 
   const athleteSection = buildAthleteContextSection(context)
+  const exerciseSection = availableExercises.length > 0
+    ? `\n\n**Exercices autorises par le referentiel** :\n${availableExercises
+      .map((exercise) => `- ${exercise.name} [${exercise.category}, ${exercise.difficulty}]`)
+      .join('\n')}\nUtilise prioritairement cette liste et n'invente pas de mouvement necessitant un equipement absent.`
+    : ''
 
   const boxNote =
     params.box_days_per_week && params.box_days_per_week > 0
@@ -235,7 +250,7 @@ export function buildProgramGeneratorUserPrompt(params: ProgramGenerationParams,
 
 **Structure de phases suggérée** : ${phases}
 
-${athleteSection}
+${athleteSection}${exerciseSection}
 
 Cree un programme periodise, progressif et adapte au profil de l'athlete.
 Chaque phase doit avoir une logique claire (accumulation → construction → realisation).

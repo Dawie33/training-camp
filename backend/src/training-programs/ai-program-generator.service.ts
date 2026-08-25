@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
+import { ExercisesService } from 'src/exercises/exercises.service'
+import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { GenerateProgramDto } from './dto/generate-program.dto'
@@ -22,14 +24,22 @@ export class AIProgramGeneratorService {
   constructor(
     private readonly userContextService: UserContextService,
     private readonly openAIClient: OpenAIClientService,
+    private readonly exercisesService: ExercisesService,
   ) { }
 
   async generateProgram(userId: string, params: GenerateProgramDto): Promise<GeneratedProgramValidated> {
     try {
       const context = await this.userContextService.getUserAIContext(userId)
+      const availableEquipment = context.equipment_available.length > 0
+        ? context.equipment_available
+        : [...EQUIPMENT_PRESETS.crossfit, 'plates']
+      const availableExercises = await this.exercisesService.findForProgram({
+        difficulty: params.target_level,
+        equipment: availableEquipment,
+      })
 
       const systemPrompt = buildProgramGeneratorSystemPrompt(params.program_type)
-      const userPrompt = buildProgramGeneratorUserPrompt(params, context)
+      const userPrompt = buildProgramGeneratorUserPrompt(params, context, availableExercises)
 
       const completion = await this.openAIClient.client.chat.completions.create({
         model: 'gpt-4.1',
