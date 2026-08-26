@@ -47,15 +47,16 @@ export const StrengthWorkSchema = z.object({
 })
 
 /**
- * L'IA renvoie parfois un bloc vide `{}` ou partiel au lieu de `null`.
- * Ce helper normalise un tel bloc en `null` (au lieu de faire echouer la
- * validation), en s'appuyant sur un predicat de validite minimale.
+ * L'IA renvoie parfois un bloc vide `{}`, partiel, ou meme une chaine de
+ * texte au lieu de `null`. Ce helper normalise un tel bloc en `null` (au
+ * lieu de faire echouer la validation), en s'appuyant sur un predicat de
+ * validite minimale.
  */
 const nullifyEmptyBlock =
   (isValid: (o: Record<string, unknown>) => boolean) =>
     (v: unknown): unknown => {
       if (v == null) return null
-      if (typeof v !== 'object') return v
+      if (typeof v !== 'object') return null
       return isValid(v as Record<string, unknown>) ? v : null
     }
 
