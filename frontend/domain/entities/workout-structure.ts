@@ -21,6 +21,25 @@ export type SectionType =
   | 'cooldown'
   | 'tabata'
 
+export const SECTION_TYPE_COLORS: Record<SectionType, string> = {
+  warmup: 'border-l-green-500',
+  skill_work: 'border-l-cyan-500',
+  strength: 'border-l-blue-500',
+  accessory: 'border-l-purple-500',
+  cardio: 'border-l-red-500',
+  intervals: 'border-l-red-500',
+  metcon: 'border-l-primary',
+  amrap: 'border-l-primary',
+  emom: 'border-l-yellow-500',
+  for_time: 'border-l-primary',
+  circuit: 'border-l-orange-500',
+  finisher: 'border-l-primary',
+  core: 'border-l-emerald-500',
+  mobility: 'border-l-slate-400',
+  cooldown: 'border-l-slate-400',
+  tabata: 'border-l-yellow-500',
+}
+
 export interface Exercise {
   name: string
   // Reps/Sets

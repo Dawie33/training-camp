@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 export function QuickActions({ index }: { index?: string } = {}) {
   const actions = [
-    { label: 'Générer avec IA', href: '/workouts/generate-ai', primary: true },
+    { label: 'Générer avec IA', href: '/crossfit/generate', primary: true },
     { label: 'Créer un workout', href: '/workouts/new' },
     { label: 'Voir mes stats', href: '/tracking' },
   ]

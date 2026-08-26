@@ -20,7 +20,7 @@ export function SectionActiveMode({
   const isStrengthWithRest = !isAMRAP && !!section.rounds && section.rounds > 1 && !!section.rest_between_rounds
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-auto">
+    <div className="dark fixed inset-0 z-50 bg-gradient-to-br from-background via-secondary/60 to-background text-foreground overflow-auto">
       <div className="min-h-screen p-4 pb-20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -28,13 +28,13 @@ export function SectionActiveMode({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white"
+            className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        {section.description && <p className="text-sm text-slate-400 mb-4">{section.description}</p>}
+        {section.description && <p className="text-sm text-muted-foreground mb-4">{section.description}</p>}
 
         <div className="mt-4">
           {isAMRAP || isStrengthWithRest ? (

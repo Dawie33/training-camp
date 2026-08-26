@@ -21,7 +21,7 @@ export function SectionExercisesList({
   onStartSection,
 }: SectionExercisesListProps) {
   return (
-    <div className="space-y-2 pl-4 border-l-2 border-orange-500/30">
+    <div className="space-y-1">
       {exercises.map((exercise, exIdx) => (
         <ExerciseDisplay
           key={exIdx}
@@ -38,10 +38,10 @@ export function SectionExercisesList({
           <button
             onClick={onStartSection}
             disabled={!canStart}
-            className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all font-medium shadow-md ${
+            className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all font-medium text-sm shadow-md ${
               canStart
-                ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-orange-500/30'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/30'
+                : 'bg-secondary text-muted-foreground cursor-not-allowed opacity-50'
             }`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,7 +61,7 @@ export function SectionExercisesList({
             <span>Démarrer</span>
           </button>
           {!canStart && (
-            <p className="text-xs text-slate-500 text-center">Terminez la section précédente pour débloquer</p>
+            <p className="text-xs text-muted-foreground text-center">Terminez la section précédente pour débloquer</p>
           )}
         </div>
       )}

@@ -8,9 +8,9 @@ export function SectionInstructions({ rounds, rest_between_rounds, between_round
   if (!rounds && !rest_between_rounds && !between_rounds_task) return null
 
   return (
-    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm">
-      <div className="font-medium text-amber-400 mb-1">Instructions</div>
-      <div className="text-amber-300">
+    <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-2 text-xs">
+      <div className="font-medium text-amber-800 mb-0.5">Instructions</div>
+      <div className="text-amber-700">
         {rounds === 1 ? (
           <>Réalise 1 tour complet des exercices ci-dessous</>
         ) : rounds ? (

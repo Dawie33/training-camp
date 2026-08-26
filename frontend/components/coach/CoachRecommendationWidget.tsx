@@ -16,7 +16,7 @@ const SPORT_CONFIG: Record<RecommendedSport, {
   icon: React.ReactNode
   href: string
 }> = {
-  crossfit: { label: 'CrossFit', icon: <Zap className="w-4 h-4" />, href: '/workouts/generate-ai' },
+  crossfit: { label: 'CrossFit', icon: <Zap className="w-4 h-4" />, href: '/crossfit/generate' },
   running: { label: 'Running', icon: <Activity className="w-4 h-4" />, href: '/running/generate' },
   biking: { label: 'Vélo', icon: <Bike className="w-4 h-4" />, href: '/biking/generate' },
   strength: { label: 'Force', icon: <Dumbbell className="w-4 h-4" />, href: '/force/generate' },
@@ -55,7 +55,7 @@ export function CoachRecommendationWidget() {
           <p className="text-sm text-muted-foreground">Recommandation Coach IA indisponible</p>
         </div>
         <Link
-          href="/workouts/generate-ai"
+          href="/crossfit/generate"
           className="px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity whitespace-nowrap"
         >
           Générer une séance
@@ -146,7 +146,7 @@ export function CoachRecommendationWidget() {
             Repos actif recommandé — prends soin de toi
           </div>
           <Link
-            href="/workouts/generate-ai"
+            href="/crossfit/generate"
             className="flex items-center justify-center gap-2 w-full py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             Générer quand même une séance

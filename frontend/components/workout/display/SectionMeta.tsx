@@ -8,20 +8,20 @@ export function SectionMeta({ format, goal, focus }: SectionMetaProps) {
   return (
     <>
       {format && (
-        <div className="text-sm px-3 py-2 bg-slate-900/50 rounded-lg border border-slate-700/50">
-          <span className="text-slate-400 font-medium">Format:</span> <span className="text-slate-300">{format}</span>
+        <div className="text-xs px-2 py-1.5 bg-secondary/40 rounded-md border border-border">
+          <span className="text-muted-foreground font-medium">Format:</span> <span className="text-foreground">{format}</span>
         </div>
       )}
 
       {goal && (
-        <div className="text-sm text-slate-400">
-          <span className="text-slate-300 font-medium">Objectif:</span> {goal}
+        <div className="text-xs text-muted-foreground">
+          <span className="text-foreground font-medium">Objectif:</span> {goal}
         </div>
       )}
 
       {focus && (
-        <div className="text-sm text-slate-400">
-          <span className="text-slate-300 font-medium">Focus:</span> {focus}
+        <div className="text-xs text-muted-foreground">
+          <span className="text-foreground font-medium">Focus:</span> {focus}
         </div>
       )}
     </>

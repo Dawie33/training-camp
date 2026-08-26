@@ -1,4 +1,4 @@
-import { WorkoutSection } from '@/domain/entities/workout-structure'
+import { SECTION_TYPE_COLORS, WorkoutSection } from '@/domain/entities/workout-structure'
 import { useState } from 'react'
 import { SectionHeader } from './SectionHeader'
 import { SectionMeta } from './SectionMeta'
@@ -61,7 +61,7 @@ export function SectionDisplay({
 
   return (
     <div
-      className={`bg-slate-800/50 border border-slate-700/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 space-y-3 lg:space-y-4 ${isCurrentSection ? 'ring-2 ring-orange-500/50' : ''} ${isSectionCompleted ? 'opacity-60' : ''}`}
+      className={`border-l-4 ${SECTION_TYPE_COLORS[section.type] ?? 'border-l-border'} bg-card border border-border rounded-r-lg pl-3 pr-3 py-2.5 space-y-2 ${isCurrentSection ? 'ring-2 ring-primary/50' : ''} ${isSectionCompleted ? 'opacity-60' : ''}`}
     >
       <SectionHeader
         title={section.title}
@@ -93,7 +93,7 @@ export function SectionDisplay({
       <SectionIntervals intervals={section.intervals} rounds={section.rounds} />
 
       {section.sections && section.sections.length > 0 && (
-        <div className="space-y-3 pl-4">
+        <div className="space-y-2">
           {section.sections.map((subsection, subIdx) => (
             <SectionDisplay
               key={subIdx}

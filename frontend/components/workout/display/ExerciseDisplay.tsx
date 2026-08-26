@@ -25,40 +25,31 @@ export function ExerciseDisplay({ exercise, isCompleted, onToggle, onExerciseCli
     return (
         <div
             onClick={onToggle}
-            className={`text-sm p-3 lg:p-4 rounded-lg lg:rounded-xl border transition-all ${onToggle ? 'cursor-pointer hover:border-orange-500/30' : ''} ${isCompleted
-                ? 'bg-orange-500/10 border-orange-500/30 line-through opacity-60'
-                : 'bg-slate-900/50 border-slate-700/50 hover:bg-slate-900/70'
-                }`}
+            className={`text-xs py-1 ${onToggle ? 'cursor-pointer' : ''} ${isCompleted ? 'opacity-50' : ''}`}
         >
-            <div className="flex items-start gap-3">
-                <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                        <span
-                            className={`font-semibold text-white ${exercise.name && onExerciseClick ? 'cursor-pointer hover:text-orange-400 transition-colors' : ''}`}
-                            onClick={handleExerciseNameClick}
-                        >
-                            {exercise.name}
-                        </span>
-                    </div>
-                    <div className="text-slate-400 flex flex-wrap gap-2 mt-1 text-xs lg:text-sm">
-                        {exercise.reps && <span>• {exercise.reps} répétition{typeof exercise.reps === 'number' && exercise.reps > 1 ? 's' : ''}</span>}
-                        {exercise.duration && <span>• {exercise.duration}</span>}
-                        {exercise.work_duration && <span>• {exercise.work_duration} travail</span>}
-                        {exercise.rest_duration && <span>• {exercise.rest_duration} repos</span>}
-                        {exercise.distance && <span>• {exercise.distance}</span>}
-                        {exercise.weight && <span className="text-orange-400">• {exercise.weight}</span>}
-                        {exercise.intensity && <span>• Intensité: {exercise.intensity}</span>}
-                        {exercise.pace && <span>• Allure: {exercise.pace}</span>}
-                        {exercise.effort && <span>• Effort: {exercise.effort}</span>}
-                        {exercise.tempo && <span>• Tempo: {exercise.tempo}</span>}
-                        {exercise.cadence && <span>• Cadence: {exercise.cadence}</span>}
-                        {exercise.per_side && <span>• par côté</span>}
-                    </div>
-                    {exercise.details && (
-                        <div className="text-xs text-slate-500 italic mt-1">{exercise.details}</div>
-                    )}
-                </div>
-            </div>
+            <p className="text-muted-foreground">
+                <span
+                    className={`font-medium ${isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'} ${exercise.name && onExerciseClick ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                    onClick={handleExerciseNameClick}
+                >
+                    {exercise.name}
+                </span>
+                {exercise.reps && <span> · {exercise.reps} répétition{typeof exercise.reps === 'number' && exercise.reps > 1 ? 's' : ''}</span>}
+                {exercise.duration && <span> · {exercise.duration}</span>}
+                {exercise.work_duration && <span> · {exercise.work_duration} travail</span>}
+                {exercise.rest_duration && <span> · {exercise.rest_duration} repos</span>}
+                {exercise.distance && <span> · {exercise.distance}</span>}
+                {exercise.weight && <span className="text-primary"> · {exercise.weight}</span>}
+                {exercise.intensity && <span> · Intensité: {exercise.intensity}</span>}
+                {exercise.pace && <span> · Allure: {exercise.pace}</span>}
+                {exercise.effort && <span> · Effort: {exercise.effort}</span>}
+                {exercise.tempo && <span> · Tempo: {exercise.tempo}</span>}
+                {exercise.cadence && <span> · Cadence: {exercise.cadence}</span>}
+                {exercise.per_side && <span> · par côté</span>}
+            </p>
+            {exercise.details && (
+                <p className="text-[11px] text-muted-foreground/70 italic mt-0.5">{exercise.details}</p>
+            )}
         </div>
     )
 }
