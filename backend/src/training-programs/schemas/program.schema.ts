@@ -27,11 +27,29 @@ export const ConditioningSchema = z.object({
   scaling_notes: z.string().optional().nullable(),
 })
 
-function normalizeScoreType(value: unknown): unknown {
-  if (typeof value !== 'string' || !value.includes('|')) return value
+const ALLOWED_SCORE_TYPES = ['rounds_and_reps', 'time', 'weight', 'calories', 'reps']
 
-  const allowedValues = ['rounds_and_reps', 'time', 'weight', 'calories', 'reps']
-  return value.split('|').map((part) => part.trim()).find((part) => allowedValues.includes(part)) ?? value
+/**
+ * L'IA renvoie parfois plusieurs choix separes par `|` (ancien bug), ou
+ * invente des synonymes hors enum (ex: "total_reps", "time_to_finish").
+ * Ce helper normalise vers une valeur autorisee par mot-cle plutot que par
+ * une liste de synonymes exhaustive, forcement incomplete face a l'IA.
+ */
+function normalizeScoreType(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+
+  const candidates = value.includes('|') ? value.split('|').map((part) => part.trim()) : [value]
+  const exactMatch = candidates.find((candidate) => ALLOWED_SCORE_TYPES.includes(candidate))
+  if (exactMatch) return exactMatch
+
+  const normalized = candidates[0]?.toLowerCase() ?? ''
+  if (normalized.includes('round')) return 'rounds_and_reps'
+  if (normalized.includes('rep')) return 'reps'
+  if (normalized.includes('time')) return 'time'
+  if (normalized.includes('weight') || normalized.includes('load')) return 'weight'
+  if (normalized.includes('cal')) return 'calories'
+
+  return value
 }
 
 export const SkillWorkSchema = z.object({
