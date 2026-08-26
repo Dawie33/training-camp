@@ -25,6 +25,8 @@ export const CROSSFIT_LIFTS: { value: string; label: string }[] = [
   { value: 'strict_press', label: 'Strict Press' },
   { value: 'push_press', label: 'Push Press' },
   { value: 'thruster', label: 'Thruster' },
+  { value: 'pull_up', label: 'Pull Up' },
+  { value: 'dips', label: 'Dips' },
 ]
 
 export interface OneRepMaxHistoryEntry {
