@@ -28,8 +28,22 @@ Genere exactement le nombre de seances demandees pour UNE seule semaine et retou
       "title": "Titre de la seance",
       "focus": "strength|conditioning|skill|mixed|recovery",
       "estimated_duration": 60,
-      "strength_work": null,
-      "conditioning": null,
+      "strength_work": {
+        "movements": [
+          { "name": "Back Squat", "sets": 5, "reps": "5", "intensity": "75% 1RM", "rest": "3min", "notes": null }
+        ]
+      },
+      "conditioning": {
+        "type": "amrap|for_time|emom|tabata|rounds_for_time|death_by|chipper",
+        "duration_minutes": 12,
+        "rounds": null,
+        "movements": [
+          { "name": "Wall Ball Shots", "reps": 15, "weight": "9kg" },
+          { "name": "Box Jumps", "reps": 10 }
+        ],
+        "score_type": "rounds_and_reps",
+        "scaling_notes": "Reduire charge ou reps si necessaire"
+      },
       "skill_work": null,
       "coach_notes": "Conseils de execution et de recuperation"
     }
@@ -38,7 +52,8 @@ Genere exactement le nombre de seances demandees pour UNE seule semaine et retou
 
 Regles :
 - session_in_week va de 1 au nombre de seances demande.
-- strength_work, conditioning et skill_work valent null quand ils ne s appliquent pas.
+- Quand un bloc s applique (voir regles de contenu ci-dessous), remplis-le TOUJOURS avec un objet structure comme dans l exemple ci-dessus (avec "movements", jamais une simple phrase ou description textuelle).
+- strength_work, conditioning et skill_work valent null uniquement quand ils ne s appliquent pas.
 - Chaque séance doit contenir au moins un bloc d entraînement avec du contenu :
   - focus strength : strength_work obligatoire ;
   - focus conditioning : conditioning obligatoire ;
@@ -47,6 +62,7 @@ Regles :
   - focus recovery : conditioning et strength_work peuvent être null, mais indique une récupération dans coach_notes.
 - Ne renvoie jamais une séance avec uniquement coach_notes et tous les blocs à null.
 - Si un bloc est présent, il doit contenir des mouvements ou une description complète, jamais un objet vide.
+- Quand skill_work s applique, utilise cette structure : { "name": "Nom du skill (ex: Muscle-up)", "description": "Description du travail technique", "sets": 5, "duration": "10min", "notes": null }.
 - Les seances d une meme semaine doivent etre complementaires.
 - Utilise les exercices autorises et respecte le niveau de l athlete.
 - Respecte le volume, l intensite et la specificite de la phase.
