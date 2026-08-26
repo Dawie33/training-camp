@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import OpenAI from 'openai'
 import { ZodError } from 'zod'
+import { OpenAIClientService } from '../../common/ai/openai-client.service'
 import { UserContextService } from '../../workouts/services/user-context.service'
 import { GenerateStrengthSessionDto } from '../dto/strength.dto'
 import { buildStrengthSystemPrompt, buildStrengthUserPrompt } from '../prompts/strength-generator.prompt'
@@ -13,18 +13,11 @@ import {
 
 @Injectable()
 export class AIStrengthGeneratorService {
-  private openai: OpenAI
-
   constructor(
     @InjectModel() private readonly knex: Knex,
+    private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService,
-  ) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
-    this.openai = new OpenAI({ apiKey })
-  }
+  ) {}
 
   async generateSession(userId: string, dto: GenerateStrengthSessionDto): Promise<GeneratedStrengthSession> {
     const [ctx, recentStrengthSessions] = await Promise.all([
@@ -117,7 +110,7 @@ IMPORTANT :
 
   private async callOpenAI(systemPrompt: string, userPrompt: string): Promise<GeneratedStrengthSession> {
     try {
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.openaiClientService.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },

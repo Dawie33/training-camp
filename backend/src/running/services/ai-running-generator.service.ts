@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import OpenAI from 'openai'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { GenerateRunningSessionDto } from '../dto/running.dto'
@@ -10,16 +10,11 @@ import { GeneratedRunningPlanSchema, GeneratedRunningPlanValidated } from '../sc
 
 @Injectable()
 export class AIRunningGeneratorService {
-  private openai: OpenAI
-
   constructor(
     @InjectModel() private readonly knex: Knex,
+    private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService,
-  ) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) throw new Error('OPENAI_API_KEY environment variable is not set')
-    this.openai = new OpenAI({ apiKey })
-  }
+  ) {}
 
   async generateRunningSession(userId: string, params: GenerateRunningSessionDto): Promise<GeneratedRunningPlanValidated> {
     const [ctx, recentRunningSessions] = await Promise.all([
@@ -42,7 +37,7 @@ export class AIRunningGeneratorService {
     })
 
     try {
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.openaiClientService.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },

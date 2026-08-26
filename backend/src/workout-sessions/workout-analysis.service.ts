@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
-import OpenAI from 'openai'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 
 export interface WodAnalysis {
@@ -15,16 +15,11 @@ export interface WodAnalysis {
 
 @Injectable()
 export class WorkoutAnalysisService {
-  private openai: OpenAI
-
   constructor(
     @InjectConnection() private readonly knex: Knex,
+    private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService
-  ) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
-    this.openai = new OpenAI({ apiKey })
-  }
+  ) {}
 
   async analyzeSession(sessionId: string, userId: string, force = false): Promise<WodAnalysis> {
     // 1. Récupérer la session
@@ -96,7 +91,7 @@ Réponds en JSON avec exactement cette structure :
 
     let completion
     try {
-      completion = await this.openai.chat.completions.create({
+      completion = await this.openaiClientService.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,

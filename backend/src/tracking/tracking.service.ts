@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
-import OpenAI from 'openai'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 
 export type SportType = 'crossfit' | 'running' | 'biking' | 'global'
@@ -42,16 +42,11 @@ export interface ProgressionReport {
 
 @Injectable()
 export class TrackingService {
-  private openai: OpenAI
-
   constructor(
     @InjectConnection() private readonly knex: Knex,
+    private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService
-  ) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
-    this.openai = new OpenAI({ apiKey })
-  }
+  ) {}
 
   async generateReport(userId: string, sport: SportType, months: number): Promise<ProgressionReport> {
     const since = new Date()
@@ -504,7 +499,7 @@ ${this.jsonInstructions(true)}`
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   private async callAI(prompt: string, isGlobal = false): Promise<Omit<ProgressionReport, 'sport' | 'period_months' | 'generated_at'>> {
-    const completion = await this.openai.chat.completions.create({
+    const completion = await this.openaiClientService.client.chat.completions.create({
       model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,

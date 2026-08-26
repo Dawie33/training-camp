@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import OpenAI from 'openai'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { GenerateSkillProgramDto } from '../dto/skill.dto'
@@ -11,15 +11,10 @@ import { GeneratedSkillProgramSchema, GeneratedSkillProgramValidated } from '../
 
 @Injectable()
 export class AISkillGeneratorService {
-  private openai: OpenAI
-
-  constructor(private readonly userContextService: UserContextService) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
-    this.openai = new OpenAI({ apiKey })
-  }
+  constructor(
+    private readonly openaiClientService: OpenAIClientService,
+    private readonly userContextService: UserContextService,
+  ) {}
 
   async generateSkillProgram(userId: string, params: GenerateSkillProgramDto): Promise<GeneratedSkillProgramValidated> {
     try {
@@ -37,7 +32,7 @@ export class AISkillGeneratorService {
         physicalLimitations: ctx.physical_limitations,
       })
 
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.openaiClientService.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },

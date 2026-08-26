@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import OpenAI from 'openai'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { GenerateBikingSessionDto } from '../dto/biking.dto'
@@ -11,16 +11,11 @@ import { GeneratedBikingPlanSchema, GeneratedBikingPlanValidated } from '../sche
 
 @Injectable()
 export class AIBikingGeneratorService {
-    private openai: OpenAI
-
     constructor(
         @InjectModel() private readonly knex: Knex,
+        private readonly openaiClientService: OpenAIClientService,
         private readonly userContextService: UserContextService,
-    ) {
-        const apiKey = process.env.OPENAI_API_KEY
-        if (!apiKey) throw new Error('OPENAI_API_KEY environment variable is not set')
-        this.openai = new OpenAI({ apiKey })
-    }
+    ) {}
 
     async generateBikingSession(userId: string, params: GenerateBikingSessionDto): Promise<GeneratedBikingPlanValidated> {
         const [ctx, recentBikingSessions] = await Promise.all([
@@ -43,7 +38,7 @@ export class AIBikingGeneratorService {
         })
 
         try {
-            const completion = await this.openai.chat.completions.create({
+            const completion = await this.openaiClientService.client.chat.completions.create({
                 model: 'gpt-4.1',
                 messages: [
                     { role: 'system', content: systemPrompt },

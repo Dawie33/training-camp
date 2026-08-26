@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import OpenAI from 'openai'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { GenerateMobilitySessionDto } from '../dto/mobility.dto'
@@ -8,13 +8,10 @@ import { GeneratedMobilityPlanSchema, GeneratedMobilityPlanValidated } from '../
 
 @Injectable()
 export class AIMobilityGeneratorService {
-    private openai: OpenAI
-
-    constructor(private readonly userContextService: UserContextService) {
-        const apiKey = process.env.OPENAI_API_KEY
-        if (!apiKey) throw new Error('OPENAI_API_KEY environment variable is not set')
-        this.openai = new OpenAI({ apiKey })
-    }
+    constructor(
+        private readonly openaiClientService: OpenAIClientService,
+        private readonly userContextService: UserContextService,
+    ) {}
 
     async generateMobilitySession(userId: string, params: GenerateMobilitySessionDto): Promise<GeneratedMobilityPlanValidated> {
         const ctx = await this.userContextService.getUserAIContext(userId)
@@ -29,7 +26,7 @@ export class AIMobilityGeneratorService {
         })
 
         try {
-            const completion = await this.openai.chat.completions.create({
+            const completion = await this.openaiClientService.client.chat.completions.create({
                 model: 'gpt-4.1',
                 messages: [
                     { role: 'system', content: systemPrompt },

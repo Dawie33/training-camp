@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import OpenAI from 'openai'
+import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { ProgramRecommendationContext, TrainingProgramsService } from 'src/training-programs/training-programs.service'
 import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
@@ -8,18 +8,14 @@ import { AIRecommendationSchema, NextSessionRecommendation, SessionStats } from 
 
 @Injectable()
 export class RecommendationsService {
-  private readonly openai: OpenAI
   private readonly cache = new Map<string, { data: NextSessionRecommendation; expiresAt: number }>()
   private readonly TTL_MS = 2 * 60 * 60 * 1000 // 2h
 
   constructor(
+    private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService,
     private readonly trainingProgramsService: TrainingProgramsService,
-  ) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) throw new Error('OPENAI_API_KEY environment variable is not set')
-    this.openai = new OpenAI({ apiKey })
-  }
+  ) {}
 
   async getNextSessionRecommendation(userId: string): Promise<NextSessionRecommendation> {
     const cached = this.cache.get(userId)
@@ -34,7 +30,7 @@ export class RecommendationsService {
       ])
       const stats = this.computeSessionStats(ctx)
 
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.openaiClientService.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: buildRecommendationSystemPrompt() },

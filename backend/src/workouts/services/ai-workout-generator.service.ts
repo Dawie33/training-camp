@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common'
-import OpenAI from 'openai'
 import { ZodError } from 'zod'
+import { OpenAIClientService } from '../../common/ai/openai-client.service'
 import {
   buildCrossFitSystemPrompt,
   buildCrossFitWorkoutPrompt
@@ -41,19 +41,12 @@ export interface WorkoutGenerationParams {
 
 @Injectable()
 export class AIWorkoutGeneratorService {
-  private openai: OpenAI
-
   constructor(
+    private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService,
     private readonly workoutsService: WorkoutsService,
     private readonly workoutScheduleService: WorkoutScheduleService,
-  ) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
-    }
-    this.openai = new OpenAI({ apiKey })
-  }
+  ) {}
 
   /**
    * Génère un workout CrossFit en utilisant l'IA GPT-4o
@@ -358,7 +351,7 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
 
   private async callOpenAI(systemPrompt: string, userPrompt: string): Promise<GeneratedWorkout> {
     try {
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.openaiClientService.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: systemPrompt },

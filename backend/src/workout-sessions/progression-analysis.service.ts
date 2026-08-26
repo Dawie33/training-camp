@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
-import OpenAI from 'openai'
+import { OpenAIClientService } from '../common/ai/openai-client.service'
 
 export interface TypeTrend {
   type: string
@@ -33,13 +33,10 @@ interface RawSession {
 
 @Injectable()
 export class ProgressionAnalysisService {
-  private openai: OpenAI
-
-  constructor(@InjectConnection() private readonly knex: Knex) {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
-    this.openai = new OpenAI({ apiKey })
-  }
+  constructor(
+    @InjectConnection() private readonly knex: Knex,
+    private readonly openaiClientService: OpenAIClientService,
+  ) {}
 
   async generateReport(userId: string, months = 3): Promise<ProgressionReport> {
     const since = new Date()
@@ -89,7 +86,7 @@ export class ProgressionAnalysisService {
     const aggregated = this.aggregateSessions(sessions)
     const prompt = this.buildPrompt(aggregated, oneRepMaxes, profile, months)
 
-    const completion = await this.openai.chat.completions.create({
+    const completion = await this.openaiClientService.client.chat.completions.create({
       model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
