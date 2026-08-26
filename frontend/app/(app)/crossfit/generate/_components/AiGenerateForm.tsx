@@ -1,82 +1,7 @@
 import { ExerciseDifficulty } from '@/domain/entities/exercise'
+import { EQUIPMENT_CATEGORIES, EQUIPMENT_PRESET_CROSSFIT_BOX } from '@/domain/entities/equipment-options'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
 import { useEffect, useState } from 'react'
-
-const BOX_EQUIPMENT = [
-  'bodyweight', 'barbell', 'plates', 'rack', 'bench', 'dumbbell', 'kettlebell',
-  'box', 'pull-up-bar', 'jump-rope', 'wall-ball', 'rings', 'parallettes',
-  'ghd', 'abmat', 'medicine-ball', 'slam-ball', 'sandbag', 'battle-ropes',
-  'rower', 'assault-bike', 'ski-erg',
-]
-
-const EQUIPMENT_CATEGORIES = [
-  {
-    category: 'Basique', items: [
-      { value: 'bodyweight', label: 'Poids du corps' },
-      { value: 'mat', label: 'Tapis' },
-      { value: 'band', label: 'Bande élastique' },
-    ]
-  },
-  {
-    category: 'Haltérophilie', items: [
-      { value: 'barbell', label: 'Barre olympique' },
-      { value: 'plates', label: 'Disques' },
-      { value: 'rack', label: 'Rack' },
-      { value: 'bench', label: 'Banc' },
-      { value: 'dumbbell', label: 'Haltères' },
-      { value: 'kettlebell', label: 'Kettlebell' },
-      { value: 'ez-bar', label: 'Barre EZ' },
-      { value: 'trap-bar', label: 'Trap bar' },
-    ]
-  },
-  {
-    category: 'CrossFit', items: [
-      { value: 'box', label: 'Box' },
-      { value: 'pull-up-bar', label: 'Barre de traction' },
-      { value: 'jump-rope', label: 'Corde à sauter' },
-      { value: 'wall-ball', label: 'Wall ball' },
-      { value: 'rings', label: 'Anneaux' },
-      { value: 'parallettes', label: 'Parallettes' },
-      { value: 'ghd', label: 'GHD' },
-      { value: 'medicine-ball', label: 'Medecine ball' },
-      { value: 'slam-ball', label: 'Slam ball' },
-      { value: 'abmat', label: 'AbMat' },
-      { value: 'sandbag', label: 'Sandbag' },
-      { value: 'battle-ropes', label: 'Battle ropes' },
-    ]
-  },
-  {
-    category: 'Cardio', items: [
-      { value: 'rower', label: 'Rameur' },
-      { value: 'assault-bike', label: 'Assault bike' },
-      { value: 'ski-erg', label: 'Ski erg' },
-      { value: 'treadmill', label: 'Tapis de course' },
-      { value: 'stationary-bike', label: 'Vélo stationnaire' },
-      { value: 'elliptical', label: 'Elliptique' },
-      { value: 'stairmaster', label: 'Stairmaster' },
-    ]
-  },
-  {
-    category: 'Strongman', items: [
-      { value: 'sled', label: 'Luge' },
-      { value: 'tire', label: 'Pneu' },
-      { value: 'sledgehammer', label: 'Masse' },
-      { value: 'farmer-walk-handles', label: 'Farmer walk' },
-      { value: 'yoke', label: 'Yoke' },
-      { value: 'atlas-stone', label: 'Atlas stone' },
-    ]
-  },
-  {
-    category: 'Accessoires', items: [
-      { value: 'foam-roller', label: 'Foam roller' },
-      { value: 'lacrosse-ball', label: 'Balle lacrosse' },
-      { value: 'ab-wheel', label: 'Ab wheel' },
-      { value: 'suspension-trainer', label: 'TRX / Suspension' },
-      { value: 'plyo-box', label: 'Plyo box' },
-      { value: 'pvc-pipe', label: 'Barre PVC' },
-    ]
-  },
-]
 
 type EquipmentMode = 'bodyweight' | 'home' | 'box' | 'custom'
 
@@ -126,7 +51,7 @@ export function AiGenerateForm({
     setMode(newMode)
     if (newMode === 'bodyweight') setEquipment(['bodyweight'])
     else if (newMode === 'home') setEquipment(profileEquipment)
-    else if (newMode === 'box') setEquipment(BOX_EQUIPMENT)
+    else if (newMode === 'box') setEquipment(EQUIPMENT_PRESET_CROSSFIT_BOX)
     else if (newMode === 'custom') setEquipment([])
   }
 

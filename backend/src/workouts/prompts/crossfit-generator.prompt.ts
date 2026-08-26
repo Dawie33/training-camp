@@ -3,11 +3,7 @@
  * Ce prompt guide l'IA pour créer des WODs structurés selon la méthodologie CrossFit
  */
 
-export const CROSSFIT_EQUIPMENT = [
-  'barbell', 'dumbbells', 'kettlebell', 'pull-up-bar', 'rings', 'rower', 'assault-bike', 'ski-erg',
-  'box', 'wall-ball', 'medicine-ball', 'rope', 'mat', 'plate', 'sandbag'
-] as const
-
+import { EQUIPMENT_PRESETS } from '../constants/equipment.constants'
 import { UserAIContext } from '../services/user-context.service'
 
 export function buildAthleteContextSection(context: UserAIContext): string {
@@ -134,7 +130,7 @@ export function buildAthleteContextSection(context: UserAIContext): string {
 export function buildCrossFitSystemPrompt(availableEquipment?: string[], userContext?: UserAIContext): string {
   const equipmentList = availableEquipment && availableEquipment.length > 0
     ? availableEquipment.join('", "')
-    : CROSSFIT_EQUIPMENT.join('", "')
+    : EQUIPMENT_PRESETS.crossfit.join('", "')
 
   const athleteSection = userContext ? `\n${buildAthleteContextSection(userContext)}\n` : ''
 

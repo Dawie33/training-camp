@@ -1,5 +1,6 @@
 'use client'
 
+import { EQUIPMENT_PRESET_CROSSFIT_BOX } from '@/domain/entities/equipment-options'
 import {
   LOWER_BODY_MUSCLES,
   MUSCLE_LABELS,
@@ -27,12 +28,6 @@ const GOALS: { value: SessionGoal; description: string; reps: string }[] = [
 ]
 
 const TRAINING_STYLE_OPTIONS: TrainingStyle[] = ['traditional', 'strongman']
-
-const CROSSFIT_BOX_EQUIPMENT = [
-  'barbell', 'bumper-plates', 'dumbbell', 'kettlebell', 'rings',
-  'pull-up-bar', 'rower', 'assault-bike', 'bike-erg', 'ski-erg',
-  'jump-rope', 'rack', 'box', 'bench', 'GHD', 'landmine', 'sandbag',
-]
 
 type EquipmentMode = 'saved' | 'bodyweight' | 'crossfit'
 
@@ -78,7 +73,7 @@ export function GenerateStrengthForm({
 
   useEffect(() => {
     if (equipmentMode === 'bodyweight') setEquipment([])
-    else if (equipmentMode === 'crossfit') setEquipment(CROSSFIT_BOX_EQUIPMENT)
+    else if (equipmentMode === 'crossfit') setEquipment(EQUIPMENT_PRESET_CROSSFIT_BOX)
     else setEquipment(profileEquipment)
   }, [equipmentMode, profileEquipment, setEquipment])
 
@@ -276,7 +271,7 @@ export function GenerateStrengthForm({
         {equipmentMode === 'crossfit' && (
           <div className="rounded-md border border-border bg-secondary/40 p-3">
             <div className="flex flex-wrap gap-1.5">
-              {CROSSFIT_BOX_EQUIPMENT.map((e) => (
+              {EQUIPMENT_PRESET_CROSSFIT_BOX.map((e) => (
                 <span key={e} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-secondary text-foreground border border-border">
                   <CheckCircle2 className="w-3 h-3" />{e}
                 </span>
