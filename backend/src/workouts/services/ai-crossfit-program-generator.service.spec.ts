@@ -49,6 +49,7 @@ describe('AICrossfitProgramGeneratorService.generateProgram', () => {
             recentSessions: [],
             recentAnalyses: [],
             activeSkills: [],
+            completedSkillNames: [],
             progressionReports: [],
         }
         const userContextService = {
@@ -78,9 +79,57 @@ describe('AICrossfitProgramGeneratorService.generateProgram', () => {
         expect(exercisesService.findForProgram).toHaveBeenCalledWith({
             difficulty: 'intermediate',
             equipment: [...EQUIPMENT_PRESETS.crossfit],
+            unlockedNames: [],
         })
         expect(program.phases.map((phase) => phase.weeks)).toEqual([[1, 2], [3], [4]])
         expect(program.phases.flatMap((phase) => phase.sessions)).toHaveLength(12)
         expect(program.phases.at(-1)?.sessions.every((session) => session.week === 4)).toBe(true)
+    })
+
+    it('debloque des mouvements au-dela du niveau via 1RM et competences terminees', async () => {
+        const createCompletion = jest.fn<() => Promise<CompletionResponse>>()
+            .mockResolvedValueOnce({ choices: [{ message: { content: weeklyResponse(1, false) } }] })
+            .mockResolvedValueOnce({ choices: [{ message: { content: weeklyResponse(2, false) } }] })
+            .mockResolvedValueOnce({ choices: [{ message: { content: weeklyResponse(3, false) } }] })
+            .mockResolvedValueOnce({ choices: [{ message: { content: weeklyResponse(4, true) } }] })
+
+        const userContext = {
+            sport_level: 'beginner',
+            oneRepMaxes: [{ lift: 'snatch', value: 60 }],
+            benchmarkResults: {},
+            global_goals: {},
+            injuries: {},
+            physical_limitations: {},
+            equipment_available: [],
+            training_preferences: {},
+            recentSessions: [],
+            recentAnalyses: [],
+            activeSkills: [],
+            completedSkillNames: ['Muscle-Up'],
+            progressionReports: [],
+        }
+        const userContextService = {
+            getUserAIContext: jest.fn<() => Promise<typeof userContext>>().mockResolvedValue(userContext),
+        } as unknown as UserContextService
+        const openAIClient = {
+            client: { chat: { completions: { create: createCompletion } } },
+        } as unknown as OpenAIClientService
+        const exercisesService = {
+            findForProgram: jest.fn<() => Promise<never[]>>().mockResolvedValue([]),
+        } as unknown as ExercisesService
+        const service = new AICrossfitProgramGeneratorService(userContextService, openAIClient, exercisesService)
+
+        await service.generateProgram('user-id', {
+            program_type: 'competition_prep',
+            duration_weeks: 4,
+            sessions_per_week: 3,
+            target_level: 'beginner',
+        })
+
+        expect(exercisesService.findForProgram).toHaveBeenCalledWith({
+            difficulty: 'beginner',
+            equipment: [...EQUIPMENT_PRESETS.crossfit],
+            unlockedNames: expect.arrayContaining(['Hang Snatch', 'Push Snatch', 'Snatch Balance', 'Overhead Squat', 'Muscle-Up']),
+        })
     })
 })

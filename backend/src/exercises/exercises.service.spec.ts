@@ -222,7 +222,10 @@ describe('ExercisesService.findByName', () => {
 describe('ExercisesService.findForProgram', () => {
     it('filtre par niveau, catégorie et équipement disponibles', async () => {
         // Arrange
-        const rows = [{ id: '1', name: 'Clean' }]
+        const rows = [
+            { id: '1', name: 'Clean', difficulty: 'intermediate' },
+            { id: '2', name: 'Snatch Balance', difficulty: 'advanced' },
+        ]
         const builder = createKnexBuilderMock({ orderBy: rows })
         const knexMock: any = jest.fn().mockReturnValue(builder)
         const service = await buildService(knexMock)
@@ -234,15 +237,35 @@ describe('ExercisesService.findForProgram', () => {
             equipment: ['barbell', 'plates'],
         })
 
-        // Assert
-        expect(result).toEqual(rows)
+        // Assert : "Clean" (intermediate) passe, "Snatch Balance" (advanced) est filtré côté service
+        expect(result).toEqual([rows[0]])
         expect(builder.where).toHaveBeenCalledWith('isActive', true)
-        expect(builder.whereIn).toHaveBeenCalledWith('difficulty', ['beginner', 'intermediate'])
         expect(builder.whereIn).toHaveBeenCalledWith('category', ['olympic_lifting'])
         expect(builder.whereRaw).toHaveBeenCalledWith(
             expect.stringContaining('jsonb_array_elements_text'),
             [['barbell', 'plates']],
         )
+    })
+
+    it('debloque un mouvement au-dela du niveau grace a unlockedNames (matching flou)', async () => {
+        // Arrange
+        const rows = [
+            { id: '1', name: 'Air Squat', difficulty: 'beginner' },
+            { id: '2', name: 'Ring Muscle-Up', difficulty: 'advanced' },
+            { id: '3', name: 'GHD Sit-Up', difficulty: 'advanced' },
+        ]
+        const builder = createKnexBuilderMock({ orderBy: rows })
+        const knexMock: any = jest.fn().mockReturnValue(builder)
+        const service = await buildService(knexMock)
+
+        // Act : niveau beginner, mais "Muscle-Up" est un skill maitrisé (nom different de l'exercice en base)
+        const result = await service.findForProgram({
+            difficulty: 'beginner',
+            unlockedNames: ['Muscle-Up'],
+        })
+
+        // Assert
+        expect(result).toEqual([rows[0], rows[1]])
     })
 })
 

@@ -5,6 +5,7 @@ import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { GenerateProgramDto } from 'src/training-programs/dto/generate-program.dto'
 import { ZodError } from 'zod'
+import { resolveUnlockedMovementNames } from '../movement-mastery.utils'
 import { buildCompetitionWeeklyPlan, WeeklyPlan } from '../planning/competition-planner'
 import {
   BonusSessionParams,
@@ -49,6 +50,9 @@ export class AICrossfitProgramGeneratorService {
       const availableExercises = await this.exercisesService.findForProgram({
         difficulty: targetLevel,
         equipment: [...EQUIPMENT_PRESETS.crossfit],
+        // Debloque les mouvements au-dela du niveau declare quand l'athlete a un
+        // signal concret de maitrise (1RM enregistre, competence terminee).
+        unlockedNames: resolveUnlockedMovementNames(context),
       })
 
       if (resolvedParams.program_type === 'competition_prep') {

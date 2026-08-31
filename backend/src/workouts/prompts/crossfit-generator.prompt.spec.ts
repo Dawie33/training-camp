@@ -17,6 +17,7 @@ function buildContext(overrides: Partial<UserAIContext> = {}): UserAIContext {
     recentSessions: [],
     recentAnalyses: [],
     activeSkills: [],
+    completedSkillNames: [],
     progressionReports: [],
     ...overrides,
   }

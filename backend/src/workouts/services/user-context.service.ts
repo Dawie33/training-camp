@@ -59,6 +59,7 @@ export interface UserAIContext {
   recentSessions: RecentSession[]
   recentAnalyses: RecentAnalysis[]
   activeSkills: ActiveSkillContext[]
+  completedSkillNames: string[]
   progressionReports: ProgressionReportSummary[]
 }
 
@@ -78,7 +79,7 @@ export class UserContextService {
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data
     }
-    const [profile, oneRepMaxes, cfSessions, runningSessions, strengthSessions, bikingSessions, recentAnalysesRaw, activeSkillsRaw, progressionReportsRaw] = await Promise.all([
+    const [profile, oneRepMaxes, cfSessions, runningSessions, strengthSessions, bikingSessions, recentAnalysesRaw, activeSkillsRaw, completedSkillNames, progressionReportsRaw] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -160,6 +161,10 @@ export class UserContextService {
           this.knex.raw('MAX(spl.session_date) as last_trained'),
         )
         .groupBy('sp.id', 'sp.skill_name', 'sp.skill_category', 'sps.id', 'sps.title', 'sps.description', 'sps.recommended_exercises', 'sps.coaching_tips'),
+
+      this.knex('skill_programs')
+        .where({ user_id: userId, status: 'completed' })
+        .pluck('skill_name') as Promise<string[]>,
 
       this.knex('tracking_reports')
         .where('user_id', userId)
@@ -281,6 +286,7 @@ export class UserContextService {
       recentSessions: recentSessionsMapped,
       recentAnalyses,
       activeSkills,
+      completedSkillNames: completedSkillNames ?? [],
       progressionReports,
     }
 

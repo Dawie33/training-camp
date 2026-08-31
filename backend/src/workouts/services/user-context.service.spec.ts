@@ -3,16 +3,16 @@ import { getConnectionToken } from 'nest-knexjs'
 import { UserContextService } from './user-context.service'
 
 /**
- * Le service enchaîne 9 requêtes Knex en Promise.all, chacune terminée par un
- * maillon différent (.first(), .orderBy(), .limit(), .groupBy()). Plutôt que de
- * mocker chaque méthode terminale une par une (voir skill testing-knex-nestjs),
+ * Le service enchaîne 10 requêtes Knex en Promise.all, chacune terminée par un
+ * maillon différent (.first(), .orderBy(), .limit(), .groupBy(), .pluck()). Plutôt
+ * que de mocker chaque méthode terminale une par une (voir skill testing-knex-nestjs),
  * on rend le builder "thenable" : toutes les méthodes de chaînage renvoient le
  * builder, et son .then() résout directement la valeur voulue, quel que soit le
  * dernier maillon appelé par le service.
  */
 const CHAIN_METHODS = [
   'select', 'where', 'whereNotNull', 'whereRaw', 'whereIn', 'leftJoin', 'join',
-  'orderBy', 'limit', 'offset', 'groupBy', 'first', 'on', 'andOnVal', 'andOn',
+  'orderBy', 'limit', 'offset', 'groupBy', 'first', 'on', 'andOnVal', 'andOn', 'pluck',
 ]
 
 function createChainableBuilder(resolvedValue: unknown) {
@@ -33,6 +33,7 @@ interface QueryOverrides {
   bikingSessions?: unknown[]
   recentAnalyses?: unknown[]
   activeSkills?: unknown[]
+  completedSkillNames?: unknown[]
   progressionReports?: unknown[]
 }
 
@@ -40,7 +41,7 @@ interface QueryOverrides {
  * L'ordre des mockImplementationOnce suit l'ordre des `this.knex(...)` dans
  * getUserAIContext() : users, one_rep_maxes, workout_sessions (crossfit),
  * running_sessions, strength_sessions, biking_sessions, workout_sessions
- * (analyses), skill_programs, tracking_reports.
+ * (analyses), skill_programs (actives), skill_programs (terminees), tracking_reports.
  */
 function createKnexMock(overrides: QueryOverrides = {}) {
   const knexMock: any = jest
@@ -53,6 +54,7 @@ function createKnexMock(overrides: QueryOverrides = {}) {
     .mockImplementationOnce(() => createChainableBuilder(overrides.bikingSessions ?? []))
     .mockImplementationOnce(() => createChainableBuilder(overrides.recentAnalyses ?? []))
     .mockImplementationOnce(() => createChainableBuilder(overrides.activeSkills ?? []))
+    .mockImplementationOnce(() => createChainableBuilder(overrides.completedSkillNames ?? []))
     .mockImplementationOnce(() => createChainableBuilder(overrides.progressionReports ?? []))
   knexMock.raw = jest.fn((sql: string) => sql)
   return knexMock
@@ -254,7 +256,7 @@ describe('UserContextService.getUserAIContext', () => {
     await service.getUserAIContext('user-1')
 
     // Assert
-    expect(knexMock).toHaveBeenCalledTimes(9)
+    expect(knexMock).toHaveBeenCalledTimes(10)
   })
 
   it('invalidateCache force une nouvelle interrogation de la base', async () => {
@@ -268,6 +270,18 @@ describe('UserContextService.getUserAIContext', () => {
     await service.getUserAIContext('user-1')
 
     // Assert
-    expect(knexMock).toHaveBeenCalledTimes(18)
+    expect(knexMock).toHaveBeenCalledTimes(20)
+  })
+
+  it('completedSkillNames : reprend les noms des programmes de competence termines', async () => {
+    // Arrange
+    const knexMock = createKnexMock({ completedSkillNames: ['Muscle-Up', 'Handstand Walk'] })
+    const service = await buildService(knexMock)
+
+    // Act
+    const result = await service.getUserAIContext('user-1')
+
+    // Assert
+    expect(result.completedSkillNames).toEqual(['Muscle-Up', 'Handstand Walk'])
   })
 })
