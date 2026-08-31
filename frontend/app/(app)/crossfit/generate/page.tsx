@@ -10,13 +10,13 @@ import { AiGeneratedResult } from './_components/AiGeneratedResult'
 type Method = WodCaptureMode | 'ai'
 
 const METHODS: { id: Method; label: string; icon: typeof Instagram }[] = [
+  { id: 'ai', label: "Générer avec l'IA", icon: Sparkles },
   { id: 'instagram', label: 'Depuis Instagram', icon: Instagram },
   { id: 'search', label: 'Rechercher un WOD', icon: Search },
-  { id: 'ai', label: "Générer avec l'IA", icon: Sparkles },
 ]
 
 export default function CrossFitGeneratePage() {
-  const [method, setMethod] = useState<Method>('instagram')
+  const [method, setMethod] = useState<Method>('ai')
 
   const ai = useGenerateWorkout({ redirectTo: null })
 
@@ -30,11 +30,10 @@ export default function CrossFitGeneratePage() {
             <button
               key={id}
               onClick={() => setMethod(id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                isActive
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${isActive
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               <Icon className="w-4 h-4" />
               {label}
