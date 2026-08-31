@@ -1,8 +1,9 @@
 import { describe, expect, it, jest } from '@jest/globals'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { ExercisesService } from 'src/exercises/exercises.service'
+import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
 import { UserContextService } from 'src/workouts/services/user-context.service'
-import { AIProgramGeneratorService } from './ai-program-generator.service'
+import { AICrossfitProgramGeneratorService } from './ai-crossfit-program-generator.service'
 
 type CompletionResponse = {
     choices: Array<{ message: { content: string | null } }>
@@ -28,7 +29,7 @@ function weeklyResponse(week: number, taper: boolean) {
     })
 }
 
-describe('AIProgramGeneratorService.generateProgram', () => {
+describe('AICrossfitProgramGeneratorService.generateProgram', () => {
     it('génère et regroupe les séances compétition semaine par semaine', async () => {
         const createCompletion = jest.fn<() => Promise<CompletionResponse>>()
             .mockResolvedValueOnce({ choices: [{ message: { content: weeklyResponse(1, false) } }] })
@@ -62,7 +63,7 @@ describe('AIProgramGeneratorService.generateProgram', () => {
         const exercisesService = {
             findForProgram: jest.fn<() => Promise<typeof availableExercises>>().mockResolvedValue(availableExercises),
         } as unknown as ExercisesService
-        const service = new AIProgramGeneratorService(userContextService, openAIClient, exercisesService)
+        const service = new AICrossfitProgramGeneratorService(userContextService, openAIClient, exercisesService)
 
         const program = await service.generateProgram('user-id', {
             program_type: 'competition_prep',
@@ -72,9 +73,11 @@ describe('AIProgramGeneratorService.generateProgram', () => {
         })
 
         expect(createCompletion).toHaveBeenCalledTimes(4)
+        // Un programme structure suppose toujours l'equipement complet d'une box CrossFit,
+        // independamment de l'equipement personnel du profil (utilise par les WODs/seances ad hoc).
         expect(exercisesService.findForProgram).toHaveBeenCalledWith({
             difficulty: 'intermediate',
-            equipment: ['barbell', 'plates', 'pull-up-bar'],
+            equipment: [...EQUIPMENT_PRESETS.crossfit],
         })
         expect(program.phases.map((phase) => phase.weeks)).toEqual([[1, 2], [3], [4]])
         expect(program.phases.flatMap((phase) => phase.sessions)).toHaveLength(12)

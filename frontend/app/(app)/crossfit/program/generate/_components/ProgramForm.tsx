@@ -7,19 +7,13 @@ import type { GenerateProgramDto } from '@/services/training-programs'
 import { Loader2, Sparkles } from 'lucide-react'
 
 const PROGRAM_TYPES = [
-  { value: 'strength_building', label: 'Force', description: 'Développer la force et les maxes' },
-  { value: 'endurance_base', label: 'Endurance', description: 'Construire la base cardio et aérobie' },
-  { value: 'competition_prep', label: 'Compétition', description: 'Préparer une compétition CrossFit' },
-  { value: 'off_season', label: 'Off-season', description: 'Développement général hors saison' },
+  { value: 'endurance_base', label: 'Engine', description: 'Capacité aérobie (Zone 2, VO2max) pour tenir les WODs longs' },
+  { value: 'competition_prep', label: 'Compétition', description: "Préparer l'Open ou une compétition CrossFit" },
+  { value: 'off_season', label: 'Off-season', description: 'Maintenir force, engine et gymnastique, cibler les points faibles' },
 ] as const
 
 const DURATIONS = [4, 6, 8, 12] as const
 const SESSIONS = [2, 3, 4, 5] as const
-const LEVELS = [
-  { value: 'beginner', label: 'Débutant' },
-  { value: 'intermediate', label: 'Intermédiaire' },
-  { value: 'advanced', label: 'Avancé' },
-] as const
 
 function OptionButton({
   selected,
@@ -55,8 +49,6 @@ interface ProgramFormProps {
   onDurationChange: (v: GenerateProgramDto['duration_weeks']) => void
   sessions: GenerateProgramDto['sessions_per_week']
   onSessionsChange: (v: GenerateProgramDto['sessions_per_week']) => void
-  level: GenerateProgramDto['target_level']
-  onLevelChange: (v: GenerateProgramDto['target_level']) => void
   focus: string
   onFocusChange: (v: string) => void
   generating: boolean
@@ -70,8 +62,6 @@ export function ProgramForm({
   onDurationChange,
   sessions,
   onSessionsChange,
-  level,
-  onLevelChange,
   focus,
   onFocusChange,
   generating,
@@ -82,7 +72,7 @@ export function ProgramForm({
       {/* Objectif */}
       <div className="border border-border bg-card rounded-lg p-5 space-y-3">
         <h2 className="eyebrow">Objectif</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {PROGRAM_TYPES.map((pt) => (
             <OptionButton key={pt.value} selected={programType === pt.value} onClick={() => onProgramTypeChange(pt.value)} className="p-4">
               <p className="font-display font-semibold text-sm text-foreground">{pt.label}</p>
@@ -133,23 +123,6 @@ export function ProgramForm({
               </OptionButton>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Niveau */}
-      <div className="border border-border bg-card rounded-lg p-5 space-y-3">
-        <h2 className="eyebrow">Niveau</h2>
-        <div className="flex gap-3">
-          {LEVELS.map((l) => (
-            <OptionButton
-              key={l.value}
-              selected={level === l.value}
-              onClick={() => onLevelChange(l.value)}
-              className="flex-1 py-3 text-center text-sm font-semibold font-display"
-            >
-              {l.label}
-            </OptionButton>
-          ))}
         </div>
       </div>
 

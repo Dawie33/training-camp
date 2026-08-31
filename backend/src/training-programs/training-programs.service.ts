@@ -1,10 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { AIProgramGeneratorService } from './ai-program-generator.service'
+import { AICrossfitProgramGeneratorService } from 'src/workouts/services/ai-crossfit-program-generator.service'
+import type { ProgramPhase, ProgramSession } from 'src/workouts/schemas/program.schema'
 import { CreateProgramDto } from './dto/create-program.dto'
 import { ScheduleWeekDto, SwapSessionDto, UpdateEnrollmentDto } from './dto/update-enrollment.dto'
-import type { ProgramPhase, ProgramSession } from './schemas/program.schema'
 
 export interface ProgramRecommendationContext {
   has_active_program: boolean
@@ -90,7 +90,7 @@ function applyWeeklyProgression(
 export class TrainingProgramsService {
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private readonly aiGenerator: AIProgramGeneratorService,
+    private readonly aiGenerator: AICrossfitProgramGeneratorService,
   ) { }
 
   /**
@@ -117,7 +117,7 @@ export class TrainingProgramsService {
           slug,
           description: data.description,
           objectives: data.objectives || null,
-          target_level: data.target_level,
+          target_level: data.target_level ?? 'intermediate',
           duration_weeks: data.duration_weeks,
           sessions_per_week: data.sessions_per_week,
           estimated_session_duration: 60,

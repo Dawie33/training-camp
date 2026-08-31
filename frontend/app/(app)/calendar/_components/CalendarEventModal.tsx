@@ -159,7 +159,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
                 asChild
                 className={c.complete}
               >
-                <a href={`/training-programs/log-session?scheduleId=${calendarEvent.id as string}`}>
+                <a href={`/crossfit/program/log-session?scheduleId=${calendarEvent.id as string}`}>
                   <Check className="w-3.5 h-3.5 mr-1" />
                   Logger la séance
                 </a>

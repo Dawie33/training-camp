@@ -8,10 +8,9 @@ export function useGenerateProgram() {
   const [step, setStep] = useState<'form' | 'preview'>('form')
 
   // Form state
-  const [programType, setProgramType] = useState<GenerateProgramDto['program_type']>('strength_building')
+  const [programType, setProgramType] = useState<GenerateProgramDto['program_type']>('endurance_base')
   const [duration, setDuration] = useState<GenerateProgramDto['duration_weeks']>(8)
   const [sessions, setSessions] = useState<GenerateProgramDto['sessions_per_week']>(3)
-  const [level, setLevel] = useState<GenerateProgramDto['target_level']>('intermediate')
   const [focus, setFocus] = useState('')
 
   // Preview state
@@ -27,7 +26,6 @@ export function useGenerateProgram() {
         program_type: programType,
         duration_weeks: duration,
         sessions_per_week: sessions,
-        target_level: level,
         focus: focus || undefined,
       })
       setPreview(result)
@@ -48,10 +46,9 @@ export function useGenerateProgram() {
         program_type: programType,
         duration_weeks: duration,
         sessions_per_week: sessions,
-        target_level: level,
       })
       toast.success('Programme créé !')
-      router.push('/training-programs')
+      router.push('/crossfit/program')
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       if (msg.includes('actif')) {
@@ -74,8 +71,6 @@ export function useGenerateProgram() {
     setDuration,
     sessions,
     setSessions,
-    level,
-    setLevel,
     focus,
     setFocus,
     generating,

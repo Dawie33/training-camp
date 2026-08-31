@@ -8,6 +8,7 @@ const TABS = [
   { label: 'Enregistrer un WOD', href: '/crossfit/log-workout' },
   { label: 'Générer un WOD', href: '/crossfit/generate' },
   { label: 'Catalogue WOD', href: '/crossfit/workouts' },
+  { label: 'Programme', href: '/crossfit/program' },
   { label: 'Progressions', href: '/crossfit/skills' },
 ]
 

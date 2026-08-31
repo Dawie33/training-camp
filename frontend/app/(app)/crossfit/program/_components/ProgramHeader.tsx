@@ -6,7 +6,7 @@ import { Pause, Play, XCircle } from 'lucide-react'
 
 const TYPE_LABELS: Record<string, string> = {
   strength_building: 'Force',
-  endurance_base: 'Endurance',
+  endurance_base: 'Engine',
   competition_prep: 'Compétition',
   off_season: 'Off-season',
 }

@@ -15,7 +15,6 @@ interface ProgramPreviewProps {
   preview: GeneratedProgram
   duration: GenerateProgramDto['duration_weeks']
   sessions: GenerateProgramDto['sessions_per_week']
-  level: GenerateProgramDto['target_level']
   expandedPhase: number
   onToggleExpandedPhase: (index: number) => void
   saving: boolean
@@ -27,7 +26,6 @@ export function ProgramPreview({
   preview,
   duration,
   sessions,
-  level,
   expandedPhase,
   onToggleExpandedPhase,
   saving,
@@ -45,7 +43,7 @@ export function ProgramPreview({
         <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
           <span className="eyebrow px-2 py-1 rounded bg-secondary">{duration} semaines</span>
           <span className="eyebrow px-2 py-1 rounded bg-secondary">{sessions}×/semaine</span>
-          <span className="eyebrow px-2 py-1 rounded bg-secondary">{LEVELS.find((l) => l.value === level)?.label}</span>
+          <span className="eyebrow px-2 py-1 rounded bg-secondary">{LEVELS.find((l) => l.value === preview.target_level)?.label}</span>
         </div>
         {preview.objectives && <p className="text-sm text-muted-foreground italic">« {preview.objectives} »</p>}
       </div>

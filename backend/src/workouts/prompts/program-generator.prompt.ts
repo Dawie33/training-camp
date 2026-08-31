@@ -41,7 +41,7 @@ Genere exactement le nombre de seances demandees pour UNE seule semaine et retou
           { "name": "Wall Ball Shots", "reps": 15, "weight": "9kg" },
           { "name": "Box Jumps", "reps": 10 }
         ],
-        "score_type": "rounds_and_reps",
+        "score_type": "rounds_and_reps|time|weight|calories|reps",
         "scaling_notes": "Reduire charge ou reps si necessaire"
       },
       "skill_work": null,
@@ -65,8 +65,13 @@ Regles :
 - Quand skill_work s applique, utilise cette structure : { "name": "Nom du skill (ex: Muscle-up)", "description": "Description du travail technique", "sets": 5, "duration": "10min", "notes": null }.
 - Les seances d une meme semaine doivent etre complementaires.
 - Utilise les exercices autorises et respecte le niveau de l athlete.
+- REGLE OBLIGATOIRE (force/halterophilie) : ce programme prepare une competition CrossFit, ou la force et l halterophilie sont des qualites determinantes. Quand un mouvement CHARGE (barbell) figure dans les "Exercices autorises" (back squat, front squat, deadlift, overhead press, bench press, clean, snatch, jerk et variantes...), le "strength_work" DOIT s appuyer dessus en priorite. N utilise le poids du corps (air squat, push-up...) pour strength_work QUE si aucun mouvement charge pertinent n est disponible dans la liste — jamais par defaut. Sur l ensemble de la semaine, au moins deux seances sur trois avec un focus "strength" ou "mixed" doivent contenir un mouvement barre.
 - Respecte le volume, l intensite et la specificite de la phase.
-- En taper, reduis nettement le volume sans supprimer tous les rappels techniques.`
+- En taper, reduis nettement le volume sans supprimer tous les rappels techniques.
+- Repartition de la semaine (microcycle) : jamais deux jours consecutifs avec le meme stress articulaire/contractile dominant (ex: pas deux seances de suite avec squat/deadlift lourd, ni deux metcons glycolytiques intenses de suite). Une journee lourde est suivie d une journee plutot metabolique ou technique.
+- Halterophilie (clean, snatch, jerk et variantes) : au maximum une seance LOURDE (>80%) par semaine en dehors d une seance technique legere (60-75%, focus vitesse de barre et position). Squat lourd (back/front, >80%) 1-2x/semaine maximum. Deadlift lourd (>85%) pas plus d une fois toutes les 2-3 semaines — le reste du temps en variantes plus legeres (deficit, tempo, RDL, sumo).
+- Gymnastique kippee (chest-to-bar, muscle-up, kipping HSPU) : ne la propose que si le niveau et les benchmarks de l athlete le permettent ; sinon privilegie le volume strict (pull-ups stricts, HSPU stricts, negatives, hold).
+- Filieres energetiques : fais varier les domaines temporels du conditioning sur la semaine (sprint court <3min, seuil/effort long, VO2max, aerobie plus longue) plutot que de repeter le meme domaine. Le champ "conditioning.type" doit TOUJOURS rester une des 7 valeurs listees ci-dessus (jamais "intervals" ou une autre valeur inventee) : pour un stimulus VO2max ou seuil, utilise "emom", "tabata", "amrap" ou "rounds_for_time" avec la duree/le nombre de tours qui correspond au domaine vise, pas un nouveau type.`
 }
 
 export function buildWeeklySessionUserPrompt(
@@ -114,10 +119,10 @@ export interface ProgramSessionReference {
 }
 
 const PROGRAM_TYPE_LABELS: Record<string, string> = {
-  strength_building: 'Développement de la force',
-  endurance_base: "Base d'endurance",
-  competition_prep: 'Préparation compétition',
-  off_season: 'Intersaison / récupération active',
+  strength_building: "Développement de la force et de l'haltérophilie (squat, deadlift, snatch, clean & jerk)",
+  endurance_base: "Développement de l'engine (capacité aérobie, Zone 2 et VO2max)",
+  competition_prep: 'Préparation compétition CrossFit (Open / Quarterfinals)',
+  off_season: 'Intersaison — maintien polyvalent (force, engine, gymnastique) et travail des points faibles',
 }
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -260,7 +265,7 @@ Tu dois TOUJOURS retourner UNIQUEMENT ce JSON, sans texte avant ni apres :
               { "name": "Box Jumps", "reps": 10 },
               { "name": "KB Swings", "reps": 12, "weight": "24kg" }
             ],
-            "score_type": "rounds_and_reps",
+            "score_type": "rounds_and_reps|time|weight|calories|reps",
             "scaling_notes": "Reduire charge ou reps si necessaire"
           },
           "skill_work": null,
@@ -297,16 +302,24 @@ Le champ "strength_work.movements" doit piocher dans un repertoire de FORCE BRUT
 - Si "landmine" est disponible dans l'equipement : integre au moins un mouvement landmine par semaine dans un programme oriente force. Le landmine offre une tension quasi continue sur toute l'amplitude (moins de point mort qu'une barre droite) et un profil unilateral/anti-rotation qui muscle le tronc en profondeur — privilegie-le pour les mouvements de poussee/tirage lourds au haut du corps, en complement des mouvements barre classiques.
 - Tenues isometriques : dead hang leste (si "pull-up-bar" dispo), top hold ou bottom hold sur squat/deadlift (blocage sous charge lourde), zercher hold ou bear hug hold au sandbag. Pour ces mouvements : "reps" = duree de la tenue (ex: "20-30s" ou "8-10s" pour une tenue proche du max absolu), "intensity" = charge quasi-max tenable sur cette duree, "rest" = repos long (2-3min).
 - Mouvements techniques d'halterophilie olympique (clean, snatch, jerk et variantes : power clean, hang snatch, split jerk...) : a reserver aux programmes program_type="competition_prep" ou si le focus declare de l'athlete le demande explicitement. NE PAS les utiliser par defaut dans un programme "strength_building" generique.
+- Frequence par patron (repere Prilepin) : squat lourd (back/front, >80%) 1-2x/semaine maximum ; deadlift lourd (>85%) pas plus d'une fois toutes les 2-3 semaines, le reste du temps en variantes plus legeres (deficit, tempo, RDL, sumo) ; quand des mouvements olympiques sont utilises, limite-les a 2-3 seances/semaine dont au moins une seance technique legere (60-75%, focus vitesse de barre et position) — jamais deux seances lourdes d'halterophilie consecutives.
 - Utilise au moins une fois par semaine, dans un programme oriente force, l'equipement de force brute reellement liste (sandbag, farmer-walk-handles, tire, sledgehammer) pour un mouvement de strength_work — pas seulement en conditioning.
 
-# METHODOLOGIE
+# METHODOLOGIE (periodisation concurrente)
 
-- Phase 1 (Accumulation) : volume eleve, intensite moderee, technique prioritaire
-- Phase 2 (Build) : volume reduit, intensite augmentee
-- Phase 3 (Peak/Realisation) : volume bas, intensite maximale, expression de la forme
+Le CrossFit developpe force, puissance, capacite aerobie et competence technique EN PARALLELE, jamais par blocs isoles : chaque semaine touche plusieurs qualites, on module l'accent selon la phase, on n'abandonne jamais une qualite.
+
+- Phase d'accumulation (debut de cycle) : volume eleve, intensite moderee, technique prioritaire.
+- Phase de construction/intensification : volume qui redescend legerement, intensite qui monte, densite accrue.
+- Phase de realisation/peak (fin de cycle) : volume bas, intensite maximale, expression de la forme.
+- Progression de volume : +10% MAXIMUM d'une semaine a l'autre au sein d'une phase, jamais plus.
+- Deload (derniere semaine d'une phase de 3 semaines ou plus) : baisse le VOLUME (-30 a -40%), PAS les charges lourdes — garde 1-2 series lourdes pour ne pas perdre la neuro.
+- Microcycle (semaine) : jamais deux jours consecutifs avec le meme stress articulaire/contractile dominant (ex: pas deux jours de suite avec squat/deadlift lourd, ni deux metcons glycolytiques intenses de suite). Une journee lourde est suivie d'une journee plutot metabolique ou technique.
 ${complementaryRule}
-- Progression semaine par semaine dans chaque phase (intensite ou volume)
-- Adapter au niveau de l'athlete et a son contexte CrossFit box`
+- Filieres energetiques : sur l'ensemble du cycle, fais varier les domaines temporels du conditioning entre sprint court (<3min, glycolytique), seuil/effort long (>3min), VO2max et aerobie plus longue (zone 2, >20min) — ne repete pas systematiquement le meme domaine. Le champ "conditioning.type" doit TOUJOURS rester "amrap", "for_time", "emom", "tabata", "rounds_for_time", "death_by" ou "chipper" (jamais "intervals" ou une autre valeur inventee) : pour un stimulus VO2max ou seuil, utilise "emom", "tabata", "amrap" ou "rounds_for_time" avec la duree/le nombre de tours qui correspond au domaine vise.
+- Gymnastique kippee (chest-to-bar, muscle-up, kipping HSPU) : ne la propose que si le niveau de l'athlete le permet (cf niveau et benchmarks du contexte athlete) ; sinon privilegie le volume strict (pull-ups stricts, HSPU stricts, negatives, hold).
+- Progression semaine par semaine coherente avec la phase (intensite OU volume qui montent, jamais les deux en meme temps sauf en taper ou les deux baissent).
+- Adapte au niveau de l'athlete et a son contexte CrossFit box.`
 }
 
 export function buildProgramGeneratorUserPrompt(
@@ -393,7 +406,7 @@ Retourne UNIQUEMENT cet objet JSON (une seule seance), sans texte avant ni apres
     "duration_minutes": 12,
     "rounds": null,
     "movements": [ { "name": "Row", "calories": 12 }, { "name": "Burpees", "reps": 10 } ],
-    "score_type": "rounds_and_reps",
+    "score_type": "rounds_and_reps|time|weight|calories|reps",
     "scaling_notes": "..."
   },
   "skill_work": null,
@@ -408,6 +421,7 @@ Retourne UNIQUEMENT cet objet JSON (une seule seance), sans texte avant ni apres
 4. "reps" peut etre un nombre ou une chaine.
 5. JAMAIS de texte hors JSON.
 6. Pour strength_work, conditioning et skill_work : mets null si le bloc ne s'applique pas. N'emets JAMAIS un objet vide {} ni partiel. Si skill_work est present, "name" et "description" doivent etre non vides.
+7. Gymnastique kippee (chest-to-bar, muscle-up, kipping HSPU) dans skill_work ou conditioning : ne la propose que si le niveau de l'athlete le permet ; sinon privilegie le volume strict (pull-ups stricts, HSPU stricts, negatives, hold).
 
 # REPERTOIRE STRENGTH_WORK (mouvements de force)
 

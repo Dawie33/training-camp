@@ -39,7 +39,7 @@ L'utilisateur demande une séance. Le backend enrichit la demande avec son profi
 | `running` | `AIRunningGeneratorService` | Génère les séances de course à pied |
 | `biking` | `AIBikingGeneratorService` | Génère les séances de vélo |
 | `mobility` | `AIMobilityGeneratorService` | Génère les séances de mobilité |
-| `training-programs` | `AIProgramGeneratorService` | Génère des programmes d'entraînement complets sur plusieurs semaines |
+| `training-programs` | `AICrossfitProgramGeneratorService` (dans `WorkoutsModule`) | Génère des programmes d'entraînement complets sur plusieurs semaines |
 | `workout-sessions` | `WorkoutAnalysisService` | Analyse une séance terminée et produit un retour personnalisé |
 
 ## Contexte utilisateur partagé

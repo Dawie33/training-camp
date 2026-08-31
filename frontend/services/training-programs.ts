@@ -69,7 +69,7 @@ export interface GenerateProgramDto {
   program_type: 'strength_building' | 'endurance_base' | 'competition_prep' | 'off_season'
   duration_weeks: 4 | 6 | 8 | 12
   sessions_per_week: 2 | 3 | 4 | 5
-  target_level: 'beginner' | 'intermediate' | 'advanced'
+  target_level?: 'beginner' | 'intermediate' | 'advanced'
   focus?: string
   box_days_per_week?: number
 }
@@ -81,6 +81,8 @@ export interface GeneratedProgram {
   phases: ProgramPhase[]
   progression_notes: string
   coach_notes?: string | null
+  // Déduit par le backend depuis le profil (sport_level) si non fourni à la génération
+  target_level: 'beginner' | 'intermediate' | 'advanced'
 }
 
 // --- Service ---
@@ -89,7 +91,7 @@ export const trainingProgramsApi = {
   generatePreview: (dto: GenerateProgramDto): Promise<GeneratedProgram> =>
     apiClient.post('/training-programs/generate-ai', dto),
 
-  createAndEnroll: (program: GeneratedProgram & { program_type: string; duration_weeks: number; sessions_per_week: number; target_level: string }) =>
+  createAndEnroll: (program: GeneratedProgram & { program_type: string; duration_weeks: number; sessions_per_week: number }) =>
     apiClient.post('/training-programs', {
       name: program.name,
       description: program.description,

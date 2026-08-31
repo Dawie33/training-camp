@@ -3,9 +3,9 @@ import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { ExercisesService } from 'src/exercises/exercises.service'
 import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
 import { UserContextService } from 'src/workouts/services/user-context.service'
+import { GenerateProgramDto } from 'src/training-programs/dto/generate-program.dto'
 import { ZodError } from 'zod'
-import { GenerateProgramDto } from './dto/generate-program.dto'
-import { buildCompetitionWeeklyPlan, WeeklyPlan } from './planning/competition-planner'
+import { buildCompetitionWeeklyPlan, WeeklyPlan } from '../planning/competition-planner'
 import {
   BonusSessionParams,
   buildBonusSessionSystemPrompt,
@@ -15,41 +15,49 @@ import {
   buildWeeklySessionSystemPrompt,
   buildWeeklySessionUserPrompt,
   ProgramSessionReference,
-} from './prompts/program-generator.prompt'
+} from '../prompts/program-generator.prompt'
 import {
   GeneratedProgramSchema,
   GeneratedProgramValidated,
   GeneratedWeeklySessionsSchema,
   ProgramSession,
   ProgramSessionSchema,
-} from './schemas/program.schema'
-import { validateCompetitionProgram } from './validators/competition-program.validator'
+} from '../schemas/program.schema'
+import { validateCompetitionProgram } from '../validators/competition-program.validator'
+
+type ResolvedProgramParams = GenerateProgramDto & { target_level: string }
 
 @Injectable()
-export class AIProgramGeneratorService {
+export class AICrossfitProgramGeneratorService {
   constructor(
     private readonly userContextService: UserContextService,
     private readonly openAIClient: OpenAIClientService,
     private readonly exercisesService: ExercisesService,
   ) { }
 
-  async generateProgram(userId: string, params: GenerateProgramDto): Promise<GeneratedProgramValidated> {
+  async generateProgram(
+    userId: string,
+    params: GenerateProgramDto,
+  ): Promise<GeneratedProgramValidated & { target_level: string }> {
     try {
       const context = await this.userContextService.getUserAIContext(userId)
-      const availableEquipment = context.equipment_available.length > 0
-        ? context.equipment_available
-        : [...EQUIPMENT_PRESETS.crossfit, 'plates']
+      const targetLevel = params.target_level ?? context.sport_level ?? 'intermediate'
+      const resolvedParams: ResolvedProgramParams = { ...params, target_level: targetLevel }
+
+      // Un programme structure suppose un entrainement en box CrossFit (equipement complet),
+      // contrairement aux WODs/seances ad hoc qui respectent l'equipement personnel du profil.
       const availableExercises = await this.exercisesService.findForProgram({
-        difficulty: params.target_level,
-        equipment: availableEquipment,
+        difficulty: targetLevel,
+        equipment: [...EQUIPMENT_PRESETS.crossfit],
       })
 
-      if (params.program_type === 'competition_prep') {
-        return await this.generateCompetitionProgram(params, context, availableExercises)
+      if (resolvedParams.program_type === 'competition_prep') {
+        const competitionProgram = await this.generateCompetitionProgram(resolvedParams, context, availableExercises)
+        return { ...competitionProgram, target_level: targetLevel }
       }
 
-      const systemPrompt = buildProgramGeneratorSystemPrompt(params.program_type)
-      const userPrompt = buildProgramGeneratorUserPrompt(params, context, availableExercises)
+      const systemPrompt = buildProgramGeneratorSystemPrompt(resolvedParams.program_type)
+      const userPrompt = buildProgramGeneratorUserPrompt(resolvedParams, context, availableExercises)
 
       const completion = await this.openAIClient.client.chat.completions.create({
         model: 'gpt-4.1',
@@ -70,7 +78,7 @@ export class AIProgramGeneratorService {
       const programData = JSON.parse(content)
       const validatedProgram = GeneratedProgramSchema.parse(programData)
 
-      return validatedProgram
+      return { ...validatedProgram, target_level: targetLevel }
     } catch (error) {
       console.error('Error generating training program with AI:', error)
 
@@ -80,6 +88,7 @@ export class AIProgramGeneratorService {
 
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')
+        console.error('Zod validation issues:', errorMessages)
         throw new BadRequestException(`Validation du programme échouée : ${errorMessages}`)
       }
 
@@ -93,7 +102,7 @@ export class AIProgramGeneratorService {
   }
 
   private async generateCompetitionProgram(
-    params: GenerateProgramDto,
+    params: ResolvedProgramParams,
     context: Awaited<ReturnType<UserContextService['getUserAIContext']>>,
     availableExercises: Array<{ name: string; category: string; difficulty: string }>,
   ): Promise<GeneratedProgramValidated> {
@@ -155,7 +164,7 @@ export class AIProgramGeneratorService {
   }
 
   private async generateCompetitionWeek(
-    params: GenerateProgramDto,
+    params: ResolvedProgramParams,
     context: Awaited<ReturnType<UserContextService['getUserAIContext']>>,
     weeklyPlan: WeeklyPlan,
     availableExercises: Array<{ name: string; category: string; difficulty: string }>,

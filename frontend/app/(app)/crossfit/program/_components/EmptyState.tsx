@@ -12,7 +12,7 @@ export function EmptyState() {
         Crée un programme structuré adapté à ton objectif — force, endurance, compétition ou objectif libre.
       </p>
       <Button asChild className="rounded-full px-6 py-5 font-display font-semibold">
-        <Link href="/training-programs/generate">
+        <Link href="/crossfit/program/generate">
           <Plus className="w-4 h-4 mr-2" />
           Créer un programme
         </Link>

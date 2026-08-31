@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Request, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { AIProgramGeneratorService } from './ai-program-generator.service'
+import { AICrossfitProgramGeneratorService } from 'src/workouts/services/ai-crossfit-program-generator.service'
 import { CreateProgramDto } from './dto/create-program.dto'
 import { GenerateProgramDto } from './dto/generate-program.dto'
 import { ScheduleWeekDto, SwapSessionDto, UpdateEnrollmentDto } from './dto/update-enrollment.dto'
@@ -12,7 +12,7 @@ import { TrainingProgramsService } from './training-programs.service'
 export class TrainingProgramsController {
   constructor(
     private readonly service: TrainingProgramsService,
-    private readonly aiGenerator: AIProgramGeneratorService,
+    private readonly aiGenerator: AICrossfitProgramGeneratorService,
   ) {}
 
   // --- Routes statiques (avant les routes paramétrées) ---

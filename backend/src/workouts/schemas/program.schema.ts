@@ -1,9 +1,46 @@
 import { z } from 'zod'
 
+/**
+ * L'IA renvoie parfois un booleen a la place d'un champ numerique (ex:
+ * "calories": true), un artefact du champ score_type/type mal interprete.
+ * Un booleen n'a pas de valeur numerique raisonnable a en deduire : on
+ * abandonne le champ (null) plutot que de faire echouer toute la generation.
+ */
+function nullifyBoolean(value: unknown): unknown {
+  return typeof value === 'boolean' ? null : value
+}
+
+/**
+ * L'IA renvoie parfois un nombre entier sous forme decimale (ex: 12.0 -> 12,
+ * ou plus rarement une vraie fraction comme 21.5), voire 0 ou un negatif pour
+ * un champ "positive()", ou meme un booleen (voir nullifyBoolean). On normalise
+ * (arrondi + clamp a 1 minimum) plutot que de faire echouer toute la
+ * generation pour un champ numerique secondaire.
+ */
+function roundToIntIfNumber(value: unknown): unknown {
+  const v = nullifyBoolean(value)
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    return Math.max(1, Math.round(v))
+  }
+  return v
+}
+
+/**
+ * Meme logique que roundToIntIfNumber, mais pour un champ numerique positif
+ * qui n'est pas force a etre entier (ex: duration_minutes).
+ */
+function clampToPositiveIfNumber(value: unknown): unknown {
+  const v = nullifyBoolean(value)
+  if (typeof v === 'number' && Number.isFinite(v) && v <= 0) {
+    return 1
+  }
+  return v
+}
+
 export const StrengthMovementSchema = z.object({
   name: z.string().min(1),
-  sets: z.number().int().positive(),
-  reps: z.union([z.number().int().positive(), z.string().min(1)]),
+  sets: z.preprocess(roundToIntIfNumber, z.number().int().positive()),
+  reps: z.preprocess(roundToIntIfNumber, z.union([z.number().int().positive(), z.string().min(1)])),
   intensity: z.string().optional().nullable(),
   rest: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -11,17 +48,17 @@ export const StrengthMovementSchema = z.object({
 
 export const ConditioningMovementSchema = z.object({
   name: z.string().min(1),
-  reps: z.union([z.number().int().positive(), z.string()]).optional().nullable(),
+  reps: z.preprocess(roundToIntIfNumber, z.union([z.number().int().positive(), z.string()]).optional().nullable()),
   distance: z.string().optional().nullable(),
   weight: z.string().optional().nullable(),
-  calories: z.number().int().positive().optional().nullable(),
+  calories: z.preprocess(roundToIntIfNumber, z.number().int().positive().optional().nullable()),
   time: z.string().optional().nullable(),
 })
 
 export const ConditioningSchema = z.object({
   type: z.enum(['amrap', 'for_time', 'emom', 'tabata', 'rounds_for_time', 'death_by', 'chipper']),
-  duration_minutes: z.number().positive().optional().nullable(),
-  rounds: z.number().int().positive().optional().nullable(),
+  duration_minutes: z.preprocess(clampToPositiveIfNumber, z.number().positive().optional().nullable()),
+  rounds: z.preprocess(roundToIntIfNumber, z.number().int().positive().optional().nullable()),
   movements: z.array(ConditioningMovementSchema).min(1),
   score_type: z.preprocess((value) => normalizeScoreType(value), z.enum(['rounds_and_reps', 'time', 'weight', 'calories', 'reps']).optional().nullable()),
   scaling_notes: z.string().optional().nullable(),
@@ -44,18 +81,22 @@ function normalizeScoreType(value: unknown): unknown {
 
   const normalized = candidates[0]?.toLowerCase() ?? ''
   if (normalized.includes('round')) return 'rounds_and_reps'
+  if (normalized.includes('completion') || normalized.includes('minute') || normalized.includes('interval')) return 'rounds_and_reps'
   if (normalized.includes('rep')) return 'reps'
   if (normalized.includes('time')) return 'time'
   if (normalized.includes('weight') || normalized.includes('load')) return 'weight'
   if (normalized.includes('cal')) return 'calories'
 
-  return value
+  // Champ optionnel : un synonyme non reconnu ne doit pas faire echouer toute
+  // la generation du programme, on abandonne juste le score_type plutot que
+  // de laisser Zod rejeter une valeur hors enum.
+  return null
 }
 
 export const SkillWorkSchema = z.object({
   name: z.string().min(1),
   description: z.string(),
-  sets: z.number().int().positive().optional().nullable(),
+  sets: z.preprocess(roundToIntIfNumber, z.number().int().positive().optional().nullable()),
   duration: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 })
@@ -86,7 +127,7 @@ export const ProgramSessionSchema = z.object({
   session_in_week: z.number().int().min(1),
   title: z.string().min(1),
   focus: z.enum(['strength', 'conditioning', 'skill', 'mixed', 'recovery']),
-  estimated_duration: z.number().positive(),
+  estimated_duration: z.preprocess(clampToPositiveIfNumber, z.number().positive()),
   strength_work: z.preprocess(nullifyEmptyBlock(hasMovements), StrengthWorkSchema.nullable()).optional(),
   conditioning: z.preprocess(nullifyEmptyBlock(hasMovements), ConditioningSchema.nullable()).optional(),
   skill_work: z

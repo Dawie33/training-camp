@@ -18,8 +18,6 @@ function GenerateProgramContent() {
     setDuration,
     sessions,
     setSessions,
-    level,
-    setLevel,
     focus,
     setFocus,
     generating,
@@ -36,7 +34,7 @@ function GenerateProgramContent() {
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center gap-3">
         <button
-          onClick={() => (step === 'preview' ? setStep('form') : router.push('/training-programs'))}
+          onClick={() => (step === 'preview' ? setStep('form') : router.push('/crossfit/program'))}
           className="flex items-center justify-center w-10 h-10 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -63,8 +61,6 @@ function GenerateProgramContent() {
             onDurationChange={setDuration}
             sessions={sessions}
             onSessionsChange={setSessions}
-            level={level}
-            onLevelChange={setLevel}
             focus={focus}
             onFocusChange={setFocus}
             generating={generating}
@@ -80,7 +76,6 @@ function GenerateProgramContent() {
             preview={preview}
             duration={duration}
             sessions={sessions}
-            level={level}
             expandedPhase={expandedPhase}
             onToggleExpandedPhase={setExpandedPhase}
             saving={saving}

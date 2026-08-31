@@ -10,8 +10,9 @@ export class GenerateProgramDto {
   @IsIn([2, 3, 4, 5])
   sessions_per_week!: number
 
+  @IsOptional()
   @IsEnum(['beginner', 'intermediate', 'advanced'])
-  target_level!: string
+  target_level?: string
 
   @IsOptional()
   @IsString()

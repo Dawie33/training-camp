@@ -48,7 +48,7 @@ export function ActiveProgramCard({ index }: { index?: string } = {}) {
     return (
       <div>
         <SectionHeader index={index} title="Programme actif" />
-        <Link href="/training-programs/generate" className="group flex items-end justify-between gap-6">
+        <Link href="/crossfit/program/generate" className="group flex items-end justify-between gap-6">
           <div>
             <h3 className="font-display text-3xl font-semibold leading-tight">
               Aucun programme actif
@@ -81,7 +81,7 @@ export function ActiveProgramCard({ index }: { index?: string } = {}) {
 
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0">
-          <Link href="/training-programs" className="group inline-flex items-start gap-2">
+          <Link href="/crossfit/program" className="group inline-flex items-start gap-2">
             <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.05]">
               {enrollment.program_name}
             </h2>

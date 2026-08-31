@@ -14,7 +14,7 @@ Training Camp distingue deux types de séances, chacun avec son propre circuit d
 ```mermaid
 graph TD
     A[Utilisateur termine une séance] --> B{Type de séance ?}
-    B -->|WOD / Programme| C[Page de log crossfit ou training-programs]
+    B -->|WOD / Programme| C[Page de log crossfit]
     B -->|Running, vélo, force, mobilité| D[Page de log du sport concerné]
     C --> E[Table workout_sessions]
     D --> F[Table dédiée au sport]
@@ -28,7 +28,7 @@ L'utilisateur accède toujours à une page de log dédiée (jamais une fenêtre 
 | Page | Sport | Service frontend | Table backend |
 |---|---|---|---|
 | `/crossfit/log-workout` | Cross-training (WOD) | `sessionService` | `workout_sessions` |
-| `/training-programs/log-session` | Programmes d'entraînement | `sessionService` | `workout_sessions` |
+| `/crossfit/program/log-session` | Programmes d'entraînement | `sessionService` | `workout_sessions` |
 | `/running/log` | Running | `runningService` | `running_sessions` |
 | `/biking/log` | Vélo | `bikingService` | `biking_sessions` |
 | `/force/log` | Force / musculation | `strengthService` | `strength_sessions` |
