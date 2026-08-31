@@ -6,6 +6,32 @@
 import { EQUIPMENT_PRESETS } from '../constants/equipment.constants'
 import { UserAIContext } from '../services/user-context.service'
 
+function buildDiagnosticRatios(oneRepMaxes: { lift: string; value: number }[]): string[] {
+  const rm: Record<string, number> = {}
+  for (const r of oneRepMaxes) rm[r.lift] = r.value
+
+  const notes: string[] = []
+  const cleanAndJerk = rm['clean_and_jerk'] ?? rm['clean']
+
+  const checkBelow = (num: number | undefined, den: number | undefined, label: string, threshold: number, hint: string) => {
+    if (!num || !den) return
+    const pct = Math.round((num / den) * 100)
+    if (pct < threshold) notes.push(`- ${label} : ${pct}% (repère ≥${threshold}%) — ${hint}`)
+  }
+  const checkAbove = (num: number | undefined, den: number | undefined, label: string, threshold: number, hint: string) => {
+    if (!num || !den) return
+    const pct = Math.round((num / den) * 100)
+    if (pct > threshold) notes.push(`- ${label} : ${pct}% (repère ≤${threshold}%) — ${hint}`)
+  }
+
+  checkBelow(rm['snatch'], cleanAndJerk, 'Snatch / Clean & Jerk', 78, 'snatch en retard — prioriser technique et mobilité overhead')
+  checkBelow(rm['front_squat'], rm['back_squat'], 'Front Squat / Back Squat', 80, 'position de réception ou gainage antérieur à travailler')
+  checkAbove(cleanAndJerk, rm['back_squat'], 'Clean & Jerk / Back Squat', 75, 'C&J proche du 1RM back squat — la limite est probablement la force max, pas la technique')
+  checkBelow(rm['deadlift'], rm['back_squat'], 'Deadlift / Back Squat', 120, 'deadlift relativement faible par rapport au squat — renforcer la chaîne postérieure')
+
+  return notes
+}
+
 export function buildAthleteContextSection(context: UserAIContext): string {
   const lines: string[] = ['## PROFIL DE L\'ATHLÈTE', '']
 
@@ -29,6 +55,14 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     lines.push('**Forces (1RM mesurés)** :')
     for (const rm of context.oneRepMaxes) {
       lines.push(`- ${rm.lift} : ${rm.value}kg`)
+    }
+
+    const ratioNotes = buildDiagnosticRatios(context.oneRepMaxes)
+    if (ratioNotes.length > 0) {
+      lines.push('')
+      lines.push('**Ratios diagnostiques (déséquilibres détectés)** :')
+      lines.push(...ratioNotes)
+      lines.push('→ Oriente le skill_work ou le strength du jour vers le point faible identifié si pertinent pour ce workout.')
     }
   }
 
@@ -88,6 +122,11 @@ export function buildAthleteContextSection(context: UserAIContext): string {
       lines.push(`- ${s.date} — ${label}${type}, ${s.duration_minutes}min${effort}`)
     }
     lines.push('→ Tiens compte de la charge globale tous sports pour adapter l\'intensité et éviter la surcharge.')
+    lines.push(
+      '→ Règle du microcycle : si une séance récente (< 48h) était déjà lourde/intense sur le même pattern de mouvement' +
+        ' (ex. strength_max sur squat/hinge, ou skill gymnastique à haut volume), évite de reproduire le même stress' +
+        ' articulaire/contractile aujourd\'hui — oriente plutôt vers un pattern complémentaire ou une autre modalité.',
+    )
   }
 
   if (context.recentAnalyses.length > 0) {
@@ -272,6 +311,20 @@ Varie et combine ces modalités selon le type de workout :
 
 ## 4. PRINCIPES DE PROGRAMMATION
 
+### Table de Prilepin (charge et volume pour force et haltérophilie)
+Utilise cette table pour prescrire des schémas reps/séries cohérents avec le %1RM visé sur strength_max, strength_accessory, et le skill work d'haltérophilie :
+
+| % du 1RM | Reps/série | Volume total optimal | Fourchette |
+|---|---|---|---|
+| 55-65 % | 3-6 | 24 | 18-30 |
+| 70-80 % | 3-6 | 18 | 12-24 |
+| 80-90 % | 2-4 | 15 | 10-20 |
+| ≥90 % | 1-2 | 7 | 4-10 |
+
+Repère descriptif, pas une règle stricte : pour les mouvements de force lente (squat, deadlift, press), le volume peut dépasser ces valeurs. Pour snatch/clean & jerk, reste dans ces fourchettes et privilégie la qualité technique.
+
+Si le profil de l'athlète indique un 1RM connu pour le mouvement travaillé, calcule la charge réelle en kg à partir du %1RM demandé (ex : 1RM back squat 120kg → 75% = 90kg) plutôt que de laisser uniquement un pourcentage dans le champ "weight".
+
 ### Intensité par niveau
 - **Beginner** : Mouvements fondamentaux, charge légère, technique avant tout
   - Scaling systématique, mouvements simplifiés
@@ -290,6 +343,10 @@ Varie et combine ces modalités selon le type de workout :
   - Benchmarks RX
 
 ### Scaling Options
+Le scaling doit **préserver le stimulus**, pas seulement réduire la charge. Applique les leviers dans cet ordre, en ne passant au levier suivant que si le précédent ne suffit pas : 1) charge, 2) volume de reps, 3) amplitude/complexité du mouvement, 4) substitution de mouvement. La version scaled doit rester dans le même temps cible / la même intensité relative que la version RX.
+
+**Gymnastique — strict avant kipping** : pour les niveaux Beginner et Intermediate, ne propose jamais une variante kipping (kipping pull-up, kipping HSPU, muscle-up) sans que la version strict correspondante soit déjà maîtrisée. En cas de doute, prescris la version strict ou une régression (ring rows, box HSPU, jumping pull-ups) plutôt que le kipping — le kipping sur une base de force insuffisante est le premier facteur de blessure d'épaule.
+
 TOUJOURS fournir des options de scaling dans le champ "details" :
 - RX : standard complet
 - Scaled : version accessible
@@ -533,7 +590,7 @@ Si la somme ne correspond pas exactement à la durée demandée, ajuste le volum
           {
             "name": "Box Jump Overs",
             "reps": 15,
-            "details": "24"/20" - step down autorisé. Scaled: step-ups"
+            "details": "24\\"/20\\" - step down autorisé. Scaled: step-ups"
           }
         ],
         "goal": "Viser 5-7 rounds pour Intermediate, 7-9 rounds pour Advanced"
