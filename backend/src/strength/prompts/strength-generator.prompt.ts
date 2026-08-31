@@ -64,10 +64,10 @@ Exception : les mouvements de chargement strongman (« sandbag clean », « keg 
 
 ## Sélection des exercices selon le matériel
 - Si "barbell" disponible → privilégier les mouvements avec barre
-- Si "dumbbells" disponibles → utiliser haltères pour unilatéral et variation
-- Si "bands" disponibles → intégrer obligatoirement AU MOINS UN exercice de rotation ou anti-rotation avec bande
+- Si "dumbbell" disponible → utiliser haltères pour unilatéral et variation
+- Si "band" disponible → intégrer obligatoirement AU MOINS UN exercice de rotation ou anti-rotation avec bande
 - Si "landmine" disponible → OBLIGATOIRE d'inclure au moins un mouvement landmine dans la séance (répartis sur push/pull/squat/rotation selon la zone ciblée) : landmine press unilatéral (push), landmine row un bras ou Meadows row (pull), landmine squat to press (squat), landmine rotation/rainbow/twist (rotation). Le landmine offre une tension quasi continue sur toute l'amplitude (moins de point mort qu'une barre droite) et un profil unilatéral/anti-rotation qui muscle le tronc en profondeur — privilégie-le pour les mouvements de poussée/tirage lourds au haut du corps quand il est disponible, en complément (pas remplacement) des mouvements barre classiques.
-- Si "cable_machine" disponible → cable woodchop, face pull, cable rotation, Pallof press câble
+- Si "cable-machine" disponible → cable woodchop, face pull, cable rotation, Pallof press câble
 - Si "sandbag" disponible → OBLIGATOIRE d'inclure au moins un mouvement au sandbag dans la séance (bear hug carry, zercher squat, shouldering, sandbag get-up, ou bear hug hold en isométrique), QUEL QUE SOIT le style choisi (traditional ou strongman) — le sandbag est un outil de force brute polyvalent, pas réservé au style strongman. Voir le répertoire détaillé dans la section STYLE STRONGMAN plus bas.
 - Si équipement limité → adapter avec poids de corps, bandes, haltères légers
 - Toujours proposer des ALTERNATIVES pour chaque exercice
@@ -84,27 +84,35 @@ Exception : les mouvements de chargement strongman (« sandbag clean », « keg 
   * Poids de corps : dead bug, bird-dog, hollow body rock, Russian twist lesté, Copenhagen plank, side plank rotation, bear crawl rotation
 
 ## Intensité selon l'objectif
-- strength : 1-5 reps, repos 3-5 min. Si un 1RM est connu pour le mouvement (voir « 1RM mesurés » dans la requête), CIBLE 85-95% de ce 1RM et indique la charge en kg (ou une fourchette) dans "intensity", ex: "90% 1RM (~102 kg)". Si aucun 1RM n'est disponible pour ce mouvement précis, utilise RPE 8-9.
+- strength : reps et %1RM DOIVENT être cohérents entre eux — une charge ne peut jamais dépasser ce qu'un nombre de reps donné permet réellement de soulever :
+  - 1-2 reps → 90-100% 1RM
+  - 3-4 reps → 84-92% 1RM
+  - 5 reps → 80-86% 1RM
+  Repos 3-5 min. Si un 1RM est connu pour le mouvement (voir « 1RM mesurés » dans la requête), calcule la charge en kg à partir de la fourchette correspondant au nombre de reps choisi et indique-la dans "intensity", ex: "5 reps @ 84% 1RM (~95 kg)". Si aucun 1RM n'est disponible pour ce mouvement précis, prescris directement en RPE 8-9 sans pourcentage. NE JAMAIS combiner un nombre de reps élevé (4-5) avec un %1RM proche du max (>90%) : c'est physiologiquement incohérent.
 - hypertrophy : 8-12 reps, RPE 7-8, repos 60-90 sec
 - endurance : 15-20+ reps, RPE 6-7, repos 30-60 sec
 - power : 3-5 reps explosifs, RPE 7-8, repos 2-3 min
 
 ## Bloc isométrique (block_type: "isometric") — règle d'or
-- **TOUJOURS inclure au moins 1 exercice de type "isometric"** dans la séance dès que l'une de ces conditions est vraie : l'objectif est "strength", OU le style est "strongman", OU au moins un des équipements suivants est disponible : barbell, dumbbells, kettlebell, sandbag, pull-up-bar. N'omets ce bloc QUE si la séance est en poids de corps strict sans barre de traction ni charge disponible.
+- **TOUJOURS inclure au moins 1 exercice de type "isometric"** dans la séance dès que l'une de ces conditions est vraie : l'objectif est "strength", OU le style est "strongman", OU au moins un des équipements suivants est disponible : barbell, dumbbell, kettlebell, sandbag, pull-up-bar. N'omets ce bloc QUE si la séance est en poids de corps strict sans barre de traction ni charge disponible.
 - Objectif : contraction volontaire maximale tenue, pas de répétitions classiques. Pour ces exercices : "reps" = durée de la tenue (ex: "8-10 sec" pour une tenue proche du max absolu, "20-40 sec" pour un farmer's carry hold ou un dead hang lesté), "sets" = nombre de tenues (généralement 3-5), "rest" = repos long (2-3 min, la contraction max est très fatigante).
 - Charge : toujours proche du maximum que l'athlète peut tenir sur la durée visée (charge quasi-max, pas un poids "confortable") — préciser dans "intensity" un ordre de grandeur (ex: "charge max tenable 30 sec").
-- Répertoire à choisir selon l'équipement disponible : "pull-up-bar" → dead hang (lesté si possible) ; "barbell"/"dumbbells"/"kettlebell" → top hold ou bottom hold squat/deadlift (blocage sous charge lourde), farmer's carry hold immobile ; "sandbag" → zercher hold, bear hug hold ; sinon (poids de corps) → plank lesté lourd ou, à défaut de lest, static wall sit, hollow body hold.
+- Répertoire à choisir selon l'équipement disponible : "pull-up-bar" → dead hang (lesté si possible) ; "barbell"/"dumbbell"/"kettlebell" → top hold ou bottom hold squat/deadlift (blocage sous charge lourde), farmer's carry hold immobile ; "sandbag" → zercher hold, bear hug hold ; sinon (poids de corps) → plank lesté lourd ou, à défaut de lest, static wall sit, hollow body hold.
 - Ce bloc est complémentaire d'un bloc "carry" ou "hinge" classique, pas un substitut.
 
 ## Durée de séance
 - Si une durée cible est précisée dans la requête : RESPECTE-LA strictement. Ajuste le nombre de blocs, d'exercices et le volume en conséquence.
 - Si aucune durée n'est précisée : adapte librement selon le volume (typiquement 45-75 min).
-- Règle de construction : échauffement (8-10 min) + blocs (12-15 min chacun) + cooldown (5 min) = durée totale.
-- Exemples : 30 min → 2 blocs courts · 45 min → 3 blocs · 60 min → 4 blocs · 90 min → 5-6 blocs
+- Règle de construction : échauffement (8-10 min) + blocs + cooldown (5 min) = durée totale. Le temps par bloc dépend du repos imposé par l'objectif :
+  - hypertrophy / endurance / rotation / core / isolation (repos 30-90 sec) : ~12-15 min par bloc de 3-5 exercices.
+  - **strength / power (repos 2-5 min) : compte le temps réel.** Un seul exercice à 4 séries avec 3-5 min de repos occupe déjà 12-20 min à lui seul. NE MET JAMAIS plus de 1-2 exercices par bloc sur ces objectifs (voir section suivante) — sinon la séance dépassera largement la durée cible, ou pire, tu seras tenté de raccourcir le repos sur des séries lourdes (interdit, voir Repos).
+- Exemples (hypertrophy/endurance) : 30 min → 2 blocs courts · 45 min → 3 blocs · 60 min → 4 blocs · 90 min → 5-6 blocs
+- Exemple (strength/power) : 60 min ≈ échauffement (10 min) + 3-4 blocs de 1-2 exercices lourds (repos inclus) + cooldown (5 min).
 
 ## Nombre de blocs et exercices
 - Séance complète (3+ groupes) : 4-5 blocs, 3-5 exercices par bloc
 - Séance ciblée (1-2 groupes) : 3-4 blocs, 3-5 exercices par bloc
+- **Exception objectif "strength"** : 1-2 exercices lourds par bloc maximum — le repos de 3-5 min ne laisse pas la place à plus (voir Durée de séance). Compense par plus de blocs (mouvement principal, variante, accessoire ciblé) plutôt que plus d'exercices par bloc.
 - **RÈGLE CORE/ABDOS** : séance focalisée sur core/abdos = MINIMUM 4 blocs avec 3-4 exercices chacun (le core se travaille en volume et variété) :
   - Bloc 1 (block_type: "core") : Stabilisation & activation (planche, dead bug, bird-dog, creux)
   - Bloc 2 (block_type: "core") : Flexion & anti-extension (crunch lesté, ab wheel, GHD sit-up, dragon flag)
@@ -116,7 +124,8 @@ Exception : les mouvements de chargement strongman (« sandbag clean », « keg 
 - beginner : 2-3 sets par exercice, 3-4 exercices par bloc (minimum 3 blocs)
 - intermediate : 3-4 sets, 3-5 exercices par bloc (minimum 3 blocs)
 - advanced : 4-5 sets, 4-6 exercices par bloc (minimum 4 blocs)
-- **MINIMUM GLOBAL** : jamais moins de 10 exercices au total pour une séance de 45 min ou plus
+- Ces fourchettes de "exercices par bloc" ne s'appliquent PAS à l'objectif "strength" (voir exception ci-dessus dans « Nombre de blocs et exercices »).
+- **MINIMUM GLOBAL** : jamais moins de 10 exercices au total pour une séance de 45 min ou plus, SAUF objectif "strength" où 6-8 exercices suffisent — un bloc principal solide (mouvement lourd + variante + accessoire ciblé) prime sur le nombre
 
 # PRINCIPES IMPORTANTS
 - Cohérence matériel : n'utiliser que les équipements listés dans la requête

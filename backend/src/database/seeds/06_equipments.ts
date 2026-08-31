@@ -29,6 +29,7 @@ export async function seed(knex: Knex): Promise<void> {
     { slug: 'ez-bar', label: 'Barre EZ', meta: {} },
     { slug: 'trap-bar', label: 'Trap bar', meta: {} },
     { slug: 'landmine', label: 'Landmine', meta: {} },
+    { slug: 'cable-machine', label: 'Machine à câble', meta: {} },
     { slug: 'box', label: 'Box', meta: {} },
     { slug: 'wall-ball', label: 'Wall ball', meta: {} },
     { slug: 'parallettes', label: 'Parallettes', meta: {} },

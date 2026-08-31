@@ -36,6 +36,7 @@ export const EQUIPMENT_CATEGORIES: EquipmentCategoryGroup[] = [
       { value: 'ez-bar', label: 'Barre EZ' },
       { value: 'trap-bar', label: 'Trap bar' },
       { value: 'landmine', label: 'Landmine' },
+      { value: 'cable-machine', label: 'Machine à câble' },
     ],
   },
   {
@@ -104,7 +105,7 @@ export const EQUIPMENT_PRESET_CROSSFIT_BOX = [
   'barbell', 'bumper-plates', 'rack', 'bench', 'dumbbell', 'kettlebell',
   'box', 'pull-up-bar', 'jump-rope', 'rower', 'assault-bike', 'bike-erg', 'ski-erg', 'sled', 'wall-ball',
   'rings', 'parallettes', 'ghd', 'medicine-ball', 'battle-ropes', 'slam-ball', 'sandbag',
-  'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles', 'landmine',
+  'abmat', 'tire', 'sledgehammer', 'farmer-walk-handles', 'landmine', 'cable-machine',
 ]
 
 export const EQUIPMENT_PRESETS = [
