@@ -6,6 +6,7 @@ import {
   SessionGoal,
   strengthService,
   TrainingStyle,
+  UPPER_BODY_MUSCLES,
 } from '@/services/strength'
 import { usersService } from '@/services/users'
 import { useRouter } from 'next/navigation'
@@ -16,7 +17,7 @@ export function useGenerateStrengthSession() {
   const router = useRouter()
 
   // Formulaire IA
-  const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([])
+  const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>(UPPER_BODY_MUSCLES)
   const [sessionGoal, setSessionGoal] = useState<SessionGoal>('hypertrophy')
   const bodyFocus = useMemo(() => deriveBodyFocus(selectedMuscles), [selectedMuscles])
   const [trainingStyle, setTrainingStyle] = useState<TrainingStyle>('traditional')

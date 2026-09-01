@@ -28,7 +28,8 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
 ]
 
 export const UPPER_BODY_MUSCLES: MuscleGroup[] = ['chest', 'back', 'shoulders', 'arms', 'forearms']
-export const LOWER_BODY_MUSCLES: MuscleGroup[] = ['legs', 'glutes', 'core']
+export const LOWER_BODY_MUSCLES: MuscleGroup[] = ['legs', 'glutes']
+export const CORE_MUSCLES: MuscleGroup[] = ['core']
 
 export function deriveBodyFocus(muscles: MuscleGroup[]): BodyFocus {
   const hasUpper = muscles.some(m => UPPER_BODY_MUSCLES.includes(m))

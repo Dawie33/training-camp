@@ -2,6 +2,7 @@
 
 import { EQUIPMENT_PRESET_CROSSFIT_BOX } from '@/domain/entities/equipment-options'
 import {
+  CORE_MUSCLES,
   LOWER_BODY_MUSCLES,
   MUSCLE_LABELS,
   MuscleGroup,
@@ -18,6 +19,7 @@ import { useEffect, useState } from 'react'
 const BODY_PARTS = {
   upper: { label: 'Haut du corps', icon: '💪', muscles: UPPER_BODY_MUSCLES },
   lower: { label: 'Bas du corps', icon: '🦵', muscles: LOWER_BODY_MUSCLES },
+  core: { label: 'Abdos / Core', icon: '🔥', muscles: CORE_MUSCLES },
 }
 
 const GOALS: { value: SessionGoal; description: string; reps: string }[] = [
@@ -77,7 +79,7 @@ export function GenerateStrengthForm({
     else setEquipment(profileEquipment)
   }, [equipmentMode, profileEquipment, setEquipment])
 
-  const toggleBodyPart = (part: 'upper' | 'lower') => {
+  const toggleBodyPart = (part: keyof typeof BODY_PARTS) => {
     const muscles = BODY_PARTS[part].muscles
     const allSelected = muscles.every(m => selectedMuscles.includes(m))
     if (allSelected) {
@@ -87,10 +89,10 @@ export function GenerateStrengthForm({
     }
   }
 
-  const isBodyPartFull = (part: 'upper' | 'lower') =>
+  const isBodyPartFull = (part: keyof typeof BODY_PARTS) =>
     BODY_PARTS[part].muscles.every(m => selectedMuscles.includes(m))
 
-  const isBodyPartPartial = (part: 'upper' | 'lower') =>
+  const isBodyPartPartial = (part: keyof typeof BODY_PARTS) =>
     BODY_PARTS[part].muscles.some(m => selectedMuscles.includes(m)) && !isBodyPartFull(part)
 
   return (
@@ -128,8 +130,8 @@ export function GenerateStrengthForm({
           )}
         </label>
 
-        {/* Boutons haut / bas du corps */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
+        {/* Boutons haut / bas du corps / core */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
           {(Object.entries(BODY_PARTS) as [keyof typeof BODY_PARTS, typeof BODY_PARTS[keyof typeof BODY_PARTS]][]).map(([key, part]) => (
             <button
               key={key}
