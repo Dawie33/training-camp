@@ -7,11 +7,11 @@ import { WeekNavigator } from '@/components/program/WeekNavigator'
 import { WeekSessionCard } from '@/components/program/WeekSessionCard'
 import { useTrainingProgram } from '@/hooks/useTrainingProgram'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { trainingProgramsApi } from '@/services/training-programs'
+import { strengthProgramApi } from '@/services/strength-program'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 
-function TrainingProgramsContent() {
+function StrengthProgramContent() {
   const {
     enrollment,
     weekData,
@@ -27,13 +27,11 @@ function TrainingProgramsContent() {
     sessionDates,
     setSessionDates,
     scheduling,
-    addingBonus,
     handleStart,
     handlePause,
     handleAbandon,
     handleSchedule,
-    handleAddBonus,
-  } = useTrainingProgram(trainingProgramsApi)
+  } = useTrainingProgram(strengthProgramApi)
 
   if (loading) {
     return (
@@ -46,7 +44,10 @@ function TrainingProgramsContent() {
   if (!enrollment) {
     return (
       <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
-        <EmptyState generateHref="/crossfit/program/generate" />
+        <EmptyState
+          generateHref="/force/program/generate"
+          description="Crée un programme de force structuré et périodisé, adapté à ton niveau et à ton objectif — force max, hypertrophie, powerlifting ou strongman."
+        />
       </div>
     )
   }
@@ -78,8 +79,6 @@ function TrainingProgramsContent() {
           viewWeek={viewWeek}
           onPrevWeek={() => setViewWeek((v) => Math.max(1, v - 1))}
           onNextWeek={() => setViewWeek((v) => Math.min(enrollment.duration_weeks, v + 1))}
-          addingBonus={addingBonus}
-          onAddBonus={handleAddBonus}
           showSchedule={showSchedule}
           onToggleSchedule={() => setShowSchedule((v) => !v)}
         />
@@ -121,12 +120,7 @@ function TrainingProgramsContent() {
             )}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {weekData.sessions.map((session, i) => (
-                <WeekSessionCard
-                  key={i}
-                  session={session}
-                  num={i + 1}
-                  logSessionHrefBase="/crossfit/program/log-session"
-                />
+                <WeekSessionCard key={i} session={session} num={i + 1} />
               ))}
             </div>
           </div>
@@ -136,6 +130,6 @@ function TrainingProgramsContent() {
   )
 }
 
-export default function TrainingProgramsPage() {
-  return <TrainingProgramsContent />
+export default function StrengthProgramPage() {
+  return <StrengthProgramContent />
 }

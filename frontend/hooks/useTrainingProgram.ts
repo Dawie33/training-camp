@@ -1,6 +1,23 @@
-import { trainingProgramsApi, ActiveEnrollment, WeekSessions } from '@/services/training-programs'
+import type { ActiveEnrollment, ProgramSession, WeekSessions } from '@/services/training-programs'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+
+// Interface generique implementee par les differents services de programme
+// (CrossFit : trainingProgramsApi, Force : strengthProgramApi, ...) pour que
+// ce hook reste independant du sport. addBonusSession est optionnel car tous
+// les sports n'exposent pas (encore) la generation de seance bonus IA.
+export interface TrainingProgramApi {
+  getActive: () => Promise<ActiveEnrollment | null>
+  getWeekSessions: (enrollmentId: string, weekNum: number) => Promise<WeekSessions>
+  start: (enrollmentId: string) => Promise<unknown>
+  pause: (enrollmentId: string) => Promise<unknown>
+  abandon: (enrollmentId: string) => Promise<unknown>
+  scheduleWeek: (
+    enrollmentId: string,
+    dto: { week_num: number; start_date?: string; box_dates?: string[]; assignments?: { session_index: number; date: string }[] }
+  ) => Promise<{ scheduled: { date: string; session_title: string; schedule_id: string }[]; week_num: number }>
+  addBonusSession?: (enrollmentId: string, weekNum: number, focus?: string) => Promise<ProgramSession & { _bonus: true }>
+}
 
 // Lundi de la semaine courante au format YYYY-MM-DD
 function mondayOfCurrentWeek(): string {
@@ -29,7 +46,7 @@ function defaultSessionDates(startDate: string, count: number): string[] {
   return dates
 }
 
-export function useTrainingProgram() {
+export function useTrainingProgram(api: TrainingProgramApi) {
   const [enrollment, setEnrollment] = useState<ActiveEnrollment | null>(null)
   const [weekData, setWeekData] = useState<WeekSessions | null>(null)
   const [loading, setLoading] = useState(true)
@@ -44,7 +61,7 @@ export function useTrainingProgram() {
 
   const fetchEnrollment = useCallback(async () => {
     try {
-      const data = await trainingProgramsApi.getActive()
+      const data = await api.getActive()
       setEnrollment(data)
       if (data) {
         setViewWeek(data.current_week)
@@ -54,7 +71,7 @@ export function useTrainingProgram() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [api])
 
   useEffect(() => {
     fetchEnrollment()
@@ -63,14 +80,14 @@ export function useTrainingProgram() {
   const fetchWeek = useCallback(async (enrollmentId: string, week: number) => {
     setLoadingWeek(true)
     try {
-      const data = await trainingProgramsApi.getWeekSessions(enrollmentId, week)
+      const data = await api.getWeekSessions(enrollmentId, week)
       setWeekData(data)
     } catch {
       toast.error('Impossible de charger les sessions de cette semaine')
     } finally {
       setLoadingWeek(false)
     }
-  }, [])
+  }, [api])
 
   useEffect(() => {
     if (enrollment) {
@@ -89,7 +106,7 @@ export function useTrainingProgram() {
     if (!enrollment) return
     setActionLoading(true)
     try {
-      await trainingProgramsApi.start(enrollment.id)
+      await api.start(enrollment.id)
       toast.success('Programme démarré !')
       fetchEnrollment()
     } catch {
@@ -103,7 +120,7 @@ export function useTrainingProgram() {
     if (!enrollment) return
     setActionLoading(true)
     try {
-      await trainingProgramsApi.pause(enrollment.id)
+      await api.pause(enrollment.id)
       toast.success('Programme mis en pause')
       fetchEnrollment()
     } catch {
@@ -118,7 +135,7 @@ export function useTrainingProgram() {
     if (!confirm('Abandonner ce programme ? Cette action est irréversible.')) return
     setActionLoading(true)
     try {
-      await trainingProgramsApi.abandon(enrollment.id)
+      await api.abandon(enrollment.id)
       toast.success('Programme abandonné')
       setEnrollment(null)
       setWeekData(null)
@@ -142,7 +159,7 @@ export function useTrainingProgram() {
     }
     setScheduling(true)
     try {
-      const res = await trainingProgramsApi.scheduleWeek(enrollment.id, {
+      const res = await api.scheduleWeek(enrollment.id, {
         week_num: viewWeek,
         assignments: dates.map((date, i) => ({ session_index: i, date })),
       })
@@ -159,10 +176,10 @@ export function useTrainingProgram() {
   }
 
   const handleAddBonus = async () => {
-    if (!enrollment) return
+    if (!enrollment || !api.addBonusSession) return
     setAddingBonus(true)
     try {
-      await trainingProgramsApi.addBonusSession(enrollment.id, viewWeek)
+      await api.addBonusSession(enrollment.id, viewWeek)
       toast.success('Séance bonus ajoutée à la semaine')
       await fetchWeek(enrollment.id, viewWeek)
     } catch {
@@ -192,6 +209,6 @@ export function useTrainingProgram() {
     handlePause,
     handleAbandon,
     handleSchedule,
-    handleAddBonus,
+    handleAddBonus: api.addBonusSession ? handleAddBonus : undefined,
   }
 }

@@ -14,7 +14,16 @@ const FOCUS_LABEL: Record<string, string> = {
   recovery: 'Récup',
 }
 
-export function WeekSessionCard({ session, num }: { session: ProgramSession; num: number }) {
+interface WeekSessionCardProps {
+  session: ProgramSession
+  num: number
+  // Base de la route de log (ex: "/crossfit/program/log-session") — le
+  // lien "Logger la séance" n'est affiché que si cette prop est fournie,
+  // car tous les sports n'ont pas encore de page de log dédiée au programme.
+  logSessionHrefBase?: string
+}
+
+export function WeekSessionCard({ session, num, logSessionHrefBase }: WeekSessionCardProps) {
   const [open, setOpen] = useState(false)
   const movements = [
     ...(session.strength_work?.movements.map((m) => m.name) ?? []),
@@ -58,9 +67,9 @@ export function WeekSessionCard({ session, num }: { session: ProgramSession; num
       {open && (
         <div className="px-4 pb-4 pt-1 border-t border-border">
           <ProgramSessionDetail session={session} />
-          {session.schedule_id && session.status !== 'completed' && (
+          {logSessionHrefBase && session.schedule_id && session.status !== 'completed' && (
             <Link
-              href={`/crossfit/program/log-session?scheduleId=${session.schedule_id}`}
+              href={`${logSessionHrefBase}?scheduleId=${session.schedule_id}`}
               className="mt-3 inline-flex items-center justify-center w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-all"
             >
               Logger la séance

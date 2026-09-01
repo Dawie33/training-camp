@@ -1,9 +1,9 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import type { GeneratedProgram, GenerateProgramDto } from '@/services/training-programs'
+import { SessionPreviewCard } from '@/components/program/SessionPreviewCard'
+import type { GeneratedProgram } from '@/services/training-programs'
 import { CheckCircle, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
-import { SessionPreviewCard } from './SessionPreviewCard'
 
 const LEVELS = [
   { value: 'beginner', label: 'Débutant' },
@@ -13,8 +13,8 @@ const LEVELS = [
 
 interface ProgramPreviewProps {
   preview: GeneratedProgram
-  duration: GenerateProgramDto['duration_weeks']
-  sessions: GenerateProgramDto['sessions_per_week']
+  duration: number
+  sessions: number
   expandedPhase: number
   onToggleExpandedPhase: (index: number) => void
   saving: boolean

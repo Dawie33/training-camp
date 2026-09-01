@@ -9,8 +9,8 @@ interface WeekNavigatorProps {
   viewWeek: number
   onPrevWeek: () => void
   onNextWeek: () => void
-  addingBonus: boolean
-  onAddBonus: () => void
+  addingBonus?: boolean
+  onAddBonus?: () => void
   showSchedule: boolean
   onToggleSchedule: () => void
 }
@@ -35,7 +35,7 @@ export function WeekNavigator({
       </span>
 
       <div className="flex items-center gap-2">
-        {canManage && (
+        {canManage && onAddBonus && (
           <Button
             variant="outline"
             size="sm"

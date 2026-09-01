@@ -1,19 +1,19 @@
 'use client'
 
+import { ProgramPreview } from '@/components/program/ProgramPreview'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
-import { ProgramPreview } from '@/components/program/ProgramPreview'
-import { ProgramForm } from './_components/ProgramForm'
-import { useGenerateProgram } from './_hooks/useGenerateProgram'
+import { StrengthProgramForm } from './_components/StrengthProgramForm'
+import { useGenerateStrengthProgram } from './_hooks/useGenerateStrengthProgram'
 
-function GenerateProgramContent() {
+function GenerateStrengthProgramContent() {
   const {
     router,
     step,
     setStep,
-    programType,
-    setProgramType,
+    trainingStyle,
+    setTrainingStyle,
     duration,
     setDuration,
     sessions,
@@ -27,14 +27,14 @@ function GenerateProgramContent() {
     setExpandedPhase,
     handleGenerate,
     handleConfirm,
-  } = useGenerateProgram()
+  } = useGenerateStrengthProgram()
 
   return (
     <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center gap-3">
         <button
-          onClick={() => (step === 'preview' ? setStep('form') : router.push('/crossfit/program'))}
+          onClick={() => (step === 'preview' ? setStep('form') : router.push('/force/program'))}
           className="flex items-center justify-center w-10 h-10 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -54,9 +54,9 @@ function GenerateProgramContent() {
       {/* Étape 1 : Formulaire */}
       {step === 'form' && (
         <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
-          <ProgramForm
-            programType={programType}
-            onProgramTypeChange={setProgramType}
+          <StrengthProgramForm
+            trainingStyle={trainingStyle}
+            onTrainingStyleChange={setTrainingStyle}
             duration={duration}
             onDurationChange={setDuration}
             sessions={sessions}
@@ -88,6 +88,6 @@ function GenerateProgramContent() {
   )
 }
 
-export default function GenerateProgramPage() {
-  return <GenerateProgramContent />
+export default function GenerateStrengthProgramPage() {
+  return <GenerateStrengthProgramContent />
 }
