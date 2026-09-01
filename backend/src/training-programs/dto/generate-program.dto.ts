@@ -7,7 +7,7 @@ export class GenerateProgramDto {
   @IsIn([4, 6, 8, 12])
   duration_weeks!: number
 
-  @IsIn([2, 3, 4, 5])
+  @IsIn([1, 2, 3, 4, 5])
   sessions_per_week!: number
 
   @IsOptional()

@@ -68,7 +68,7 @@ export interface WeekSessions {
 export interface GenerateProgramDto {
   program_type: 'strength_building' | 'endurance_base' | 'competition_prep' | 'off_season'
   duration_weeks: 4 | 6 | 8 | 12
-  sessions_per_week: 2 | 3 | 4 | 5
+  sessions_per_week: 1 | 2 | 3 | 4 | 5
   target_level?: 'beginner' | 'intermediate' | 'advanced'
   focus?: string
   box_days_per_week?: number

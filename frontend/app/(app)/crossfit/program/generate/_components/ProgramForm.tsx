@@ -13,7 +13,7 @@ const PROGRAM_TYPES = [
 ] as const
 
 const DURATIONS = [4, 6, 8, 12] as const
-const SESSIONS = [2, 3, 4, 5] as const
+const SESSIONS = [1, 2, 3, 4, 5] as const
 
 function OptionButton({
   selected,
@@ -111,7 +111,7 @@ export function ProgramForm({
 
         <div className="border border-border bg-card rounded-lg p-5 space-y-3">
           <h2 className="eyebrow">Séances/sem.</h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {SESSIONS.map((s) => (
               <OptionButton
                 key={s}
