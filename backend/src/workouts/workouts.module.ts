@@ -9,6 +9,11 @@ import { UserContextService } from './services/user-context.service'
 import { WorkoutScheduleService } from './services/workout-schedule.service'
 import { WorkoutsService } from './services/workouts.service'
 
+/**
+ * Module workouts : CRUD des workouts et de leur planification, génération assistée
+ * par IA (WODs et programmes CrossFit) et agrégation du contexte utilisateur.
+ * `UserContextService` est exporté pour être réutilisé par tout nouveau service IA.
+ */
 @Module({
   imports: [GoogleCalendarModule, ExercisesModule],
   controllers: [WorkoutsController, WorkoutScheduleController],

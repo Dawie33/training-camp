@@ -9,6 +9,10 @@ interface TagInputProps {
   label?: string
 }
 
+/**
+ * Champ de saisie de tags (chips) à partir d'une chaîne unique séparée par des virgules.
+ * Ajout via Entrée, suppression via le bouton × ou Retour arrière sur champ vide.
+ */
 export function TagInput({ value, onChange, placeholder = 'Ajouter...', label }: TagInputProps) {
   const [inputValue, setInputValue] = useState('')
 

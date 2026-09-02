@@ -6,6 +6,10 @@ import { GenerateForm } from './_components/GenerateForm'
 import { GeneratedWorkoutResult } from './_components/GeneratedWorkoutResult'
 import { useGenerateWorkout } from './_hooks/useGenerateWorkout'
 
+/**
+ * Page de génération de workout par IA : formulaire de paramètres puis prévisualisation
+ * éditable et sauvegarde du workout généré.
+ */
 export default function GenerateWorkoutAIPage() {
   const router = useRouter()
   const {

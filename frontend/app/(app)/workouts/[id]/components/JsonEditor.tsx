@@ -12,6 +12,10 @@ interface JsonEditorProps {
   rows?: number
 }
 
+/**
+ * Zone de texte pour éditer du JSON brut, avec validation en direct et un bouton
+ * de formatage (indentation).
+ */
 export function JsonEditor({ value, onChange, label, placeholder, rows = 8 }: JsonEditorProps) {
   const [isValid, setIsValid] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')

@@ -2,6 +2,9 @@ import { EQUIPMENT_PRESETS } from 'src/workouts/constants/equipment.constants'
 import type { UserAIContext } from 'src/workouts/services/user-context.service'
 import type { WeeklyPlan } from '../planning/competition-planner'
 
+/**
+ * Paramètres de génération d'un programme d'entraînement CrossFit périodisé.
+ */
 export interface ProgramGenerationParams {
   program_type: string
   duration_weeks: number
@@ -17,6 +20,11 @@ interface ProgramExerciseReference {
   difficulty: string
 }
 
+/**
+ * Construit le prompt système décrivant le format JSON et les règles de génération
+ * des séances d'une semaine de préparation compétition (une semaine à la fois).
+ * @returns Le prompt système
+ */
 export function buildWeeklySessionSystemPrompt(): string {
   return `Tu es un coach CrossFit specialise dans la preparation a la competition.
 
@@ -74,6 +82,17 @@ Regles :
 - Filieres energetiques : fais varier les domaines temporels du conditioning sur la semaine (sprint court <3min, seuil/effort long, VO2max, aerobie plus longue) plutot que de repeter le meme domaine. Le champ "conditioning.type" doit TOUJOURS rester une des 7 valeurs listees ci-dessus (jamais "intervals" ou une autre valeur inventee) : pour un stimulus VO2max ou seuil, utilise "emom", "tabata", "amrap" ou "rounds_for_time" avec la duree/le nombre de tours qui correspond au domaine vise, pas un nouveau type.`
 }
 
+/**
+ * Construit le prompt utilisateur demandant les séances d'une semaine spécifique
+ * d'un programme de préparation compétition, en tenant compte des séances déjà
+ * générées pour éviter les répétitions.
+ * @param params Paramètres du programme (durée, séances/semaine, niveau)
+ * @param context Contexte utilisateur agrégé
+ * @param weeklyPlan Objectifs et contraintes de la semaine ciblée
+ * @param availableExercises Exercices du référentiel autorisés
+ * @param previousSessions Séances déjà générées sur les semaines précédentes
+ * @returns Le prompt utilisateur complet
+ */
 export function buildWeeklySessionUserPrompt(
   params: ProgramGenerationParams,
   context: UserAIContext,
@@ -110,6 +129,10 @@ ${previous}
 Retourne exactement ${params.sessions_per_week} seances complementaires en JSON.`
 }
 
+/**
+ * Résumé d'une séance déjà générée, utilisé comme référence pour éviter les
+ * répétitions dans les prompts de génération suivants.
+ */
 export interface ProgramSessionReference {
   week: number
   session_in_week: number
@@ -205,6 +228,13 @@ function buildAthleteContextSection(context: UserAIContext): string {
   return lines.join('\n')
 }
 
+/**
+ * Construit le prompt système décrivant la méthodologie de périodisation, le format
+ * JSON attendu et les règles de programmation (force brute vs haltérophilie, filières
+ * énergétiques, deload) pour un programme d'entraînement complet.
+ * @param programType Type de programme (ex: 'strength_building' applique des règles dédiées)
+ * @returns Le prompt système
+ */
 export function buildProgramGeneratorSystemPrompt(programType?: string): string {
   const isStrengthOnly = programType === 'strength_building'
   const complementaryRule = isStrengthOnly
@@ -322,6 +352,14 @@ ${complementaryRule}
 - Adapte au niveau de l'athlete et a son contexte CrossFit box.`
 }
 
+/**
+ * Construit le prompt utilisateur demandant la génération d'un programme d'entraînement
+ * complet (toutes phases) en un seul appel IA.
+ * @param params Paramètres du programme (type, durée, séances/semaine, niveau, focus)
+ * @param context Contexte utilisateur agrégé
+ * @param availableExercises Exercices du référentiel autorisés
+ * @returns Le prompt utilisateur complet
+ */
 export function buildProgramGeneratorUserPrompt(
   params: ProgramGenerationParams,
   context: UserAIContext,
@@ -376,6 +414,10 @@ function computePhaseCount(durationWeeks: number): string {
   return '3-4 phases (accumulation + build + peak + deload)'
 }
 
+/**
+ * Paramètres de génération d'une séance bonus ponctuelle, complémentaire à une
+ * semaine de programme existante.
+ */
 export interface BonusSessionParams {
   program_type: string
   target_level: string
@@ -383,6 +425,11 @@ export interface BonusSessionParams {
   focus?: string
 }
 
+/**
+ * Construit le prompt système pour la génération d'une unique séance bonus,
+ * au format JSON strict.
+ * @returns Le prompt système
+ */
 export function buildBonusSessionSystemPrompt(): string {
   return `Tu es un coach CrossFit certifie Level 3+. Tu generes UNE seule seance d'entrainement complementaire au format JSON strict.
 
@@ -428,6 +475,13 @@ Retourne UNIQUEMENT cet objet JSON (une seule seance), sans texte avant ni apres
 Si "strength_work" est renseigne, piochez dans un repertoire de FORCE BRUTE, pas uniquement des levers d'halterophilie olympique : squat (back/front/box/goblet), hinge (deadlift, RDL, good morning), push (bench, overhead press), pull (weighted pull-up, row, rack pull), portes lourds (farmer's carry, sandbag carry si "sandbag" dispo), et tenues isometriques (dead hang leste, top/bottom hold squat/deadlift, zercher ou bear hug hold au sandbag — pour ces mouvements "reps" = duree de la tenue ex "20-30s", "intensity" = charge quasi-max). Les mouvements techniques d'halterophilie olympique (clean/snatch/jerk) restent possibles mais ne doivent pas etre le choix par defaut pour un programme oriente force.`
 }
 
+/**
+ * Construit le prompt utilisateur demandant une séance bonus complémentaire à une
+ * semaine existante, en équilibrant les focus déjà couverts.
+ * @param params Paramètres de la séance bonus (type de programme, niveau, focus déjà couverts)
+ * @param context Contexte utilisateur agrégé
+ * @returns Le prompt utilisateur complet
+ */
 export function buildBonusSessionUserPrompt(params: BonusSessionParams, context: UserAIContext): string {
   const programTypeLabel = PROGRAM_TYPE_LABELS[params.program_type] || params.program_type
   const levelLabel = LEVEL_LABELS[params.target_level] || params.target_level

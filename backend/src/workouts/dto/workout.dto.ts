@@ -1,6 +1,9 @@
 import { Transform, Type } from "class-transformer"
 import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength, ValidateNested } from "class-validator"
 
+/**
+ * Données de création d'un workout dans le référentiel commun.
+ */
 export class CreateWorkoutDto {
   @IsString()
   @IsOptional()
@@ -113,6 +116,9 @@ export class CreateWorkoutDto {
   image_url?: string
 }
 
+/**
+ * Données de mise à jour partielle d'un workout du référentiel commun.
+ */
 export class UpdateWorkoutDto {
   @IsString()
   @IsOptional()
@@ -172,6 +178,9 @@ export class UpdateWorkoutDto {
   image_url?: string
 }
 
+/**
+ * Paramètres de génération d'un workout générique via l'IA.
+ */
 export class GenerateWorkoutDto {
   @IsString()
   workoutType!: string
@@ -204,6 +213,9 @@ export class GenerateWorkoutDto {
   additionalInstructions?: string
 }
 
+/**
+ * Paramètres de génération d'un workout personnalisé via l'IA, tenant compte du contexte utilisateur.
+ */
 export class GeneratePersonalizedWorkoutDto {
   @IsString()
   workoutType!: string
@@ -232,6 +244,9 @@ export class GeneratePersonalizedWorkoutDto {
   additionalInstructions?: string
 }
 
+/**
+ * Filtres et pagination pour la recherche de workouts.
+ */
 export class WorkoutQueryDto {
   @IsOptional()
   @Type(() => String)
@@ -279,6 +294,9 @@ export class WorkoutQueryDto {
   is_benchmark?: boolean
 }
 
+/**
+ * Données d'un workout personnalisé (création ou représentation complète).
+ */
 export class WorkoutDto {
 
   @IsUUID()
@@ -400,12 +418,18 @@ export class WorkoutDto {
 }
 
 
+/**
+ * Texte libre décrivant un WOD à parser via l'IA.
+ */
 export class ParseWorkoutTextDto {
   @IsString()
   @MinLength(10)
   text!: string
 }
 
+/**
+ * Recherche d'un WOD connu par son nom, avec données de référence optionnelles.
+ */
 export class LookupWorkoutDto {
   @IsString()
   @MinLength(2)
@@ -416,6 +440,9 @@ export class LookupWorkoutDto {
   referenceData?: string
 }
 
+/**
+ * Un jour du plan hebdomadaire à générer (date, type de session, focus).
+ */
 export class WeeklyPlanDayDto {
   @IsString()
   date!: string // 'YYYY-MM-DD'
@@ -428,6 +455,9 @@ export class WeeklyPlanDayDto {
   focus?: string
 }
 
+/**
+ * Liste des jours à planifier pour la génération d'un plan hebdomadaire.
+ */
 export class WeeklyPlanDto {
   @IsArray()
   @ValidateNested({ each: true })

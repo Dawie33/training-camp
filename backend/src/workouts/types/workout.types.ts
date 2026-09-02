@@ -1,3 +1,7 @@
+/**
+ * Types structurant les blocs de workout (héritage — voir aussi le schéma Zod
+ * `GeneratedWorkoutSchema` pour la validation des workouts générés par l'IA).
+ */
 export interface WorkoutBlock {
   title?: string
   duration_min?: number
@@ -65,6 +69,9 @@ export type WorkoutBlocks = {
   availableEquipment?: string[] // Liste du matériel dispo (bodyweight si rien)
 }
 
+/**
+ * Plan d'entraînement pour un jour donné (date, tags, blocs, métadonnées du workout).
+ */
 export type DailyPlan = {
   date: string                  // ISO yyyy-mm-dd
   tags: string[]

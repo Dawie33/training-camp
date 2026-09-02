@@ -3,6 +3,9 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 import { WorkoutScheduleService } from '../services/workout-schedule.service'
 
+/**
+ * Endpoints CRUD de la planification des workouts sur le calendrier utilisateur.
+ */
 @Controller('workout-schedule')
 @UseGuards(JwtAuthGuard)
 export class WorkoutScheduleController {

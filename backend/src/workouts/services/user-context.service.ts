@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 
+/**
+ * Résumé d'une analyse IA post-workout récente, utilisé comme contexte pour la génération.
+ */
 export interface RecentAnalysis {
   date: string
   workout_name: string
@@ -11,6 +14,10 @@ export interface RecentAnalysis {
   next_steps: string
 }
 
+/**
+ * Étape en cours d'un programme de compétence actif, avec ses exercices recommandés
+ * et la date de dernière pratique — injectée dans les prompts de génération IA.
+ */
 export interface ActiveSkillContext {
   program_id: string
   skill_name: string
@@ -23,6 +30,9 @@ export interface ActiveSkillContext {
   last_trained: string | null // ISO date ou null si jamais travaillé
 }
 
+/**
+ * Résumé d'un rapport de progression généré par sport (tendance, points forts/faibles, recommandations).
+ */
 export interface ProgressionReportSummary {
   sport: string
   period_months: number
@@ -37,6 +47,10 @@ export interface ProgressionReportSummary {
 
 export type RecentSessionSport = 'crossfit' | 'running' | 'strength' | 'biking'
 
+/**
+ * Séance récente tous sports confondus (CrossFit, course, force, vélo), utilisée comme
+ * contexte pour la génération IA et les suggestions de type de séance.
+ */
 export interface RecentSession {
   date: string
   sport: RecentSessionSport
@@ -45,6 +59,10 @@ export interface RecentSession {
   perceived_effort?: number
 }
 
+/**
+ * Contexte complet d'un utilisateur (1RMs, équipements, historique, compétences actives,
+ * rapports de progression) fourni aux services de génération IA. Voir `UserContextService`.
+ */
 export interface UserAIContext {
   sport_level: string
   height?: number
@@ -63,6 +81,11 @@ export interface UserAIContext {
   progressionReports: ProgressionReportSummary[]
 }
 
+/**
+ * Agrège le contexte complet d'un utilisateur (profil, 1RMs, équipements, historique
+ * multi-sport, compétences actives, rapports de progression) pour les services de
+ * génération IA. Le résultat est mis en cache en mémoire par utilisateur (TTL 30 min).
+ */
 @Injectable()
 export class UserContextService {
   private readonly cache = new Map<string, { data: UserAIContext; expiresAt: number }>()
@@ -70,10 +93,20 @@ export class UserContextService {
 
   constructor(@InjectModel() private readonly knex: Knex) {}
 
+  /**
+   * Invalide le contexte IA mis en cache pour un utilisateur, à appeler après toute
+   * modification de son profil, de ses 1RMs, équipements ou historique.
+   * @param userId ID de l'utilisateur
+   */
   invalidateCache(userId: string): void {
     this.cache.delete(userId)
   }
 
+  /**
+   * Récupère (ou construit et met en cache) le contexte IA complet d'un utilisateur.
+   * @param userId ID de l'utilisateur
+   * @returns Le contexte utilisateur agrégé
+   */
   async getUserAIContext(userId: string): Promise<UserAIContext> {
     const cached = this.cache.get(userId)
     if (cached && Date.now() < cached.expiresAt) {

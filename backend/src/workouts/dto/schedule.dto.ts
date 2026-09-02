@@ -1,6 +1,9 @@
 import { Type } from 'class-transformer'
 import { IsDateString, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator'
 
+/**
+ * Données de création d'une planification de workout sur le calendrier.
+ */
 export class CreateScheduleDto {
   @IsOptional()
   @IsUUID()
@@ -27,6 +30,9 @@ export class CreateScheduleDto {
   notes?: string
 }
 
+/**
+ * Champs modifiables d'une planification existante (statut, date, notes, etc.).
+ */
 export class UpdateScheduleDto {
   @IsOptional()
   @IsDateString()
@@ -49,6 +55,9 @@ export class UpdateScheduleDto {
   notes?: string
 }
 
+/**
+ * Filtres et pagination pour la recherche de planifications.
+ */
 export class ScheduleQueryDto {
   @IsOptional()
   @Type(() => String)

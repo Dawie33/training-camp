@@ -7,6 +7,10 @@ interface WorkoutExercisesListProps {
   exercises?: AdminWorkoutExercise[]
 }
 
+/**
+ * Liste en lecture seule des exercices d'un workout (sets/reps/poids/temps/distance
+ * et instructions spécifiques). Ne rend rien si la liste est vide.
+ */
 export function WorkoutExercisesList({ exercises }: WorkoutExercisesListProps) {
   if (!exercises || exercises.length === 0) {
     return null

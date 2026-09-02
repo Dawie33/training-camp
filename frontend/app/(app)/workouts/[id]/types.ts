@@ -8,6 +8,10 @@ import type { Exercise } from '@/domain/entities/exercise'
 // WORKOUT FORM
 // ============================================================================
 
+/**
+ * Champs du formulaire de création/édition d'un workout (état contrôlé, valeurs
+ * sous forme de chaînes pour les champs JSON/liste — voir `useWorkoutForm`).
+ */
 export interface WorkoutFormFields {
   name: string
   description: string

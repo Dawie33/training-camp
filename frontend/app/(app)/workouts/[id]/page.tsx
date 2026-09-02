@@ -9,6 +9,10 @@ import { useWorkoutForm } from './_hooks/useWorkoutForm'
 import { WorkoutAIGenerationModal } from './components/WorkoutAIGenerationModal'
 import { WorkoutForm } from './components/WorkoutForm'
 
+/**
+ * Page de création (`id === 'new'`) ou d'édition d'un workout, avec génération
+ * assistée par IA optionnelle en mode création (modale `WorkoutAIGenerationModal`).
+ */
 export default function WorkoutEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()

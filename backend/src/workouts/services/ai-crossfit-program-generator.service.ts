@@ -28,6 +28,11 @@ import { validateCompetitionProgram } from '../validators/competition-program.va
 
 type ResolvedProgramParams = GenerateProgramDto & { target_level: string }
 
+/**
+ * Génère des programmes de musculation CrossFit périodisés via l'IA (dont les programmes
+ * de préparation compétition, générés semaine par semaine), ainsi que des séances bonus
+ * ponctuelles, en tenant compte du contexte utilisateur.
+ */
 @Injectable()
 export class AICrossfitProgramGeneratorService {
   constructor(
@@ -36,6 +41,14 @@ export class AICrossfitProgramGeneratorService {
     private readonly exercisesService: ExercisesService,
   ) { }
 
+  /**
+   * Génère un programme d'entraînement complet pour l'utilisateur via l'IA.
+   * Les programmes de type `competition_prep` sont générés semaine par semaine
+   * (voir `generateCompetitionProgram`), les autres en un seul appel IA.
+   * @param userId ID de l'utilisateur
+   * @param params Paramètres de génération (type de programme, durée, séances/semaine, focus, etc.)
+   * @returns Le programme généré et validé, avec le niveau cible résolu
+   */
   async generateProgram(
     userId: string,
     params: GenerateProgramDto,
@@ -239,6 +252,12 @@ export class AICrossfitProgramGeneratorService {
     }[phase]
   }
 
+  /**
+   * Génère une séance bonus ponctuelle via l'IA, en tenant compte du contexte utilisateur.
+   * @param userId ID de l'utilisateur
+   * @param params Paramètres de la séance bonus à générer
+   * @returns La séance générée et validée
+   */
   async generateBonusSession(userId: string, params: BonusSessionParams): Promise<ProgramSession> {
     try {
       const context = await this.userContextService.getUserAIContext(userId)

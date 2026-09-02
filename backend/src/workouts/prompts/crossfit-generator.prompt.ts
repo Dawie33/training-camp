@@ -32,6 +32,13 @@ function buildDiagnosticRatios(oneRepMaxes: { lift: string; value: number }[]): 
   return notes
 }
 
+/**
+ * Construit la section "profil de l'athlète" injectée dans les prompts de génération
+ * IA : niveau, 1RMs (avec ratios diagnostiques), benchmarks, objectifs, limitations
+ * physiques, équipement, activité récente et bilans de progression.
+ * @param context Contexte utilisateur agrégé (voir UserContextService)
+ * @returns Le texte de la section à insérer dans le prompt système
+ */
 export function buildAthleteContextSection(context: UserAIContext): string {
   const lines: string[] = ['## PROFIL DE L\'ATHLÈTE', '']
 
@@ -166,6 +173,13 @@ export function buildAthleteContextSection(context: UserAIContext): string {
   return lines.join('\n')
 }
 
+/**
+ * Construit le prompt système décrivant la méthodologie CrossFit (structure JSON attendue,
+ * formats de WOD, principes de programmation, benchmarks) à respecter par l'IA.
+ * @param availableEquipment Équipement disponible (par défaut : équipement complet CrossFit)
+ * @param userContext Contexte utilisateur optionnel, injecté sous forme de section profil athlète
+ * @returns Le prompt système complet
+ */
 export function buildCrossFitSystemPrompt(availableEquipment?: string[], userContext?: UserAIContext): string {
   const equipmentList = availableEquipment && availableEquipment.length > 0
     ? availableEquipment.join('", "')
@@ -633,6 +647,9 @@ Si la somme ne correspond pas exactement à la durée demandée, ajuste le volum
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 }
 
+/**
+ * Paramètres de génération d'un WOD passés au prompt utilisateur.
+ */
 export interface CrossFitWorkoutParams {
   workoutType: string
   duration: number
@@ -649,6 +666,13 @@ function pickRandomFormat(): string {
   return METCON_FORMATS[Math.floor(Math.random() * METCON_FORMATS.length)]
 }
 
+/**
+ * Construit le prompt utilisateur demandant la génération d'un WOD précis, avec des
+ * instructions de structure spécifiques selon le `workoutType` (technique_metcon,
+ * strength_max, conditioning, vo2max, benchmark).
+ * @param params Paramètres de génération (type, durée, niveau, équipement, focus)
+ * @returns Le prompt utilisateur complet
+ */
 export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): string {
   const {
     workoutType,

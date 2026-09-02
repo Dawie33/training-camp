@@ -29,6 +29,11 @@ const SECTION_TYPES = [
 
 const TIMECAP_TYPES = ['for_time', 'amrap', 'emom']
 
+/**
+ * Éditeur visuel de la structure JSON d'un workout (`blocks`) : sections, métadonnées
+ * (type, durée, rounds, repos) et exercices, avec ajout depuis la bibliothèque
+ * d'exercices (`ExercisesSidebar`).
+ */
 export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set([0]))
   const [sidebarOpen, setSidebarOpen] = useState(false)

@@ -6,12 +6,18 @@ import ResourceApi from './resourceApi'
 // Re-export types
 export type { GeneratedWorkout }
 
+/**
+ * Un jour planifié avec succès lors de la génération d'un plan hebdomadaire.
+ */
 export interface WeeklyPlanResultDay {
   date: string
   workout_name: string
   schedule_id: string
 }
 
+/**
+ * Résultat de la génération d'un plan hebdomadaire (jours planifiés, ignorés, jours Box).
+ */
 export interface WeeklyPlanResult {
   scheduled: WeeklyPlanResultDay[]
   skipped: string[]
@@ -21,7 +27,18 @@ export interface WeeklyPlanResult {
 export const workoutsApi = new ResourceApi<Workouts, CreateWorkoutDTO, UpdateWorkoutDTO>('/workouts')
 
 // Helper functions for backward compatibility
+/**
+ * Crée un nouveau workout. Alias de `workoutsApi.create`, conservé pour compatibilité.
+ * @param data Données du workout à créer
+ * @returns Le workout créé
+ */
 export const createWorkout = (data: CreateWorkoutDTO) => workoutsApi.create(data)
+/**
+ * Génère un workout générique via l'IA. Alias de `workoutsService.generateWorkoutWithAI`,
+ * conservé pour compatibilité.
+ * @param data Paramètres de génération (type, difficulté, durée, focus, équipement)
+ * @returns Le workout généré
+ */
 export const generateWorkoutWithAI = (data: {
   workoutType: string
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite'
@@ -32,6 +49,12 @@ export const generateWorkoutWithAI = (data: {
   additionalInstructions?: string
 }) => workoutsService.generateWorkoutWithAI(data)
 
+/**
+ * Génère un workout personnalisé via l'IA. Alias de `workoutsService.generatePersonalizedWorkoutWithAI`,
+ * conservé pour compatibilité.
+ * @param data Paramètres de génération (type, difficulté, durée, focus, équipement)
+ * @returns Le workout personnalisé généré
+ */
 export const generatePersonalizedWorkoutWithAI = (data: {
   workoutType: string
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
@@ -41,6 +64,9 @@ export const generatePersonalizedWorkoutWithAI = (data: {
   additionalInstructions?: string
 }) => workoutsService.generatePersonalizedWorkoutWithAI(data)
 
+/**
+ * Client API pour les workouts : CRUD, benchmarks, génération IA et planification hebdomadaire.
+ */
 export class WorkoutsService {
 
   /**
@@ -233,6 +259,13 @@ export class WorkoutsService {
     return apiClient.post<GeneratedWorkout>('/workouts/parse-text', { text })
   }
 
+  /**
+   * Recherche un WOD connu par son nom (ex: "Fran") et retourne sa structure exacte via l'IA.
+   * @param name Nom du WOD
+   * @param referenceData Détails officiels à fournir pour les WOD postérieurs à début 2025,
+   *   inconnus de l'IA
+   * @returns Le workout structuré correspondant
+   */
   async lookupWorkout(name: string, referenceData?: string): Promise<GeneratedWorkout> {
     return apiClient.post<GeneratedWorkout>('/workouts/lookup', { name, referenceData })
   }

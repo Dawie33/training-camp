@@ -10,6 +10,10 @@ import { UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
 
 
+/**
+ * Gère le CRUD des workouts (référentiel commun et personnalisés), les benchmarks
+ * et leur historique de progression.
+ */
 @Injectable()
 export class WorkoutsService {
   constructor(
@@ -130,6 +134,19 @@ export class WorkoutsService {
     return { rows, count: rows.length }
   }
 
+  /**
+   * Liste les workouts personnalisés de l'utilisateur avec filtres (recherche, difficulté,
+   * intensité, durée) et pagination.
+   * @param userId ID de l'utilisateur
+   * @param limit Nombre maximum de résultats
+   * @param offset Décalage de pagination
+   * @param search Recherche texte sur le nom/description du plan
+   * @param difficulty Filtre de difficulté
+   * @param intensity Filtre d'intensité
+   * @param minDuration Durée minimale en minutes
+   * @param maxDuration Durée maximale en minutes
+   * @returns Les workouts personnalisés correspondants et leur nombre total
+   */
   async getPersonalizedWorkouts(
     userId: string,
     limit = '20',
@@ -415,6 +432,11 @@ export class WorkoutsService {
     return row
   }
 
+  /**
+   * Supprime un workout du référentiel commun.
+   * @param id ID du workout
+   * @returns Le résultat de la suppression
+   */
   async delete(id: string) {
     await this.knex('workouts').where({ id }).delete()
     return { success: true }
@@ -631,6 +653,11 @@ export class WorkoutsService {
     return { scheduled: false }
   }
 
+  /**
+   * Supprime un workout du référentiel commun.
+   * @param id ID du workout
+   * @returns Le résultat de la suppression
+   */
   async remove(id: string) {
     await this.knex('workouts').where({ id }).delete()
     return { success: true }

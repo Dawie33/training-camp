@@ -7,6 +7,10 @@ import type { WorkoutFormProps } from '../types'
 import { BlocksEditor } from './BlocksEditor'
 import { TagInput } from './TagInput'
 
+/**
+ * Formulaire de création/édition d'un workout : type, format, tags, structure des
+ * blocs (via `BlocksEditor`), objectif de force (si type strength) et notes.
+ */
 export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode }: WorkoutFormProps) {
   const router = useRouter()
 

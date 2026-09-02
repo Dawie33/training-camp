@@ -4,6 +4,10 @@ import { InjectModel } from 'nest-knexjs'
 import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 
+/**
+ * Gère la planification des workouts sur le calendrier utilisateur, la synchronisation
+ * Google Calendar associée, et les suggestions de configuration hebdomadaire.
+ */
 @Injectable()
 export class WorkoutScheduleService {
   constructor(

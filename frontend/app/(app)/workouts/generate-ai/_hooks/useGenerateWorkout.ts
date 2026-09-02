@@ -14,6 +14,14 @@ interface UseGenerateWorkoutOptions {
   redirectTo?: string | null
 }
 
+/**
+ * Gère le formulaire, la génération IA (générique ou personnalisée) et la sauvegarde
+ * d'un workout sur la page `/workouts/generate-ai`. Suggère aussi le type de séance
+ * par défaut et pré-remplit l'équipement à partir du profil utilisateur.
+ * @param options Options du hook, notamment la route de redirection après sauvegarde
+ * @returns L'état du formulaire, l'état d'édition du workout généré, et les handlers
+ *   `handleGenerate` / `handleSave`
+ */
 export function useGenerateWorkout(options?: UseGenerateWorkoutOptions) {
   const redirectTo = options?.redirectTo === undefined ? '/workouts' : options.redirectTo
   const router = useRouter()

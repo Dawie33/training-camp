@@ -33,6 +33,10 @@ const CATEGORY_COLORS: Record<string, string> = {
   mobility: 'bg-teal-100 text-teal-700 border-teal-200',
 }
 
+/**
+ * Panneau latéral listant les exercices du référentiel (recherche + filtre par
+ * catégorie) pour les ajouter à la section active du `BlocksEditor`.
+ */
 export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSidebarProps) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)

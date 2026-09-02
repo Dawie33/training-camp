@@ -4,6 +4,9 @@ import { WorkoutsCatalogTable } from '@/components/workout/WorkoutsCatalogTable'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 
+/**
+ * Page catalogue listant tous les workouts (référentiel commun et personnalisés).
+ */
 export default function WorkoutsPage() {
   return (
     <motion.div

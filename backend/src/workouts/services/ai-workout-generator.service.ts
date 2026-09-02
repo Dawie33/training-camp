@@ -16,18 +16,28 @@ import { WorkoutsService } from './workouts.service'
  */
 export type GeneratedWorkout = GeneratedWorkoutValidated
 
+/**
+ * Un jour du plan hebdomadaire à générer.
+ */
 export interface WeeklyPlanDayInput {
   date: string // 'YYYY-MM-DD'
   type: string // 'perso' | 'box' | 'rest'
   focus?: string
 }
 
+/**
+ * Résultat de la génération d'un plan hebdomadaire : jours planifiés avec succès,
+ * jours ignorés (conflit de planification) et jours Box enregistrés.
+ */
 export interface WeeklyPlanResult {
   scheduled: { date: string; workout_name: string; schedule_id: string }[]
   skipped: string[]
   box_days: string[]
 }
 
+/**
+ * Paramètres communs à la génération d'un workout via l'IA.
+ */
 export interface WorkoutGenerationParams {
   workoutType?: string
   duration: number
@@ -39,6 +49,11 @@ export interface WorkoutGenerationParams {
   techniqueFocus?: string // 'skills' | 'altero' | 'conditioning' | '' (auto)
 }
 
+/**
+ * Génère des workouts CrossFit via OpenAI (générique ou personnalisé), retrouve des WODs
+ * de référence connus, parse du texte libre en workout structuré et construit des plans
+ * hebdomadaires.
+ */
 @Injectable()
 export class AIWorkoutGeneratorService {
   constructor(
@@ -269,7 +284,10 @@ Exemple : "3 rounds de 50 DU + 10 Deadlifts (100kg), 2 rounds de 50 DU + 10 Dead
   /**
    * Retrouve un WOD de référence connu (benchmark, Open, Hero WOD) par son nom
    * @param name Nom du WOD (ex: "Open 18.1", "Murph", "Fran")
+   * @param referenceData Détails officiels fournis par l'utilisateur pour les WOD postérieurs
+   *   à début 2025, inconnus de l'IA (voir endpoint `/workouts/lookup`)
    * @returns Le workout structuré au format JSON
+   * @throws BadRequestException si le WOD est inconnu (`UNKNOWN_WOD`) et qu'aucune référence n'est fournie
    */
   async lookupWorkoutByName(name: string, referenceData?: string): Promise<GeneratedWorkout> {
     const systemPrompt = `Tu es un expert CrossFit avec une connaissance exhaustive des WODs officiels.

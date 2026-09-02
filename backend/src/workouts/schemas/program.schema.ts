@@ -37,6 +37,9 @@ function clampToPositiveIfNumber(value: unknown): unknown {
   return v
 }
 
+/**
+ * Schéma de validation pour un mouvement de force (séries/répétitions/intensité).
+ */
 export const StrengthMovementSchema = z.object({
   name: z.string().min(1),
   sets: z.preprocess(roundToIntIfNumber, z.number().int().positive()),
@@ -46,6 +49,9 @@ export const StrengthMovementSchema = z.object({
   notes: z.string().optional().nullable(),
 })
 
+/**
+ * Schéma de validation pour un mouvement de conditioning (metcon).
+ */
 export const ConditioningMovementSchema = z.object({
   name: z.string().min(1),
   reps: z.preprocess(roundToIntIfNumber, z.union([z.number().int().positive(), z.string()]).optional().nullable()),
@@ -55,6 +61,9 @@ export const ConditioningMovementSchema = z.object({
   time: z.string().optional().nullable(),
 })
 
+/**
+ * Schéma de validation pour un bloc de conditioning (type, durée, mouvements, scoring).
+ */
 export const ConditioningSchema = z.object({
   type: z.enum(['amrap', 'for_time', 'emom', 'tabata', 'rounds_for_time', 'death_by', 'chipper']),
   duration_minutes: z.preprocess(clampToPositiveIfNumber, z.number().positive().optional().nullable()),
@@ -93,6 +102,9 @@ function normalizeScoreType(value: unknown): unknown {
   return null
 }
 
+/**
+ * Schéma de validation pour un bloc de travail technique (skill work).
+ */
 export const SkillWorkSchema = z.object({
   name: z.string().min(1),
   description: z.string(),
@@ -101,6 +113,9 @@ export const SkillWorkSchema = z.object({
   notes: z.string().optional().nullable(),
 })
 
+/**
+ * Schéma de validation pour un bloc de force (liste de mouvements).
+ */
 export const StrengthWorkSchema = z.object({
   movements: z.array(StrengthMovementSchema).min(1),
 })
@@ -122,6 +137,10 @@ const nullifyEmptyBlock =
 const hasMovements = (o: Record<string, unknown>): boolean =>
   Array.isArray(o.movements) && o.movements.length > 0
 
+/**
+ * Schéma de validation complet pour une séance de programme, normalisant les blocs
+ * vides/partiels renvoyés par l'IA en `null` (voir `nullifyEmptyBlock`).
+ */
 export const ProgramSessionSchema = z.object({
   week: z.number().int().positive().optional(),
   session_in_week: z.number().int().min(1),
@@ -136,6 +155,9 @@ export const ProgramSessionSchema = z.object({
   coach_notes: z.string().optional().nullable(),
 })
 
+/**
+ * Schéma de validation pour une phase de programme (accumulation, intensification, etc.).
+ */
 export const ProgramPhaseSchema = z.object({
   phase_number: z.number().int().positive(),
   name: z.string().min(1),
@@ -144,6 +166,9 @@ export const ProgramPhaseSchema = z.object({
   sessions: z.array(ProgramSessionSchema).min(1),
 })
 
+/**
+ * Schéma de validation complet pour un programme d'entraînement généré par l'IA.
+ */
 export const GeneratedProgramSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
@@ -153,6 +178,10 @@ export const GeneratedProgramSchema = z.object({
   coach_notes: z.string().optional().nullable(),
 })
 
+/**
+ * Schéma de validation pour les séances générées pour une seule semaine
+ * (utilisé lors de la génération semaine par semaine d'un programme compétition).
+ */
 export const GeneratedWeeklySessionsSchema = z.object({
   sessions: z.array(ProgramSessionSchema),
 })

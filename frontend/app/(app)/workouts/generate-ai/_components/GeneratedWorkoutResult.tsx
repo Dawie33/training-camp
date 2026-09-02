@@ -26,6 +26,10 @@ interface GeneratedWorkoutResultProps {
 
 const editSelectClass = 'w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50'
 
+/**
+ * Affiche le workout généré par l'IA (ou un état vide avant génération), avec bascule
+ * entre prévisualisation en lecture seule et édition des champs avant sauvegarde.
+ */
 export function GeneratedWorkoutResult({
   generatedWorkout, personalized,
   isEditing, onToggleEdit,

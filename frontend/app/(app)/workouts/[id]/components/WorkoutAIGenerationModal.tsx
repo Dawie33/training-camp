@@ -22,6 +22,10 @@ interface WorkoutAIGenerationModalProps {
   saving: boolean
 }
 
+/**
+ * Modale de génération d'un workout par IA depuis la page de création (paramètres :
+ * date, durée, type, intensité, difficulté, tags).
+ */
 export function WorkoutAIGenerationModal({
   isOpen,
   onClose,

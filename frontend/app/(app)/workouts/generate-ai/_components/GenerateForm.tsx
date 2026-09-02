@@ -36,6 +36,11 @@ interface GenerateFormProps {
   onGenerate: () => void
 }
 
+/**
+ * Formulaire de paramètres de génération d'un workout par IA : type, difficulté, durée,
+ * environnement d'équipement (poids du corps / maison / box / personnalisé) et instructions
+ * additionnelles.
+ */
 export function GenerateForm({
   workoutType, setWorkoutType,
   suggestionReason,
