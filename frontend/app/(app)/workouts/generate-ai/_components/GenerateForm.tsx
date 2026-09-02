@@ -18,6 +18,7 @@ const selectClass = 'w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border
 interface GenerateFormProps {
   workoutType: string
   setWorkoutType: (v: string) => void
+  suggestionReason?: string | null
   difficulty: ExerciseDifficulty
   setDifficulty: (v: ExerciseDifficulty) => void
   duration: number
@@ -37,6 +38,7 @@ interface GenerateFormProps {
 
 export function GenerateForm({
   workoutType, setWorkoutType,
+  suggestionReason,
   difficulty, setDifficulty,
   duration, setDuration,
   equipment, setEquipment, toggleEquipment,
@@ -98,6 +100,9 @@ export function GenerateForm({
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
           </select>
+          {suggestionReason && (
+            <p className="text-xs text-orange-400/80 mt-1.5">💡 Suggéré automatiquement — {suggestionReason}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">

@@ -49,6 +49,12 @@ export class WorkoutsController {
     return await this.service.checkAndScheduleMonthlyBenchmark(req.user.id)
   }
 
+  @Get('suggest-type')
+  @UseGuards(JwtAuthGuard)
+  async suggestNextWorkoutType(@Request() req: { user: { id: string } }) {
+    return await this.aiGenerator.suggestNextWorkoutType(req.user.id)
+  }
+
   @Get('personalized')
   @UseGuards(JwtAuthGuard)
   async getPersonalizedWorkouts(

@@ -10,6 +10,7 @@ export default function GenerateWorkoutAIPage() {
   const router = useRouter()
   const {
     workoutType, setWorkoutType,
+    suggestionReason,
     difficulty, setDifficulty,
     duration, setDuration,
     equipment, setEquipment, toggleEquipment,
@@ -52,6 +53,7 @@ export default function GenerateWorkoutAIPage() {
         <div className="space-y-6 lg:space-y-8">
           <GenerateForm
             workoutType={workoutType} setWorkoutType={setWorkoutType}
+            suggestionReason={suggestionReason}
             difficulty={difficulty} setDifficulty={setDifficulty}
             duration={duration} setDuration={setDuration}
             equipment={equipment} setEquipment={setEquipment} toggleEquipment={toggleEquipment}

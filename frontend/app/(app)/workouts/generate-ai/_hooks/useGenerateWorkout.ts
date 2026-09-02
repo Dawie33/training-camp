@@ -20,6 +20,7 @@ export function useGenerateWorkout(options?: UseGenerateWorkoutOptions) {
 
   // Form state
   const [workoutType, setWorkoutType] = useState<string>(WORKOUT_TYPES.crossfit[0].value)
+  const [suggestionReason, setSuggestionReason] = useState<string | null>(null)
   const [difficulty, setDifficulty] = useState<ExerciseDifficulty>('intermediate')
   const [duration, setDuration] = useState(45)
   const [equipment, setEquipment] = useState<string[]>([])
@@ -33,6 +34,14 @@ export function useGenerateWorkout(options?: UseGenerateWorkoutOptions) {
       setProfileEquipment(saved)
       setEquipment(saved)
     }).catch(() => {/* silencieux si pas de profil */})
+  }, [])
+
+  // Suggère le type de séance selon l'historique récent (alterne force/technique/conditioning)
+  useEffect(() => {
+    workoutsService.getSuggestedWorkoutType().then(({ workoutType: suggested, reason }) => {
+      setWorkoutType(suggested)
+      setSuggestionReason(reason)
+    }).catch(() => {/* silencieux — on garde le type par défaut */})
   }, [])
 
   // UI state
@@ -133,9 +142,16 @@ export function useGenerateWorkout(options?: UseGenerateWorkoutOptions) {
     setEquipment((prev) => prev.includes(item) ? prev.filter((e) => e !== item) : [...prev, item])
   }
 
+  // Choix manuel de l'utilisateur : la suggestion automatique ne s'applique plus
+  const handleSetWorkoutType = (v: string) => {
+    setWorkoutType(v)
+    setSuggestionReason(null)
+  }
+
   return {
     // Form
-    workoutType, setWorkoutType,
+    workoutType, setWorkoutType: handleSetWorkoutType,
+    suggestionReason,
     difficulty, setDifficulty,
     duration, setDuration,
     equipment, setEquipment, toggleEquipment,

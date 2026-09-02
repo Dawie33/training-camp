@@ -245,6 +245,15 @@ export class WorkoutsService {
   async generateWeeklyPlan(days: { date: string; type: string; focus?: string }[]): Promise<WeeklyPlanResult> {
     return apiClient.post<WeeklyPlanResult>('/workouts/weekly-plan', { days })
   }
+
+  /**
+   * Suggère le prochain workout_type à générer en fonction de l'historique récent
+   * de l'utilisateur, pour alterner force / technique / conditioning.
+   * @returns Le type suggéré et la raison de la suggestion
+   */
+  async getSuggestedWorkoutType(): Promise<{ workoutType: string; reason: string }> {
+    return apiClient.get<{ workoutType: string; reason: string }>('/workouts/suggest-type')
+  }
 }
 
 export const workoutsService = new WorkoutsService()

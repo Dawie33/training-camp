@@ -103,6 +103,47 @@ export class AIWorkoutGeneratorService {
   }
 
   /**
+   * Suggère le prochain workout_type CrossFit à générer en se basant sur l'historique
+   * récent de l'utilisateur, pour éviter d'enchaîner systématiquement des metcons.
+   * Règles issues du skill coach-crossfit : jamais deux séances de suite sur le même
+   * type de stress, et la force max doit revenir 1-2x/semaine.
+   */
+  async suggestNextWorkoutType(userId: string): Promise<{ workoutType: string; reason: string }> {
+    const context = await this.userContextService.getUserAIContext(userId)
+    const recentCrossfit = context.recentSessions.filter((s) => s.sport === 'crossfit' && s.workout_type)
+
+    if (recentCrossfit.length === 0) {
+      return { workoutType: 'technique_metcon', reason: 'Première séance générée — pas d\'historique récent.' }
+    }
+
+    const rotationPool = ['technique_metcon', 'strength_max', 'conditioning', 'vo2max']
+    const lastType = recentCrossfit[0].workout_type
+    const last3Types = recentCrossfit.slice(0, 3).map((s) => s.workout_type)
+
+    if (!last3Types.includes('strength_max')) {
+      return {
+        workoutType: 'strength_max',
+        reason: 'Pas de séance de force max sur les 3 dernières séances CrossFit — on rééquilibre le cycle.',
+      }
+    }
+
+    const occurrences: Record<string, number> = {}
+    for (const type of rotationPool) occurrences[type] = 0
+    for (const s of recentCrossfit) {
+      if (s.workout_type && occurrences[s.workout_type] !== undefined) occurrences[s.workout_type]++
+    }
+
+    const candidates = rotationPool
+      .filter((type) => type !== lastType)
+      .sort((a, b) => occurrences[a] - occurrences[b])
+
+    return {
+      workoutType: candidates[0],
+      reason: `Séance précédente : ${lastType}. On varie le stimulus pour respecter l'alternance recommandée.`,
+    }
+  }
+
+  /**
    * Sélectionne le skill le moins récemment travaillé parmi les skills actifs
    * et construit l'instruction à injecter dans le prompt de génération.
    */
