@@ -5,17 +5,7 @@ import { AuthService } from './auth.service'
 import { LoginDto, SignupDto } from './dto/auth.dto'
 import { UpdateProfileDto } from './dto/update-profile.dto'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
-
-interface RequestWithUser extends Request {
-  user: {
-    id: string
-    email: string
-    firstName: string
-    lastName: string
-    role: string
-    isActive: boolean
-  }
-}
+import type { RequestWithUser } from './types/auth.types'
 
 @Controller('auth')
 export class AuthController {

@@ -41,7 +41,7 @@ export class AuthService {
         firstName,
         lastName,
       })
-      .returning(['id', 'email', 'firstName', 'lastName'])
+      .returning(['id', 'email', 'firstName', 'lastName', 'role'])
 
     // Générer le token JWT
     const payload = { sub: user.id, email: user.email }
