@@ -9,6 +9,7 @@ export interface Equipment {
     image_url?: string
     created_at: string
     updated_at: string
+    meta: Record<string, string>
 }
 
 export interface CreateEquipmentDTO {
