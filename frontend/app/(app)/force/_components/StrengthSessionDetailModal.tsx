@@ -21,6 +21,13 @@ interface ExerciseEntry {
   sets: Array<{ reps: string; weight_kg: string }>
 }
 
+/** Extrait le premier nombre d'une prescription de reps (ex: "20 m par bras reps" -> "20", "8" -> "8"). */
+function extractRepsNumber(reps: number | string): string {
+  if (typeof reps === 'number') return String(reps)
+  const match = reps.match(/\d+/)
+  return match ? match[0] : ''
+}
+
 function Section({ label, action, children }: { label: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="py-3 first:pt-0 last:pb-0">
@@ -61,7 +68,7 @@ export function StrengthSessionDetailModal({ session, onClose, onUpdate }: Props
             name: ex.name,
             prescribedReps: String(ex.reps),
             sets: Array.from({ length: ex.sets }, () => ({
-              reps: typeof ex.reps === 'number' ? String(ex.reps) : '',
+              reps: extractRepsNumber(ex.reps),
               weight_kg: '',
             })),
           })

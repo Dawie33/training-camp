@@ -1,6 +1,6 @@
 import { apiClient } from './index'
 
-export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'forearms' | 'legs' | 'glutes' | 'core'
+export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'forearms' | 'legs' | 'glutes' | 'calves' | 'core'
 export type SessionGoal = 'strength' | 'hypertrophy' | 'endurance' | 'power'
 export type BlockType = 'push' | 'pull' | 'hinge' | 'squat' | 'carry' | 'rotation' | 'isolation' | 'core' | 'isometric'
 export type BodyFocus = 'upper_body' | 'lower_body' | 'full_body'
@@ -24,11 +24,11 @@ export const TRAINING_STYLE_LABELS: Record<TrainingStyle, string> = {
 }
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
-  'chest', 'back', 'shoulders', 'arms', 'forearms', 'legs', 'glutes', 'core',
+  'chest', 'back', 'shoulders', 'arms', 'forearms', 'legs', 'glutes', 'calves', 'core',
 ]
 
 export const UPPER_BODY_MUSCLES: MuscleGroup[] = ['chest', 'back', 'shoulders', 'arms', 'forearms']
-export const LOWER_BODY_MUSCLES: MuscleGroup[] = ['legs', 'glutes']
+export const LOWER_BODY_MUSCLES: MuscleGroup[] = ['legs', 'glutes', 'calves']
 export const CORE_MUSCLES: MuscleGroup[] = ['core']
 
 export function deriveBodyFocus(muscles: MuscleGroup[]): BodyFocus {
@@ -48,6 +48,7 @@ export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
   forearms: 'Avant-bras',
   legs: 'Jambes',
   glutes: 'Fessiers',
+  calves: 'Mollets',
   core: 'Abdos / Core',
 }
 
@@ -59,6 +60,7 @@ export const MUSCLE_COLORS: Record<MuscleGroup, string> = {
   forearms: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   legs: 'bg-green-500/20 text-green-400 border-green-500/30',
   glutes: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+  calves: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
   core: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
 }
 

@@ -10,7 +10,7 @@ import {
 
 export class GenerateStrengthSessionDto {
   @IsArray()
-  @IsEnum(['chest', 'back', 'shoulders', 'arms', 'forearms', 'legs', 'glutes', 'core'], { each: true })
+  @IsEnum(['chest', 'back', 'shoulders', 'arms', 'forearms', 'legs', 'glutes', 'calves', 'core'], { each: true })
   targetMuscles!: MuscleGroup[]
 
   @IsEnum(['strength', 'hypertrophy', 'endurance', 'power'])
