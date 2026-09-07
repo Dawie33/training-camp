@@ -12,10 +12,13 @@ interface GeneratedStrengthResultProps {
   onRegenerate: () => void
   regenerateDisabled: boolean
   emptyStateText: ReactNode
+  sessionDate: string
+  setSessionDate: (date: string) => void
 }
 
 export function GeneratedStrengthResult({
   plan, saving, onSave, regenerateLabel, onRegenerate, regenerateDisabled, emptyStateText,
+  sessionDate, setSessionDate,
 }: GeneratedStrengthResultProps) {
   return (
     <div>
@@ -85,6 +88,19 @@ export function GeneratedStrengthResult({
               <p className="text-xs text-muted-foreground/80">{plan.cooldown}</p>
             </div>
           )}
+
+          <div>
+            <label htmlFor="strength-session-date" className="block text-xs font-medium text-muted-foreground mb-1">
+              Planifier pour le
+            </label>
+            <input
+              id="strength-session-date"
+              type="date"
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
+              className="w-full px-3 py-2 bg-card border border-border rounded-md text-sm text-foreground"
+            />
+          </div>
 
           <div className="flex gap-3">
             <button

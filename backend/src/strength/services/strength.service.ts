@@ -53,7 +53,8 @@ export class StrengthService {
     const [session] = await this.knex('strength_sessions')
       .insert({
         user_id: userId,
-        session_date: new Date().toISOString().split('T')[0],
+        session_date: dto.sessionDate ?? new Date().toISOString().split('T')[0],
+        status: 'planned',
         target_muscles: dto.targetMuscles,
         session_goal: dto.sessionGoal,
         body_focus: dto.bodyFocus ?? null,
@@ -74,6 +75,7 @@ export class StrengthService {
       .insert({
         user_id: userId,
         session_date: dto.session_date,
+        status: dto.status ?? 'completed',
         target_muscles: dto.target_muscles,
         session_goal: dto.session_goal,
         body_focus: dto.body_focus ?? null,
@@ -103,6 +105,8 @@ export class StrengthService {
         ...(dto.perceived_effort !== undefined && { perceived_effort: dto.perceived_effort }),
         ...(dto.duration_minutes !== undefined && { duration_minutes: dto.duration_minutes }),
         ...(dto.notes !== undefined && { notes: dto.notes }),
+        ...(dto.status !== undefined && { status: dto.status }),
+        ...(dto.session_date !== undefined && { session_date: dto.session_date }),
         updated_at: new Date(),
       })
       .returning('*')

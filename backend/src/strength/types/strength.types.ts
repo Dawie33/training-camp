@@ -8,6 +8,8 @@ export type BodyFocus = 'upper_body' | 'lower_body' | 'full_body'
 
 export type TrainingStyle = 'traditional' | 'strongman'
 
+export type StrengthSessionStatus = 'planned' | 'completed' | 'skipped'
+
 export const MUSCLE_GROUPS: MuscleGroup[] = [
   'chest', 'back', 'shoulders', 'arms', 'forearms', 'legs', 'glutes', 'calves', 'core',
 ]
@@ -17,3 +19,5 @@ export const SESSION_GOALS: SessionGoal[] = ['strength', 'hypertrophy', 'enduran
 export const BODY_FOCUS_VALUES: BodyFocus[] = ['upper_body', 'lower_body', 'full_body']
 
 export const TRAINING_STYLE_VALUES: TrainingStyle[] = ['traditional', 'strongman']
+
+export const STRENGTH_SESSION_STATUS_VALUES: StrengthSessionStatus[] = ['planned', 'completed', 'skipped']

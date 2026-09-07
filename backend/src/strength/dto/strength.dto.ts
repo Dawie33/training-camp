@@ -1,10 +1,12 @@
-import { IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, IsNumber } from 'class-validator'
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, IsNumber } from 'class-validator'
 import {
   BODY_FOCUS_VALUES,
+  STRENGTH_SESSION_STATUS_VALUES,
   TRAINING_STYLE_VALUES,
   type BodyFocus,
   type MuscleGroup,
   type SessionGoal,
+  type StrengthSessionStatus,
   type TrainingStyle,
 } from '../types/strength.types'
 
@@ -53,6 +55,11 @@ export class GenerateStrengthSessionDto {
   // Plan déjà généré par /generate/preview, évite un second appel IA
   @IsOptional()
   existingPlan?: Record<string, unknown>
+
+  // Date de planification choisie par l'utilisateur — par défaut aujourd'hui si absente
+  @IsOptional()
+  @IsDateString()
+  sessionDate?: string
 }
 
 export class ParseStrengthTextDto {
@@ -104,6 +111,10 @@ export class CreateStrengthSessionDto {
   @IsOptional()
   @IsString()
   notes?: string
+
+  @IsOptional()
+  @IsEnum(STRENGTH_SESSION_STATUS_VALUES)
+  status?: StrengthSessionStatus
 }
 
 export class UpdateStrengthSessionDto {
@@ -124,6 +135,14 @@ export class UpdateStrengthSessionDto {
   @IsOptional()
   @IsString()
   notes?: string
+
+  @IsOptional()
+  @IsEnum(STRENGTH_SESSION_STATUS_VALUES)
+  status?: StrengthSessionStatus
+
+  @IsOptional()
+  @IsDateString()
+  session_date?: string
 }
 
 export class StrengthSessionQueryDto {

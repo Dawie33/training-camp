@@ -80,6 +80,8 @@ export default function GenerateStrengthPage() {
           regenerateLabel={mode === 'paste' ? 'Réanalyser' : 'Regénérer'}
           onRegenerate={mode === 'paste' ? s.handleAnalyzeText : s.handleGenerate}
           regenerateDisabled={s.loading || s.analyzing || s.saving}
+          sessionDate={s.sessionDate}
+          setSessionDate={s.setSessionDate}
           emptyStateText={
             mode === 'paste' ? (
               <>Colle un texte à gauche et clique sur<br /><span className="text-primary">"Analyser"</span></>

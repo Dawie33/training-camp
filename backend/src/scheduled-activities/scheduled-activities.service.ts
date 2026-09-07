@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { GoogleCalendarService } from '../google-calendar/google-calendar.service'
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
-import { UnifiedActivity } from './types/unified-activity.type'
+import { ActivityStatus, UnifiedActivity } from './types/unified-activity.type'
 
 const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', biking: 'Vélo', strength: 'Force', skill: 'Skill', mobility: 'Mobilité', wod: 'WOD', conditioning: 'Conditioning' }
 
@@ -237,45 +237,47 @@ export class ScheduledActivitiesService {
     // --- Force (strength_sessions) ---
     // N'affiche que les séances NON liées à une scheduled_activity (évite les doublons)
     if (!moduleFilter || moduleFilter === 'strength') {
-      if (!status || status === 'completed') {
-        // IDs déjà couverts par scheduled_activities
-        const scheduledIds = await this.knex('scheduled_activities')
-          .where('user_id', userId)
-          .where('activity_type', 'strength')
-          .whereNotNull('activity_id')
-          .pluck('activity_id')
+      // IDs déjà couverts par scheduled_activities
+      const scheduledIds = await this.knex('scheduled_activities')
+        .where('user_id', userId)
+        .where('activity_type', 'strength')
+        .whereNotNull('activity_id')
+        .pluck('activity_id')
 
-        let ssQuery = this.knex('strength_sessions').where('user_id', userId)
-        if (scheduledIds.length > 0) ssQuery = ssQuery.whereNotIn('id', scheduledIds)
-        if (start_date) ssQuery = ssQuery.where('session_date', '>=', start_date)
-        if (end_date) ssQuery = ssQuery.where('session_date', '<=', end_date)
+      let ssQuery = this.knex('strength_sessions').where('user_id', userId)
+      if (scheduledIds.length > 0) ssQuery = ssQuery.whereNotIn('id', scheduledIds)
+      if (start_date) ssQuery = ssQuery.where('session_date', '>=', start_date)
+      if (end_date) ssQuery = ssQuery.where('session_date', '<=', end_date)
 
-        const ssRows = await ssQuery.orderBy('session_date', 'asc')
+      const ssRows = await ssQuery.orderBy('session_date', 'asc')
 
-        for (const row of ssRows) {
-          const muscles: string[] = Array.isArray(row.target_muscles) ? row.target_muscles : []
-          const aiPlan = row.ai_plan as Record<string, unknown> | null
-          const title = (aiPlan?.session_name as string) || (muscles.length > 0 ? `Force — ${muscles.slice(0, 2).join(', ')}` : 'Séance Force')
+      for (const row of ssRows) {
+        // strength_sessions.status ('planned'/'completed'/'skipped') se mappe sur ActivityStatus ('scheduled' au lieu de 'planned')
+        const activityStatus: ActivityStatus = row.status === 'planned' ? 'scheduled' : (row.status ?? 'completed')
+        if (status && status !== activityStatus) continue
 
-          activities.push({
-            id: row.id,
-            user_id: row.user_id,
-            scheduled_date: typeof row.session_date === 'string'
-              ? row.session_date.slice(0, 10)
-              : new Date(row.session_date).toISOString().slice(0, 10),
-            module: 'strength',
-            status: 'completed',
-            title,
-            notes: row.notes ?? undefined,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            target_muscles: muscles,
-            session_goal: row.session_goal,
-            duration_minutes: row.duration_minutes ?? undefined,
-            perceived_effort: row.perceived_effort ?? undefined,
-            _source: 'strength_sessions',
-          })
-        }
+        const muscles: string[] = Array.isArray(row.target_muscles) ? row.target_muscles : []
+        const aiPlan = row.ai_plan as Record<string, unknown> | null
+        const title = (aiPlan?.session_name as string) || (muscles.length > 0 ? `Force — ${muscles.slice(0, 2).join(', ')}` : 'Séance Force')
+
+        activities.push({
+          id: row.id,
+          user_id: row.user_id,
+          scheduled_date: typeof row.session_date === 'string'
+            ? row.session_date.slice(0, 10)
+            : new Date(row.session_date).toISOString().slice(0, 10),
+          module: 'strength',
+          status: activityStatus,
+          title,
+          notes: row.notes ?? undefined,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          target_muscles: muscles,
+          session_goal: row.session_goal,
+          duration_minutes: row.duration_minutes ?? undefined,
+          perceived_effort: row.perceived_effort ?? undefined,
+          _source: 'strength_sessions',
+        })
       }
     }
 

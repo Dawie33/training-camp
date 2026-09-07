@@ -5,6 +5,7 @@ export type SessionGoal = 'strength' | 'hypertrophy' | 'endurance' | 'power'
 export type BlockType = 'push' | 'pull' | 'hinge' | 'squat' | 'carry' | 'rotation' | 'isolation' | 'core' | 'isometric'
 export type BodyFocus = 'upper_body' | 'lower_body' | 'full_body'
 export type TrainingStyle = 'traditional' | 'strongman'
+export type StrengthSessionStatus = 'planned' | 'completed' | 'skipped'
 
 export const BODY_FOCUS_LABELS: Record<BodyFocus, string> = {
   upper_body: 'Haut du corps',
@@ -143,6 +144,7 @@ export interface StrengthSession {
   id: string
   user_id: string
   session_date: string
+  status: StrengthSessionStatus
   target_muscles: string[]
   session_goal: SessionGoal
   body_focus?: BodyFocus
@@ -187,6 +189,7 @@ export interface GenerateStrengthDto {
   trainingStyle?: TrainingStyle
   personalized?: boolean
   existingPlan?: GeneratedStrengthSession
+  sessionDate?: string
 }
 
 export const strengthService = {

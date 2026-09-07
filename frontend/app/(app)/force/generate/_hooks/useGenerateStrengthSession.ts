@@ -37,6 +37,7 @@ export function useGenerateStrengthSession() {
   const [saving, setSaving] = useState(false)
   const [plan, setPlan] = useState<GeneratedStrengthSession | null>(null)
   const [lastParams, setLastParams] = useState<GenerateStrengthDto | null>(null)
+  const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().split('T')[0])
 
   useEffect(() => {
     setLoadingProfile(true)
@@ -97,8 +98,8 @@ export function useGenerateStrengthSession() {
     if (!plan || !lastParams) return
     try {
       setSaving(true)
-      await strengthService.generateAndSave({ ...lastParams, existingPlan: plan })
-      toast.success('Séance sauvegardée !')
+      await strengthService.generateAndSave({ ...lastParams, existingPlan: plan, sessionDate })
+      toast.success('Séance planifiée !')
       router.push('/force')
     } catch { toast.error('Erreur lors de la sauvegarde') } finally { setSaving(false) }
   }
@@ -119,6 +120,7 @@ export function useGenerateStrengthSession() {
     personalized, setPersonalized,
     parseInputText, setParseInputText, analyzing,
     loading, saving, plan,
+    sessionDate, setSessionDate,
     handleGenerate, handleAnalyzeText, handleSave, resetPlan,
   }
 }
