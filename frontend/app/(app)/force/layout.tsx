@@ -7,7 +7,6 @@ const TABS = [
   { label: 'Historique', href: '/force' },
   { label: 'Enregistrer', href: '/force/log' },
   { label: 'Générer', href: '/force/generate' },
-  { label: 'Programme', href: '/force/program' },
   { label: 'Mes RM', href: '/force/rm' },
 ]
 

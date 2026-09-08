@@ -5,7 +5,6 @@ import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
 import { DailyWorkoutCard } from './components/DailyWorkoutCard'
-import { ActiveProgramCard } from './components/ActiveProgramCard'
 import { SkillOfTheDayCard } from './components/SkillOfTheDayCard'
 import { TrainingOverview } from './components/TrainingOverview'
 import { QuickActions } from './components/QuickActions'
@@ -53,14 +52,9 @@ function DashboardContent() {
           <DailyWorkoutCard index="02" />
         </motion.div>
 
-        {/* Programme actif */}
-        <motion.div variants={fadeInUp}>
-          <ActiveProgramCard index="03" />
-        </motion.div>
-
         {/* Skill du jour */}
         <motion.div variants={fadeInUp}>
-          <SkillOfTheDayCard index="04" />
+          <SkillOfTheDayCard index="03" />
         </motion.div>
 
         {/* Vue d'ensemble */}

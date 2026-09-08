@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button'
 import { MUSCLE_LABELS, SESSION_GOAL_LABELS } from '@/services/strength'
 import { Check, ExternalLink, FileDown, SkipForward, Trash2 } from 'lucide-react'
 import { statusColors } from './CalendarEventContent'
-import { ProgramSessionDetail, type ProgramSessionData } from '@/components/program/ProgramSessionDetail'
 
 export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unknown> }) {
   const status = (calendarEvent.status as string) || 'scheduled'
@@ -14,24 +13,11 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const onPrint = calendarEvent._onPrint as (() => void) | undefined
   const isStrength = module === 'strength'
   const isSkill = module === 'skill'
-  const isProgramSession = calendarEvent.session_type === 'program_session'
   const targetMuscles = calendarEvent.target_muscles as string[] | undefined
   const sessionGoal = calendarEvent.session_goal as string | undefined
   const skillStepTitle = calendarEvent.skill_step_title as string | undefined
   const skillProgress = calendarEvent.skill_progress as number | undefined
   const skillProgramId = calendarEvent.skill_program_id as string | undefined
-
-  const rawSession = calendarEvent.session_data
-  let session: ProgramSessionData | null = null
-  if (rawSession && typeof rawSession === 'object') {
-    session = rawSession as ProgramSessionData
-  } else if (typeof rawSession === 'string') {
-    try {
-      session = JSON.parse(rawSession) as ProgramSessionData
-    } catch {
-      session = null
-    }
-  }
 
   // Thème Clay (calendrier en style Clay éditorial)
   const clay = true
@@ -126,14 +112,11 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
         )}
       </div>
 
-      {/* Contenu de la séance (programme) */}
-      {session && <ProgramSessionDetail session={session} />}
-
       {/* Actions */}
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
         {status === 'scheduled' && (
           <>
-            {onComplete && !isProgramSession && (isStrength || isSkill) && (
+            {onComplete && (isStrength || isSkill) && (
               <Button
                 size="sm"
                 onClick={onComplete}
@@ -153,19 +136,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
                 Sauté
               </Button>
             )}
-            {isProgramSession && (
-              <Button
-                size="sm"
-                asChild
-                className={c.complete}
-              >
-                <a href={`/crossfit/program/log-session?scheduleId=${calendarEvent.id as string}`}>
-                  <Check className="w-3.5 h-3.5 mr-1" />
-                  Logger la séance
-                </a>
-              </Button>
-            )}
-            {!isProgramSession && !isStrength && !isSkill && (
+            {!isStrength && !isSkill && (
               <Button
                 size="sm"
                 asChild

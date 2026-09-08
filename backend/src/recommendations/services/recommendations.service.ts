@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
-import { ProgramRecommendationContext, TrainingProgramsService } from 'src/training-programs/training-programs.service'
 import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { buildRecommendationSystemPrompt, buildRecommendationUserPrompt } from '../prompts/recommendation.prompt'
@@ -14,7 +13,6 @@ export class RecommendationsService {
   constructor(
     private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService,
-    private readonly trainingProgramsService: TrainingProgramsService,
   ) {}
 
   async getNextSessionRecommendation(userId: string): Promise<NextSessionRecommendation> {
@@ -24,17 +22,14 @@ export class RecommendationsService {
     }
 
     try {
-      const [ctx, programContext] = await Promise.all([
-        this.userContextService.getUserAIContext(userId),
-        this.trainingProgramsService.getRecommendationContext(userId),
-      ])
+      const ctx = await this.userContextService.getUserAIContext(userId)
       const stats = this.computeSessionStats(ctx)
 
       const completion = await this.openaiClientService.client.chat.completions.create({
         model: 'gpt-4.1',
         messages: [
           { role: 'system', content: buildRecommendationSystemPrompt() },
-          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats, programContext) },
+          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
         ],
         temperature: 0.4,
         max_tokens: 800,
@@ -49,7 +44,6 @@ export class RecommendationsService {
       const result: NextSessionRecommendation = {
         recommendation,
         session_stats: stats,
-        program: programContext,
         generated_at: new Date().toISOString(),
       }
 
