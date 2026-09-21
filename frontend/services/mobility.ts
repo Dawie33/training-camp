@@ -108,7 +108,6 @@ export function deriveMobilityFocusAreaFromMuscles(muscles: string[]): MobilityF
 
 type RecoveryMobilityContext =
     | { sport: 'strength'; targetMuscles: string[] }
-    | { sport: 'running' }
     | { sport: 'biking' }
     | { sport: 'crossfit'; workoutType?: string; focusAreasText?: string[]; exerciseNames?: string[] }
 
@@ -118,13 +117,6 @@ export function buildRecoveryMobilityUrl(ctx: RecoveryMobilityContext): string {
     switch (ctx.sport) {
         case 'strength':
             params.set('focus_area', deriveMobilityFocusAreaFromMuscles(ctx.targetMuscles))
-            break
-        case 'running':
-            params.set('focus_area', 'hips')
-            params.set(
-                'additional_instructions',
-                'Sortie course à pied : cible en particulier mollets, ischio-jambiers et fascia lata en complément des hanches.',
-            )
             break
         case 'biking':
             params.set('focus_area', 'hips_shoulders')

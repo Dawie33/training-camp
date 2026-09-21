@@ -117,7 +117,7 @@ export function buildAthleteContextSection(context: UserAIContext): string {
 
   if (context.recentSessions.length > 0) {
     const sportLabels: Record<string, string> = {
-      crossfit: 'CrossFit', running: 'Running',
+      crossfit: 'CrossFit',
       strength: 'Force', biking: 'Vélo',
     }
     lines.push('')

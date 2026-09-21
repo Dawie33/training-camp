@@ -6,7 +6,6 @@ import {
   Bike,
   Dna,
   Flame,
-  Footprints,
   GraduationCap,
   Minus,
   Scale,
@@ -28,7 +27,6 @@ const TREND_CONFIG: Record<TypeTrend['trend'], { icon: LucideIcon; color: string
 
 const SPORT_CONFIG: Record<SportType, { label: string; icon: LucideIcon; color: string }> = {
   crossfit: { label: 'CrossFit', icon: Flame, color: 'text-orange-600' },
-  running: { label: 'Running', icon: Footprints, color: 'text-orange-600' },
   biking: { label: 'Vélo', icon: Bike, color: 'text-orange-600' },
   global: { label: 'Multi-sport', icon: BarChart3, color: 'text-foreground' },
 }

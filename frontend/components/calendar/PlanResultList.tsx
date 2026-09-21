@@ -19,7 +19,6 @@ const ACTIVITY_STYLE: Record<string, { color: string; icon: string }> = {
   Conditioning: { color: 'bg-orange-600/10 border-orange-600/30', icon: '🔥' },
   Mobilité: { color: 'bg-green-600/10 border-green-600/30', icon: '🧘' },
   Force: { color: 'bg-blue-600/10 border-blue-600/30', icon: '🏋' },
-  Running: { color: 'bg-green-600/10 border-green-600/30', icon: '👟' },
 }
 
 export function PlanResultList({ result, onClose }: PlanResultListProps) {

@@ -4,7 +4,7 @@ import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 
-export type SportType = 'crossfit' | 'running' | 'biking' | 'global'
+export type SportType = 'crossfit' | 'biking' | 'global'
 
 export interface TypeTrend {
   type: string
@@ -55,7 +55,6 @@ export class TrackingService {
     let report: ProgressionReport
     if (sport === 'global') report = await this.generateGlobalReport(userId, months, since)
     else if (sport === 'crossfit') report = await this.generateCrossfitReport(userId, months, since)
-    else if (sport === 'running') report = await this.generateRunningReport(userId, months, since)
     else report = await this.generateBikingReport(userId, months, since)
 
     await this.saveReport(userId, sport, months, report)
@@ -273,75 +272,6 @@ Analyse ces données précisément. Cite des résultats concrets (noms de workou
 ${this.jsonInstructions()}`
   }
 
-  // ─── Running ──────────────────────────────────────────────────────────────
-
-  private async generateRunningReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const sessions = await this.knex('running_sessions')
-      .select('session_date', 'run_type', 'distance_km', 'duration_seconds', 'avg_pace_seconds_per_km', 'avg_heart_rate')
-      .where('user_id', userId)
-      .where('session_date', '>=', since.toISOString().split('T')[0])
-      .orderBy('session_date', 'asc')
-
-    if (sessions.length < 3) return this.notEnoughData('running', months, sessions.length)
-
-    const agg = this.aggregateRunning(sessions)
-    const prompt = this.buildRunningPrompt(agg, months)
-    const parsed = await this.callAI(prompt)
-
-    return { sport: 'running', period_months: months, ...parsed, generated_at: new Date().toISOString() }
-  }
-
-  private aggregateRunning(sessions: any[]) {
-    const total = sessions.length
-    const totalKm = sessions.reduce((acc, s) => acc + (s.distance_km ?? 0), 0).toFixed(1)
-    const maxKm = Math.max(...sessions.map(s => s.distance_km ?? 0)).toFixed(1)
-
-    // Tendance allure : comparer première moitié vs deuxième moitié
-    const withPace = sessions.filter(s => s.avg_pace_seconds_per_km)
-    const mid = Math.floor(withPace.length / 2)
-    const firstHalfPace = withPace.slice(0, mid).reduce((a, s) => a + s.avg_pace_seconds_per_km, 0) / (mid || 1)
-    const secondHalfPace = withPace.slice(mid).reduce((a, s) => a + s.avg_pace_seconds_per_km, 0) / (withPace.length - mid || 1)
-    const paceTrend: 'improving' | 'stable' | 'declining' =
-      firstHalfPace - secondHalfPace > 15 ? 'improving' : secondHalfPace - firstHalfPace > 15 ? 'declining' : 'stable'
-    const paceImprovePct = firstHalfPace > 0 ? Math.round(((firstHalfPace - secondHalfPace) / firstHalfPace) * 100) : 0
-
-    // FC moyenne
-    const withHr = sessions.filter(s => s.avg_heart_rate)
-    const avgHr = withHr.length ? Math.round(withHr.reduce((a, s) => a + s.avg_heart_rate, 0) / withHr.length) : null
-
-    // Répartition par type
-    const byType: Record<string, number> = {}
-    for (const s of sessions) {
-      const t = s.run_type ?? 'easy'
-      byType[t] = (byType[t] ?? 0) + 1
-    }
-
-    const weekSpan = this.computeWeekSpanFromDates(sessions.map(s => s.session_date))
-    const consistencyPct = this.computeConsistencyFromDates(sessions.map(s => s.session_date), weekSpan)
-
-    return { total, totalKm, maxKm, paceTrend, paceImprovePct, avgHr, byType, weekSpan, consistencyPct }
-  }
-
-  private buildRunningPrompt(agg: any, months: number): string {
-    const typeLines = Object.entries(agg.byType)
-      .map(([type, count]) => `- ${type}: ${count} séance(s)`)
-      .join('\n')
-
-    return `Tu es un coach running expert. Génère un bilan de progression running sur ${months} mois.
-
-Données ${months} mois :
-- ${agg.total} séances, ${agg.totalKm} km au total
-- Plus longue sortie : ${agg.maxKm} km
-- Tendance allure : ${agg.paceTrend}${agg.paceImprovePct ? ` (${agg.paceImprovePct > 0 ? '+' : ''}${agg.paceImprovePct}%)` : ''}
-- FC moyenne : ${agg.avgHr ? `${agg.avgHr} bpm` : 'non renseignée'}
-- Régularité : ${agg.consistencyPct}% (${agg.weekSpan} semaines)
-
-Types de sorties :
-${typeLines}
-
-${this.jsonInstructions()}`
-  }
-
   // ─── Biking ───────────────────────────────────────────────────────────────
 
   private async generateBikingReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
@@ -420,10 +350,8 @@ ${this.jsonInstructions()}`
     const sinceDate = since.toISOString().split('T')[0]
     const sinceISO = since.toISOString()
 
-    const [cfSessions, runningSessions, bikingSessions, orms, profile] = await Promise.all([
+    const [cfSessions, bikingSessions, orms, profile] = await Promise.all([
       this.knex('workout_sessions').where('user_id', userId).whereNotNull('completed_at').where('started_at', '>=', sinceISO).count('* as count').first(),
-      this.knex('running_sessions').where('user_id', userId).where('session_date', '>=', sinceDate)
-        .select('distance_km', 'avg_pace_seconds_per_km', 'avg_heart_rate', 'run_type'),
       this.knex('biking_sessions').where('user_id', userId).where('session_date', '>=', sinceDate)
         .select('distance_km', 'duration_seconds', 'avg_power_watts', 'bike_type'),
       this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId).orderBy('lift'),
@@ -431,22 +359,18 @@ ${this.jsonInstructions()}`
     ])
 
     const cfCount = Number((cfSessions as any)?.count ?? 0)
-    const totalSessions = cfCount + runningSessions.length + bikingSessions.length
+    const totalSessions = cfCount + bikingSessions.length
 
     if (totalSessions < 5) return this.notEnoughData('global', months, totalSessions)
 
-    const agg = this.aggregateGlobal({ cfCount, runningSessions, bikingSessions, orms, profile })
+    const agg = this.aggregateGlobal({ cfCount, bikingSessions, orms, profile })
     const prompt = this.buildGlobalPrompt(agg, months)
     const parsed = await this.callAI(prompt, true)
 
     return { sport: 'global', period_months: months, ...parsed, generated_at: new Date().toISOString() }
   }
 
-  private aggregateGlobal({ cfCount, runningSessions, bikingSessions, orms, profile }: any) {
-    const totalRunningKm = runningSessions.reduce((a: number, s: any) => a + (s.distance_km ?? 0), 0).toFixed(1)
-    const paceValues = runningSessions.filter((s: any) => s.avg_pace_seconds_per_km).map((s: any) => s.avg_pace_seconds_per_km)
-    const avgPace = paceValues.length ? Math.round(paceValues.reduce((a: number, v: number) => a + v, 0) / paceValues.length) : null
-
+  private aggregateGlobal({ cfCount, bikingSessions, orms, profile }: any) {
     const totalBikingKm = bikingSessions.reduce((a: number, s: any) => a + (Number(s.distance_km) ?? 0), 0).toFixed(1)
     const bikingPowerValues = bikingSessions.filter((s: any) => s.avg_power_watts).map((s: any) => s.avg_power_watts as number)
     const avgBikingPower = bikingPowerValues.length
@@ -457,18 +381,13 @@ ${this.jsonInstructions()}`
 
     const balance = {
       crossfit: cfCount,
-      running: runningSessions.length,
       biking: bikingSessions.length,
     }
 
-    return { cfCount, totalRunningKm, avgPace, totalBikingKm, avgBikingPower, ormStr, balance, profile }
+    return { cfCount, totalBikingKm, avgBikingPower, ormStr, balance, profile }
   }
 
   private buildGlobalPrompt(agg: any, months: number): string {
-    const paceStr = agg.avgPace
-      ? `${Math.floor(agg.avgPace / 60)}:${String(agg.avgPace % 60).padStart(2, '0')}/km`
-      : 'non renseignée'
-
     const balanceLines = Object.entries(agg.balance)
       .map(([sport, count]) => `- ${sport}: ${count} séance(s)`)
       .join('\n')
@@ -488,7 +407,6 @@ ${balanceLines}
 
 Indicateurs par discipline :
 - CrossFit : ${agg.cfCount} séances
-- Running : ${agg.totalRunningKm} km totaux, allure moyenne ${paceStr}
 - Vélo : ${agg.balance.biking} séances — ${bikingStr}
 
 En te basant sur ces données, évalue la condition physique globale de l'athlète.

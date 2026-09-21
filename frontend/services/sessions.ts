@@ -3,18 +3,6 @@ import apiClient from './apiClient'
 import ResourceApi from './resourceApi'
 import type { QueryParams } from './types'
 
-export interface RunningSegment {
-  session_id: string
-  workout_name: string | null
-  date: string
-  duration_seconds: number
-  distance_meters: number
-  avg_pace_min_km: number
-  avg_heart_rate: number | null
-  max_heart_rate: number | null
-  activity_index: number
-}
-
 export interface WodAnalysis {
   summary: string
   performance_level: 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
@@ -92,9 +80,6 @@ export class SessionService {
     return apiClient.post<WodAnalysis>(url, {})
   }
 
-  async getRunningSegments(): Promise<RunningSegment[]> {
-    return apiClient.get<RunningSegment[]>('/workout-sessions/running-segments')
-  }
 }
 
 export const sessionService = new SessionService()

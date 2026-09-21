@@ -5,7 +5,7 @@ import { GoogleCalendarService } from '../google-calendar/google-calendar.servic
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
 import { ActivityStatus, UnifiedActivity } from './types/unified-activity.type'
 
-const ACTIVITY_LABELS: Record<string, string> = { running: 'Running', biking: 'Vélo', strength: 'Force', skill: 'Skill', mobility: 'Mobilité', wod: 'WOD', conditioning: 'Conditioning' }
+const ACTIVITY_LABELS: Record<string, string> = { biking: 'Vélo', strength: 'Force', skill: 'Skill', mobility: 'Mobilité', wod: 'WOD', conditioning: 'Conditioning' }
 
 export interface SkillEnrichment {
   title: string

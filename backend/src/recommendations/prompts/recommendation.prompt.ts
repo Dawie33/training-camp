@@ -3,7 +3,6 @@ import { SessionStats } from '../schemas/recommendation.schema'
 
 const SPORT_LABELS: Record<string, string> = {
   crossfit: 'CrossFit',
-  running: 'Running',
   biking: 'Vélo',
   strength: 'Force',
 }
@@ -17,31 +16,29 @@ Ta mission est d'analyser l'historique d'entraînement complet d'un athlète (to
 
 ## Équilibre des modalités
 Un programme équilibré sur 3 semaines doit couvrir :
-- **Cardio/endurance** : Running easy/long_run ou Biking endurance Z2 (2-3x/3 semaines minimum)
+- **Cardio/endurance** : Biking endurance Z2 (2-3x/3 semaines minimum)
 - **Force/puissance** : Strength ou CrossFit strength_max (1-2x/semaine)
 - **Conditionnement métabolique** : CrossFit conditioning, Biking intervals (2-3x/semaine)
 - **Technique/seuil** : CrossFit technique_metcon, Biking sweet_spot (1x/semaine)
 
 ## Règles de récupération
 - RPE 9-10 hier → recommander séance légère ou repos
-- 3 séances haute intensité en 5 jours → recommander récupération active (running easy, strength légère)
+- 3 séances haute intensité en 5 jours → recommander récupération active (strength légère)
 - Pas de 2 séances de même sport à haute intensité 2 jours de suite
 
 ## Règles d'urgence (days_since_last)
-- **Urgence haute** : > 14 jours sans running, > 10 jours sans force, > 14 jours sans vélo
+- **Urgence haute** : > 10 jours sans force, > 14 jours sans vélo
 - **Urgence moyenne** : 8-14 jours sans une modalité
 - **Urgence faible** : 3-7 jours sans une modalité (rotation normale)
 
 ## Types de séance par sport
 - **crossfit** : technique_metcon, strength_max, conditioning, benchmark, vo2max
-- **running** : easy, tempo, intervals, long_run, fartlek
 - **biking** : endurance, sweet_spot, intervals, ftp_test, recovery, race
 - **strength** : strength, hypertrophy, endurance, power
 - **rest** : récupération active (type "active_recovery")
 
 ## Durée suggérée par sport et niveau
 - CrossFit : 45-60 min (beginner: 35-45 min)
-- Running : 30-60 min selon le type (easy: 30-40, intervals: 40-50, long_run: 60-90)
 - Vélo : 45-90 min (endurance: 60-90, sweet_spot: 60-75, intervals: 60, recovery: 40-50)
 - Strength : 50-70 min
 
@@ -50,7 +47,7 @@ Un programme équilibré sur 3 semaines doit couvrir :
 Retourne UNIQUEMENT ce JSON :
 \`\`\`json
 {
-  "recommended_sport": "crossfit|running|biking|strength|rest",
+  "recommended_sport": "crossfit|biking|strength|rest",
   "recommended_type": "type de séance spécifique",
   "urgency": "low|medium|high",
   "reason": "1-2 phrases directes expliquant POURQUOI cette séance maintenant",
@@ -91,7 +88,7 @@ export function buildRecommendationUserPrompt(
   lines.push(`Total séances : ${stats.total_sessions_21d}`)
   lines.push('Par sport :')
 
-  const ALL_SPORTS = ['crossfit', 'running', 'biking', 'strength']
+  const ALL_SPORTS = ['crossfit', 'biking', 'strength']
   for (const sport of ALL_SPORTS) {
     const count = stats.by_sport[sport] ?? 0
     const days = stats.days_since_last[sport]

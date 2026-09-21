@@ -2,8 +2,7 @@
 
 import { WorkoutStats } from '@/domain/entities/workout-history'
 import { BikingStats } from '@/services/biking'
-import { RunningStats } from '@/services/running'
-import { Bike, Flame, Footprints, Trophy, type LucideIcon } from 'lucide-react'
+import { Bike, Flame, Trophy, type LucideIcon } from 'lucide-react'
 import { StatsCard } from './StatsCard'
 
 interface SportCardProps {
@@ -39,20 +38,17 @@ function SportCard({ icon: Icon, label, sessions, stat, statLabel, onTabChange }
 
 interface GlobalOverviewProps {
   workoutStats: WorkoutStats | null
-  runningStats: RunningStats | null
   bikingStats: BikingStats | null
   onTabChange: (tab: string) => void
 }
 
 export function GlobalOverview({
   workoutStats,
-  runningStats,
   bikingStats,
   onTabChange,
 }: GlobalOverviewProps) {
   const totalSessions =
     (workoutStats?.totalWorkouts ?? 0) +
-    (runningStats?.total_sessions ?? 0) +
     (bikingStats?.total_sessions ?? 0)
 
   return (
@@ -74,14 +70,6 @@ export function GlobalOverview({
           stat={workoutStats?.currentStreak ? `${workoutStats.currentStreak}j` : '--'}
           statLabel="Streak actuel"
           onTabChange={() => onTabChange('crossfit')}
-        />
-        <SportCard
-          icon={Footprints}
-          label="Running"
-          sessions={runningStats?.total_sessions ?? 0}
-          stat={runningStats ? `${runningStats.total_km} km` : '--'}
-          statLabel="Distance totale"
-          onTabChange={() => onTabChange('running')}
         />
         <SportCard
           icon={Bike}

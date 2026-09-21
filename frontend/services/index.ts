@@ -30,10 +30,6 @@ export * from './users'
 // One Rep Maxes
 export * from './one-rep-maxes'
 
-// Running
-export * from './running'
-
-
 // Activities (unified multi-module calendar)
 export * from './activities'
 

@@ -9,7 +9,7 @@ export class ScheduledActivitiesController {
   constructor(private readonly service: ScheduledActivitiesService) {}
 
   /**
-   * Vue unifiée de toutes les activités planifiées (CrossFit + Running + Force)
+   * Vue unifiée de toutes les activités planifiées (CrossFit + Vélo + Force)
    */
   @Get('unified')
   async findUnified(
@@ -20,7 +20,7 @@ export class ScheduledActivitiesController {
   }
 
   /**
-   * Crée une nouvelle activité planifiée (Running / Force)
+   * Crée une nouvelle activité planifiée (Vélo / Force)
    */
   @Post()
   async create(
@@ -31,7 +31,7 @@ export class ScheduledActivitiesController {
   }
 
   /**
-   * Met à jour une activité planifiée (Running / Force)
+   * Met à jour une activité planifiée (Vélo / Force)
    */
   @Patch(':id')
   async update(
@@ -43,7 +43,7 @@ export class ScheduledActivitiesController {
   }
 
   /**
-   * Supprime une activité planifiée (Running / Force)
+   * Supprime une activité planifiée (Vélo / Force)
    */
   @Delete(':id')
   async delete(

@@ -28,7 +28,6 @@ interface QueryOverrides {
   profile?: unknown
   oneRepMaxes?: unknown[]
   cfSessions?: unknown[]
-  runningSessions?: unknown[]
   strengthSessions?: unknown[]
   bikingSessions?: unknown[]
   recentAnalyses?: unknown[]
@@ -40,7 +39,7 @@ interface QueryOverrides {
 /**
  * L'ordre des mockImplementationOnce suit l'ordre des `this.knex(...)` dans
  * getUserAIContext() : users, one_rep_maxes, workout_sessions (crossfit),
- * running_sessions, strength_sessions, biking_sessions, workout_sessions
+ * strength_sessions, biking_sessions, workout_sessions
  * (analyses), skill_programs (actives), skill_programs (terminees), tracking_reports.
  */
 function createKnexMock(overrides: QueryOverrides = {}) {
@@ -49,7 +48,6 @@ function createKnexMock(overrides: QueryOverrides = {}) {
     .mockImplementationOnce(() => createChainableBuilder(overrides.profile ?? null))
     .mockImplementationOnce(() => createChainableBuilder(overrides.oneRepMaxes ?? []))
     .mockImplementationOnce(() => createChainableBuilder(overrides.cfSessions ?? []))
-    .mockImplementationOnce(() => createChainableBuilder(overrides.runningSessions ?? []))
     .mockImplementationOnce(() => createChainableBuilder(overrides.strengthSessions ?? []))
     .mockImplementationOnce(() => createChainableBuilder(overrides.bikingSessions ?? []))
     .mockImplementationOnce(() => createChainableBuilder(overrides.recentAnalyses ?? []))
@@ -123,11 +121,10 @@ describe('UserContextService.getUserAIContext', () => {
     expect(knexMock).toHaveBeenNthCalledWith(2, 'one_rep_maxes')
   })
 
-  it('fusionne et trie par date décroissante les séances des 4 sports', async () => {
+  it('fusionne et trie par date décroissante les séances des 3 sports', async () => {
     // Arrange
     const knexMock = createKnexMock({
       cfSessions: [{ started_at: '2026-08-28T10:00:00Z', completed_at: '2026-08-28T10:45:00Z', workout_type: 'metcon', perceived_effort: '8' }],
-      runningSessions: [{ session_date: '2026-08-29', run_type: 'easy', duration_seconds: 1800, perceived_effort: 5 }],
       strengthSessions: [{ session_date: '2026-08-27', session_goal: 'squat', duration_minutes: 50, perceived_effort: 7 }],
       bikingSessions: [{ session_date: '2026-08-30', bike_type: 'zone2', duration_seconds: 3600, perceived_effort: 4 }],
     })
@@ -139,7 +136,6 @@ describe('UserContextService.getUserAIContext', () => {
     // Assert
     expect(result.recentSessions).toEqual([
       { date: '2026-08-30', sport: 'biking', workout_type: 'zone2', duration_minutes: 60, perceived_effort: 4 },
-      { date: '2026-08-29', sport: 'running', workout_type: 'easy', duration_minutes: 30, perceived_effort: 5 },
       { date: '2026-08-28', sport: 'crossfit', workout_type: 'metcon', duration_minutes: 45, perceived_effort: 8 },
       { date: '2026-08-27', sport: 'strength', workout_type: 'squat', duration_minutes: 50, perceived_effort: 7 },
     ])
@@ -147,13 +143,13 @@ describe('UserContextService.getUserAIContext', () => {
 
   it('limite les séances récentes fusionnées à 20, en gardant les plus récentes', async () => {
     // Arrange
-    const runningSessions = Array.from({ length: 25 }, (_, i) => ({
+    const bikingSessions = Array.from({ length: 25 }, (_, i) => ({
       session_date: `2026-01-${String(i + 1).padStart(2, '0')}`,
-      run_type: 'easy',
+      bike_type: 'zone2',
       duration_seconds: 1200,
       perceived_effort: 5,
     }))
-    const knexMock = createKnexMock({ runningSessions })
+    const knexMock = createKnexMock({ bikingSessions })
     const service = await buildService(knexMock)
 
     // Act
@@ -256,7 +252,7 @@ describe('UserContextService.getUserAIContext', () => {
     await service.getUserAIContext('user-1')
 
     // Assert
-    expect(knexMock).toHaveBeenCalledTimes(10)
+    expect(knexMock).toHaveBeenCalledTimes(9)
   })
 
   it('invalidateCache force une nouvelle interrogation de la base', async () => {
@@ -270,7 +266,7 @@ describe('UserContextService.getUserAIContext', () => {
     await service.getUserAIContext('user-1')
 
     // Assert
-    expect(knexMock).toHaveBeenCalledTimes(20)
+    expect(knexMock).toHaveBeenCalledTimes(18)
   })
 
   it('completedSkillNames : reprend les noms des programmes de competence termines', async () => {

@@ -4,7 +4,7 @@ Ce document explique comment Training Camp génère des séances d'entraînement
 
 ## Pourquoi ce mécanisme ?
 
-Chaque sport (cross-training, force, running, vélo, mobilité, compétences, programmes d'entraînement) dispose de son propre générateur IA. Un service séparé analyse également les séances terminées.
+Chaque sport (cross-training, force, vélo, mobilité, compétences, programmes d'entraînement) dispose de son propre générateur IA. Un service séparé analyse également les séances terminées.
 
 Tous ces générateurs suivent le **même pattern** : ils appellent OpenAI avec des instructions précises, puis valident strictement la réponse avant de l'enregistrer.
 
@@ -36,7 +36,6 @@ L'utilisateur demande une séance. Le backend enrichit la demande avec son profi
 | `workouts` | `AIWorkoutGeneratorService` | Génère les WOD de cross-training, extrait un WOD depuis du texte brut, retrouve un WOD officiel connu |
 | `skills` | `AISkillGeneratorService` | Génère un programme de progression sur une compétence gymnique ou d'haltérophilie |
 | `strength` | `AIStrengthGeneratorService` | Génère les séances de force / musculation |
-| `running` | `AIRunningGeneratorService` | Génère les séances de course à pied |
 | `biking` | `AIBikingGeneratorService` | Génère les séances de vélo |
 | `mobility` | `AIMobilityGeneratorService` | Génère les séances de mobilité |
 | `training-programs` | `AICrossfitProgramGeneratorService` (dans `WorkoutsModule`) | Génère des programmes d'entraînement complets sur plusieurs semaines |

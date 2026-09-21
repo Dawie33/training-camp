@@ -63,7 +63,7 @@ export class RecommendationsService {
   }
 
   private computeSessionStats(ctx: UserAIContext): SessionStats {
-    const ALL_SPORTS = ['crossfit', 'running', 'biking', 'strength'] as const
+    const ALL_SPORTS = ['crossfit', 'biking', 'strength'] as const
 
     const bySport: Record<string, number> = {}
     const lastDateBySport: Record<string, string | null> = {}

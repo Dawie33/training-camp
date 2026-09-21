@@ -2,13 +2,11 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { activitiesApi } from '@/services/activities'
-import { RunType } from '@/services/running'
 import { Building2, Home } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { BikingTab } from './BikingTab'
 import { CrossfitTab } from './CrossfitTab'
-import { RunningTab } from './RunningTab'
 import { StrengthTab } from './StrengthTab'
 import { SPORT_TABS, SportTab } from './types'
 import { useBikingSessions } from './useBikingSessions'
@@ -38,7 +36,6 @@ export function ScheduleWorkoutModal({
   const [selectedWorkoutId, setSelectedWorkoutId] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [runType, setRunType] = useState<RunType>('easy')
   const [location, setLocation] = useState<SessionLocation | undefined>(undefined)
 
   const library = useWorkoutLibrary(open, activeTab === 'library')
@@ -56,7 +53,6 @@ export function ScheduleWorkoutModal({
       setActiveTab('library')
       setSportTab('crossfit')
       setNotes('')
-      setRunType('easy')
       setLocation(undefined)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,8 +86,7 @@ export function ScheduleWorkoutModal({
   }
 
   const handleSubmitSportActivity = async () => {
-    const activityTypeMap: Record<Exclude<SportTab, 'crossfit'>, 'running' | 'biking' | 'strength'> = {
-      running: 'running',
+    const activityTypeMap: Record<Exclude<SportTab, 'crossfit'>, 'biking' | 'strength'> = {
       biking: 'biking',
       strength: 'strength',
     }
@@ -115,8 +110,6 @@ export function ScheduleWorkoutModal({
       setSubmitting(false)
     }
   }
-
-  const activeSport = SPORT_TABS.find(t => t.id === sportTab)!
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -176,19 +169,6 @@ export function ScheduleWorkoutModal({
             onNotesChange={setNotes}
             submitting={submitting}
             onSubmit={handleSubmit}
-            onCancel={closeModal}
-          />
-        )}
-
-        {sportTab === 'running' && (
-          <RunningTab
-            activeSport={activeSport}
-            runType={runType}
-            onRunTypeChange={setRunType}
-            notes={notes}
-            onNotesChange={setNotes}
-            submitting={submitting}
-            onSubmit={handleSubmitSportActivity}
             onCancel={closeModal}
           />
         )}

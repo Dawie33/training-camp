@@ -42,7 +42,7 @@ Après connexion, le navigateur envoie automatiquement le cookie à chaque requ�
 | Routes générales | 60 requêtes / minute / IP |
 | Connexion (`/auth/login`) | 10 requêtes / minute |
 | Inscription (`/auth/signup`) | 5 requêtes / minute |
-| Génération IA (workouts, skills, force, running, vélo, mobilité, programmes) | 10 requêtes / minute |
+| Génération IA (workouts, skills, force, vélo, mobilité, programmes) | 10 requêtes / minute |
 | Recommandations (lecture) | 60 requêtes / minute |
 | Recommandations (génération) | 5 requêtes / minute |
 

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const RecommendedSportSchema = z.enum(['crossfit', 'running', 'biking', 'strength', 'rest'])
+export const RecommendedSportSchema = z.enum(['crossfit', 'biking', 'strength', 'rest'])
 
 export const AIRecommendationSchema = z.object({
   recommended_sport: RecommendedSportSchema,

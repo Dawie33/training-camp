@@ -1,6 +1,6 @@
 import { apiClient } from './index'
 
-export type ActivityModule = 'crossfit' | 'running' | 'biking' | 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
+export type ActivityModule = 'crossfit' | 'biking' | 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**
@@ -33,7 +33,7 @@ export interface UnifiedActivity {
   completed_session_id?: string
 
   // Champs nouveaux modules
-  activity_type?: 'running' | 'biking' | 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
+  activity_type?: 'biking' | 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
   activity_id?: string
 
   // Champs Force
@@ -54,7 +54,7 @@ export interface UnifiedActivity {
 }
 
 export interface CreateActivityDto {
-  activity_type: 'running' | 'biking' | 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
+  activity_type: 'biking' | 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
   scheduled_date: string
   activity_id?: string
   location?: 'home' | 'box'
@@ -79,28 +79,28 @@ export interface UnifiedActivityQueryParams extends Record<string, string | numb
 
 export const activitiesApi = {
   /**
-   * Récupère la vue unifiée de toutes les activités planifiées (CrossFit + Running + Force)
+   * Récupère la vue unifiée de toutes les activités planifiées (CrossFit + Vélo + Force)
    */
   async getUnified(params?: UnifiedActivityQueryParams): Promise<UnifiedActivity[]> {
     return apiClient.get<UnifiedActivity[]>('/scheduled-activities/unified', { params })
   },
 
   /**
-   * Crée une nouvelle activité planifiée (Running / Biking / Strength)
+   * Crée une nouvelle activité planifiée (Biking / Strength)
    */
   async create(data: CreateActivityDto): Promise<UnifiedActivity> {
     return apiClient.post<UnifiedActivity>('/scheduled-activities', data)
   },
 
   /**
-   * Met à jour une activité planifiée (Running / Biking / Strength)
+   * Met à jour une activité planifiée (Biking / Strength)
    */
   async update(id: string, data: UpdateActivityDto): Promise<UnifiedActivity> {
     return apiClient.patch<UnifiedActivity>(`/scheduled-activities/${id}`, data)
   },
 
   /**
-   * Supprime une activité planifiée (Running / Force)
+   * Supprime une activité planifiée (Biking / Force)
    */
   async delete(id: string): Promise<{ success: boolean }> {
     return apiClient.delete<{ success: boolean }>(`/scheduled-activities/${id}`)

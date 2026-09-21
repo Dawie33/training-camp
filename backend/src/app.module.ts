@@ -16,7 +16,6 @@ import { HealthcheckModule } from './healthcheck/healthcheck.module'
 import { MobilityModule } from './mobility/mobility.module'
 import { OneRepMaxesModule } from './one-rep-maxes/one-rep-maxes.module'
 import { RecommendationsModule } from './recommendations/recommendations.module'
-import { RunningModule } from './running/running.module'
 import { ScheduledActivitiesModule } from './scheduled-activities/scheduled-activities.module'
 import { SkillsModule } from './skills/skills.module'
 import { StrengthModule } from './strength/strength.module'
@@ -51,7 +50,6 @@ import { WorkoutsModule } from './workouts/workouts.module'
     OneRepMaxesModule,
     GoogleCalendarModule,
     ScheduledActivitiesModule,
-    RunningModule,
     BikingModule,
     StrengthModule,
     MobilityModule,
