@@ -2,7 +2,6 @@
 
 import { CorosImport } from '@/components/fit-import/CorosImport'
 import { MultiActivityFitData } from '@/services/fit-import'
-import { buildRecoveryMobilityUrl, recoveryToastOptions } from '@/services/mobility'
 import { GeneratedStrengthSession, MUSCLE_GROUPS, MUSCLE_LABELS, SESSION_GOAL_LABELS, SessionGoal, strengthService } from '@/services/strength'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -80,7 +79,7 @@ export default function StrengthLogPage() {
         notes,
         ...(ai_plan && { ai_plan }),
       })
-      toast.success('Séance enregistrée !', recoveryToastOptions(() => router.push(buildRecoveryMobilityUrl({ sport: 'strength', targetMuscles: form.target_muscles }))))
+      toast.success('Séance enregistrée !')
       router.push('/force')
     } catch {
       toast.error('Erreur lors de l\'enregistrement')

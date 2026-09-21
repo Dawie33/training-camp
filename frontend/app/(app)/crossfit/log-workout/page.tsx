@@ -6,7 +6,6 @@ import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
 import { parseFitFiles, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
 import { scheduleApi, sessionService, workoutsService } from '@/services'
-import { buildRecoveryMobilityUrl, recoveryToastOptions } from '@/services/mobility'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -322,12 +321,7 @@ function LogWorkoutContent() {
         await scheduleApi.markAsCompleted(scheduleId, session.id)
       }
 
-      toast.success('Séance enregistrée !', recoveryToastOptions(() => router.push(buildRecoveryMobilityUrl({
-        sport: 'crossfit',
-        workoutType: selectedWorkout?.workout_type,
-        focusAreasText: selectedWorkout?.focus_area ? [selectedWorkout.focus_area] : undefined,
-        exerciseNames: exercises.map(e => e.name),
-      }))))
+      toast.success('Séance enregistrée !')
       router.push('/crossfit')
     } catch {
       toast.error('Erreur lors de l\'enregistrement')

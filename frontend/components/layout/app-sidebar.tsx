@@ -17,7 +17,6 @@ import {
   ChevronDown,
   Dumbbell,
   Home,
-  PersonStanding,
   TrendingUp,
 } from 'lucide-react'
 
@@ -67,7 +66,6 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
       items: [
         { href: '/crossfit', label: 'CrossFit', icon: <Activity className="w-5 h-5" /> },
         { href: '/force', label: 'Force', icon: <Dumbbell className="w-5 h-5" /> },
-        { href: '/mobility', label: 'Mobilité', icon: <PersonStanding className="w-5 h-5" /> },
       ],
     },
   ]

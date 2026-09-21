@@ -118,15 +118,14 @@ export function WeeklyPlannerModal({ open, onOpenChange, weekStart, onPlanned }:
         .filter((_, i) => boxResults[i].status === 'rejected')
         .map(d => d.date)
 
-      // WOD / Conditioning / Mobilité / Force : simple tag, contenu généré ensuite depuis la page dédiée
+      // WOD / Conditioning / Force : simple tag, contenu généré ensuite depuis la page dédiée
       const activities: { date: string; type: string }[] = []
-      const activityTypeByDayType: Record<DayType, 'wod' | 'conditioning' | 'mobility' | 'strength'> = {
+      const activityTypeByDayType: Record<DayType, 'wod' | 'conditioning' | 'strength'> = {
         wod: 'wod',
         conditioning: 'conditioning',
-        mobility: 'mobility',
         force: 'strength',
       }
-      const labels: Record<DayType, string> = { wod: 'WOD', conditioning: 'Conditioning', mobility: 'Mobilité', force: 'Force' }
+      const labels: Record<DayType, string> = { wod: 'WOD', conditioning: 'Conditioning', force: 'Force' }
 
       const tagRequests: Promise<unknown>[] = []
       for (const day of activeDays) {

@@ -3,7 +3,7 @@
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-export type DayType = 'wod' | 'conditioning' | 'mobility' | 'force'
+export type DayType = 'wod' | 'conditioning' | 'force'
 
 export interface DayConfig {
   date: string
@@ -15,7 +15,6 @@ export interface DayConfig {
 const DAY_TYPES: { type: DayType; label: string; activeClass: string; hoverClass: string }[] = [
   { type: 'wod', label: 'WOD', activeClass: 'border-primary bg-primary/10 text-primary', hoverClass: 'hover:border-primary hover:text-primary' },
   { type: 'conditioning', label: 'Conditioning', activeClass: 'border-orange-600/30 bg-orange-600/10 text-orange-700', hoverClass: 'hover:border-orange-600/40 hover:text-orange-700' },
-  { type: 'mobility', label: 'Mobilité', activeClass: 'border-green-600/30 bg-green-600/10 text-green-700', hoverClass: 'hover:border-green-600/40 hover:text-green-700' },
   { type: 'force', label: 'Force', activeClass: 'border-blue-600/30 bg-blue-600/10 text-blue-700', hoverClass: 'hover:border-blue-600/40 hover:text-blue-700' },
 ]
 

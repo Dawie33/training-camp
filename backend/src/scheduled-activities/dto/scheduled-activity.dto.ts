@@ -1,8 +1,8 @@
 import { IsDateString, IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator'
 
 export class CreateScheduledActivityDto {
-  @IsEnum(['strength', 'skill', 'mobility', 'wod', 'conditioning'])
-  activity_type!: 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
+  @IsEnum(['strength', 'skill', 'wod', 'conditioning'])
+  activity_type!: 'strength' | 'skill' | 'wod' | 'conditioning'
 
   @IsDateString()
   scheduled_date!: string

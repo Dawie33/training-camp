@@ -1,6 +1,6 @@
 import { apiClient } from './index'
 
-export type ActivityModule = 'crossfit' | 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
+export type ActivityModule = 'crossfit' | 'strength' | 'skill' | 'wod' | 'conditioning'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**
@@ -33,7 +33,7 @@ export interface UnifiedActivity {
   completed_session_id?: string
 
   // Champs nouveaux modules
-  activity_type?: 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
+  activity_type?: 'strength' | 'skill' | 'wod' | 'conditioning'
   activity_id?: string
 
   // Champs Force
@@ -54,7 +54,7 @@ export interface UnifiedActivity {
 }
 
 export interface CreateActivityDto {
-  activity_type: 'strength' | 'skill' | 'mobility' | 'wod' | 'conditioning'
+  activity_type: 'strength' | 'skill' | 'wod' | 'conditioning'
   scheduled_date: string
   activity_id?: string
   location?: 'home' | 'box'

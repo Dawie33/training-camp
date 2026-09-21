@@ -23,7 +23,6 @@ const MODULE_COLORS: Record<string, string> = {
   conditioning: 'conditioning',
   strength: 'strength',
   skill: 'skill',
-  mobility: 'mobility',
 }
 
 export function useCalendarPage() {
