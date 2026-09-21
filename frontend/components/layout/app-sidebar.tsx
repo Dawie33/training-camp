@@ -13,7 +13,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Activity,
-  Bike,
   Calendar,
   ChevronDown,
   Dumbbell,
@@ -67,7 +66,6 @@ export function AppSidebar({ isOpen }: isSidebarOpen) {
       label: 'Sports',
       items: [
         { href: '/crossfit', label: 'CrossFit', icon: <Activity className="w-5 h-5" /> },
-        { href: '/biking', label: 'Vélo', icon: <Bike className="w-5 h-5" /> },
         { href: '/force', label: 'Force', icon: <Dumbbell className="w-5 h-5" /> },
         { href: '/mobility', label: 'Mobilité', icon: <PersonStanding className="w-5 h-5" /> },
       ],

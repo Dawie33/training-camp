@@ -3,7 +3,7 @@
 import { apiClient } from '@/services/apiClient'
 import { useEffect, useState } from 'react'
 
-export type SportType = 'crossfit' | 'biking' | 'global'
+export type SportType = 'crossfit' | 'global'
 
 export interface TypeTrend {
   type: string

@@ -45,10 +45,10 @@ export interface ProgressionReportSummary {
   generated_at: string
 }
 
-export type RecentSessionSport = 'crossfit' | 'strength' | 'biking'
+export type RecentSessionSport = 'crossfit' | 'strength'
 
 /**
- * Séance récente tous sports confondus (CrossFit, force, vélo), utilisée comme
+ * Séance récente tous sports confondus (CrossFit, force), utilisée comme
  * contexte pour la génération IA et les suggestions de type de séance.
  */
 export interface RecentSession {
@@ -112,7 +112,7 @@ export class UserContextService {
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data
     }
-    const [profile, oneRepMaxes, cfSessions, strengthSessions, bikingSessions, recentAnalysesRaw, activeSkillsRaw, completedSkillNames, progressionReportsRaw] = await Promise.all([
+    const [profile, oneRepMaxes, cfSessions, strengthSessions, recentAnalysesRaw, activeSkillsRaw, completedSkillNames, progressionReportsRaw] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -148,13 +148,6 @@ export class UserContextService {
 
       this.knex('strength_sessions')
         .select('session_date', 'session_goal', 'duration_minutes', 'perceived_effort')
-        .where('user_id', userId)
-        .whereRaw("session_date >= NOW() - INTERVAL '21 days'")
-        .orderBy('session_date', 'desc')
-        .limit(7),
-
-      this.knex('biking_sessions')
-        .select('session_date', 'bike_type', 'duration_seconds', 'perceived_effort')
         .where('user_id', userId)
         .whereRaw("session_date >= NOW() - INTERVAL '21 days'")
         .orderBy('session_date', 'desc')
@@ -218,15 +211,7 @@ export class UserContextService {
       perceived_effort: s.perceived_effort ?? undefined,
     }))
 
-    const bikingMapped: RecentSession[] = (bikingSessions ?? []).map((s: { session_date: string | Date; bike_type: string; duration_seconds?: number; perceived_effort?: number }) => ({
-      date: new Date(s.session_date).toISOString().split('T')[0],
-      sport: 'biking' as const,
-      workout_type: s.bike_type,
-      duration_minutes: s.duration_seconds ? Math.round(s.duration_seconds / 60) : 0,
-      perceived_effort: s.perceived_effort ?? undefined,
-    }))
-
-    const recentSessionsMapped = [...cfMapped, ...strengthMapped, ...bikingMapped]
+    const recentSessionsMapped = [...cfMapped, ...strengthMapped]
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 20)
 

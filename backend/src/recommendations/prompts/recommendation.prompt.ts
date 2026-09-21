@@ -3,7 +3,6 @@ import { SessionStats } from '../schemas/recommendation.schema'
 
 const SPORT_LABELS: Record<string, string> = {
   crossfit: 'CrossFit',
-  biking: 'Vélo',
   strength: 'Force',
 }
 
@@ -16,10 +15,9 @@ Ta mission est d'analyser l'historique d'entraînement complet d'un athlète (to
 
 ## Équilibre des modalités
 Un programme équilibré sur 3 semaines doit couvrir :
-- **Cardio/endurance** : Biking endurance Z2 (2-3x/3 semaines minimum)
 - **Force/puissance** : Strength ou CrossFit strength_max (1-2x/semaine)
-- **Conditionnement métabolique** : CrossFit conditioning, Biking intervals (2-3x/semaine)
-- **Technique/seuil** : CrossFit technique_metcon, Biking sweet_spot (1x/semaine)
+- **Conditionnement métabolique** : CrossFit conditioning (2-3x/semaine)
+- **Technique/seuil** : CrossFit technique_metcon (1x/semaine)
 
 ## Règles de récupération
 - RPE 9-10 hier → recommander séance légère ou repos
@@ -27,19 +25,17 @@ Un programme équilibré sur 3 semaines doit couvrir :
 - Pas de 2 séances de même sport à haute intensité 2 jours de suite
 
 ## Règles d'urgence (days_since_last)
-- **Urgence haute** : > 10 jours sans force, > 14 jours sans vélo
+- **Urgence haute** : > 10 jours sans force
 - **Urgence moyenne** : 8-14 jours sans une modalité
 - **Urgence faible** : 3-7 jours sans une modalité (rotation normale)
 
 ## Types de séance par sport
 - **crossfit** : technique_metcon, strength_max, conditioning, benchmark, vo2max
-- **biking** : endurance, sweet_spot, intervals, ftp_test, recovery, race
 - **strength** : strength, hypertrophy, endurance, power
 - **rest** : récupération active (type "active_recovery")
 
 ## Durée suggérée par sport et niveau
 - CrossFit : 45-60 min (beginner: 35-45 min)
-- Vélo : 45-90 min (endurance: 60-90, sweet_spot: 60-75, intervals: 60, recovery: 40-50)
 - Strength : 50-70 min
 
 # FORMAT JSON REQUIS
@@ -47,7 +43,7 @@ Un programme équilibré sur 3 semaines doit couvrir :
 Retourne UNIQUEMENT ce JSON :
 \`\`\`json
 {
-  "recommended_sport": "crossfit|biking|strength|rest",
+  "recommended_sport": "crossfit|strength|rest",
   "recommended_type": "type de séance spécifique",
   "urgency": "low|medium|high",
   "reason": "1-2 phrases directes expliquant POURQUOI cette séance maintenant",
@@ -88,7 +84,7 @@ export function buildRecommendationUserPrompt(
   lines.push(`Total séances : ${stats.total_sessions_21d}`)
   lines.push('Par sport :')
 
-  const ALL_SPORTS = ['crossfit', 'biking', 'strength']
+  const ALL_SPORTS = ['crossfit', 'strength']
   for (const sport of ALL_SPORTS) {
     const count = stats.by_sport[sport] ?? 0
     const days = stats.days_since_last[sport]

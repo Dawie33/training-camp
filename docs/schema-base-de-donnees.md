@@ -34,7 +34,7 @@ Chaque donnée est rattachée à un utilisateur. Le catalogue de séances et les
 | `one_rep_maxes` / `one_rep_max_history` | Charge maximale actuelle par mouvement, et historique de son évolution dans le temps. |
 | `skill_programs` / `skill_program_steps` / `skill_progress_logs` | Programme de progression sur une compétence, ses étapes, et le journal des séances de travail technique. |
 | `equipments` / `user_equipments` | Référentiel du matériel disponible et association avec chaque utilisateur. |
-| `biking_sessions`, `strength_sessions` | Séances réalisées propres à chaque sport (vélo, force), indépendantes de `workout_sessions`. |
+| `strength_sessions` | Séances réalisées propres à chaque sport (force), indépendantes de `workout_sessions`. |
 
 > **Détail technique**
 >
@@ -42,6 +42,6 @@ Chaque donnée est rattachée à un utilisateur. Le catalogue de séances et les
 >
 > `workout_sessions.workout_id` est nullable : une session référence soit un `workout_id` (séance du catalogue), soit un `personalized_workout_id` (séance générée par IA), jamais les deux à la fois.
 >
-> `scheduled_activities.activity_id` est une référence polymorphique (sans contrainte de clé étrangère) : selon `activity_type`, elle pointe vers `biking_sessions` ou `strength_sessions`.
+> `scheduled_activities.activity_id` est une référence polymorphique (sans contrainte de clé étrangère) : selon `activity_type`, elle pointe vers `strength_sessions`.
 >
 > Toutes les tables utilisateur utilisent des identifiants **UUID** générés par l'extension PostgreSQL `pgcrypto`, et les colonnes suivent la convention `snake_case`.

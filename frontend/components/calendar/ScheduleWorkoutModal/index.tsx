@@ -5,11 +5,9 @@ import { activitiesApi } from '@/services/activities'
 import { Building2, Home } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { BikingTab } from './BikingTab'
 import { CrossfitTab } from './CrossfitTab'
 import { StrengthTab } from './StrengthTab'
 import { SPORT_TABS, SportTab } from './types'
-import { useBikingSessions } from './useBikingSessions'
 import { usePersonalizedWorkouts } from './usePersonalizedWorkouts'
 import { useStrengthSessions } from './useStrengthSessions'
 import { useWorkoutLibrary } from './useWorkoutLibrary'
@@ -40,14 +38,12 @@ export function ScheduleWorkoutModal({
 
   const library = useWorkoutLibrary(open, activeTab === 'library')
   const personalized = usePersonalizedWorkouts(open, activeTab === 'personalized')
-  const biking = useBikingSessions(open, sportTab === 'biking')
   const strength = useStrengthSessions(open, sportTab === 'strength')
 
   useEffect(() => {
     if (!open) {
       library.reset()
       personalized.reset()
-      biking.reset()
       strength.reset()
       setSelectedWorkoutId('')
       setActiveTab('library')
@@ -86,14 +82,13 @@ export function ScheduleWorkoutModal({
   }
 
   const handleSubmitSportActivity = async () => {
-    const activityTypeMap: Record<Exclude<SportTab, 'crossfit'>, 'biking' | 'strength'> = {
-      biking: 'biking',
+    const activityTypeMap: Record<Exclude<SportTab, 'crossfit'>, 'strength'> = {
       strength: 'strength',
     }
     if (sportTab === 'crossfit') return
     setSubmitting(true)
     try {
-      const activityId = sportTab === 'strength' ? strength.selectedId : sportTab === 'biking' ? biking.selectedId : undefined
+      const activityId = sportTab === 'strength' ? strength.selectedId : undefined
       await activitiesApi.create({
         activity_type: activityTypeMap[sportTab],
         scheduled_date: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`,
@@ -169,17 +164,6 @@ export function ScheduleWorkoutModal({
             onNotesChange={setNotes}
             submitting={submitting}
             onSubmit={handleSubmit}
-            onCancel={closeModal}
-          />
-        )}
-
-        {sportTab === 'biking' && (
-          <BikingTab
-            biking={biking}
-            notes={notes}
-            onNotesChange={setNotes}
-            submitting={submitting}
-            onSubmit={handleSubmitSportActivity}
             onCancel={closeModal}
           />
         )}

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import {
-  Bike,
   Flame,
   FolderClock,
   Globe,
@@ -16,7 +15,6 @@ import { useReportsHistory } from '../_hooks/useReportsHistory'
 
 const SPORT_CONFIG: Record<SportType, { label: string; icon: LucideIcon; color: string; border: string }> = {
   crossfit: { label: 'CrossFit', icon: Flame, color: 'text-orange-600', border: 'border-orange-600/20' },
-  biking: { label: 'Vélo', icon: Bike, color: 'text-orange-600', border: 'border-orange-600/20' },
   global: { label: 'Multi-sport', icon: Globe, color: 'text-foreground', border: 'border-border' },
 }
 
@@ -26,7 +24,7 @@ const TREND_CONFIG: Record<TypeTrend['trend'], { icon: LucideIcon; color: string
   declining: { icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/10 border-destructive/20', label: 'En baisse' },
 }
 
-const SPORT_ORDER: SportType[] = ['global', 'crossfit', 'biking']
+const SPORT_ORDER: SportType[] = ['global', 'crossfit']
 
 function BilanCard({ report }: { report: ProgressionReport }) {
   const [expanded, setExpanded] = useState(false)

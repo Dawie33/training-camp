@@ -4,7 +4,6 @@ import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { KnexModule } from 'nest-knexjs'
 import { AuthModule } from './auth/auth.module'
-import { BikingModule } from './biking/biking.module'
 import { AiModule } from './common/ai/ai.module'
 import { envValidationSchema } from './common/config/env.validation'
 import knexConfig from './database/knexfile'
@@ -50,7 +49,6 @@ import { WorkoutsModule } from './workouts/workouts.module'
     OneRepMaxesModule,
     GoogleCalendarModule,
     ScheduledActivitiesModule,
-    BikingModule,
     StrengthModule,
     MobilityModule,
     FitImportModule,

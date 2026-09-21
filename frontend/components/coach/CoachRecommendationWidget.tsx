@@ -4,7 +4,7 @@ import { useRecommendation } from '@/hooks/useRecommendation'
 import { RecommendedSport } from '@/services/recommendations'
 import { motion } from 'framer-motion'
 import {
-  ArrowRight, Bike, Brain,
+  ArrowRight, Brain,
   Dumbbell, Heart, RefreshCw, Zap,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -17,7 +17,6 @@ const SPORT_CONFIG: Record<RecommendedSport, {
   href: string
 }> = {
   crossfit: { label: 'CrossFit', icon: <Zap className="w-4 h-4" />, href: '/crossfit/generate' },
-  biking: { label: 'Vélo', icon: <Bike className="w-4 h-4" />, href: '/biking/generate' },
   strength: { label: 'Force', icon: <Dumbbell className="w-4 h-4" />, href: '/force/generate' },
   rest: { label: 'Récupération', icon: <Heart className="w-4 h-4" />, href: '#' },
 }
@@ -108,7 +107,7 @@ export function CoachRecommendationWidget() {
 
       {/* Stats rapides */}
       <div className="flex gap-2 flex-wrap">
-        {(['crossfit', 'biking', 'strength'] as const).map((s) => {
+        {(['crossfit', 'strength'] as const).map((s) => {
           const days = stats.days_since_last[s]
           const count = stats.by_sport[s] ?? 0
           const isActive = s === rec.recommended_sport

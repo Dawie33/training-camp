@@ -148,7 +148,7 @@ Un fichier service par domaine : `workouts.ts`, `sessions.ts`, `skills.ts`, `sch
 
 ### Log de séance : une page dédiée par sport
 
-Pas de modale de log — chaque sport a sa propre page (`/crossfit/log-workout`, `/training-programs/log-session`, `/biking/log`, `/force/log`). Cross-training et programmes partagent `workout_sessions` + `sessionService` et sont reliés au calendrier via `scheduleId` + `scheduleApi`. Les autres sports ont leur propre table et service (`biking_sessions`/`bikingService`, etc.) et sont visibles au calendrier via le registre en lecture `scheduled_activities`. Détails dans [docs/flux-log-workout.md](docs/flux-log-workout.md).
+Pas de modale de log — chaque sport a sa propre page (`/crossfit/log-workout`, `/training-programs/log-session`, `/force/log`). Cross-training et programmes partagent `workout_sessions` + `sessionService` et sont reliés au calendrier via `scheduleId` + `scheduleApi`. Les autres sports ont leur propre table et service (`strength_sessions`/`strengthService`, etc.) et sont visibles au calendrier via le registre en lecture `scheduled_activities`. Détails dans [docs/flux-log-workout.md](docs/flux-log-workout.md).
 
 ## Base de données — tables principales
 

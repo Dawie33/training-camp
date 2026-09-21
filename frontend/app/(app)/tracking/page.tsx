@@ -2,13 +2,11 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Bike, Dumbbell, History, LayoutDashboard, TrendingUp, Trophy, Zap } from 'lucide-react'
+import { Activity, Dumbbell, History, LayoutDashboard, TrendingUp, Trophy, Zap } from 'lucide-react'
 import { useState } from 'react'
-import { useMultiSportStats } from './_hooks/useMultiSportStats'
 import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
-import { BikingStatsPanel } from './components/BikingStatsPanel'
 import { BilansHistoryPanel } from './components/BilansHistoryPanel'
 import { GlobalOverview } from './components/GlobalOverview'
 import { OneRepMaxChart } from './components/OneRepMaxChart'
@@ -18,7 +16,7 @@ import { ProgressionReportPanel } from './components/ProgressionReport'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
-type Tab = 'global' | 'crossfit' | 'biking' | 'history'
+type Tab = 'global' | 'crossfit' | 'history'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
   {
@@ -31,12 +29,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string
     id: 'crossfit',
     label: 'CrossFit',
     icon: <Activity className="w-4 h-4" />,
-    activeColor: 'text-orange-600 border-orange-600 bg-orange-600/10',
-  },
-  {
-    id: 'biking',
-    label: 'Vélo',
-    icon: <Bike className="w-4 h-4" />,
     activeColor: 'text-orange-600 border-orange-600 bg-orange-600/10',
   },
   {
@@ -53,7 +45,6 @@ function TrackingContent() {
   const { workoutStats, workoutSessions } = useWorkoutStats()
   const { progressData, loading: progressLoading } = useWorkoutProgress()
   const { liftsWithHistory, loading: ormsLoading } = useOneRepMaxHistory()
-  const { stats: multiStats, loading: multiLoading } = useMultiSportStats()
 
   return (
     <motion.div
@@ -104,7 +95,6 @@ function TrackingContent() {
             <div className="space-y-6">
               <GlobalOverview
                 workoutStats={workoutStats}
-                bikingStats={multiStats.biking}
                 onTabChange={(tab) => setActiveTab(tab as Tab)}
               />
               <ProgressionReportPanel sport="global" />
@@ -198,20 +188,6 @@ function TrackingContent() {
               <div className="p-6 bg-card border border-border rounded-lg">
                 <h2 className="font-display text-2xl font-semibold mb-6">Historique Complet</h2>
                 <WorkoutHistoryList />
-              </div>
-            </div>
-          )}
-
-          {/* Vélo */}
-          {activeTab === 'biking' && (
-            <div className="space-y-6">
-              <ProgressionReportPanel sport="biking" />
-              <div className="p-6 bg-card border border-border rounded-lg">
-                <div className="flex items-center gap-2 mb-6">
-                  <Bike className="w-4 h-4 text-muted-foreground" />
-                  <h2 className="font-display text-2xl font-semibold">Statistiques Vélo</h2>
-                </div>
-                <BikingStatsPanel stats={multiStats.biking} loading={multiLoading} />
               </div>
             </div>
           )}

@@ -21,7 +21,6 @@ const MODULE_COLORS: Record<string, string> = {
   crossfit: '',
   wod: '',
   conditioning: 'conditioning',
-  biking: 'biking',
   strength: 'strength',
   skill: 'skill',
   mobility: 'mobility',

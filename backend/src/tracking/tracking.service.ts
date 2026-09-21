@@ -4,7 +4,7 @@ import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 
-export type SportType = 'crossfit' | 'biking' | 'global'
+export type SportType = 'crossfit' | 'global'
 
 export interface TypeTrend {
   type: string
@@ -54,8 +54,7 @@ export class TrackingService {
 
     let report: ProgressionReport
     if (sport === 'global') report = await this.generateGlobalReport(userId, months, since)
-    else if (sport === 'crossfit') report = await this.generateCrossfitReport(userId, months, since)
-    else report = await this.generateBikingReport(userId, months, since)
+    else report = await this.generateCrossfitReport(userId, months, since)
 
     await this.saveReport(userId, sport, months, report)
     this.userContextService.invalidateCache(userId)
@@ -272,129 +271,43 @@ Analyse ces données précisément. Cite des résultats concrets (noms de workou
 ${this.jsonInstructions()}`
   }
 
-  // ─── Biking ───────────────────────────────────────────────────────────────
-
-  private async generateBikingReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const sessions = await this.knex('biking_sessions')
-      .select('session_date', 'bike_type', 'distance_km', 'duration_seconds', 'avg_power_watts', 'ftp_watts', 'avg_heart_rate', 'perceived_effort')
-      .where('user_id', userId)
-      .where('session_date', '>=', since.toISOString().split('T')[0])
-      .orderBy('session_date', 'asc')
-
-    if (sessions.length < 2) return this.notEnoughData('biking', months, sessions.length)
-
-    const agg = this.aggregateBiking(sessions)
-    const prompt = this.buildBikingPrompt(agg, months)
-    const parsed = await this.callAI(prompt)
-
-    return { sport: 'biking', period_months: months, ...parsed, generated_at: new Date().toISOString() }
-  }
-
-  private aggregateBiking(sessions: any[]) {
-    const total = sessions.length
-    const totalKm = sessions.reduce((acc, s) => acc + (Number(s.distance_km) ?? 0), 0).toFixed(1)
-    const longestKm = Math.max(...sessions.map(s => Number(s.distance_km) ?? 0)).toFixed(1)
-
-    const totalSeconds = sessions.reduce((acc, s) => acc + (s.duration_seconds ?? 0), 0)
-    const totalHours = (totalSeconds / 3600).toFixed(1)
-
-    const withPower = sessions.filter(s => s.avg_power_watts)
-    const avgPower = withPower.length
-      ? Math.round(withPower.reduce((a, s) => a + s.avg_power_watts, 0) / withPower.length)
-      : null
-
-    const ftpValues = sessions.filter(s => s.ftp_watts).map(s => s.ftp_watts as number)
-    const latestFtp = ftpValues.length ? ftpValues[ftpValues.length - 1] : null
-
-    const byType: Record<string, number> = {}
-    for (const s of sessions) {
-      const t = s.bike_type ?? 'endurance'
-      byType[t] = (byType[t] ?? 0) + 1
-    }
-
-    const weekSpan = this.computeWeekSpanFromDates(sessions.map(s => s.session_date))
-    const consistencyPct = this.computeConsistencyFromDates(sessions.map(s => s.session_date), weekSpan)
-
-    const withEffort = sessions.filter(s => s.perceived_effort)
-    const avgEffort = withEffort.length
-      ? (withEffort.reduce((a, s) => a + s.perceived_effort, 0) / withEffort.length).toFixed(1)
-      : null
-
-    return { total, totalKm, longestKm, totalHours, avgPower, latestFtp, byType, weekSpan, consistencyPct, avgEffort }
-  }
-
-  private buildBikingPrompt(agg: any, months: number): string {
-    const typeLines = Object.entries(agg.byType)
-      .map(([type, count]) => `- ${type}: ${count} séance(s)`)
-      .join('\n')
-
-    return `Tu es un coach cyclisme expert. Génère un bilan de progression vélo sur ${months} mois.
-
-Données ${months} mois :
-- ${agg.total} séances, ${agg.totalHours}h d'entraînement, ${agg.totalKm} km au total
-- Sortie la plus longue : ${agg.longestKm} km
-- Puissance moyenne : ${agg.avgPower ? `${agg.avgPower} watts` : 'non renseignée'}
-- FTP actuel : ${agg.latestFtp ? `${agg.latestFtp} watts` : 'non renseigné'}
-- Effort perçu moyen : ${agg.avgEffort ? `${agg.avgEffort}/10` : 'non renseigné'}
-- Régularité : ${agg.consistencyPct}% (${agg.weekSpan} semaines)
-
-Types de séances :
-${typeLines}
-
-${this.jsonInstructions()}`
-  }
-
   // ─── Global ───────────────────────────────────────────────────────────────
 
   private async generateGlobalReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const sinceDate = since.toISOString().split('T')[0]
     const sinceISO = since.toISOString()
 
-    const [cfSessions, bikingSessions, orms, profile] = await Promise.all([
+    const [cfSessions, orms, profile] = await Promise.all([
       this.knex('workout_sessions').where('user_id', userId).whereNotNull('completed_at').where('started_at', '>=', sinceISO).count('* as count').first(),
-      this.knex('biking_sessions').where('user_id', userId).where('session_date', '>=', sinceDate)
-        .select('distance_km', 'duration_seconds', 'avg_power_watts', 'bike_type'),
       this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId).orderBy('lift'),
       this.knex('users').select('sport_level', 'global_goals', 'height', 'weight').where('id', userId).first(),
     ])
 
     const cfCount = Number((cfSessions as any)?.count ?? 0)
-    const totalSessions = cfCount + bikingSessions.length
+    const totalSessions = cfCount
 
     if (totalSessions < 5) return this.notEnoughData('global', months, totalSessions)
 
-    const agg = this.aggregateGlobal({ cfCount, bikingSessions, orms, profile })
+    const agg = this.aggregateGlobal({ cfCount, orms, profile })
     const prompt = this.buildGlobalPrompt(agg, months)
     const parsed = await this.callAI(prompt, true)
 
     return { sport: 'global', period_months: months, ...parsed, generated_at: new Date().toISOString() }
   }
 
-  private aggregateGlobal({ cfCount, bikingSessions, orms, profile }: any) {
-    const totalBikingKm = bikingSessions.reduce((a: number, s: any) => a + (Number(s.distance_km) ?? 0), 0).toFixed(1)
-    const bikingPowerValues = bikingSessions.filter((s: any) => s.avg_power_watts).map((s: any) => s.avg_power_watts as number)
-    const avgBikingPower = bikingPowerValues.length
-      ? Math.round(bikingPowerValues.reduce((a: number, v: number) => a + v, 0) / bikingPowerValues.length)
-      : null
-
+  private aggregateGlobal({ cfCount, orms, profile }: any) {
     const ormStr = orms.length ? orms.map((o: any) => `${o.lift}: ${o.value}kg`).join(', ') : 'Non renseignés'
 
     const balance = {
       crossfit: cfCount,
-      biking: bikingSessions.length,
     }
 
-    return { cfCount, totalBikingKm, avgBikingPower, ormStr, balance, profile }
+    return { cfCount, ormStr, balance, profile }
   }
 
   private buildGlobalPrompt(agg: any, months: number): string {
     const balanceLines = Object.entries(agg.balance)
       .map(([sport, count]) => `- ${sport}: ${count} séance(s)`)
       .join('\n')
-
-    const bikingStr = agg.balance.biking > 0
-      ? `${agg.totalBikingKm} km${agg.avgBikingPower ? `, puissance moy. ${agg.avgBikingPower}W` : ''}`
-      : 'Aucune séance'
 
     return `Tu es un coach multi-sport expert. Génère un bilan global de condition physique sur ${months} mois.
 
@@ -407,7 +320,6 @@ ${balanceLines}
 
 Indicateurs par discipline :
 - CrossFit : ${agg.cfCount} séances
-- Vélo : ${agg.balance.biking} séances — ${bikingStr}
 
 En te basant sur ces données, évalue la condition physique globale de l'athlète.
 
@@ -519,27 +431,9 @@ ${this.jsonInstructions(true)}`
     return Math.max(1, Math.ceil((last.getTime() - first.getTime()) / (7 * 24 * 3600 * 1000)))
   }
 
-  private computeWeekSpanFromDates(dates: string[]): number {
-    if (dates.length < 2) return 1
-    const first = new Date(dates[0])
-    const last = new Date(dates[dates.length - 1])
-    return Math.max(1, Math.ceil((last.getTime() - first.getTime()) / (7 * 24 * 3600 * 1000)))
-  }
-
   private computeConsistency(sessions: { started_at: string }[], weekSpan: number): number {
     const weekSet = new Set(sessions.map(s => {
       const d = new Date(s.started_at)
-      const dow = d.getDay()
-      const monday = new Date(d)
-      monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1))
-      return monday.toISOString().split('T')[0]
-    }))
-    return Math.round((weekSet.size / weekSpan) * 100)
-  }
-
-  private computeConsistencyFromDates(dates: string[], weekSpan: number): number {
-    const weekSet = new Set(dates.map(date => {
-      const d = new Date(date)
       const dow = d.getDay()
       const monday = new Date(d)
       monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1))

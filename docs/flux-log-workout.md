@@ -29,14 +29,13 @@ L'utilisateur accède toujours à une page de log dédiée (jamais une fenêtre 
 |---|---|---|---|
 | `/crossfit/log-workout` | Cross-training (WOD) | `sessionService` | `workout_sessions` |
 | `/crossfit/program/log-session` | Programmes d'entraînement | `sessionService` | `workout_sessions` |
-| `/biking/log` | Vélo | `bikingService` | `biking_sessions` |
 | `/force/log` | Force / musculation | `strengthService` | `strength_sessions` |
 
 ## Lien avec le calendrier
 
 Depuis le calendrier, seules les séances **cross-training** et **programmes** peuvent être marquées comme complétées directement : le clic redirige vers la page de log avec un identifiant de planification (`scheduleId`) dans l'URL. Une fois la séance enregistrée, l'entrée du calendrier (table `user_workout_schedule`) est automatiquement mise à jour via `scheduleApi.markAsCompleted`.
 
-Les autres sports (vélo, force, mobilité) apparaissent dans le calendrier via un registre unifié en lecture (`scheduled_activities`), mais leur enregistrement se fait indépendamment, depuis la page de log de leur module respectif.
+Les autres sports (force, mobilité) apparaissent dans le calendrier via un registre unifié en lecture (`scheduled_activities`), mais leur enregistrement se fait indépendamment, depuis la page de log de leur module respectif.
 
 > **Détail technique**
 >

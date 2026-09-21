@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import {
   BarChart3,
-  Bike,
   Dna,
   Flame,
   GraduationCap,
@@ -27,7 +26,6 @@ const TREND_CONFIG: Record<TypeTrend['trend'], { icon: LucideIcon; color: string
 
 const SPORT_CONFIG: Record<SportType, { label: string; icon: LucideIcon; color: string }> = {
   crossfit: { label: 'CrossFit', icon: Flame, color: 'text-orange-600' },
-  biking: { label: 'Vélo', icon: Bike, color: 'text-orange-600' },
   global: { label: 'Multi-sport', icon: BarChart3, color: 'text-foreground' },
 }
 
