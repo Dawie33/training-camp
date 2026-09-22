@@ -22,6 +22,8 @@ import {
 } from '@/services/analytics'
 import { CROSSFIT_LIFTS } from '@/services/one-rep-maxes'
 import { AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react'
+import { SkillOfTheDayCard } from '../SkillOfTheDayCard'
+import { TodayWorkoutCard } from '../TodayWorkoutCard'
 import { BentoCard, BentoStat } from './BentoCard'
 
 const ACWR_ZONES: Record<AcwrZone, { label: string; className: string }> = {
@@ -74,7 +76,7 @@ function WeakPointCard({ data }: { data: StrengthRatiosResult }) {
   if (!weakest) return null
 
   return (
-    <BentoCard eyebrow="Point faible du moment" title={weakest.label} href="/tracking" className="md:col-span-2" accent>
+    <BentoCard eyebrow="Point faible du moment" title={weakest.label} href="/tracking" accent>
       <div className="flex items-baseline gap-2.5 mb-2.5">
         <span className="font-display text-5xl font-semibold leading-none tracking-tight text-foreground">
           {weakest.value_pct}
@@ -97,7 +99,6 @@ function StrengthHistoryCard({ data }: { data: StrengthHistoryResult }) {
       eyebrow="Évolution des charges"
       href="/crossfit/rm"
       hrefLabel="Gérer mes 1RM"
-      className="md:col-span-2"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3">
         {data.lifts.slice(0, 6).map(lift => (
@@ -126,7 +127,7 @@ function LoadCard({ load }: { load: TrainingLoadResult }) {
   const zone = load.acwr_zone ? ACWR_ZONES[load.acwr_zone] : null
 
   return (
-    <BentoCard eyebrow="Charge d'entraînement" className="md:col-span-2">
+    <BentoCard eyebrow="Charge d'entraînement">
       <div className="flex items-baseline gap-4 mb-1">
         <BentoStat value={load.acute ?? 0} unit="UA" label="sur 7 jours" />
         {zone && load.acwr !== null && (
@@ -156,7 +157,7 @@ function VolumeCard({ volume }: { volume: TrainingVolumeResult }) {
   if (volume.total_sessions === 0) return null
 
   return (
-    <BentoCard eyebrow="Volume hebdomadaire" className="md:col-span-2">
+    <BentoCard eyebrow="Volume hebdomadaire">
       <div className="flex items-baseline gap-5 mb-1">
         <BentoStat value={volume.total_sessions} label="séances" />
         <BentoStat value={volume.avg_per_week} label="par semaine" />
@@ -174,7 +175,6 @@ function EnergyCard({ data }: { data: EnergySystemsResult }) {
     <BentoCard
       eyebrow="Filières énergétiques"
       title={`${data.total_scored_sessions} séances chronométrées`}
-      className="md:col-span-2"
     >
       <EnergyMixChart domains={data.domains} underworked={data.underworked} height={190} />
     </BentoCard>
@@ -185,7 +185,7 @@ function BenchmarksCard({ benchmarks }: { benchmarks: BenchmarkProgress[] }) {
   if (benchmarks.length === 0) return null
 
   return (
-    <BentoCard eyebrow="Benchmarks" href="/tracking" className="md:col-span-2">
+    <BentoCard eyebrow="Benchmarks" href="/tracking">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3">
         {benchmarks.slice(0, 4).map(benchmark => {
           const last = benchmark.points[benchmark.points.length - 1]
@@ -223,7 +223,7 @@ function MovementsCard({ data }: { data: MovementExposureResult }) {
   if (!data.available || data.movements.length === 0) return null
 
   return (
-    <BentoCard eyebrow="Exposition par mouvement" className="md:col-span-2">
+    <BentoCard eyebrow="Exposition par mouvement">
       <MovementExposureChart movements={data.movements} limit={8} />
       {data.most_scaled.length > 0 && (
         <p className="flex items-start gap-1.5 text-xs text-orange-600 mt-2">
@@ -240,7 +240,7 @@ function StrengthBalanceCard({ data }: { data: StrengthRatiosResult }) {
   if (known.length === 0) return null
 
   return (
-    <BentoCard eyebrow="Équilibres de force" href="/crossfit/rm" hrefLabel="Gérer mes 1RM" className="md:col-span-2">
+    <BentoCard eyebrow="Équilibres de force" href="/crossfit/rm" hrefLabel="Gérer mes 1RM">
       <div className="space-y-2.5">
         {known.map(ratio => {
           const scaleMin = ratio.target_min_pct * 0.7
@@ -288,7 +288,6 @@ function LatestAnalysisCard({ analysis }: { analysis: LatestSessionAnalysis | nu
       eyebrow="Retour sur ta dernière séance"
       title={analysis.workout_name}
       href={`/tracking`}
-      className="md:col-span-2"
     >
       <div className="flex items-center gap-2 flex-wrap mb-2.5">
         <span className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${level.className}`}>
@@ -346,7 +345,7 @@ function SkillProgressCard({ data }: { data: SkillProgressResult }) {
   if (!data.available || data.skills.length === 0) return null
 
   return (
-    <BentoCard eyebrow="Compétences en cours" href="/skills" hrefLabel="Voir mes progressions" className="md:col-span-2">
+    <BentoCard eyebrow="Compétences en cours" href="/skills" hrefLabel="Voir mes progressions">
       <div className="space-y-3">
         {data.skills.slice(0, 4).map(skill => (
           <div key={skill.program_id}>
@@ -394,7 +393,7 @@ function MissingDataCard({ overview }: { overview: PerformanceOverview }) {
   if (todo.length === 0) return null
 
   return (
-    <BentoCard eyebrow="Pour compléter ton diagnostic" className="md:col-span-4 2xl:col-span-6">
+    <BentoCard eyebrow="Pour compléter ton diagnostic" className="col-span-full">
       <ul className="space-y-1.5">
         {todo.map(item => (
           <li key={item.href + item.label}>
@@ -422,10 +421,10 @@ export function PerformanceCards({ overview, loading }: { overview: PerformanceO
   if (loading && !overview) {
     return (
       <>
-        <LoadingCard className="md:col-span-2" />
-        <LoadingCard className="md:col-span-2" />
-        <LoadingCard className="md:col-span-2" />
-        <LoadingCard className="md:col-span-2" />
+        <LoadingCard />
+        <LoadingCard />
+        <LoadingCard />
+        <LoadingCard />
       </>
     )
   }
@@ -444,6 +443,12 @@ export function PerformanceCards({ overview, loading }: { overview: PerformanceO
       <EnergyCard data={overview.energy_systems} />
       <MovementsCard data={overview.movements} />
       <StrengthBalanceCard data={overview.strength_ratios} />
+      <BentoCard>
+        <TodayWorkoutCard />
+      </BentoCard>
+      <BentoCard>
+        <SkillOfTheDayCard />
+      </BentoCard>
       <MissingDataCard overview={overview} />
     </>
   )
