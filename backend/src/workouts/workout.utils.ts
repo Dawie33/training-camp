@@ -15,6 +15,34 @@ export function validateLevel(level: string): 'beginner' | 'intermediate' | 'adv
     return 'beginner'
 }
 
+export interface BenchmarkStandard {
+    elite: number
+    advanced: number
+    intermediate: number
+    beginner: number
+    metric: 'rounds' | 'time' | 'distance' | 'weight' | 'power'
+}
+
+/**
+ * Standards de référence par benchmark.
+ * Seuils exprimés en secondes (metric 'time', plus bas = meilleur) ou en rounds
+ * (metric 'rounds', plus haut = meilleur). Source unique : `calculateLevelFromBenchmarks`
+ * s'en sert pour classer un résultat, le module analytics pour situer une courbe.
+ */
+export const BENCHMARK_STANDARDS: Record<string, BenchmarkStandard> = {
+    // ===== CROSSFIT =====
+    'Cindy': { elite: 25, advanced: 20, intermediate: 15, beginner: 8, metric: 'rounds' },
+    'Fran': { elite: 150, advanced: 240, intermediate: 360, beginner: 999999, metric: 'time' },
+    'Helen': { elite: 480, advanced: 600, intermediate: 720, beginner: 999999, metric: 'time' },
+    'Grace': { elite: 90, advanced: 180, intermediate: 300, beginner: 999999, metric: 'time' },
+    'Murph': { elite: 2100, advanced: 3000, intermediate: 3600, beginner: 999999, metric: 'time' },
+    'Annie': { elite: 300, advanced: 480, intermediate: 720, beginner: 999999, metric: 'time' },
+    'Diane': { elite: 180, advanced: 360, intermediate: 540, beginner: 999999, metric: 'time' },
+    'Elizabeth': { elite: 240, advanced: 420, intermediate: 600, beginner: 999999, metric: 'time' },
+    'Isabel': { elite: 90, advanced: 180, intermediate: 300, beginner: 999999, metric: 'time' },
+    'Kelly': { elite: 1500, advanced: 1920, intermediate: 2280, beginner: 999999, metric: 'time' },
+}
+
 /**
  * Calcule le niveau de l'utilisateur basé sur les résultats du benchmark
  * Cette fonction utilise des standards de référence pour déterminer le niveau
@@ -28,29 +56,7 @@ export function calculateLevelFromBenchmarks(
     result: BenchmarkResultDto,
     currentLevel: string
 ): 'beginner' | 'intermediate' | 'advanced' | 'elite' {
-    // Standards de référence pour les benchmarks
-    // Seuils exprimés en secondes (metric 'time', plus bas = meilleur) ou en rounds (metric 'rounds', plus haut = meilleur)
-    const benchmarkStandards: Record<string, {
-        elite: number,
-        advanced: number,
-        intermediate: number,
-        beginner: number,
-        metric: 'rounds' | 'time' | 'distance' | 'weight' | 'power'
-    }> = {
-        // ===== CROSSFIT =====
-        'Cindy': { elite: 25, advanced: 20, intermediate: 15, beginner: 8, metric: 'rounds' },
-        'Fran': { elite: 150, advanced: 240, intermediate: 360, beginner: 999999, metric: 'time' },
-        'Helen': { elite: 480, advanced: 600, intermediate: 720, beginner: 999999, metric: 'time' },
-        'Grace': { elite: 90, advanced: 180, intermediate: 300, beginner: 999999, metric: 'time' },
-        'Murph': { elite: 2100, advanced: 3000, intermediate: 3600, beginner: 999999, metric: 'time' },
-        'Annie': { elite: 300, advanced: 480, intermediate: 720, beginner: 999999, metric: 'time' },
-        'Diane': { elite: 180, advanced: 360, intermediate: 540, beginner: 999999, metric: 'time' },
-        'Elizabeth': { elite: 240, advanced: 420, intermediate: 600, beginner: 999999, metric: 'time' },
-        'Isabel': { elite: 90, advanced: 180, intermediate: 300, beginner: 999999, metric: 'time' },
-        'Kelly': { elite: 1500, advanced: 1920, intermediate: 2280, beginner: 999999, metric: 'time' },
-    }
-
-    const standard = benchmarkStandards[workoutName]
+    const standard = BENCHMARK_STANDARDS[workoutName]
     if (!standard) {
         // Si pas de standard défini, garder le niveau actuel
         return validateLevel(currentLevel)

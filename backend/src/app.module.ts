@@ -17,6 +17,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
 import { ScheduledActivitiesModule } from './scheduled-activities/scheduled-activities.module'
 import { SkillsModule } from './skills/skills.module'
 import { StrengthModule } from './strength/strength.module'
+import { AnalyticsModule } from './analytics/analytics.module'
 import { TrackingModule } from './tracking/tracking.module'
 import { UsersModule } from './users/users.module'
 import { WorkoutSessionsModule } from './workout-sessions/workout-sessions.module'
@@ -51,6 +52,7 @@ import { WorkoutsModule } from './workouts/workouts.module'
     StrengthModule,
     FitImportModule,
     TrackingModule,
+    AnalyticsModule,
     RecommendationsModule,
   ],
   providers: [

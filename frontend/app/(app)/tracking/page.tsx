@@ -2,7 +2,7 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Dumbbell, History, LayoutDashboard, TrendingUp, Trophy, Zap } from 'lucide-react'
+import { Activity, Dumbbell, History, LayoutDashboard, Stethoscope, TrendingUp, Trophy, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
@@ -10,15 +10,22 @@ import { useWorkoutStats } from './_hooks/useWorkoutStats'
 import { BilansHistoryPanel } from './components/BilansHistoryPanel'
 import { GlobalOverview } from './components/GlobalOverview'
 import { OneRepMaxChart } from './components/OneRepMaxChart'
+import { PerformanceDiagnostic } from './components/PerformanceDiagnostic'
 import { PersonalRecords } from './components/PersonalRecords'
 import { ProgressChart } from './components/ProgressChart'
 import { ProgressionReportPanel } from './components/ProgressionReport'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
-type Tab = 'global' | 'crossfit' | 'history'
+type Tab = 'diagnostic' | 'global' | 'crossfit' | 'history'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
+  {
+    id: 'diagnostic',
+    label: 'Diagnostic',
+    icon: <Stethoscope className="w-4 h-4" />,
+    activeColor: 'text-emerald-600 border-emerald-600 bg-emerald-600/10',
+  },
   {
     id: 'global',
     label: 'Vue globale',
@@ -40,7 +47,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string
 ]
 
 function TrackingContent() {
-  const [activeTab, setActiveTab] = useState<Tab>('global')
+  const [activeTab, setActiveTab] = useState<Tab>('diagnostic')
 
   const { workoutStats, workoutSessions } = useWorkoutStats()
   const { progressData, loading: progressLoading } = useWorkoutProgress()
@@ -89,6 +96,9 @@ function TrackingContent() {
 
         {/* Contenu de l'onglet */}
         <motion.div variants={fadeInUp}>
+
+          {/* Diagnostic calculé */}
+          {activeTab === 'diagnostic' && <PerformanceDiagnostic months={3} />}
 
           {/* Vue globale */}
           {activeTab === 'global' && (

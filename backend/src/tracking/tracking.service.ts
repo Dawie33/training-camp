@@ -162,11 +162,10 @@ export class TrackingService {
       byType[type].push(s)
     }
 
-    const typeStats = Object.entries(byType).map(([type, rows]) => {
-      const scores = rows.map(s => this.extractCFScore(s.results, type)).filter((v): v is number => v !== null)
-      const { trend, pct } = this.computeTrend(scores, type === 'for_time')
-      return { type, count: rows.length, trend, improvement_pct: pct }
-    })
+    // Volume d'exposition par format, sans tendance : deux WODs d'un même format (Fran et
+    // Murph sont tous deux « for time ») ne sont pas comparables entre eux. La progression
+    // réelle se lit sur `benchmarkProgression`, où chaque workout est comparé à lui-même.
+    const typeStats = Object.entries(byType).map(([type, rows]) => ({ type, count: rows.length }))
 
     const namedWorkouts = sessions
       .filter(s => s.workout_name)
@@ -226,7 +225,7 @@ export class TrackingService {
       ? Object.entries(profile.global_goals).filter(([, v]) => v).map(([k]) => k).join(', ') || 'Non renseignés'
       : 'Non renseignés'
     const typeLines = agg.typeStats
-      .map((t: any) => `- ${t.type} (${t.count} séances, ${t.trend}${t.improvement_pct ? `, ${t.improvement_pct > 0 ? '+' : ''}${t.improvement_pct}%` : ''})`)
+      .map((t: any) => `- ${t.type} : ${t.count} séance${t.count > 1 ? 's' : ''}`)
       .join('\n')
 
     const namedLines = agg.namedWorkouts.length
@@ -254,7 +253,7 @@ Volume et régularité :
 - ${agg.total} séances sur ${agg.weekSpan} semaines (${agg.avgPerWeek}/semaine)
 - Régularité : ${agg.consistencyPct}%
 
-Tendances par type de WOD :
+Volume d'exposition par format de WOD (nombre de séances, sans notion de progression) :
 ${typeLines}
 
 Résultats des workouts nommés (benchmarks, WODs box) :
@@ -402,26 +401,6 @@ ${this.jsonInstructions(true)}`
     if (results.load_kg) return `${results.load_kg}kg`
     if (results.reps) return `${results.reps} reps`
     return null
-  }
-
-  private extractCFScore(results: any, type: string): number | null {
-    if (!results) return null
-    if (type === 'for_time' && results.elapsed_time_seconds) return results.elapsed_time_seconds as number
-    if (type === 'amrap') {
-      const rounds = results.rounds as number | undefined
-      const reps = results.reps as number | undefined
-      if (rounds !== undefined) return rounds * 100 + (reps ?? 0)
-    }
-    return null
-  }
-
-  private computeTrend(scores: number[], lowerIsBetter: boolean): { trend: 'improving' | 'stable' | 'declining'; pct: number } {
-    if (scores.length < 2) return { trend: 'stable', pct: 0 }
-    const first = scores[0]
-    const last = scores[scores.length - 1]
-    const rawPct = lowerIsBetter ? ((first - last) / first) * 100 : ((last - first) / first) * 100
-    const pct = Math.round(rawPct)
-    return { trend: pct > 5 ? 'improving' : pct < -5 ? 'declining' : 'stable', pct }
   }
 
   private computeWeekSpan(sessions: { started_at: string }[]): number {

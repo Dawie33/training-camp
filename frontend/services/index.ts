@@ -33,5 +33,8 @@ export * from './one-rep-maxes'
 // Activities (unified multi-module calendar)
 export * from './activities'
 
+// Analytics (diagnostic de performance calculé)
+export * from './analytics'
+
 // Types
 export * from './types'
