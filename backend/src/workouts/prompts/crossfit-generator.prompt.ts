@@ -1,3 +1,4 @@
+import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 /**
  * Prompt système spécialisé pour la génération de workouts de CrossFit par IA
  * Ce prompt guide l'IA pour créer des WODs structurés selon la méthodologie CrossFit
@@ -164,10 +165,14 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     lines.push('→ Utilise ces bilans pour orienter le type de workout (cardio si carence, force si stagnation des 1RMs, etc.).')
   }
 
+  lines.push(...buildDiagnosticPromptLines(context.diagnostic))
+
   lines.push('')
   lines.push(
     '**Directives** : Adapte le workout à ce profil. Respecte les limitations physiques.' +
-      ' Utilise l\'équipement disponible. Programme en cohérence avec l\'activité récente et les bilans de progression.',
+      ' Utilise l\'équipement disponible. Programme en cohérence avec l\'activité récente et les bilans de progression.' +
+      ' Quand le diagnostic calculé signale un déséquilibre de force, une filière délaissée ou un mouvement souvent scalé,' +
+      ' fais-en une cible explicite du workout plutôt que de programmer au hasard.',
   )
 
   return lines.join('\n')

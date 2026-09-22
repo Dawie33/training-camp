@@ -1,5 +1,4 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
-import { format } from 'date-fns'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { safeJsonStringify } from 'src/common/utils/utils'
@@ -84,38 +83,6 @@ export class WorkoutsService {
     return {
       ...workout,
       exercises,
-    }
-  }
-
-  /**
-   * Récupère le workout du jour.
-   * Sélectionne un workout publié basé sur un hash de la date.
-   * @param userId ID de l'utilisateur
-   * @param date Date (format YYYY-MM-DD), par défaut aujourd'hui
-   * @returns Le workout du jour
-   */
-  async getDailyWorkout(userId: string, date?: string): Promise<WorkoutDto> {
-    const targetDate = date && date.trim() !== '' ? date : format(new Date(), 'yyyy-MM-dd')
-
-    // Récupérer tous les workouts publiés
-    const workouts = await this.knex('workouts')
-      .where({ status: 'published' })
-      .orderBy('id', 'asc')
-
-    if (!workouts || workouts.length === 0) {
-      throw new NotFoundException('Aucun workout publié trouvé')
-    }
-
-    // Sélectionner le workout du jour basé sur un hash de la date
-    const dateHash = parseInt(targetDate.split('-').join(''), 10)
-    const workoutIndex = dateHash % workouts.length
-    const workout = workouts[workoutIndex]
-
-    const { blocks, tags, ...rest } = workout
-    return {
-      ...rest,
-      blocks,
-      tags: tags || [],
     }
   }
 

@@ -4,13 +4,18 @@ import { InjectConnection } from 'nest-knexjs'
 import { BenchmarkEntry, computeBenchmarkProgress } from './calculators/benchmark-progress'
 import { computeEnergySystems } from './calculators/energy-systems'
 import { computeMovementExposure, LoggedExercise } from './calculators/movement-exposure'
+import { computeSkillProgress, SkillProgramRow, SkillStepRow } from './calculators/skill-progress'
+import { computeStrengthHistory, OneRepMaxEntry } from './calculators/strength-history'
 import { computeStrengthRatios } from './calculators/strength-ratios'
 import { computeTrainingLoad } from './calculators/training-load'
 import { computeTrainingVolume } from './calculators/training-volume'
 import {
   BenchmarkProgress,
   EnergySystemsResult,
+  LatestSessionAnalysis,
   MovementExposureResult,
+  SkillProgressResult,
+  StrengthHistoryResult,
   StrengthRatiosResult,
   TrainingLoadResult,
   TrainingVolumeResult,
@@ -21,9 +26,13 @@ export interface PerformanceOverview {
   strength_ratios: StrengthRatiosResult
   benchmarks: BenchmarkProgress[]
   energy_systems: EnergySystemsResult
+  strength_history: StrengthHistoryResult
   volume: TrainingVolumeResult
   load: TrainingLoadResult
   movements: MovementExposureResult
+  skills: SkillProgressResult
+  /** Relecture de la dernière analyse stockée — aucune génération IA déclenchée ici. */
+  latest_analysis: LatestSessionAnalysis | null
   computed_at: string
 }
 
@@ -53,7 +62,15 @@ export class AnalyticsService {
     since.setMonth(since.getMonth() - months)
     const sinceISO = since.toISOString()
 
-    const [sessions, oneRepMaxRows, benchmarkRows] = await Promise.all([
+    const [
+      sessions,
+      oneRepMaxRows,
+      benchmarkRows,
+      oneRepMaxHistoryRows,
+      skillPrograms,
+      skillSteps,
+      latestAnalysisRow,
+    ] = await Promise.all([
       this.knex('workout_sessions')
         .select('started_at', 'completed_at', 'results')
         .where('user_id', userId)
@@ -67,6 +84,38 @@ export class AnalyticsService {
         .select('workout_name', 'score_type', 'score_value', 'extra_reps', 'calculated_level', 'measured_at')
         .where('user_id', userId)
         .orderBy('measured_at', 'asc'),
+
+      // Historique de force non borné à la période : une courbe de 1RM n'a de sens
+      // que sur la durée, et les mesures sont trop espacées pour une fenêtre courte.
+      this.knex('one_rep_max_history')
+        .select('lift', 'value', 'measured_at')
+        .where('user_id', userId)
+        .orderBy('measured_at', 'asc'),
+
+      this.knex('skill_programs')
+        .select('id as program_id', 'skill_name', 'skill_category')
+        .where('user_id', userId)
+        .where('status', 'active') as Promise<SkillProgramRow[]>,
+
+      this.knex('skill_program_steps as sps')
+        .join('skill_programs as sp', 'sps.program_id', 'sp.id')
+        .select('sps.program_id', 'sps.title', 'sps.status')
+        .where('sp.user_id', userId)
+        .where('sp.status', 'active') as Promise<SkillStepRow[]>,
+
+      this.knex('workout_sessions as ws')
+        .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
+        .leftJoin('personalized_workouts as pw', 'ws.personalized_workout_id', 'pw.id')
+        .select(
+          'ws.id',
+          'ws.started_at',
+          'ws.ai_analysis',
+          this.knex.raw("COALESCE(w.name, pw.plan_json->>'name') as workout_name"),
+        )
+        .where('ws.user_id', userId)
+        .whereNotNull('ws.ai_analysis')
+        .orderBy('ws.started_at', 'desc')
+        .first(),
     ])
 
     const oneRepMaxes: Record<string, number> = {}
@@ -92,15 +141,55 @@ export class AnalyticsService {
 
     const loggedExercises = sessions.flatMap(session => this.readExerciseResults(session.results))
 
+    const strengthEntries: OneRepMaxEntry[] = oneRepMaxHistoryRows.map(row => ({
+      lift: row.lift,
+      value: Number(row.value),
+      measured_at: new Date(row.measured_at).toISOString(),
+    }))
+
     return {
       period_months: months,
       strength_ratios: computeStrengthRatios(oneRepMaxes),
+      strength_history: computeStrengthHistory(strengthEntries),
       benchmarks: computeBenchmarkProgress(benchmarkEntries),
       energy_systems: computeEnergySystems(durations),
       volume: computeTrainingVolume(durations),
       load: computeTrainingLoad(durations),
       movements: computeMovementExposure(loggedExercises, oneRepMaxes),
+      skills: computeSkillProgress(skillPrograms, skillSteps),
+      latest_analysis: this.readLatestAnalysis(latestAnalysisRow),
       computed_at: new Date().toISOString(),
+    }
+  }
+
+  /**
+   * Relit l'analyse stockée de la dernière séance analysée.
+   * Renvoie null dès qu'un champ attendu manque, plutôt qu'un objet à moitié vide.
+   */
+  private readLatestAnalysis(row: Record<string, unknown> | undefined): LatestSessionAnalysis | null {
+    if (!row?.ai_analysis) return null
+
+    let analysis: Record<string, unknown>
+    try {
+      analysis = typeof row.ai_analysis === 'string'
+        ? JSON.parse(row.ai_analysis)
+        : (row.ai_analysis as Record<string, unknown>)
+    } catch {
+      return null
+    }
+
+    if (typeof analysis?.performance_level !== 'string') return null
+
+    return {
+      session_id: String(row.id),
+      workout_name: typeof row.workout_name === 'string' ? row.workout_name : 'Séance',
+      session_date: new Date(row.started_at as string).toISOString(),
+      summary: typeof analysis.summary === 'string' ? analysis.summary : '',
+      performance_level: analysis.performance_level as LatestSessionAnalysis['performance_level'],
+      comparison: typeof analysis.comparison === 'string' ? analysis.comparison : null,
+      strengths: Array.isArray(analysis.strengths) ? analysis.strengths.filter(s => typeof s === 'string') : [],
+      improvements: Array.isArray(analysis.improvements) ? analysis.improvements.filter(s => typeof s === 'string') : [],
+      next_steps: typeof analysis.next_steps === 'string' ? analysis.next_steps : '',
     }
   }
 

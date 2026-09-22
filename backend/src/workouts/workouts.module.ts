@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AnalyticsModule } from '../analytics/analytics.module'
 import { ExercisesModule } from '../exercises/exercises.module'
 import { GoogleCalendarModule } from '../google-calendar/google-calendar.module'
 import { WorkoutScheduleController } from './controllers/workout-schedule.controller'
@@ -14,9 +15,9 @@ import { WorkoutsService } from './services/workouts.service'
  * `UserContextService` est exporté pour être réutilisé par tout nouveau service IA.
  */
 @Module({
-  imports: [GoogleCalendarModule, ExercisesModule],
+  imports: [GoogleCalendarModule, ExercisesModule, AnalyticsModule],
   controllers: [WorkoutsController, WorkoutScheduleController],
   providers: [WorkoutsService, AIWorkoutGeneratorService, WorkoutScheduleService, UserContextService],
-  exports: [WorkoutsService, WorkoutScheduleService, UserContextService],
+  exports: [WorkoutsService, WorkoutScheduleService, UserContextService, AIWorkoutGeneratorService],
 })
 export class WorkoutsModule { }

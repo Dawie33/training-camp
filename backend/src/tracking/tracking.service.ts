@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common'
+import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { PerformanceDiagnosticSummary, UserContextService } from 'src/workouts/services/user-context.service'
 
 export type SportType = 'crossfit' | 'global'
 
@@ -143,7 +144,8 @@ export class TrackingService {
     if (sessions.length < 3) return this.notEnoughData('crossfit', months, sessions.length)
 
     const agg = this.aggregateCrossfit(sessions, ormHistory, benchmarkHistory)
-    const prompt = this.buildCrossfitPrompt(agg, oneRepMaxes, profile, months)
+    const { diagnostic } = await this.userContextService.getUserAIContext(userId)
+    const prompt = this.buildCrossfitPrompt(agg, oneRepMaxes, profile, months, diagnostic)
     const parsed = await this.callAI(prompt)
 
     return { sport: 'crossfit', period_months: months, ...parsed, generated_at: new Date().toISOString() }
@@ -219,7 +221,13 @@ export class TrackingService {
     return String(value)
   }
 
-  private buildCrossfitPrompt(agg: any, orms: any[], profile: any, months: number): string {
+  private buildCrossfitPrompt(
+    agg: any,
+    orms: any[],
+    profile: any,
+    months: number,
+    diagnostic?: PerformanceDiagnosticSummary,
+  ): string {
     const ormStr = orms.length ? orms.map(o => `${o.lift}: ${o.value}kg`).join(', ') : 'Non renseignés'
     const goals = profile?.global_goals
       ? Object.entries(profile.global_goals).filter(([, v]) => v).map(([k]) => k).join(', ') || 'Non renseignés'
@@ -265,7 +273,10 @@ ${ormProgressionLines}
 Progression sur les benchmarks testés (niveau calculé automatiquement) :
 ${benchmarkProgressionLines}
 
+${buildDiagnosticPromptLines(diagnostic).join('\n')}
+
 Analyse ces données précisément. Cite des résultats concrets (noms de workouts, temps, charges) dans tes commentaires. Sois un vrai coach — pas de conseils génériques.
+Le diagnostic calculé fait foi : reprends ses chiffres tels quels et ne propose jamais une lecture qui le contredit.
 
 ${this.jsonInstructions()}`
   }

@@ -1,49 +1,47 @@
+import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 import { UserAIContext } from 'src/workouts/services/user-context.service'
 import { SessionStats } from '../schemas/recommendation.schema'
 
 const SPORT_LABELS: Record<string, string> = {
   crossfit: 'CrossFit',
-  strength: 'Force',
 }
 
 export function buildRecommendationSystemPrompt(): string {
-  return `Tu es un coach cross-training expert avec une vision globale de l'entraînement multi-sport.
+  return `Tu es un coach CrossFit expert. Le travail de force fonctionnelle fait partie intégrante du CrossFit : il se programme comme un bloc de séance, jamais comme une discipline séparée.
 
-Ta mission est d'analyser l'historique d'entraînement complet d'un athlète (tous sports confondus) et de recommander LA prochaine séance optimale, en appliquant les principes scientifiques du cross-training.
+Ta mission est d'analyser l'historique d'entraînement d'un athlète et de recommander LA prochaine séance optimale, en appliquant les principes de la périodisation concurrente.
 
-# PRINCIPES DE PROGRAMMATION CROSS-TRAINING
+# PRINCIPES DE PROGRAMMATION
 
 ## Équilibre des modalités
 Un programme équilibré sur 3 semaines doit couvrir :
-- **Force/puissance** : Strength ou CrossFit strength_max (1-2x/semaine)
-- **Conditionnement métabolique** : CrossFit conditioning (2-3x/semaine)
-- **Technique/seuil** : CrossFit technique_metcon (1x/semaine)
+- **Force/puissance** : séance à dominante strength_max (1-2x/semaine)
+- **Conditionnement métabolique** : conditioning (2-3x/semaine)
+- **Technique/seuil** : technique_metcon (1x/semaine)
 
 ## Règles de récupération
 - RPE 9-10 hier → recommander séance légère ou repos
-- 3 séances haute intensité en 5 jours → recommander récupération active (strength légère)
-- Pas de 2 séances de même sport à haute intensité 2 jours de suite
+- 3 séances haute intensité en 5 jours → recommander récupération active
+- Jamais deux jours consécutifs de même stress articulaire ou contractile
 
 ## Règles d'urgence (days_since_last)
-- **Urgence haute** : > 10 jours sans force
+- **Urgence haute** : > 10 jours sans travail de force
 - **Urgence moyenne** : 8-14 jours sans une modalité
 - **Urgence faible** : 3-7 jours sans une modalité (rotation normale)
 
-## Types de séance par sport
+## Types de séance
 - **crossfit** : technique_metcon, strength_max, conditioning, benchmark, vo2max
-- **strength** : strength, hypertrophy, endurance, power
 - **rest** : récupération active (type "active_recovery")
 
-## Durée suggérée par sport et niveau
+## Durée suggérée par niveau
 - CrossFit : 45-60 min (beginner: 35-45 min)
-- Strength : 50-70 min
 
 # FORMAT JSON REQUIS
 
 Retourne UNIQUEMENT ce JSON :
 \`\`\`json
 {
-  "recommended_sport": "crossfit|strength|rest",
+  "recommended_sport": "crossfit|rest",
   "recommended_type": "type de séance spécifique",
   "urgency": "low|medium|high",
   "reason": "1-2 phrases directes expliquant POURQUOI cette séance maintenant",
@@ -84,7 +82,7 @@ export function buildRecommendationUserPrompt(
   lines.push(`Total séances : ${stats.total_sessions_21d}`)
   lines.push('Par sport :')
 
-  const ALL_SPORTS = ['crossfit', 'strength']
+  const ALL_SPORTS = ['crossfit']
   for (const sport of ALL_SPORTS) {
     const count = stats.by_sport[sport] ?? 0
     const days = stats.days_since_last[sport]
@@ -114,9 +112,12 @@ export function buildRecommendationUserPrompt(
     }
   }
 
+  lines.push(...buildDiagnosticPromptLines(ctx.diagnostic))
+
   lines.push('')
   lines.push('## MISSION')
   lines.push('Analyse cette situation et recommande LA prochaine séance optimale pour cet athlète.')
+  lines.push('Appuie-toi en priorité sur le DIAGNOSTIC CALCULÉ : un déséquilibre de force, une filière délaissée ou un mouvement souvent scalé sont des cibles prioritaires.')
   lines.push('Sois direct et précis. La recommandation doit être actionnable immédiatement.')
 
   return lines.join('\n')

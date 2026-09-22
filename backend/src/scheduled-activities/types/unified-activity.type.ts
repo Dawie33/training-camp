@@ -1,10 +1,12 @@
-export type ActivityModule = 'crossfit' | 'strength' | 'skill' | 'wod' | 'conditioning'
+export type ActivityModule = 'crossfit' | 'skill' | 'wod' | 'conditioning'
 export type ActivityStatus = 'scheduled' | 'completed' | 'skipped' | 'rescheduled'
 
 /**
  * Vue unifiée d'une activité planifiée, quelle que soit sa source
- * (user_workout_schedule pour CrossFit, scheduled_activities pour les autres modules,
- * strength_sessions pour le module Force)
+ * (user_workout_schedule pour CrossFit, scheduled_activities pour les autres modules).
+ *
+ * Le travail de force n'a pas de source propre : c'est une section de type `strength`
+ * dans une séance CrossFit.
  */
 export interface UnifiedActivity {
   id: string
@@ -32,7 +34,7 @@ export interface UnifiedActivity {
   session_data?: unknown
 
   // Champs nouveaux modules (source: scheduled_activities)
-  activity_type?: 'strength' | 'skill' | 'wod' | 'conditioning'
+  activity_type?: 'skill' | 'wod' | 'conditioning'
   activity_id?: string
 
   // Champs Skill (source: scheduled_activities + skill_programs)
@@ -42,12 +44,6 @@ export interface UnifiedActivity {
   skill_step_title?: string
   skill_progress?: number
 
-  // Champs Force (source: strength_sessions)
-  target_muscles?: string[]
-  session_goal?: string
-  duration_minutes?: number
-  perceived_effort?: number
-
   // Identifie la table source pour les actions CRUD
-  _source: 'workout_schedule' | 'scheduled_activities' | 'strength_sessions'
+  _source: 'workout_schedule' | 'scheduled_activities'
 }

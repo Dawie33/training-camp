@@ -28,7 +28,7 @@ Monorepo npm workspaces :
 - Préfixe API : `/api`
 
 ### Base de données
-- PostgreSQL 15 (Docker, port **5432**)
+- PostgreSQL 15 (Docker, port **5435** côté hôte)
 - Migrations Knex.js dans `backend/src/database/migrations/`
 - Seeds dans `backend/src/database/seeds/`
 - UUID via pgcrypto, snake_case pour les colonnes
@@ -98,6 +98,8 @@ Guards : `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées — **sans
 | `exercises` | Référentiel d'exercices |
 | `equipments` | Équipements disponibles |
 | `one-rep-maxes` | Maxes et historique |
+| `analytics` | Diagnostic de performance calculé (sans IA) |
+| `tracking` | Bilans de progression IA |
 | `google-calendar` | Sync agenda Google |
 
 ### Pattern génération IA
@@ -148,7 +150,17 @@ Un fichier service par domaine : `workouts.ts`, `sessions.ts`, `skills.ts`, `sch
 
 ### Log de séance : une page dédiée par sport
 
-Pas de modale de log — chaque sport a sa propre page (`/crossfit/log-workout`, `/training-programs/log-session`, `/force/log`). Cross-training et programmes partagent `workout_sessions` + `sessionService` et sont reliés au calendrier via `scheduleId` + `scheduleApi`. Les autres sports ont leur propre table et service (`strength_sessions`/`strengthService`, etc.) et sont visibles au calendrier via le registre en lecture `scheduled_activities`. Détails dans [docs/flux-log-workout.md](docs/flux-log-workout.md).
+Pas de modale de log : le log se fait sur `/crossfit/log-workout`, qui écrit dans `workout_sessions` via `sessionService` et se relie au calendrier par `scheduleId` + `scheduleApi`. Les compétences passent par `scheduled_activities`. Détails dans [docs/flux-log-workout.md](docs/flux-log-workout.md).
+
+**Le travail de force n'est pas un module.** C'est une section de type `strength` dans une séance CrossFit. Il n'existe ni écran `/force`, ni table `strength_sessions` : les 1RM se gèrent sur `/crossfit/rm` et alimentent le diagnostic d'équilibres de force.
+
+### Contrat du champ `results` (workout_sessions)
+
+`results` est un `jsonb` validé par `SessionResultsSchema` (Zod, `.passthrough()` pour ne pas invalider l'historique). Champs structurés à privilégier : `exercise_results` (une entrée par exercice, pas par série — `load_kg` porte la charge la plus lourde) et `rpe` (échelle CR-10). Le format historique `exercise_details` (texte libre) est conservé en lecture seule.
+
+### Analyse de performance
+
+`backend/src/analytics/` calcule le diagnostic **sans IA**, via des fonctions pures dans `calculators/` (testables sans mock Knex) : ratios de force, progression par benchmark, filières énergétiques, volume/régularité, charge sRPE/ACWR, exposition par mouvement. Le service fait les requêtes, les calculateurs font les maths. Règle : un benchmark ne se compare qu'à lui-même, jamais à un autre workout du même format.
 
 ## Base de données — tables principales
 
@@ -187,4 +199,4 @@ En production, le backend est déployé sur Render (`https://training-camp.onren
 - `turbopack: { root: '../' }` dans `next.config.ts` provoque des redémarrages intempestifs du backend en watch mode — ne pas le remettre.
 - Les migrations Knex sont dans `backend/src/database/migrations/` (pas `backend/database/`).
 - GPT-4.1 ne connaît pas les workouts CrossFit Open postérieurs à début 2025. Utiliser le champ `referenceData` du endpoint `POST /workouts/lookup` pour injecter les détails exacts.
-- La DB écoute sur le port **5432** (standard PostgreSQL — dans le monorepo, utiliser le docker-compose racine).
+- La DB écoute sur le port **5435** côté hôte (mappé sur 5432 dans le conteneur — utiliser le docker-compose racine).

@@ -1,6 +1,6 @@
 import { apiClient } from './apiClient'
 
-export type RecommendedSport = 'crossfit' | 'strength' | 'rest'
+export type RecommendedSport = 'crossfit' | 'rest'
 
 export interface AIRecommendation {
   recommended_sport: RecommendedSport

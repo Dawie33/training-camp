@@ -155,7 +155,6 @@ function CalendarContent() {
         onOpenChange={setModalOpen}
         selectedDate={selectedDate}
         onSchedule={handleScheduleWorkout}
-        onActivityScheduled={refetch}
       />
 
       <ParseBoxWodModal

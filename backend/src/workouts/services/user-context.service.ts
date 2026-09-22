@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { AnalyticsService } from 'src/analytics/analytics.service'
 
 /**
  * Résumé d'une analyse IA post-workout récente, utilisé comme contexte pour la génération.
@@ -45,7 +46,7 @@ export interface ProgressionReportSummary {
   generated_at: string
 }
 
-export type RecentSessionSport = 'crossfit' | 'strength'
+export type RecentSessionSport = 'crossfit'
 
 /**
  * Séance récente tous sports confondus (CrossFit, force), utilisée comme
@@ -60,8 +61,29 @@ export interface RecentSession {
 }
 
 /**
+ * Synthèse du diagnostic calculé, sous une forme assez compacte pour tenir dans un prompt.
+ *
+ * On n'y met que ce qui oriente une décision de programmation : les écarts, les manques
+ * et les alertes. Les séries complètes restent dans le module analytics.
+ */
+export interface PerformanceDiagnosticSummary {
+  /** Ratios de force hors fourchette basse, avec la lecture coach de l'écart. */
+  weak_ratios: { label: string; value_pct: number; target: string; reading: string }[]
+  /** Domaines temporels sous 10 % du volume — un athlète ne progresse que là où il s'expose. */
+  underworked_domains: string[]
+  load_zone: string | null
+  load_change_pct: number | null
+  /** Mouvements scalés plus d'une fois sur deux : points faibles techniques probables. */
+  most_scaled_movements: string[]
+  benchmark_trends: { name: string; trend: string; delta_pct: number | null }[]
+  sessions_per_week: number
+  consistency_pct: number
+}
+
+/**
  * Contexte complet d'un utilisateur (1RMs, équipements, historique, compétences actives,
- * rapports de progression) fourni aux services de génération IA. Voir `UserContextService`.
+ * rapports de progression, diagnostic calculé) fourni aux services de génération IA.
+ * Voir `UserContextService`.
  */
 export interface UserAIContext {
   sport_level: string
@@ -79,6 +101,8 @@ export interface UserAIContext {
   activeSkills: ActiveSkillContext[]
   completedSkillNames: string[]
   progressionReports: ProgressionReportSummary[]
+  /** Métriques calculées par le module analytics — jamais estimées par l'IA. */
+  diagnostic: PerformanceDiagnosticSummary
 }
 
 /**
@@ -91,7 +115,10 @@ export class UserContextService {
   private readonly cache = new Map<string, { data: UserAIContext; expiresAt: number }>()
   private readonly TTL_MS = 30 * 60 * 1000
 
-  constructor(@InjectModel() private readonly knex: Knex) {}
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly analyticsService: AnalyticsService,
+  ) {}
 
   /**
    * Invalide le contexte IA mis en cache pour un utilisateur, à appeler après toute
@@ -112,7 +139,7 @@ export class UserContextService {
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data
     }
-    const [profile, oneRepMaxes, cfSessions, strengthSessions, recentAnalysesRaw, activeSkillsRaw, completedSkillNames, progressionReportsRaw] = await Promise.all([
+    const [profile, oneRepMaxes, cfSessions, recentAnalysesRaw, activeSkillsRaw, completedSkillNames, progressionReportsRaw] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -137,7 +164,7 @@ export class UserContextService {
         .select(
           'ws.started_at',
           'ws.completed_at',
-          this.knex.raw("ws.results->>'perceived_effort' as perceived_effort"),
+          this.knex.raw("COALESCE(ws.results->>'rpe', ws.results->>'perceived_effort') as perceived_effort"),
           this.knex.raw("COALESCE(w.workout_type, pw.plan_json->>'workout_type') as workout_type"),
         )
         .where('ws.user_id', userId)
@@ -145,13 +172,6 @@ export class UserContextService {
         .whereRaw("ws.started_at >= NOW() - INTERVAL '21 days'")
         .orderBy('ws.started_at', 'desc')
         .limit(10),
-
-      this.knex('strength_sessions')
-        .select('session_date', 'session_goal', 'duration_minutes', 'perceived_effort')
-        .where('user_id', userId)
-        .whereRaw("session_date >= NOW() - INTERVAL '21 days'")
-        .orderBy('session_date', 'desc')
-        .limit(7),
 
       this.knex('workout_sessions as ws')
         .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
@@ -203,15 +223,7 @@ export class UserContextService {
       }
     })
 
-    const strengthMapped: RecentSession[] = (strengthSessions ?? []).map((s: { session_date: string | Date; session_goal: string; duration_minutes?: number; perceived_effort?: number }) => ({
-      date: new Date(s.session_date).toISOString().split('T')[0],
-      sport: 'strength' as const,
-      workout_type: s.session_goal,
-      duration_minutes: s.duration_minutes ?? 0,
-      perceived_effort: s.perceived_effort ?? undefined,
-    }))
-
-    const recentSessionsMapped = [...cfMapped, ...strengthMapped]
+    const recentSessionsMapped = [...cfMapped]
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 20)
 
@@ -291,9 +303,52 @@ export class UserContextService {
       activeSkills,
       completedSkillNames: completedSkillNames ?? [],
       progressionReports,
+      diagnostic: await this.buildDiagnosticSummary(userId),
     }
 
     this.cache.set(userId, { data: result, expiresAt: Date.now() + this.TTL_MS })
     return result
+  }
+
+  /**
+   * Condense le diagnostic calculé pour le prompt : uniquement les écarts, les manques
+   * et les alertes, c'est-à-dire ce qui doit peser sur une décision de programmation.
+   *
+   * Ces valeurs viennent du module analytics ; l'IA les commente, elle ne les recalcule
+   * jamais — un LLM n'est pas fiable pour dériver un ratio, et n'a pas les fourchettes
+   * de référence qui lui donnent son sens.
+   *
+   * @param userId ID de l'utilisateur
+   */
+  private async buildDiagnosticSummary(userId: string): Promise<PerformanceDiagnosticSummary> {
+    const overview = await this.analyticsService.getOverview(userId, 3)
+
+    return {
+      weak_ratios: overview.strength_ratios.ratios
+        .filter(ratio => ratio.verdict === 'below' && ratio.value_pct !== null)
+        .map(ratio => ({
+          label: ratio.label,
+          value_pct: ratio.value_pct as number,
+          target: `${ratio.target_min_pct}-${ratio.target_max_pct} %`,
+          reading: ratio.interpretation,
+        })),
+
+      underworked_domains: overview.energy_systems.domains
+        .filter(domain => overview.energy_systems.underworked.includes(domain.domain))
+        .map(domain => `${domain.label} (${domain.range_label})`),
+
+      load_zone: overview.load.acwr_zone,
+      load_change_pct: overview.load.last_week_change_pct,
+      most_scaled_movements: overview.movements.most_scaled,
+
+      benchmark_trends: overview.benchmarks.slice(0, 5).map(benchmark => ({
+        name: benchmark.name,
+        trend: benchmark.trend,
+        delta_pct: benchmark.delta_pct,
+      })),
+
+      sessions_per_week: overview.volume.avg_per_week,
+      consistency_pct: overview.volume.consistency_pct,
+    }
   }
 }
