@@ -4,10 +4,12 @@ import { ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 
 export function QuickActions({ index }: { index?: string } = {}) {
+  // Logger passe en action principale : c'est la saisie qui alimente tout le diagnostic
   const actions = [
-    { label: 'Générer avec IA', href: '/crossfit/generate', primary: true },
-    { label: 'Créer un workout', href: '/workouts/new' },
-    { label: 'Voir mes stats', href: '/tracking' },
+    { label: 'Logger une séance', href: '/crossfit/log-workout', primary: true },
+    { label: 'Mon diagnostic', href: '/tracking' },
+    { label: 'Générer avec IA', href: '/crossfit/generate' },
+    { label: 'Mes 1RM', href: '/crossfit/rm' },
   ]
 
   return (

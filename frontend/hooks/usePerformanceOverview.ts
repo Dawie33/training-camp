@@ -5,6 +5,11 @@ import { useCallback, useEffect, useState } from 'react'
 
 /**
  * Charge le diagnostic de performance calculé pour la période demandée.
+ *
+ * Au changement de période, le résultat précédent est conservé pendant le
+ * rechargement (`refreshing`) : les graphes gardent leur rendu au lieu de
+ * repasser par un squelette, ce qui éviterait un saut de mise en page.
+ *
  * @param months Profondeur d'analyse en mois
  */
 export function usePerformanceOverview(months = 3) {
@@ -28,5 +33,12 @@ export function usePerformanceOverview(months = 3) {
     load()
   }, [load])
 
-  return { overview, loading, error, reload: load }
+  return {
+    overview,
+    loading,
+    /** true uniquement quand on recharge par-dessus un résultat déjà affiché. */
+    refreshing: loading && overview !== null,
+    error,
+    reload: load,
+  }
 }

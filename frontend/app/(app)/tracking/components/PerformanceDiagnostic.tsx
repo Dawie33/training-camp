@@ -11,7 +11,7 @@ import {
 } from '@/services/analytics'
 import { motion } from 'framer-motion'
 import { Activity, AlertTriangle, Dumbbell, Gauge, Target, TrendingDown, TrendingUp } from 'lucide-react'
-import { usePerformanceOverview } from '../_hooks/usePerformanceOverview'
+import { usePerformanceOverview } from '@/hooks/usePerformanceOverview'
 
 const VERDICT_STYLES: Record<StrengthRatio['verdict'], { label: string; className: string }> = {
   below: { label: 'En retard', className: 'text-orange-600 bg-orange-500/10 border-orange-500/30' },
