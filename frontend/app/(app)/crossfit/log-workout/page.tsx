@@ -1,7 +1,8 @@
 'use client'
 
-import { PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
+import { ExerciseResult, PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout-structure'
+import { RpeSelector } from '@/components/ui/rpe-selector'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
 import { parseFitFiles, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
@@ -61,6 +62,40 @@ function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSecon
   )
 }
 
+/**
+ * Extrait une charge en kg depuis le poids prescrit d'un exercice ("42.5kg", "95/65 lb", "60% 1RM").
+ * Retourne null quand la prescription est relative ou non numérique : on pré-remplit ce qu'on sait
+ * lire, on ne devine jamais une charge à la place de l'athlète.
+ */
+function parsePrescribedLoadKg(weight?: string): number | null {
+  if (!weight || weight.includes('%')) return null
+  const match = weight.match(/(\d+(?:[.,]\d+)?)/)
+  if (!match) return null
+  const value = parseFloat(match[1].replace(',', '.'))
+  if (!Number.isFinite(value) || value <= 0) return null
+  if (/lbs?|#/i.test(weight)) return Math.round(value * 0.4536 * 10) / 10
+  return value
+}
+
+/** Nombre de reps prescrites, quand il est exploitable tel quel (un `21-15-9` reste à saisir à la main). */
+function parsePrescribedReps(reps?: number | string): number | null {
+  if (typeof reps === 'number') return Number.isInteger(reps) && reps > 0 ? reps : null
+  if (!reps) return null
+  const trimmed = reps.trim()
+  if (!/^\d+$/.test(trimmed)) return null
+  const value = parseInt(trimmed, 10)
+  return value > 0 ? value : null
+}
+
+interface ExerciseEntry {
+  load: string
+  reps: string
+  scaled: boolean
+  scalingNote: string
+}
+
+const EMPTY_ENTRY: ExerciseEntry = { load: '', reps: '', scaled: false, scalingNote: '' }
+
 interface ExerciseGroup {
   section: WorkoutSection
   exercises: Exercise[]
@@ -104,7 +139,7 @@ function LogWorkoutContent() {
   const [search, setSearch] = useState('')
   const [selectedWorkout, setSelectedWorkout] = useState<(Workouts & { personalized_id?: string }) | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
-  const [exerciseNotes, setWeightsUsed] = useState<Record<number, string>>({})
+  const [exerciseEntries, setExerciseEntries] = useState<Record<number, ExerciseEntry>>({})
 
   const [timeMinutes, setTimeMinutes] = useState('')
   const [timeSeconds, setTimeSeconds] = useState('')
@@ -114,6 +149,7 @@ function LogWorkoutContent() {
   const [rounds, setRounds] = useState('')
   const [bonusReps, setBonusReps] = useState('')
   const [rating, setRating] = useState<number>(0)
+  const [rpe, setRpe] = useState<number>(0)
   const [notes, setNotes] = useState('')
   const [wodDate, setWodDate] = useState(() => new Date().toISOString().slice(0, 16))
 
@@ -199,6 +235,24 @@ function LogWorkoutContent() {
     [exerciseGroups]
   )
 
+  // Pré-remplit ce que la prescription donne déjà (charge absolue, reps fixes) pour que
+  // l'athlète n'ait à corriger que ce qui a réellement différé du plan.
+  useEffect(() => {
+    setExerciseEntries(() => {
+      const initial: Record<number, ExerciseEntry> = {}
+      exercises.forEach((exercise, idx) => {
+        const load = parsePrescribedLoadKg(exercise.weight)
+        const reps = parsePrescribedReps(exercise.reps)
+        initial[idx] = {
+          ...EMPTY_ENTRY,
+          load: load !== null ? String(load) : '',
+          reps: reps !== null ? String(reps) : '',
+        }
+      })
+      return initial
+    })
+  }, [exercises])
+
   const hasConditioning = useMemo(() => {
     if (!selectedWorkout?.blocks?.sections) return false
     return hasConditioningSection(selectedWorkout.blocks.sections)
@@ -216,7 +270,7 @@ function LogWorkoutContent() {
     setSelectedWorkout(workout)
     setSearch(workout.name || '')
     setShowDropdown(false)
-    setWeightsUsed({})
+    setExerciseEntries({})
     setCapAtteint(false)
     setCapRounds('')
     setCapNote('')
@@ -246,8 +300,8 @@ function LogWorkoutContent() {
     }
   }
 
-  const handleExerciseNoteChange = useCallback((idx: number, value: string) => {
-    setWeightsUsed(prev => ({ ...prev, [idx]: value }))
+  const handleEntryChange = useCallback((idx: number, patch: Partial<ExerciseEntry>) => {
+    setExerciseEntries(prev => ({ ...prev, [idx]: { ...EMPTY_ENTRY, ...prev[idx], ...patch } }))
   }, [])
 
   const handleSave = async () => {
@@ -277,22 +331,35 @@ function LogWorkoutContent() {
       }
       const session = await sessionService.startSession(sessionData)
 
-      const cleanNotes: Record<string, string> = {}
-      for (const [idxStr, note] of Object.entries(exerciseNotes)) {
-        if (note.trim()) {
-          const exercise = exercises[parseInt(idxStr)]
-          const label = exercises.filter((e, i) => e.name === exercise.name && i < parseInt(idxStr)).length > 0
-            ? `${exercise.name} (${parseInt(idxStr) + 1})`
-            : exercise.name
-          cleanNotes[label] = note.trim()
-        }
-      }
+      const exerciseResults: ExerciseResult[] = exerciseGroups.flatMap(group =>
+        group.exercises.flatMap((exercise, i) => {
+          const idx = group.startIndex + i
+          const entry = exerciseEntries[idx]
+          if (!entry) return []
+
+          const load = parseFloat(entry.load.replace(',', '.'))
+          const reps = parseInt(entry.reps, 10)
+          const result: ExerciseResult = {
+            name: exercise.name,
+            section_type: group.section.type,
+            scaled: entry.scaled,
+          }
+          if (Number.isFinite(load) && load > 0) result.load_kg = load
+          if (Number.isInteger(reps) && reps > 0) result.reps_completed = reps
+          if (entry.scaled && entry.scalingNote.trim()) result.scaling_note = entry.scalingNote.trim()
+
+          // Une entrée sans charge, sans reps et non scalée n'apporte rien à l'analyse
+          const isEmpty = result.load_kg === undefined && result.reps_completed === undefined && !result.scaled
+          return isEmpty ? [] : [result]
+        })
+      )
 
       const resultPayload: Record<string, unknown> = {
         rounds: rounds ? parseInt(rounds) : undefined,
         reps: bonusReps ? parseInt(bonusReps) : undefined,
         rating: rating > 0 ? rating : undefined,
-        exercise_details: Object.keys(cleanNotes).length > 0 ? cleanNotes : undefined,
+        rpe: rpe > 0 ? rpe : undefined,
+        exercise_results: exerciseResults.length > 0 ? exerciseResults : undefined,
         ...(fitData && {
           coros: {
             activities: fitData.activities,
@@ -408,7 +475,7 @@ function LogWorkoutContent() {
                 </div>
               </div>
               <button
-                onClick={() => { setSelectedWorkout(null); setSearch(''); setWeightsUsed({}) }}
+                onClick={() => { setSelectedWorkout(null); setSearch(''); setExerciseEntries({}) }}
                 className="text-muted-foreground hover:text-foreground transition-colors text-lg"
               >
                 &times;
@@ -422,7 +489,9 @@ function LogWorkoutContent() {
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Détails des exercices</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Poids, distance, scaling, variante...</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Charge et reps réellement réalisées — pré-remplies depuis la prescription, corrige ce qui a changé.
+              </p>
             </div>
             <div className="space-y-5">
               {exerciseGroups.map((group, groupIdx) => (
@@ -435,32 +504,74 @@ function LogWorkoutContent() {
                   <div className="space-y-3">
                     {group.exercises.map((exercise, i) => {
                       const idx = group.startIndex + i
-                      const hints: string[] = []
-                      if (exercise.weight) hints.push(exercise.weight)
-                      if (exercise.distance) hints.push(exercise.distance)
-                      if (exercise.details) {
-                        const scaledMatch = exercise.details.match(/Scaled:\s*([^|]+)/i)
-                        if (scaledMatch) hints.push(`Scaled: ${scaledMatch[1].trim()}`)
-                      }
-                      const placeholder = hints.length > 0 ? hints.join(' / ') : 'ex: 60kg, Scaled, 500m...'
+                      const entry = exerciseEntries[idx] ?? EMPTY_ENTRY
+                      const prescribed: string[] = []
+                      if (exercise.reps) prescribed.push(`${exercise.reps} reps`)
+                      if (exercise.sets) prescribed.push(`${exercise.sets} séries`)
+                      if (exercise.weight) prescribed.push(exercise.weight)
+                      if (exercise.distance) prescribed.push(exercise.distance)
+                      if (exercise.duration) prescribed.push(exercise.duration)
                       return (
                         <div key={`${exercise.name}-${idx}`} className="flex items-start gap-3">
                           <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-sm flex-shrink-0 mt-0.5">
                             {idx + 1}
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 space-y-1.5">
                             <p className="text-sm font-medium text-foreground truncate">{exercise.name}</p>
-                            <div className="flex flex-wrap gap-1.5 mt-0.5">
-                              {exercise.reps && <span className="text-xs text-muted-foreground">{exercise.reps} reps</span>}
-                              {exercise.duration && <span className="text-xs text-muted-foreground">{exercise.duration}</span>}
+                            {prescribed.length > 0 && (
+                              <p className="text-xs text-muted-foreground">Prescrit : {prescribed.join(' · ')}</p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.5"
+                                  min="0"
+                                  value={entry.load}
+                                  onChange={(e) => handleEntryChange(idx, { load: e.target.value })}
+                                  placeholder="—"
+                                  aria-label={`Charge utilisée sur ${exercise.name} en kg`}
+                                  className="w-24 pl-3 pr-8 py-2 bg-background border border-border rounded-lg text-foreground text-sm text-right font-mono placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+                                />
+                                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">kg</span>
+                              </div>
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="0"
+                                  value={entry.reps}
+                                  onChange={(e) => handleEntryChange(idx, { reps: e.target.value })}
+                                  placeholder="—"
+                                  aria-label={`Reps réalisées sur ${exercise.name}`}
+                                  className="w-24 pl-3 pr-10 py-2 bg-background border border-border rounded-lg text-foreground text-sm text-right font-mono placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+                                />
+                                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">reps</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleEntryChange(idx, { scaled: !entry.scaled, scalingNote: entry.scaled ? '' : entry.scalingNote })}
+                                aria-pressed={entry.scaled}
+                                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${
+                                  entry.scaled
+                                    ? 'bg-orange-500/10 border-orange-500/40 text-orange-600'
+                                    : 'bg-secondary border-border text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                {entry.scaled ? 'Scaled' : 'RX'}
+                              </button>
                             </div>
-                            <input
-                              type="text"
-                              value={exerciseNotes[idx] || ''}
-                              onChange={(e) => handleExerciseNoteChange(idx, e.target.value)}
-                              placeholder={placeholder}
-                              className="w-full mt-1.5 px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
-                            />
+                            {entry.scaled && (
+                              <input
+                                type="text"
+                                value={entry.scalingNote}
+                                onChange={(e) => handleEntryChange(idx, { scalingNote: e.target.value })}
+                                placeholder="Comment tu as scalé ? ex: bande verte, box HSPU, genoux..."
+                                aria-label={`Détail du scaling sur ${exercise.name}`}
+                                className="w-full px-3 py-2 bg-background border border-orange-500/30 rounded-lg text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-orange-500/60 transition-all"
+                              />
+                            )}
                           </div>
                         </div>
                       )
@@ -692,6 +803,13 @@ function LogWorkoutContent() {
           <div>
             <label className="block text-sm text-muted-foreground mb-2">Comment tu t&apos;es senti ?</label>
             <StarRating rating={rating} onChange={setRating} />
+          </div>
+
+          <div>
+            <label className="block text-sm text-muted-foreground mb-2">
+              Difficulté de la séance <span className="text-xs">(RPE)</span>
+            </label>
+            <RpeSelector value={rpe} onChange={setRpe} />
           </div>
 
           <div>

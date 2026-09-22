@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { WorkoutsService } from 'src/workouts/services/workouts.service'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto, WorkoutSession } from './dto/session.dto'
+import { SessionResultsSchema } from './schemas/session-results.schema'
 
 @Injectable()
 export class WorkoutSessionsService {
@@ -104,21 +105,47 @@ export class WorkoutSessionsService {
         userId: string,
         data: UpdateWorkoutSessionDto
     ): Promise<WorkoutSession | null> {
+        const payload = { ...data }
+        if (payload.results) {
+            payload.results = this.validateResults(payload.results)
+        }
+
         const [session] = await this.knex('workout_sessions')
             .where({ id: sessionId, user_id: userId })
             .update({
-                ...data,
+                ...payload,
                 updated_at: new Date().toISOString(),
             })
             .returning('*')
 
-        if (session?.workout_id && data.results) {
-            await this.recordBenchmarkIfApplicable(userId, session.workout_id, data.results)
+        if (session?.workout_id && payload.results) {
+            await this.recordBenchmarkIfApplicable(userId, session.workout_id, payload.results)
         }
 
         this.userContextService.invalidateCache(userId)
 
         return session || null
+    }
+
+    /**
+     * Valide le payload `results` contre le contrat de séance.
+     *
+     * Le schéma laisse passer les clés inconnues : les séances enregistrées avant
+     * l'introduction du format structuré (`exercise_details` en texte libre, données
+     * Coros, progression par bloc) restent modifiables sans migration.
+     * @param results Résultats bruts envoyés par le client
+     * @returns Les résultats validés
+     * @throws BadRequestException si une clé connue est hors contrat
+     */
+    private validateResults(results: Record<string, unknown>): Record<string, unknown> {
+        const parsed = SessionResultsSchema.safeParse(results)
+        if (!parsed.success) {
+            const detail = parsed.error.issues
+                .map(issue => `${issue.path.join('.')}: ${issue.message}`)
+                .join(' | ')
+            throw new BadRequestException(`Résultats de séance invalides — ${detail}`)
+        }
+        return parsed.data
     }
 
     /**

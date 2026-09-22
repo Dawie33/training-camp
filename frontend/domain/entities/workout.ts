@@ -117,12 +117,32 @@ export interface WorkoutSessionMetrics {
     [key: string]: unknown
 }
 
+/**
+ * Résultat d'un exercice au sein d'une séance : une entrée par exercice, pas par série.
+ * Sur un bloc de force à séries montantes, `load_kg` porte la charge la plus lourde travaillée.
+ */
+export interface ExerciseResult {
+    name: string
+    section_type: string
+    load_kg?: number
+    reps_completed?: number
+    sets_completed?: number
+    scaled: boolean
+    scaling_note?: string
+    note?: string
+}
+
 export interface WorkoutSessionResults {
     rating?: number
+    /** Effort perçu sur l'ensemble de la séance (échelle CR-10). Croisé avec la durée, il donne la charge de séance (sRPE). */
+    rpe?: number
     metrics?: WorkoutSessionMetrics
     block_progress?: Record<string, boolean>
     elapsed_time_seconds?: number
     session_title?: string
+    exercise_results?: ExerciseResult[]
+    /** Format historique, texte libre par exercice. Lu seul — les nouvelles séances remplissent `exercise_results`. */
+    exercise_details?: Record<string, string>
     [key: string]: unknown
 }
 
