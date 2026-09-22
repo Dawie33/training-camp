@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { AppSidebar } from './app-sidebar'
+import { AppTopbar } from './app-topbar'
 import { BottomNavigation } from './bottom-navigation'
 
 interface DashboardLayoutProps {
@@ -14,7 +14,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Pages qui ne doivent pas afficher la navigation
   const noNavRoutes = ['/login', '/signup', '/']
 
-  // Pages en fullscreen (pas de bottom nav ni sidebar)
+  // Pages en fullscreen (pas de bottom nav ni topbar)
   const fullscreenRoutes = ['/workout/', '/personalized-workout/']
 
   const shouldShowNav = !noNavRoutes.includes(pathname)
@@ -25,20 +25,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Desktop Sidebar - masquée sur mobile */}
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Barre supérieure — masquée sur mobile, où la barre du bas prend le relais */}
       {!isFullscreen && (
-        <div className="hidden lg:block">
-          <AppSidebar isOpen={true} />
+        <div className="hidden lg:block shrink-0">
+          <AppTopbar />
         </div>
       )}
 
-      {/* Main content */}
       <main className={`flex-1 overflow-y-auto w-full ${!isFullscreen ? 'pb-20 lg:pb-0' : ''}`}>
         {children}
       </main>
 
-      {/* Mobile Bottom Navigation - masquée sur desktop et en fullscreen */}
+      {/* Navigation mobile — masquée sur desktop et en fullscreen */}
       {!isFullscreen && <BottomNavigation />}
     </div>
   )
