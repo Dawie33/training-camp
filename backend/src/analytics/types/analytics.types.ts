@@ -115,3 +115,60 @@ export interface MovementExposureResult {
   /** Mouvements scalés sur au moins la moitié de leurs expositions. */
   most_scaled: string[]
 }
+
+export interface StrengthHistoryPoint {
+  value: number
+  measured_at: string
+}
+
+export interface StrengthLiftHistory {
+  lift: string
+  points: StrengthHistoryPoint[]
+  current: number
+  best: number
+  gain_kg: number | null
+  gain_pct: number | null
+  trend: 'improving' | 'stable' | 'declining'
+}
+
+export interface StrengthHistoryResult {
+  available: boolean
+  lifts: StrengthLiftHistory[]
+}
+
+export type PerformanceLevel = 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
+
+/**
+ * Analyse de la dernière séance analysée.
+ *
+ * Contrairement au reste du module, ce bloc n'est pas calculé : il **relit** une
+ * analyse déjà produite et stockée par `WorkoutAnalysisService`. Aucun appel à
+ * l'IA n'est déclenché ici.
+ */
+export interface LatestSessionAnalysis {
+  session_id: string
+  workout_name: string
+  session_date: string
+  summary: string
+  performance_level: PerformanceLevel
+  comparison: string | null
+  strengths: string[]
+  improvements: string[]
+  next_steps: string
+}
+
+export interface SkillProgress {
+  program_id: string
+  skill_name: string
+  skill_category: string
+  /** Étape en cours, null quand le programme n'en a aucune d'ouverte. */
+  current_step_title: string | null
+  completed_steps: number
+  total_steps: number
+  progress_pct: number
+}
+
+export interface SkillProgressResult {
+  available: boolean
+  skills: SkillProgress[]
+}

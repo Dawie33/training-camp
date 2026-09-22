@@ -106,14 +106,66 @@ export interface MovementExposureResult {
   most_scaled: string[]
 }
 
+export interface StrengthHistoryPoint {
+  value: number
+  measured_at: string
+}
+
+export interface StrengthLiftHistory {
+  lift: string
+  points: StrengthHistoryPoint[]
+  current: number
+  best: number
+  gain_kg: number | null
+  gain_pct: number | null
+  trend: 'improving' | 'stable' | 'declining'
+}
+
+export interface StrengthHistoryResult {
+  available: boolean
+  lifts: StrengthLiftHistory[]
+}
+
+export type PerformanceLevel = 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
+
+export interface LatestSessionAnalysis {
+  session_id: string
+  workout_name: string
+  session_date: string
+  summary: string
+  performance_level: PerformanceLevel
+  comparison: string | null
+  strengths: string[]
+  improvements: string[]
+  next_steps: string
+}
+
+export interface SkillProgress {
+  program_id: string
+  skill_name: string
+  skill_category: string
+  current_step_title: string | null
+  completed_steps: number
+  total_steps: number
+  progress_pct: number
+}
+
+export interface SkillProgressResult {
+  available: boolean
+  skills: SkillProgress[]
+}
+
 export interface PerformanceOverview {
   period_months: number
   strength_ratios: StrengthRatiosResult
+  strength_history: StrengthHistoryResult
   benchmarks: BenchmarkProgress[]
   energy_systems: EnergySystemsResult
   volume: TrainingVolumeResult
   load: TrainingLoadResult
   movements: MovementExposureResult
+  skills: SkillProgressResult
+  latest_analysis: LatestSessionAnalysis | null
   computed_at: string
 }
 
