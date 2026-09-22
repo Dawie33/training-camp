@@ -1,15 +1,10 @@
 'use client'
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { activitiesApi } from '@/services/activities'
 import { Building2, Home } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
 import { CrossfitTab } from './CrossfitTab'
-import { StrengthTab } from './StrengthTab'
-import { SPORT_TABS, SportTab } from './types'
 import { usePersonalizedWorkouts } from './usePersonalizedWorkouts'
-import { useStrengthSessions } from './useStrengthSessions'
 import { useWorkoutLibrary } from './useWorkoutLibrary'
 
 type SessionLocation = 'home' | 'box'
@@ -19,7 +14,6 @@ interface ScheduleWorkoutModalProps {
   onOpenChange: (open: boolean) => void
   selectedDate: Date
   onSchedule: (payload: { workout_id?: string; personalized_workout_id?: string }, notes?: string, location?: SessionLocation) => Promise<void>
-  onActivityScheduled?: () => void
 }
 
 export function ScheduleWorkoutModal({
@@ -27,9 +21,7 @@ export function ScheduleWorkoutModal({
   onOpenChange,
   selectedDate,
   onSchedule,
-  onActivityScheduled,
 }: ScheduleWorkoutModalProps) {
-  const [sportTab, setSportTab] = useState<SportTab>('crossfit')
   const [activeTab, setActiveTab] = useState<'library' | 'personalized'>('library')
   const [selectedWorkoutId, setSelectedWorkoutId] = useState('')
   const [notes, setNotes] = useState('')
@@ -38,16 +30,13 @@ export function ScheduleWorkoutModal({
 
   const library = useWorkoutLibrary(open, activeTab === 'library')
   const personalized = usePersonalizedWorkouts(open, activeTab === 'personalized')
-  const strength = useStrengthSessions(open, sportTab === 'strength')
 
   useEffect(() => {
     if (!open) {
       library.reset()
       personalized.reset()
-      strength.reset()
       setSelectedWorkoutId('')
       setActiveTab('library')
-      setSportTab('crossfit')
       setNotes('')
       setLocation(undefined)
     }
@@ -76,31 +65,6 @@ export function ScheduleWorkoutModal({
       closeModal()
     } catch (error) {
       console.error('Error scheduling workout:', error)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleSubmitSportActivity = async () => {
-    const activityTypeMap: Record<Exclude<SportTab, 'crossfit'>, 'strength'> = {
-      strength: 'strength',
-    }
-    if (sportTab === 'crossfit') return
-    setSubmitting(true)
-    try {
-      const activityId = sportTab === 'strength' ? strength.selectedId : undefined
-      await activitiesApi.create({
-        activity_type: activityTypeMap[sportTab],
-        scheduled_date: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`,
-        activity_id: activityId || undefined,
-        location,
-        notes: notes || undefined,
-      })
-      toast.success('Séance planifiée !')
-      onActivityScheduled?.()
-      closeModal()
-    } catch {
-      toast.error('Erreur lors de la planification')
     } finally {
       setSubmitting(false)
     }
@@ -135,49 +99,19 @@ export function ScheduleWorkoutModal({
           </button>
         </div>
 
-        <div className="flex gap-1 bg-muted/60 rounded-md p-1">
-          {SPORT_TABS.map(tab => {
-            const Icon = tab.icon
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setSportTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium transition-all border ${sportTab === tab.id ? `${tab.activeColor} border` : 'text-muted-foreground hover:text-foreground border-transparent'}`}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {sportTab === 'crossfit' && (
-          <CrossfitTab
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            library={library}
-            personalized={personalized}
-            selectedWorkoutId={selectedWorkoutId}
-            onSelectWorkout={setSelectedWorkoutId}
-            notes={notes}
-            onNotesChange={setNotes}
-            submitting={submitting}
-            onSubmit={handleSubmit}
-            onCancel={closeModal}
-          />
-        )}
-
-        {sportTab === 'strength' && (
-          <StrengthTab
-            strength={strength}
-            notes={notes}
-            onNotesChange={setNotes}
-            submitting={submitting}
-            onSubmit={handleSubmitSportActivity}
-            onCancel={closeModal}
-          />
-        )}
+        <CrossfitTab
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          library={library}
+          personalized={personalized}
+          selectedWorkoutId={selectedWorkoutId}
+          onSelectWorkout={setSelectedWorkoutId}
+          notes={notes}
+          onNotesChange={setNotes}
+          submitting={submitting}
+          onSubmit={handleSubmit}
+          onCancel={closeModal}
+        />
       </DialogContent>
     </Dialog>
   )

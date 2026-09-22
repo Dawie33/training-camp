@@ -87,7 +87,7 @@ export function EquipmentTab({ equipment, saving, onToggle, onPreset, onClear, o
 
       <p className="text-xs text-slate-500 text-center">
         Tu cherches tes 1RM ? Ils se gèrent maintenant dans{' '}
-        <Link href="/force/rm" className="text-orange-400 hover:underline">
+        <Link href="/crossfit/rm" className="text-orange-400 hover:underline">
           Force → Mes RM
         </Link>
       </p>

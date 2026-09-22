@@ -1,9 +1,9 @@
 'use client'
 
-import { OneRepMaxTab } from '../_components/OneRepMaxTab'
-import { useOneRepMaxes } from '../_hooks/useOneRepMaxes'
+import { OneRepMaxTab } from './_components/OneRepMaxTab'
+import { useOneRepMaxes } from './_hooks/useOneRepMaxes'
 
-export default function ForceRmPage() {
+export default function OneRepMaxPage() {
   const { oneRepMaxes, liftValues, savingLift, setLiftEntry, handleSaveLift } = useOneRepMaxes()
 
   return (

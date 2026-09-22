@@ -5,7 +5,7 @@ import { RecommendedSport } from '@/services/recommendations'
 import { motion } from 'framer-motion'
 import {
   ArrowRight, Brain,
-  Dumbbell, Heart, RefreshCw, Zap,
+  Heart, RefreshCw, Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -17,7 +17,6 @@ const SPORT_CONFIG: Record<RecommendedSport, {
   href: string
 }> = {
   crossfit: { label: 'CrossFit', icon: <Zap className="w-4 h-4" />, href: '/crossfit/generate' },
-  strength: { label: 'Force', icon: <Dumbbell className="w-4 h-4" />, href: '/force/generate' },
   rest: { label: 'Récupération', icon: <Heart className="w-4 h-4" />, href: '#' },
 }
 
@@ -63,7 +62,9 @@ export function CoachRecommendationWidget() {
   }
 
   const { recommendation: rec, session_stats: stats } = data
-  const sport = SPORT_CONFIG[rec.recommended_sport]
+  // Une recommandation mise en cache avant le recentrage CrossFit peut porter un sport
+  // qui n'existe plus : on retombe sur CrossFit plutôt que de laisser planter le widget.
+  const sport = SPORT_CONFIG[rec.recommended_sport] ?? SPORT_CONFIG.crossfit
   const typeLabel = rec.recommended_type.replace(/_/g, ' ')
 
   return (
@@ -107,7 +108,7 @@ export function CoachRecommendationWidget() {
 
       {/* Stats rapides */}
       <div className="flex gap-2 flex-wrap">
-        {(['crossfit', 'strength'] as const).map((s) => {
+        {(['crossfit'] as const).map((s) => {
           const days = stats.days_since_last[s]
           const count = stats.by_sport[s] ?? 0
           const isActive = s === rec.recommended_sport

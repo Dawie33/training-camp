@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button'
-import { MUSCLE_LABELS, SESSION_GOAL_LABELS } from '@/services/strength'
 import { Check, ExternalLink, FileDown, SkipForward, Trash2 } from 'lucide-react'
 import { statusColors } from './CalendarEventContent'
 
@@ -11,10 +10,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const onSkip = calendarEvent._onSkip as (() => void) | undefined
   const onDelete = calendarEvent._onDelete as (() => void) | undefined
   const onPrint = calendarEvent._onPrint as (() => void) | undefined
-  const isStrength = module === 'strength'
   const isSkill = module === 'skill'
-  const targetMuscles = calendarEvent.target_muscles as string[] | undefined
-  const sessionGoal = calendarEvent.session_goal as string | undefined
   const skillStepTitle = calendarEvent.skill_step_title as string | undefined
   const skillProgress = calendarEvent.skill_progress as number | undefined
   const skillProgramId = calendarEvent.skill_program_id as string | undefined
@@ -70,33 +66,6 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
             <span className="text-foreground">{calendarEvent.duration as number} min</span>
           </div>
         )}
-        {/* Détails spécifiques Force */}
-        {isStrength && sessionGoal && (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Objectif:</span>
-            <span className="text-foreground capitalize">{SESSION_GOAL_LABELS[sessionGoal as keyof typeof SESSION_GOAL_LABELS] ?? sessionGoal}</span>
-          </div>
-        )}
-        {isStrength && targetMuscles && targetMuscles.length > 0 && (
-          <div className="flex items-start gap-2 text-sm">
-            <span className="text-muted-foreground shrink-0">Muscles:</span>
-            <span className="text-foreground">
-              {targetMuscles.map((m) => MUSCLE_LABELS[m as keyof typeof MUSCLE_LABELS] ?? m).join(', ')}
-            </span>
-          </div>
-        )}
-        {isStrength && !!calendarEvent.duration_minutes && (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Durée:</span>
-            <span className="text-foreground">{calendarEvent.duration_minutes as number} min</span>
-          </div>
-        )}
-        {isStrength && !!calendarEvent.perceived_effort && (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">RPE:</span>
-            <span className="text-foreground">{calendarEvent.perceived_effort as number} / 10</span>
-          </div>
-        )}
         {/* Détails spécifiques Skill */}
         {isSkill && skillStepTitle && (
           <div className="flex items-start gap-2 text-sm">
@@ -116,7 +85,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
         {status === 'scheduled' && (
           <>
-            {onComplete && (isStrength || isSkill) && (
+            {onComplete && isSkill && (
               <Button
                 size="sm"
                 onClick={onComplete}
@@ -136,7 +105,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
                 Sauté
               </Button>
             )}
-            {!isStrength && !isSkill && (
+            {!isSkill && (
               <Button
                 size="sm"
                 asChild
@@ -156,18 +125,6 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
             )}
           </>
         )}
-        {isStrength && (
-          <Button
-            size="sm"
-            asChild
-            className="bg-violet-500/10 text-violet-700 border border-violet-500/30 hover:bg-violet-500/20"
-          >
-            <a href="/force">
-              <ExternalLink className="w-3.5 h-3.5 mr-1" />
-              Voir dans Force
-            </a>
-          </Button>
-        )}
         {isSkill && (
           <Button
             size="sm"
@@ -180,7 +137,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
             </a>
           </Button>
         )}
-        {!isStrength && !!(calendarEvent.workout_id || calendarEvent.personalized_workout_id) && (
+        {!!(calendarEvent.workout_id || calendarEvent.personalized_workout_id) && (
           <Button
             size="sm"
             asChild
