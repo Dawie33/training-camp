@@ -26,23 +26,3 @@ export interface Tip {
 
 export type PeriodType = 'week' | 'month' | 'year'
 export type MetricType = 'count' | 'duration'
-
-/**
- * Types pour le calendrier
- */
-export interface DayWorkout {
-  id: string
-  workoutId?: string
-  name: string
-  type: 'scheduled' | 'completed' | 'rest'
-  intensity?: 'low' | 'medium' | 'high'
-  duration?: number
-}
-
-export interface WeekDay {
-  date: Date
-  dayName: string
-  dayNumber: number
-  isToday: boolean
-  workouts: DayWorkout[]
-}

@@ -11,8 +11,6 @@ import { BentoCard } from './components/bento/BentoCard'
 import { PerformanceCards } from './components/bento/PerformanceCards'
 import { PeriodFilter } from './components/bento/PeriodFilter'
 import { QuickActions } from './components/QuickActions'
-import { SkillOfTheDayCard } from './components/SkillOfTheDayCard'
-import { WeeklyCalendar } from './components/WeeklyCalendar'
 
 function DashboardContent() {
   const user = useAuth()
@@ -44,36 +42,26 @@ function DashboardContent() {
           )}
         </motion.div>
 
-        {/* Suivi — l'état de l'athlète occupe le haut et les grandes surfaces */}
+        {/* Suivi — toutes les cartes (coach, stats, séance du jour, skill) partagent une seule grille
+            auto-adaptative : chaque carte prend sa largeur naturelle et la grille se réajuste seule,
+            sans jamais laisser une carte isolée sur une ligne. */}
         <motion.section
           variants={fadeInUp}
           aria-label="Suivi de performance"
-          className={`grid grid-cols-1 md:grid-cols-4 2xl:grid-cols-6 gap-3 transition-opacity ${refreshing ? 'opacity-60' : ''}`}
+          className={`grid gap-3 grid-cols-[repeat(auto-fit,minmax(480px,1fr))] transition-opacity ${refreshing ? 'opacity-60' : ''}`}
         >
+          {/* Contenu plus dense (texte + CTA) : garde toute la largeur de la ligne */}
+          <div className="col-span-full">
+            <CoachRecommendationWidget />
+          </div>
+
           {error && !overview ? (
-            <BentoCard eyebrow="Suivi" className="md:col-span-4 2xl:col-span-6">
+            <BentoCard eyebrow="Suivi" className="col-span-full">
               <p className="text-sm text-muted-foreground">{error}</p>
             </BentoCard>
           ) : (
             <PerformanceCards overview={overview} loading={loading} />
           )}
-        </motion.section>
-
-        {/* Semaine en cours */}
-        <motion.section variants={fadeInUp} aria-label="Ta semaine">
-          <WeeklyCalendar />
-        </motion.section>
-
-        {/* Compétence du jour — la carte porte déjà son en-tête, la BentoCard ne fournit que la surface */}
-        <motion.section variants={fadeInUp} aria-label="Compétence du jour">
-          <BentoCard>
-            <SkillOfTheDayCard />
-          </BentoCard>
-        </motion.section>
-
-        {/* Recommandation coach */}
-        <motion.section variants={fadeInUp} aria-label="Recommandation du coach">
-          <CoachRecommendationWidget />
         </motion.section>
       </div>
     </motion.div>
