@@ -28,26 +28,6 @@ export class WorkoutsController {
   }
 
   /**
-   * Récupère le workout planifié pour l'utilisateur à une date donnée (aujourd'hui par défaut).
-   * @param req Requête authentifiée contenant l'utilisateur courant
-   * @param date Date au format YYYY-MM-DD (optionnelle)
-   * @returns Le workout du jour
-   * @throws NotFoundException si aucun workout n'est planifié à cette date
-   */
-  @Get('daily')
-  @UseGuards(JwtAuthGuard)
-  async getDailyWorkout(
-    @Request() req: { user: { id: string } },
-    @Query('date') date?: string,
-  ) {
-    const workout = await this.service.getDailyWorkout(req.user.id, date)
-    if (!workout) {
-      throw new NotFoundException('Aucun workout trouvé pour cette date')
-    }
-    return workout
-  }
-
-  /**
    * Liste les workouts marqués comme benchmarks (Fran, Grace, Murph, etc.).
    * @returns La liste des workouts benchmark
    */

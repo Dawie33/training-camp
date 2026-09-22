@@ -118,14 +118,6 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère le workout du jour
-   * @returns Promesse contenant le workout du jour
-   */
-  async getDailyWorkout(): Promise<Workouts> {
-    return apiClient.get<Workouts>('/workouts/daily')
-  }
-
-  /**
    * Crée un nouveau workout personnalisé.
    * @param data Données du workout à créer
    * @returns Promesse contenant le workout créé
