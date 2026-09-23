@@ -112,7 +112,11 @@ export async function up(knex: Knex): Promise<void> {
   const hasTable = await knex.schema.hasTable('strength_sessions')
   if (!hasTable) return
 
-  const rows: StrengthSessionRow[] = await knex('strength_sessions').select('*').orderBy('session_date', 'asc')
+  // `pg` convertit une colonne DATE en objet Date : on la relit en texte YYYY-MM-DD pour
+  // pouvoir reconstituer l'horodatage de la séance sans dépendre du fuseau du serveur.
+  const rows: StrengthSessionRow[] = await knex('strength_sessions')
+    .select('*', knex.raw(`to_char(session_date, 'YYYY-MM-DD') as session_date`))
+    .orderBy('strength_sessions.session_date', 'asc')
 
   for (const row of rows) {
     const exerciseResults = buildExerciseResults(row.sets_logged)
