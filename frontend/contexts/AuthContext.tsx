@@ -22,15 +22,6 @@ function checkMonthlyBenchmark() {
   apiClient.get('/workouts/check-monthly-benchmark').catch(() => {})
 }
 
-/**
- * Génère et planifie la séance du jour si elle n'existe pas encore, pour que
- * l'athlète n'ait pas à la créer lui-même. Le backend ne génère qu'une fois par
- * jour et ne produit rien quand le repos est recommandé. Même pattern fire-and-forget.
- */
-function checkDailySession() {
-  apiClient.get('/recommendations/daily-session/check').catch(() => {})
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -44,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('user', JSON.stringify(currentUser))
         checkMonthlyReport()
         checkMonthlyBenchmark()
-        checkDailySession()
       } catch {
         // 401 = pas connecté, on nettoie juste le localStorage
         localStorage.removeItem('user')
@@ -61,7 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await authService.login(data)
     setUser(response.user)
     checkMonthlyReport()
-    checkDailySession()
   }, [])
 
   const signup = useCallback(async (data: SignupDto) => {

@@ -220,6 +220,19 @@ export class WorkoutScheduleService {
   }
 
   /**
+   * Attache au créneau la recommandation du coach qui l'a produit.
+   * Réservé à la génération automatique : ce champ n'est pas exposé dans les DTO.
+   * @param id ID de la planification
+   * @param userId ID de l'utilisateur
+   * @param recommendation Raison et conseil du coach, tels qu'affichés au dashboard
+   */
+  async setCoachRecommendation(id: string, userId: string, recommendation: Record<string, unknown>) {
+    await this.knex('user_workout_schedule')
+      .where({ id, user_id: userId })
+      .update({ coach_recommendation: JSON.stringify(recommendation), updated_at: this.knex.fn.now() })
+  }
+
+  /**
    * Met à jour une planification
    * @param id ID de la planification
    * @param userId ID de l'utilisateur

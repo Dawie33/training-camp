@@ -1,4 +1,5 @@
 import { apiClient } from './index'
+import type { CoachRecommendation } from './recommendations'
 
 export type SessionType = 'workout' | 'box_session' | 'program_session'
 
@@ -15,6 +16,8 @@ export interface WorkoutSchedule {
   location?: 'home' | 'box'
   notes?: string
   session_data?: Record<string, unknown>
+  /** Raison et conseil du coach, présents quand la séance a été générée automatiquement. */
+  coach_recommendation?: CoachRecommendation | null
   created_at: string
   updated_at: string
   // Joined data

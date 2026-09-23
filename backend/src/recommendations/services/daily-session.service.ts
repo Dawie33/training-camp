@@ -2,15 +2,34 @@ import { Injectable, Logger } from '@nestjs/common'
 import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
 import { WorkoutScheduleService } from 'src/workouts/services/workout-schedule.service'
 import { WorkoutsService } from 'src/workouts/services/workouts.service'
+import { AIRecommendation } from '../schemas/recommendation.schema'
 import { RecommendationsService } from './recommendations.service'
+
+/** Ce que le coach a retenu pour la séance — conservé sur le créneau pour rester fidèle à la séance générée. */
+export type CoachRecommendationSnapshot = Pick<
+  AIRecommendation,
+  'recommended_type' | 'urgency' | 'reason' | 'coaching_insight' | 'suggested_duration'
+>
 
 export interface DailySessionResult {
   generated: boolean
-  /** Renseigné seulement quand une séance vient d'être créée. */
-  workout_name?: string
-  schedule_id?: string
   /** Pourquoi rien n'a été généré, quand c'est le cas. */
   reason?: 'already_scheduled' | 'rest_recommended' | 'failed'
+  /** Le créneau du jour (avec `coach_recommendation` s'il a été généré automatiquement), ou null. */
+  schedule: Record<string, unknown> | null
+  /** Renseignée les jours de repos, pour expliquer pourquoi aucune séance n'est prévue. */
+  recommendation?: CoachRecommendationSnapshot
+}
+
+function toSnapshot(recommendation: AIRecommendation): CoachRecommendationSnapshot {
+  const { recommended_type, urgency, reason, coaching_insight, suggested_duration } = recommendation
+  return {
+    recommended_type,
+    urgency,
+    reason,
+    coaching_insight,
+    suggested_duration,
+  }
 }
 
 /**
@@ -31,7 +50,7 @@ export class DailySessionService {
     private readonly recommendationsService: RecommendationsService,
     private readonly generator: AIWorkoutGeneratorService,
     private readonly workoutsService: WorkoutsService,
-    private readonly scheduleService: WorkoutScheduleService,
+    private readonly scheduleService: WorkoutScheduleService
   ) {}
 
   /**
@@ -47,15 +66,24 @@ export class DailySessionService {
     const today = new Date().toISOString().slice(0, 10)
 
     const existing = await this.scheduleService.findByDate(userId, today)
-    if (Array.isArray(existing) ? existing.length > 0 : Boolean(existing)) {
-      return { generated: false, reason: 'already_scheduled' }
+    if (existing) {
+      return {
+        generated: false,
+        reason: 'already_scheduled',
+        schedule: existing,
+      }
     }
 
     try {
       const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId)
 
       if (recommendation.recommended_sport === 'rest') {
-        return { generated: false, reason: 'rest_recommended' }
+        return {
+          generated: false,
+          reason: 'rest_recommended',
+          schedule: null,
+          recommendation: toSnapshot(recommendation),
+        }
       }
 
       const wod = await this.generator.generatePersonalizedWorkout(userId, {
@@ -88,11 +116,21 @@ export class DailySessionService {
         scheduled_date: today,
       })
 
-      return { generated: true, workout_name: wod.name, schedule_id: schedule.id }
+      await this.scheduleService.setCoachRecommendation(schedule.id, userId, toSnapshot(recommendation))
+
+      return {
+        generated: true,
+        schedule: await this.scheduleService.findByDate(userId, today),
+      }
     } catch (error) {
       // Une génération ratée ne doit jamais bloquer la connexion : on journalise et on passe.
       this.logger.warn(`Séance du jour non générée pour ${userId} : ${(error as Error).message}`)
-      return { generated: false, reason: 'failed' }
+
+      // Un appel concurrent a pu planifier la séance entre-temps (conflit sur la date) : on la renvoie.
+      const concurrent = await this.scheduleService.findByDate(userId, today).catch(() => null)
+      if (concurrent) return { generated: false, reason: 'already_scheduled', schedule: concurrent }
+
+      return { generated: false, reason: 'failed', schedule: null }
     }
   }
 }
