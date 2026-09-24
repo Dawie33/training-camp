@@ -2,21 +2,18 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Dumbbell, History, Stethoscope, TrendingUp, Trophy, Zap } from 'lucide-react'
+import { Activity, Dumbbell, History, Stethoscope, Trophy } from 'lucide-react'
 import { useState } from 'react'
 import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
-import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
 import { BilansHistoryPanel } from './components/BilansHistoryPanel'
 import { OneRepMaxChart } from './components/OneRepMaxChart'
 import { PerformanceDiagnostic } from './components/PerformanceDiagnostic'
 import { PersonalRecords } from './components/PersonalRecords'
-import { ProgressChart } from './components/ProgressChart'
 import { ProgressionReportPanel } from './components/ProgressionReport'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
-import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
-type Tab = 'diagnostic' | 'crossfit' | 'history'
+type Tab = 'diagnostic' | 'history' | 'reports'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
   {
@@ -26,13 +23,13 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string
     activeColor: 'text-emerald-600 border-emerald-600 bg-emerald-600/10',
   },
   {
-    id: 'crossfit',
-    label: 'CrossFit',
+    id: 'history',
+    label: 'Historique',
     icon: <Activity className="w-4 h-4" />,
     activeColor: 'text-orange-600 border-orange-600 bg-orange-600/10',
   },
   {
-    id: 'history',
+    id: 'reports',
     label: 'Bilans',
     icon: <History className="w-4 h-4" />,
     activeColor: 'text-foreground border-foreground/60 bg-foreground/5',
@@ -42,8 +39,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string
 function TrackingContent() {
   const [activeTab, setActiveTab] = useState<Tab>('diagnostic')
 
-  const { workoutStats, workoutSessions } = useWorkoutStats()
-  const { progressData, loading: progressLoading } = useWorkoutProgress()
+  const { workoutStats } = useWorkoutStats()
   const { liftsWithHistory, loading: ormsLoading } = useOneRepMaxHistory()
 
   return (
@@ -93,28 +89,10 @@ function TrackingContent() {
           {/* Diagnostic calculé */}
           {activeTab === 'diagnostic' && <PerformanceDiagnostic months={3} />}
 
-          {/* CrossFit */}
-          {activeTab === 'crossfit' && (
+          {/* Historique : bilan IA et données brutes */}
+          {activeTab === 'history' && (
             <div className="space-y-6">
               <ProgressionReportPanel sport="crossfit" />
-
-              {(progressLoading || progressData.length > 0) && (
-                <WorkoutProgressComparison progressData={progressData} loading={progressLoading} />
-              )}
-
-              <div className="p-6 bg-card border border-border rounded-lg">
-                <div className="flex items-center gap-2 mb-6">
-                  <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  <h2 className="font-display text-2xl font-semibold">Activité & Progression</h2>
-                </div>
-                {workoutSessions.length > 0 ? (
-                  <ProgressChart sessions={workoutSessions} />
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <p className="text-muted-foreground">Complète tes premiers workouts pour voir ta progression</p>
-                  </div>
-                )}
-              </div>
 
               <div className="p-6 bg-card border border-border rounded-lg">
                 <div className="flex items-center gap-2 mb-6">
@@ -134,47 +112,16 @@ function TrackingContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="p-6 bg-card border border-border rounded-lg">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Zap className="w-4 h-4 text-muted-foreground" />
-                    <h2 className="font-display text-xl font-semibold">Workouts par Type</h2>
-                  </div>
-                  {workoutStats && workoutStats.totalWorkouts > 0 ? (
-                    <div className="space-y-3">
-                      {Object.entries(workoutStats.workoutsByType).map(([type, count]) => (
-                        <div key={type} className="flex items-center justify-between">
-                          <span className="font-medium text-foreground">{type.replace(/_/g, ' ')}</span>
-                          <div className="flex items-center gap-3">
-                            <div className="w-32 h-2 bg-border rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-orange-600 transition-all"
-                                style={{
-                                  width: `${workoutStats.totalWorkouts > 0 ? (count / workoutStats.totalWorkouts) * 100 : 0}%`,
-                                }}
-                              />
-                            </div>
-                            <span className="text-sm text-muted-foreground w-12 text-right">{count}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm py-4">Aucun workout complété pour le moment</p>
-                  )}
+              <div className="p-6 bg-card border border-border rounded-lg">
+                <div className="flex items-center gap-2 mb-6">
+                  <Trophy className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-display text-2xl font-semibold">Records Personnels</h2>
                 </div>
-
-                <div className="p-6 bg-card border border-border rounded-lg">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Trophy className="w-4 h-4 text-muted-foreground" />
-                    <h2 className="font-display text-xl font-semibold">Records Personnels</h2>
-                  </div>
-                  {workoutStats && workoutStats.personalRecords.length > 0 ? (
-                    <PersonalRecords records={workoutStats.personalRecords} />
-                  ) : (
-                    <p className="text-muted-foreground text-sm py-4">Complète des workouts pour établir tes records</p>
-                  )}
-                </div>
+                {workoutStats && workoutStats.personalRecords.length > 0 ? (
+                  <PersonalRecords records={workoutStats.personalRecords} />
+                ) : (
+                  <p className="text-muted-foreground text-sm py-4">Complète des workouts pour établir tes records</p>
+                )}
               </div>
 
               <div className="p-6 bg-card border border-border rounded-lg">
@@ -185,7 +132,7 @@ function TrackingContent() {
           )}
 
           {/* Historique des bilans */}
-          {activeTab === 'history' && <BilansHistoryPanel />}
+          {activeTab === 'reports' && <BilansHistoryPanel />}
 
         </motion.div>
       </div>
