@@ -1,7 +1,6 @@
 'use client'
 
 import { StarRating } from '@/components/ui/star-rating'
-import { WorkoutSession } from '@/domain/entities/workout'
 import { sessionService } from '@/services'
 import { useState } from 'react'
 
