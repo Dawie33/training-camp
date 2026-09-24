@@ -7,7 +7,6 @@ import {
   Flame,
   GraduationCap,
   Minus,
-  Scale,
   Sparkles,
   Target,
   TrendingDown,
@@ -26,7 +25,6 @@ const TREND_CONFIG: Record<TypeTrend['trend'], { icon: LucideIcon; color: string
 
 const SPORT_CONFIG: Record<SportType, { label: string; icon: LucideIcon; color: string }> = {
   crossfit: { label: 'CrossFit', icon: Flame, color: 'text-orange-600' },
-  global: { label: 'Multi-sport', icon: BarChart3, color: 'text-foreground' },
 }
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -100,20 +98,9 @@ function ReportContent({ report }: { report: ProgressionReport }) {
         <p className="text-foreground leading-relaxed">{report.period_summary}</p>
       </div>
 
-      {/* Profil fitness (global uniquement) */}
+      {/* Profil de condition physique */}
       {report.fitness_profile && (
         <FitnessProfileCard profile={report.fitness_profile} level={report.overall_fitness_level} />
-      )}
-
-      {/* Équilibre multi-sport (global uniquement) */}
-      {report.sport_balance_feedback && (
-        <div className="p-4 bg-blue-600/5 border border-blue-600/15 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <Scale className="w-4 h-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-foreground">Équilibre entre disciplines</h3>
-          </div>
-          <p className="text-sm text-muted-foreground">{report.sport_balance_feedback}</p>
-        </div>
       )}
 
       {/* Highlights */}
@@ -296,9 +283,7 @@ export function ProgressionReportPanel({ sport }: ProgressionReportPanelProps) {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            {sport === 'global'
-              ? 'Analyse ta condition physique globale sur toutes tes disciplines'
-              : `L'IA analyse toutes tes séances ${cfg.label} et te donne un retour de coach`}
+            L&apos;IA analyse toutes tes séances {cfg.label} et te donne un retour de coach
           </p>
         </div>
 

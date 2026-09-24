@@ -7,7 +7,7 @@ interface AuthenticatedRequest extends Request {
   user: { id: string; email: string }
 }
 
-const VALID_SPORTS: SportType[] = ['crossfit', 'global']
+const VALID_SPORTS: SportType[] = ['crossfit']
 
 @Controller('tracking')
 @UseGuards(JwtAuthGuard)

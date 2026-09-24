@@ -1,34 +1,25 @@
 import { apiClient } from './apiClient'
+import type { WorkoutSchedule } from './schedule'
 
-export type RecommendedSport = 'crossfit' | 'rest'
-
-export interface AIRecommendation {
-  recommended_sport: RecommendedSport
+/** Ce que le coach IA a retenu pour la séance du jour. */
+export interface CoachRecommendation {
   recommended_type: string
   urgency: 'low' | 'medium' | 'high'
   reason: string
   coaching_insight: string
   suggested_duration: number
-  suggested_focus?: string | null
-  suggested_instructions?: string | null
 }
 
-export interface SessionStats {
-  total_sessions_21d: number
-  by_sport: Record<string, number>
-  days_since_last: Record<string, number | null>
-}
-
-export interface NextSessionRecommendation {
-  recommendation: AIRecommendation
-  session_stats: SessionStats
-  generated_at: string
+export interface DailySessionResult {
+  generated: boolean
+  reason?: 'already_scheduled' | 'rest_recommended' | 'failed'
+  /** Le créneau du jour, ou null (jour de repos, génération ratée). */
+  schedule: WorkoutSchedule | null
+  /** Renseignée les jours de repos. */
+  recommendation?: CoachRecommendation
 }
 
 export const recommendationsService = {
-  getNextSession: (): Promise<NextSessionRecommendation> =>
-    apiClient.get('/recommendations/next-session'),
-
-  refresh: (): Promise<NextSessionRecommendation> =>
-    apiClient.post('/recommendations/next-session/refresh', {}),
+  /** Renvoie la séance du jour, en la générant d'abord si elle n'existe pas encore. */
+  checkDailySession: (): Promise<DailySessionResult> => apiClient.get('/recommendations/daily-session/check'),
 }

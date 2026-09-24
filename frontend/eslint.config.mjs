@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 
 export default [
   {
-    ignores: ['.next/**', 'node_modules/**', 'out/**', '.turbo/**'],
+    // public/sw.js et public/workbox-*.js sont générés par next-pwa au build
+    ignores: ['.next/**', 'node_modules/**', 'out/**', '.turbo/**', 'public/sw.js', 'public/workbox-*.js'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -36,4 +37,15 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
-];
+  {
+    // Fichiers de config exécutés par Node en CommonJS (tailwind, postcss)
+    files: ['*.config.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: globals.node,
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+]

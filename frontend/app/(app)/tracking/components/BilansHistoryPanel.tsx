@@ -4,7 +4,6 @@ import { useState } from 'react'
 import {
   Flame,
   FolderClock,
-  Globe,
   Minus,
   TrendingDown,
   TrendingUp,
@@ -15,7 +14,6 @@ import { useReportsHistory } from '../_hooks/useReportsHistory'
 
 const SPORT_CONFIG: Record<SportType, { label: string; icon: LucideIcon; color: string; border: string }> = {
   crossfit: { label: 'CrossFit', icon: Flame, color: 'text-orange-600', border: 'border-orange-600/20' },
-  global: { label: 'Multi-sport', icon: Globe, color: 'text-foreground', border: 'border-border' },
 }
 
 const TREND_CONFIG: Record<TypeTrend['trend'], { icon: LucideIcon; color: string; bg: string; label: string }> = {
@@ -23,8 +21,6 @@ const TREND_CONFIG: Record<TypeTrend['trend'], { icon: LucideIcon; color: string
   stable: { icon: Minus, color: 'text-muted-foreground', bg: 'bg-muted border-border', label: 'Stable' },
   declining: { icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/10 border-destructive/20', label: 'En baisse' },
 }
-
-const SPORT_ORDER: SportType[] = ['global', 'crossfit']
 
 function BilanCard({ report }: { report: ProgressionReport }) {
   const [expanded, setExpanded] = useState(false)
@@ -168,9 +164,8 @@ function BilanCard({ report }: { report: ProgressionReport }) {
 export function BilansHistoryPanel() {
   const { reports, loading } = useReportsHistory()
 
-  const sorted = [...reports].sort(
-    (a, b) => SPORT_ORDER.indexOf(a.sport) - SPORT_ORDER.indexOf(b.sport),
-  )
+  // Garde-fou : ignore un éventuel ancien bilan d'un sport qui n'existe plus
+  const sorted = reports.filter((report) => report.sport in SPORT_CONFIG)
 
   return (
     <div className="p-6 bg-card border border-border rounded-lg">

@@ -1,6 +1,5 @@
 'use client'
 
-import { CoachRecommendationWidget } from '@/components/coach/CoachRecommendationWidget'
 import { useAuth } from '@/hooks/useAuth'
 import { usePerformanceOverview } from '@/hooks/usePerformanceOverview'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
@@ -8,9 +7,10 @@ import { format } from 'date-fns'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { BentoCard } from './components/bento/BentoCard'
-import { PerformanceCards } from './components/bento/PerformanceCards'
+import { MissingDataCard, PerformanceCards } from './components/bento/PerformanceCards'
 import { PeriodFilter } from './components/bento/PeriodFilter'
 import { QuickActions } from './components/QuickActions'
+import { TodaySessionCard } from './components/TodaySessionCard'
 
 function DashboardContent() {
   const user = useAuth()
@@ -42,7 +42,7 @@ function DashboardContent() {
           )}
         </motion.div>
 
-        {/* Suivi — toutes les cartes (coach, stats, séance du jour, skill) partagent une seule grille
+        {/* Suivi — toutes les cartes (séance du jour, stats, skill) partagent une seule grille
             auto-adaptative : chaque carte prend sa largeur naturelle et la grille se réajuste seule,
             sans jamais laisser une carte isolée sur une ligne. */}
         <motion.section
@@ -50,9 +50,12 @@ function DashboardContent() {
           aria-label="Suivi de performance"
           className={`grid gap-3 grid-cols-[repeat(auto-fit,minmax(480px,1fr))] transition-opacity ${refreshing ? 'opacity-60' : ''}`}
         >
+          {/* Ce qu'il reste à saisir passe en premier : c'est ce qui débloque le reste du diagnostic */}
+          {overview && <MissingDataCard overview={overview} />}
+
           {/* Contenu plus dense (texte + CTA) : garde toute la largeur de la ligne */}
           <div className="col-span-full">
-            <CoachRecommendationWidget />
+            <TodaySessionCard />
           </div>
 
           {error && !overview ? (

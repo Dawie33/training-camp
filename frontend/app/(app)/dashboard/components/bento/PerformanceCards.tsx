@@ -23,7 +23,6 @@ import {
 import { CROSSFIT_LIFTS } from '@/services/one-rep-maxes'
 import { AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react'
 import { SkillOfTheDayCard } from '../SkillOfTheDayCard'
-import { TodayWorkoutCard } from '../TodayWorkoutCard'
 import { BentoCard, BentoStat } from './BentoCard'
 
 const ACWR_ZONES: Record<AcwrZone, { label: string; className: string }> = {
@@ -374,7 +373,7 @@ function SkillProgressCard({ data }: { data: SkillProgressResult }) {
 }
 
 /** Amorçage : ce qu'il reste à saisir pour débloquer les cartes encore absentes. */
-function MissingDataCard({ overview }: { overview: PerformanceOverview }) {
+export function MissingDataCard({ overview }: { overview: PerformanceOverview }) {
   const todo: { label: string; href: string }[] = []
 
   if (!overview.strength_history.available || overview.strength_ratios.missing_lifts.length > 0) {
@@ -414,8 +413,8 @@ function LoadingCard({ className = '' }: { className?: string }) {
 /**
  * Bloc de suivi du dashboard.
  *
- * Une carte sans donnée exploitable ne s'affiche pas : la grille reste dense, et
- * une unique carte d'amorçage récapitule ce qu'il reste à saisir.
+ * Une carte sans donnée exploitable ne s'affiche pas : la grille reste dense. Ce qu'il
+ * reste à saisir est récapitulé par `MissingDataCard`, affichée en tête du dashboard.
  */
 export function PerformanceCards({ overview, loading }: { overview: PerformanceOverview | null; loading: boolean }) {
   if (loading && !overview) {
@@ -444,12 +443,8 @@ export function PerformanceCards({ overview, loading }: { overview: PerformanceO
       <MovementsCard data={overview.movements} />
       <StrengthBalanceCard data={overview.strength_ratios} />
       <BentoCard>
-        <TodayWorkoutCard />
-      </BentoCard>
-      <BentoCard>
         <SkillOfTheDayCard />
       </BentoCard>
-      <MissingDataCard overview={overview} />
     </>
   )
 }

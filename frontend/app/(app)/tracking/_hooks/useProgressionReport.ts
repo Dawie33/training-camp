@@ -3,7 +3,7 @@
 import { apiClient } from '@/services/apiClient'
 import { useEffect, useState } from 'react'
 
-export type SportType = 'crossfit' | 'global'
+export type SportType = 'crossfit'
 
 export interface TypeTrend {
   type: string
@@ -35,7 +35,6 @@ export interface ProgressionReport {
   movement_focus?: string[]
   fitness_profile?: FitnessProfile
   overall_fitness_level?: string
-  sport_balance_feedback?: string
   generated_at: string
 }
 
