@@ -161,13 +161,13 @@ describe('EquipmentsService.create', () => {
             expect.objectContaining({
                 label: 'Wall Ball',
                 slug: 'wall-ball',
-                meta: '{}', // meta absent → JSON.stringify({})
+                meta: {}, // meta absent → objet vide, sérialisé en jsonb par le driver pg
             }),
         )
         expect(builder.returning).toHaveBeenCalledWith('*')
     })
 
-    it('sérialise meta en JSON quand il est fourni', async () => {
+    it('transmet meta tel quel quand il est fourni', async () => {
         // Arrange
         const created = { id: '11', label: 'Rope' }
         const builder = createKnexBuilderMock({ returning: [created] })
@@ -180,7 +180,7 @@ describe('EquipmentsService.create', () => {
         // Assert
         expect(result).toEqual(created)
         expect(builder.insert).toHaveBeenCalledWith(
-            expect.objectContaining({ meta: JSON.stringify({ color: 'red' }) }),
+            expect.objectContaining({ meta: { color: 'red' } }),
         )
     })
 })

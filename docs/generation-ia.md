@@ -77,7 +77,9 @@ Tout nouveau service IA doit injecter ce service.
 > | Échec de validation Zod | La structure ne respecte pas le schéma | `400` avec le détail des champs |
 > | `{"error": "UNKNOWN_WOD"}` | L'IA ne connaît pas le WOD demandé avec certitude | `400 BadRequestException('UNKNOWN_WOD')` |
 >
-> **Écart connu** : `WorkoutAnalysisService` et `TrackingService` parsent le JSON sans schéma Zod.
+> Chaque service a son schéma Zod : `GeneratedWorkoutSchema`, `GeneratedSkillProgramSchema`, `WodAnalysisSchema`, `AIRecommendationSchema` et `AIProgressionReportSchema`.
+>
+> **Exception** : `WorkoutAnalysisService` renvoie une erreur `500` (et non `400`) quand la réponse de l'IA est invalide.
 
 ## Limite de connaissance de GPT-4.1
 

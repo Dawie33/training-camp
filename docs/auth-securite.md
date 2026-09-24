@@ -43,12 +43,14 @@ Le frontend appelle toujours l'API via une réécriture d'URL Next.js (`/api` �
 | Connexion (`POST /auth/login`) | 10 |
 | Inscription (`POST /auth/signup`) | 5 |
 | Génération de WOD (`POST /workouts/generate-ai`, `/generate-ai-personalized`) | 10 |
+| Import d'un WOD (`POST /workouts/parse-text`, `/lookup`) | 10 |
 | Génération de programme de compétence (`POST /skills/generate-ai`) | 10 |
 | Analyse post-séance (`POST /workout-sessions/:id/analyze`) | 10 |
 | Séance du jour (`GET /recommendations/daily-session/check`) | 10 |
+| Bilan de progression à la demande (`GET /tracking/report`) | 10 |
 | Recommandation du coach — lecture / régénération | 60 / 5 |
 
-> **Point d'attention** : certaines routes appellent OpenAI mais n'ont que la limite par défaut (60/min). C'est le cas de `POST /workouts/lookup`, `POST /workouts/parse-text`, `POST /workouts/weekly-plan` et `GET /tracking/report`.
+> **Exception assumée** : `GET /tracking/report/check-monthly` garde la limite par défaut. Il est appelé à chaque connexion et ne génère qu'un bilan par mois.
 
 > **Détail technique**
 >

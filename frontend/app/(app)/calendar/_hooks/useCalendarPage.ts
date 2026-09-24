@@ -21,7 +21,6 @@ const MODULE_COLORS: Record<string, string> = {
   crossfit: '',
   wod: '',
   conditioning: 'conditioning',
-  strength: 'strength',
   skill: 'skill',
 }
 
@@ -103,15 +102,11 @@ export function useCalendarPage() {
         activity_id: schedule.activity_id,
         session_data: schedule.session_data,
         _source: schedule._source,
-        target_muscles: schedule.target_muscles,
-        session_goal: schedule.session_goal,
-        duration_minutes: schedule.duration_minutes,
-        perceived_effort: schedule.perceived_effort,
         skill_program_id: schedule.skill_program_id,
         skill_step_title: schedule.skill_step_title,
         skill_progress: schedule.skill_progress,
-        _onComplete: schedule._source === 'strength_sessions' ? undefined : () => { markAsCompleted(schedule.id); setSelectedEvent(null) },
-        _onSkip: schedule._source === 'strength_sessions' ? undefined : () => { markAsSkipped(schedule.id); setSelectedEvent(null) },
+        _onComplete: () => { markAsCompleted(schedule.id); setSelectedEvent(null) },
+        _onSkip: () => { markAsSkipped(schedule.id); setSelectedEvent(null) },
         _onDelete: () => {
           if (confirm('Voulez-vous vraiment supprimer cette planification ?')) {
             deleteSchedule(schedule.id)

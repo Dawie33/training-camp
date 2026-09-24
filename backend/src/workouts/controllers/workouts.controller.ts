@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { CreateWorkoutDto, GeneratePersonalizedWorkoutDto, GenerateWorkoutDto, LookupWorkoutDto, ParseWorkoutTextDto, SaveBenchmarkResultDto, WeeklyPlanDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
-import { AIWorkoutGeneratorService, GeneratedWorkout, WeeklyPlanResult } from '../services/ai-workout-generator.service'
+import { CreateWorkoutDto, GeneratePersonalizedWorkoutDto, GenerateWorkoutDto, LookupWorkoutDto, ParseWorkoutTextDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
+import { AIWorkoutGeneratorService, GeneratedWorkout } from '../services/ai-workout-generator.service'
 import { WorkoutsService } from '../services/workouts.service'
 
 /**
@@ -168,6 +168,7 @@ export class WorkoutsController {
    */
   @Post('parse-text')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async parseText(@Body() dto: ParseWorkoutTextDto): Promise<GeneratedWorkout> {
     return this.aiGenerator.parseWorkoutText(dto.text)
   }
@@ -180,23 +181,9 @@ export class WorkoutsController {
    */
   @Post('lookup')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async lookupWorkout(@Body() dto: LookupWorkoutDto): Promise<GeneratedWorkout> {
     return this.aiGenerator.lookupWorkoutByName(dto.name, dto.referenceData)
-  }
-
-  /**
-   * Génère un plan hebdomadaire de workouts via l'IA à partir des jours fournis.
-   * @param dto Liste des jours à planifier (date, type, focus)
-   * @param req Requête authentifiée contenant l'utilisateur courant
-   * @returns Le plan hebdomadaire généré
-   */
-  @Post('weekly-plan')
-  @UseGuards(JwtAuthGuard)
-  async weeklyPlan(
-    @Body() dto: WeeklyPlanDto,
-    @Request() req: { user: { id: string } },
-  ): Promise<WeeklyPlanResult> {
-    return this.aiGenerator.generateWeeklyPlan(req.user.id, dto.days)
   }
 
   /**

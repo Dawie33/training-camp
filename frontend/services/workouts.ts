@@ -6,24 +6,6 @@ import ResourceApi from './resourceApi'
 // Re-export types
 export type { GeneratedWorkout }
 
-/**
- * Un jour planifié avec succès lors de la génération d'un plan hebdomadaire.
- */
-export interface WeeklyPlanResultDay {
-  date: string
-  workout_name: string
-  schedule_id: string
-}
-
-/**
- * Résultat de la génération d'un plan hebdomadaire (jours planifiés, ignorés, jours Box).
- */
-export interface WeeklyPlanResult {
-  scheduled: WeeklyPlanResultDay[]
-  skipped: string[]
-  box_days: string[]
-}
-
 export const workoutsApi = new ResourceApi<Workouts, CreateWorkoutDTO, UpdateWorkoutDTO>('/workouts')
 
 // Helper functions for backward compatibility
@@ -260,15 +242,6 @@ export class WorkoutsService {
    */
   async lookupWorkout(name: string, referenceData?: string): Promise<GeneratedWorkout> {
     return apiClient.post<GeneratedWorkout>('/workouts/lookup', { name, referenceData })
-  }
-
-  /**
-   * Génère un plan hebdomadaire : les jours Perso sont générés par l'IA et planifiés
-   * @param days Tableau des 7 jours avec leur type (perso/box/rest) et focus optionnel
-   * @returns Résumé : workouts planifiés, jours skippés (conflit), jours Box
-   */
-  async generateWeeklyPlan(days: { date: string; type: string; focus?: string }[]): Promise<WeeklyPlanResult> {
-    return apiClient.post<WeeklyPlanResult>('/workouts/weekly-plan', { days })
   }
 
   /**

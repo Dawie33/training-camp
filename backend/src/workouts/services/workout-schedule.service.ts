@@ -324,7 +324,7 @@ export class WorkoutScheduleService {
   /**
    * Suggère une configuration de semaine basée sur l'historique des 3 dernières semaines.
    * Lit à la fois les jours Box (`user_workout_schedule`) et les tags de séance
-   * WOD/Conditioning/Force (`scheduled_activities`) pour reconstituer, par jour
+   * WOD/Conditioning (`scheduled_activities`) pour reconstituer, par jour
    * de la semaine, ce qui revient le plus souvent (aucun appel IA).
    */
   async suggestWeek(
@@ -346,7 +346,7 @@ export class WorkoutScheduleService {
       this.knex('scheduled_activities')
         .select('scheduled_date', 'activity_type')
         .where('user_id', userId)
-        .whereIn('activity_type', ['wod', 'conditioning', 'strength'])
+        .whereIn('activity_type', ['wod', 'conditioning'])
         .where('scheduled_date', '>=', historyStart)
         .where('scheduled_date', '<', weekStart),
     ])
@@ -403,7 +403,7 @@ export class WorkoutScheduleService {
     const weeksAnalyzed = distinctWeeks.size
     // Un type est suggéré s'il est revenu au moins une semaine sur deux
     const majorityThreshold = Math.max(1, Math.ceil(weeksAnalyzed / 2))
-    const activityTypeToDayType: Record<string, string> = { wod: 'wod', conditioning: 'conditioning', strength: 'force' }
+    const activityTypeToDayType: Record<string, string> = { wod: 'wod', conditioning: 'conditioning' }
 
     return {
       days: makeDays((i) => {
