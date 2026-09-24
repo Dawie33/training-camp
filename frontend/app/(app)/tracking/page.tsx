@@ -2,13 +2,12 @@
 
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
-import { Activity, Dumbbell, History, LayoutDashboard, Stethoscope, TrendingUp, Trophy, Zap } from 'lucide-react'
+import { Activity, Dumbbell, History, Stethoscope, TrendingUp, Trophy, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useOneRepMaxHistory } from './_hooks/useOneRepMaxHistory'
 import { useWorkoutProgress } from './_hooks/useWorkoutProgress'
 import { useWorkoutStats } from './_hooks/useWorkoutStats'
 import { BilansHistoryPanel } from './components/BilansHistoryPanel'
-import { GlobalOverview } from './components/GlobalOverview'
 import { OneRepMaxChart } from './components/OneRepMaxChart'
 import { PerformanceDiagnostic } from './components/PerformanceDiagnostic'
 import { PersonalRecords } from './components/PersonalRecords'
@@ -17,7 +16,7 @@ import { ProgressionReportPanel } from './components/ProgressionReport'
 import { WorkoutHistoryList } from './components/WorkoutHistoryList'
 import { WorkoutProgressComparison } from './components/WorkoutProgressComparison'
 
-type Tab = 'diagnostic' | 'global' | 'crossfit' | 'history'
+type Tab = 'diagnostic' | 'crossfit' | 'history'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
   {
@@ -25,12 +24,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; activeColor: string
     label: 'Diagnostic',
     icon: <Stethoscope className="w-4 h-4" />,
     activeColor: 'text-emerald-600 border-emerald-600 bg-emerald-600/10',
-  },
-  {
-    id: 'global',
-    label: 'Vue globale',
-    icon: <LayoutDashboard className="w-4 h-4" />,
-    activeColor: 'text-primary border-primary bg-primary/10',
   },
   {
     id: 'crossfit',
@@ -68,7 +61,7 @@ function TrackingContent() {
           <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-none tracking-tight">
             Suivi des performances
           </h1>
-          <p className="text-muted-foreground text-lg mt-2">Analyse tes progrès sur toutes tes disciplines</p>
+          <p className="text-muted-foreground text-lg mt-2">Analyse tes progrès en CrossFit</p>
         </motion.section>
 
         {/* Onglets */}
@@ -99,17 +92,6 @@ function TrackingContent() {
 
           {/* Diagnostic calculé */}
           {activeTab === 'diagnostic' && <PerformanceDiagnostic months={3} />}
-
-          {/* Vue globale */}
-          {activeTab === 'global' && (
-            <div className="space-y-6">
-              <GlobalOverview
-                workoutStats={workoutStats}
-                onTabChange={(tab) => setActiveTab(tab as Tab)}
-              />
-              <ProgressionReportPanel sport="global" />
-            </div>
-          )}
 
           {/* CrossFit */}
           {activeTab === 'crossfit' && (

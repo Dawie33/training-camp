@@ -5,7 +5,7 @@ import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { PerformanceDiagnosticSummary, UserContextService } from 'src/workouts/services/user-context.service'
 
-export type SportType = 'crossfit' | 'global'
+export type SportType = 'crossfit'
 
 export interface TypeTrend {
   type: string
@@ -37,7 +37,6 @@ export interface ProgressionReport {
   movement_focus?: string[]
   fitness_profile?: FitnessProfile
   overall_fitness_level?: string
-  sport_balance_feedback?: string
   generated_at: string
 }
 
@@ -53,9 +52,7 @@ export class TrackingService {
     const since = new Date()
     since.setMonth(since.getMonth() - months)
 
-    let report: ProgressionReport
-    if (sport === 'global') report = await this.generateGlobalReport(userId, months, since)
-    else report = await this.generateCrossfitReport(userId, months, since)
+    const report = await this.generateCrossfitReport(userId, months, since)
 
     await this.saveReport(userId, sport, months, report)
     this.userContextService.invalidateCache(userId)
@@ -281,69 +278,14 @@ Le diagnostic calculé fait foi : reprends ses chiffres tels quels et ne propose
 ${this.jsonInstructions()}`
   }
 
-  // ─── Global ───────────────────────────────────────────────────────────────
-
-  private async generateGlobalReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const sinceISO = since.toISOString()
-
-    const [cfSessions, orms, profile] = await Promise.all([
-      this.knex('workout_sessions').where('user_id', userId).whereNotNull('completed_at').where('started_at', '>=', sinceISO).count('* as count').first(),
-      this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId).orderBy('lift'),
-      this.knex('users').select('sport_level', 'global_goals', 'height', 'weight').where('id', userId).first(),
-    ])
-
-    const cfCount = Number((cfSessions as any)?.count ?? 0)
-    const totalSessions = cfCount
-
-    if (totalSessions < 5) return this.notEnoughData('global', months, totalSessions)
-
-    const agg = this.aggregateGlobal({ cfCount, orms, profile })
-    const prompt = this.buildGlobalPrompt(agg, months)
-    const parsed = await this.callAI(prompt, true)
-
-    return { sport: 'global', period_months: months, ...parsed, generated_at: new Date().toISOString() }
-  }
-
-  private aggregateGlobal({ cfCount, orms, profile }: any) {
-    const ormStr = orms.length ? orms.map((o: any) => `${o.lift}: ${o.value}kg`).join(', ') : 'Non renseignés'
-
-    const balance = {
-      crossfit: cfCount,
-    }
-
-    return { cfCount, ormStr, balance, profile }
-  }
-
-  private buildGlobalPrompt(agg: any, months: number): string {
-    const balanceLines = Object.entries(agg.balance)
-      .map(([sport, count]) => `- ${sport}: ${count} séance(s)`)
-      .join('\n')
-
-    return `Tu es un coach multi-sport expert. Génère un bilan global de condition physique sur ${months} mois.
-
-Profil athlète :
-- Niveau déclaré : ${agg.profile?.sport_level ?? 'intermédiaire'}
-- 1RMs (force) : ${agg.ormStr}
-
-Volume d'entraînement sur ${months} mois :
-${balanceLines}
-
-Indicateurs par discipline :
-- CrossFit : ${agg.cfCount} séances
-
-En te basant sur ces données, évalue la condition physique globale de l'athlète.
-
-${this.jsonInstructions(true)}`
-  }
-
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  private async callAI(prompt: string, isGlobal = false): Promise<Omit<ProgressionReport, 'sport' | 'period_months' | 'generated_at'>> {
+  private async callAI(prompt: string): Promise<Omit<ProgressionReport, 'sport' | 'period_months' | 'generated_at'>> {
     const completion = await this.openaiClientService.client.chat.completions.create({
       model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
-      max_tokens: isGlobal ? 2000 : 2500,
+      max_tokens: 2500,
       response_format: { type: 'json_object' },
     })
 
@@ -352,8 +294,8 @@ ${this.jsonInstructions(true)}`
     return JSON.parse(content)
   }
 
-  private jsonInstructions(isGlobal = false): string {
-    const base = `Réponds en JSON avec exactement cette structure :
+  private jsonInstructions(): string {
+    return `Réponds en JSON avec exactement cette structure :
 {
   "period_summary": "Résumé global en 3-4 phrases, ton coach précis et motivant. Mentionne des chiffres réels si disponibles.",
   "overall_trend": "improving | stable | declining",
@@ -365,19 +307,14 @@ ${this.jsonInstructions(true)}`
   "consistency_feedback": "Feedback détaillé sur la régularité et le volume",
   "performance_highlights": ["Perf notable 1 avec résultat chiffré", "Perf notable 2"],
   "strength_progression": "Analyse de l'évolution des charges et 1RMs sur la période (ou absence de données)",
-  "movement_focus": ["Mouvement/compétence prioritaire à travailler 1", "Mouvement 2"]`
-
-    if (!isGlobal) return base + '\n}'
-
-    return base + `,
+  "movement_focus": ["Mouvement/compétence prioritaire à travailler 1", "Mouvement 2"],
   "fitness_profile": {
     "cardio": "beginner | intermediate | advanced | elite",
     "strength": "beginner | intermediate | advanced | elite",
     "work_capacity": "beginner | intermediate | advanced | elite",
     "endurance": "beginner | intermediate | advanced | elite"
   },
-  "overall_fitness_level": "Niveau global en une phrase (ex: Athlète intermédiaire polyvalent)",
-  "sport_balance_feedback": "Commentaire sur l'équilibre entre les disciplines"
+  "overall_fitness_level": "Niveau en une phrase (ex: Athlète intermédiaire polyvalent)"
 }`
   }
 
