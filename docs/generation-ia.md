@@ -1,65 +1,91 @@
-# Génération de séances par intelligence artificielle
+# Génération par intelligence artificielle
 
-Ce document explique comment Training Camp génère des séances d'entraînement personnalisées par IA. Il s'adresse aux Product Owners souhaitant comprendre le fonctionnement global, et aux développeurs découvrant le pattern à respecter pour tout nouveau sport.
+Ce document présente les services qui font appel à l'IA dans Training Camp. Il s'adresse aux Product Owners qui veulent comprendre le rôle du coach IA, et aux développeurs qui ajoutent ou modifient un service IA.
 
-## Pourquoi ce mécanisme ?
+## Rôle de l'IA dans le produit
 
-Chaque sport (cross-training, force, vélo, mobilité, compétences, programmes d'entraînement) dispose de son propre générateur IA. Un service séparé analyse également les séances terminées.
+L'IA **rédige et propose**, elle ne **mesure** pas.
 
-Tous ces générateurs suivent le **même pattern** : ils appellent OpenAI avec des instructions précises, puis valident strictement la réponse avant de l'enregistrer.
+- Les chiffres (ratios de force, charge d'entraînement, progression) sont calculés sans IA par le module `analytics`.
+- L'IA reçoit ces chiffres et s'en sert pour générer une séance, recommander quoi faire ou rédiger un bilan.
+- Le prompt lui interdit de recalculer ou de contredire ces chiffres.
+
+Ainsi, la séance générée, la recommandation et le bilan mensuel s'appuient tous sur les mêmes données.
 
 ## Comment ça fonctionne
 
 ```mermaid
 sequenceDiagram
-    participant U as Utilisateur
+    participant U as Athlète
     participant B as Backend NestJS
     participant C as Contexte utilisateur
     participant IA as OpenAI (gpt-4.1)
     participant D as Base de données
 
-    U->>B: Demande de génération
-    B->>C: Récupère profil, 1RM, équipement, compétences actives
-    B->>IA: Envoie les instructions (prompt) + contexte
-    IA-->>B: Retourne un JSON structuré
-    B->>B: Valide le JSON (schéma Zod)
-    B->>D: Enregistre la séance générée
-    B-->>U: Renvoie la séance validée
+    U->>B: Demande (séance, recommandation, bilan…)
+    B->>C: Profil, 1RM, matériel, séances récentes, diagnostic
+    B->>IA: Instructions (prompt) + contexte
+    IA-->>B: Réponse JSON
+    B->>B: Vérifie la structure du JSON
+    B->>D: Enregistre le résultat
+    B-->>U: Renvoie le résultat
 ```
 
-L'utilisateur demande une séance. Le backend enrichit la demande avec son profil complet, puis interroge l'intelligence artificielle. La réponse est systématiquement vérifiée avant d'être stockée, afin d'éviter qu'un contenu mal formé n'atteigne la base de données.
+Le backend enrichit chaque demande avec le profil complet de l'athlète. La réponse de l'IA est vérifiée avant d'être enregistrée. Un contenu mal formé n'atteint donc pas la base de données.
 
-## Les générateurs existants
+## Les services IA existants
 
-| Module | Service | Rôle |
+| Service | Module | Ce qu'il produit |
 |---|---|---|
-| `workouts` | `AIWorkoutGeneratorService` | Génère les WOD de cross-training, extrait un WOD depuis du texte brut, retrouve un WOD officiel connu |
-| `skills` | `AISkillGeneratorService` | Génère un programme de progression sur une compétence gymnique ou d'haltérophilie |
-| `strength` | `AIStrengthGeneratorService` | Génère les séances de force / musculation |
-| `training-programs` | `AICrossfitProgramGeneratorService` (dans `WorkoutsModule`) | Génère des programmes d'entraînement complets sur plusieurs semaines |
-| `workout-sessions` | `WorkoutAnalysisService` | Analyse une séance terminée et produit un retour personnalisé |
+| `AIWorkoutGeneratorService` | `workouts` | WOD personnalisé, WOD extrait d'un texte collé, WOD officiel retrouvé par son nom |
+| `AISkillGeneratorService` | `skills` | Programme de progression vers une compétence (muscle-up, handstand…) |
+| `WorkoutAnalysisService` | `workout-sessions` | Retour du coach après une séance terminée |
+| `RecommendationsService` | `recommendations` | Recommandation de la prochaine séance (type, intensité, justification) |
+| `DailySessionService` | `recommendations` | Transforme la recommandation en séance du jour planifiée |
+| `TrackingService` | `tracking` | Bilan mensuel de progression |
+
+## La séance du jour automatique
+
+La carte « Séance du jour » du tableau de bord déclenche la création du WOD du jour. Le fonctionnement complet est décrit dans [Séance du jour et coach IA](seance-du-jour-coach.md).
+
+Le bilan mensuel, lui, est vérifié à chaque connexion. Il n'est régénéré qu'une fois par mois calendaire.
 
 ## Contexte utilisateur partagé
 
-**`UserContextService`** (exporté par `WorkoutsModule`) fournit à tous les générateurs les mêmes informations sur l'utilisateur : niveau sportif, 1RM (records de force), équipement disponible, blessures, objectifs, séances récentes, et compétences actives en cours de progression. Cela garantit que chaque séance générée est cohérente avec le profil réel de l'utilisateur, quel que soit le sport.
+**`UserContextService`** (exporté par `WorkoutsModule`) construit le contexte transmis à l'IA :
+
+- niveau, objectifs, blessures, matériel disponible ;
+- 1RM (records de force) ;
+- séances et analyses récentes ;
+- compétences en cours de progression ;
+- synthèse du **diagnostic calculé** (champ `diagnostic`).
+
+Tout nouveau service IA doit injecter ce service.
 
 > **Détail technique**
 >
-> Chaque service instancie un client `OpenAI` et appelle `chat.completions.create` avec :
-> - `model: 'gpt-4.1'`
-> - `response_format: { type: 'json_object' }` — force une réponse JSON
-> - un prompt système (règles métier, structure attendue) et un prompt utilisateur (paramètres de la demande)
+> Le client OpenAI est partagé via `OpenAIClientService` (`common/ai/`). Chaque appel utilise :
+> - `model: 'gpt-4.1'` ;
+> - `response_format: { type: 'json_object' }` ;
+> - un prompt système (règles, structure attendue) et un prompt utilisateur (contexte, demande).
 >
-> La réponse brute est d'abord parsée en JSON, puis validée avec un schéma **Zod** dédié au module (ex. `GeneratedWorkoutSchema`). Trois cas d'erreur sont gérés explicitement :
+> Le diagnostic est mis en forme par `buildDiagnosticPromptLines()` (`common/ai/diagnostic-prompt.ts`).
 >
 > | Erreur | Cause | Réponse HTTP |
 > |---|---|---|
-> | JSON invalide | L'IA n'a pas renvoyé un JSON exploitable | `400 BadRequestException` |
-> | Échec de validation Zod | La structure ne respecte pas le schéma attendu | `400 BadRequestException` avec le détail des champs en erreur |
-> | `{"error": "UNKNOWN_WOD"}` | L'IA ne connaît pas avec certitude le WOD demandé (ex. un WOD CrossFit Open trop récent) | `400 BadRequestException('UNKNOWN_WOD')` |
+> | JSON invalide | L'IA n'a pas renvoyé de JSON exploitable | `400 BadRequestException` |
+> | Échec de validation Zod | La structure ne respecte pas le schéma | `400` avec le détail des champs |
+> | `{"error": "UNKNOWN_WOD"}` | L'IA ne connaît pas le WOD demandé avec certitude | `400 BadRequestException('UNKNOWN_WOD')` |
 >
-> Pour contourner la limite de connaissance de GPT-4.1 (pas de WOD CrossFit Open postérieur à début 2025), l'endpoint `POST /workouts/lookup` accepte un champ `referenceData` : les détails exacts du WOD sont alors injectés dans le prompt plutôt que demandés à l'IA.
+> **Écart connu** : `WorkoutAnalysisService` et `TrackingService` parsent le JSON sans schéma Zod.
 
-## Sécurité
+## Limite de connaissance de GPT-4.1
 
-Toutes les routes de génération sont protégées par `JwtAuthGuard` (authentification obligatoire) et limitées à 10 requêtes par minute par utilisateur via `@Throttle()`, afin de maîtriser les coûts d'appel à l'API OpenAI.
+GPT-4.1 ne connaît pas les WOD du CrossFit Open postérieurs à début 2025.
+
+L'endpoint `POST /workouts/lookup` accepte donc un champ `referenceData`. Il contient le texte exact du WOD, injecté dans le prompt au lieu d'être demandé à l'IA.
+
+## Sécurité et coûts
+
+- Toutes les routes IA exigent une authentification (`JwtAuthGuard`).
+- Les routes de génération sont limitées à 10 requêtes par minute (voir [Authentification et sécurité](auth-securite.md)).

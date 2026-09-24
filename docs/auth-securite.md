@@ -1,8 +1,6 @@
 # Authentification et sécurité
 
-Ce document décrit comment Training Camp authentifie ses utilisateurs et quelles mesures protègent l'application. Il s'adresse aux Product Owners souhaitant comprendre le niveau de sécurité du produit, et aux développeurs intervenant sur l'authentification ou les API.
-
-> **Point d'attention** : le jeton de connexion (JWT) est désormais transmis via un cookie **httpOnly**, et non plus stocké dans le stockage local du navigateur. Cette migration, identifiée comme un chantier à venir dans une version antérieure de la documentation, est aujourd'hui effective.
+Ce document décrit comment Training Camp authentifie ses utilisateurs et quelles mesures protègent l'application. Il s'adresse aux Product Owners et aux développeurs qui touchent à l'authentification ou aux API.
 
 ## Flux de connexion
 
@@ -12,42 +10,50 @@ sequenceDiagram
     participant F as Frontend Next.js
     participant B as Backend NestJS
 
-    U->>F: Saisit email / mot de passe
+    U->>F: Saisit email et mot de passe
     F->>B: POST /api/auth/login
     B->>B: Vérifie les identifiants
     B-->>F: Cookie httpOnly "access_token" (7 jours)
-    F->>B: Requêtes suivantes (cookie envoyé automatiquement)
-    B->>B: Vérifie le cookie à chaque requête protégée
+    F->>B: Requêtes suivantes (cookie joint automatiquement)
+    B->>B: Vérifie le cookie sur chaque route protégée
     B-->>F: Réponse autorisée
 ```
 
-Après connexion, le navigateur envoie automatiquement le cookie à chaque requête : le frontend n'a pas besoin de gérer le jeton manuellement. Le frontend appelle systématiquement l'API via une réécriture d'URL Next.js (`/api` → backend), afin que le cookie soit toujours considéré comme "même origine" et ne soit pas bloqué par les navigateurs mobiles.
+Après la connexion, le navigateur joint le cookie à chaque requête. Le frontend n'a donc aucun jeton à manipuler.
+
+Le frontend appelle toujours l'API via une réécriture d'URL Next.js (`/api` → backend). Le cookie reste ainsi « même origine ». Les navigateurs mobiles ne le bloquent donc pas.
 
 ## Mesures de sécurité en place
 
-| Mesure | Description |
+| Mesure | Ce qu'elle protège |
 |---|---|
-| **Authentification obligatoire** | Toutes les routes protégées exigent un jeton valide (`JwtAuthGuard`), y compris les routes de génération IA — sans exception. |
-| **Cookie httpOnly** | Le jeton n'est jamais accessible en JavaScript côté navigateur, ce qui réduit le risque de vol par une faille XSS (injection de script). |
-| **CORS restreint** | Seule l'URL du frontend (variable `FRONTEND_URL`) est autorisée à appeler l'API, avec transmission des cookies activée. |
-| **Limitation de débit (rate limiting)** | Un nombre maximal de requêtes par minute est imposé, pour éviter les abus et maîtriser les coûts d'IA. |
-| **Validation stricte des données** | Tout champ non prévu dans une requête est rejeté (HTTP 400), ce qui empêche l'envoi de données inattendues. |
-| **En-têtes de sécurité (Helmet)** | Des en-têtes HTTP standards protègent contre plusieurs attaques web courantes. |
-| **Secret obligatoire** | L'application refuse de démarrer si la clé secrète de signature des jetons (`JWT_SECRET`) n'est pas configurée. |
+| **Authentification obligatoire** | Toutes les routes protégées exigent un jeton valide (`JwtAuthGuard`), y compris les routes IA. |
+| **Cookie httpOnly** | Le jeton est inaccessible en JavaScript. Cela limite le vol par faille XSS (injection de script). |
+| **CORS restreint** | Seule l'URL du frontend (`FRONTEND_URL`) peut appeler l'API, cookies inclus. CORS : partage de ressources entre origines. |
+| **Limitation de débit** | Un nombre maximal de requêtes par minute limite les abus et les coûts d'IA. |
+| **Validation stricte** | Tout champ non prévu dans une requête est rejeté (HTTP 400). |
+| **En-têtes de sécurité** | Helmet côté API et en-têtes dédiés côté Next.js contrent plusieurs attaques web courantes. |
+| **Secret obligatoire** | L'API refuse de démarrer sans clé de signature des jetons (`JWT_SECRET`). |
 
 ## Limites de débit par route
 
-| Route | Limite |
+| Route | Limite par minute |
 |---|---|
-| Routes générales | 60 requêtes / minute / IP |
-| Connexion (`/auth/login`) | 10 requêtes / minute |
-| Inscription (`/auth/signup`) | 5 requêtes / minute |
-| Génération IA (workouts, skills, force, vélo, mobilité, programmes) | 10 requêtes / minute |
-| Recommandations (lecture) | 60 requêtes / minute |
-| Recommandations (génération) | 5 requêtes / minute |
+| Toutes les routes (par défaut) | 60 |
+| Connexion (`POST /auth/login`) | 10 |
+| Inscription (`POST /auth/signup`) | 5 |
+| Génération de WOD (`POST /workouts/generate-ai`, `/generate-ai-personalized`) | 10 |
+| Génération de programme de compétence (`POST /skills/generate-ai`) | 10 |
+| Analyse post-séance (`POST /workout-sessions/:id/analyze`) | 10 |
+| Séance du jour (`GET /recommendations/daily-session/check`) | 10 |
+| Recommandation du coach — lecture / régénération | 60 / 5 |
+
+> **Point d'attention** : certaines routes appellent OpenAI mais n'ont que la limite par défaut (60/min). C'est le cas de `POST /workouts/lookup`, `POST /workouts/parse-text`, `POST /workouts/weekly-plan` et `GET /tracking/report`.
 
 > **Détail technique**
 >
-> Le jeton est extrait par `JwtStrategy` en priorité depuis le cookie `access_token`, avec un repli sur l'en-tête `Authorization: Bearer` pour compatibilité (ex. appels API hors navigateur). Le cookie est configuré avec `secure: true` et `sameSite: 'none'` en production (nécessaire pour un cookie cross-site en HTTPS), et `sameSite: 'lax'` en développement local.
+> `JwtStrategy` lit le jeton d'abord dans le cookie `access_token`. À défaut, il lit l'en-tête `Authorization: Bearer` (appels hors navigateur).
 >
-> La validation des DTOs (`class-validator`) est appliquée globalement avec `whitelist: true` et `forbidNonWhitelisted: true` : un champ non déclaré dans un DTO provoque un rejet immédiat de la requête.
+> En production, le cookie est posé avec `secure: true` et `sameSite: 'none'`. En local, il utilise `sameSite: 'lax'`.
+>
+> La validation des DTOs (`class-validator`) est globale, avec `whitelist: true` et `forbidNonWhitelisted: true`.

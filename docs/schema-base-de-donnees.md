@@ -1,47 +1,82 @@
 # Schéma de base de données
 
-Ce document présente les tables principales de Training Camp et leurs relations. Il s'adresse aux développeurs travaillant sur le backend ou les migrations, ainsi qu'aux Product Owners souhaitant comprendre comment les données sont organisées.
+Ce document présente les tables de Training Camp et leurs relations. Il s'adresse aux développeurs qui travaillent sur le backend ou les migrations, et aux Product Owners qui veulent comprendre l'organisation des données.
 
 ## Vue d'ensemble
 
 ```mermaid
 graph TD
-    U[Utilisateurs] --> W[Catalogue de séances]
-    U --> P[Séances personnalisées par IA]
-    U --> S[Sessions WOD réalisées]
-    U --> SP[Sessions par sport]
+    U[Athlète] --> C[Catalogue de WOD]
+    U --> P[WOD générés par IA]
+    U --> S[Séances réalisées]
     U --> PL[Planification]
-    U --> RM[Records personnels]
+    U --> RM[Records 1RM]
+    U --> B[Historique des benchmarks]
     U --> SK[Programmes de compétences]
-    U --> EQ[Équipements]
-    W --> S
+    U --> R[Bilans mensuels]
+    C --> S
     P --> S
 ```
 
-Chaque donnée est rattachée à un utilisateur. Le catalogue de séances et les séances générées par IA alimentent les sessions réalisées. La planification, les records personnels, les compétences et l'équipement sont gérés indépendamment, mais tous consultés par les générateurs IA pour personnaliser les séances.
+Toutes les données sont rattachées à un athlète. Une séance réalisée provient soit du catalogue, soit d'un WOD généré par IA. Les séances, les 1RM et les benchmarks alimentent le diagnostic de performance.
 
 ## Tables principales
 
+### Athlète et matériel
+
 | Table | Rôle |
 |---|---|
-| `users` | Profil complet de l'utilisateur : niveau sportif, physiologie, objectifs, blessures, équipement disponible. |
-| `workouts` | Catalogue des séances de référence (WOD officiels, benchmarks, séances créées par un utilisateur). |
-| `exercises` / `workout_exercises` | Référentiel des exercices et leur usage détaillé dans une séance du catalogue. |
-| `personalized_workouts` | Séance générée par IA pour un utilisateur à une date donnée, avec un instantané des paramètres utilisés (`params_json`). |
-| `workout_sessions` | Séance de cross-training ou de programme réellement réalisée par l'utilisateur (résultats, durée, notes). |
-| `user_workout_schedule` | Planification d'un WOD du catalogue à une date donnée, avec son statut (prévu, complété, sauté). |
-| `scheduled_activities` | Registre unifié des activités planifiées tous sports confondus, utilisé par le calendrier. |
-| `one_rep_maxes` / `one_rep_max_history` | Charge maximale actuelle par mouvement, et historique de son évolution dans le temps. |
-| `skill_programs` / `skill_program_steps` / `skill_progress_logs` | Programme de progression sur une compétence, ses étapes, et le journal des séances de travail technique. |
-| `equipments` / `user_equipments` | Référentiel du matériel disponible et association avec chaque utilisateur. |
-| `strength_sessions` | Séances réalisées propres à chaque sport (force), indépendantes de `workout_sessions`. |
+| `users` | Profil : niveau, physiologie, objectifs, blessures |
+| `equipments` / `user_equipments` | Référentiel du matériel et matériel disponible pour chaque athlète |
+
+### Séances
+
+| Table | Rôle |
+|---|---|
+| `workouts` | Catalogue : WOD officiels, benchmarks (Fran, Grace…), WOD créés par l'athlète |
+| `exercises` / `workout_exercises` | Référentiel des exercices et leur place dans un WOD du catalogue |
+| `personalized_workouts` | WOD généré par IA pour un athlète, avec les paramètres utilisés (`params_json`) |
+| `workout_sessions` | Séance réellement réalisée : score, charges, RPE, notes, analyse IA |
+
+### Planification
+
+| Table | Rôle |
+|---|---|
+| `user_workout_schedule` | WOD planifié à une date, avec statut (prévu, complété, sauté) et recommandation du coach |
+| `scheduled_activities` | Autres activités planifiées : compétences (`skill`), créneaux `wod` et `conditioning` posés depuis le planificateur de la semaine |
+
+### Suivi de performance
+
+| Table | Rôle |
+|---|---|
+| `one_rep_maxes` / `one_rep_max_history` | 1RM actuel par mouvement, et son évolution dans le temps |
+| `benchmark_history` | Chaque score réalisé sur un benchmark, avec le niveau calculé |
+| `tracking_reports` | Dernier bilan mensuel rédigé par l'IA |
+
+### Compétences
+
+| Table | Rôle |
+|---|---|
+| `skill_programs` | Programme de progression vers une compétence |
+| `skill_program_steps` | Étapes du programme |
+| `skill_progress_logs` | Journal des séances de travail technique |
+
+## Tables obsolètes
+
+Ces tables existent encore en base mais ne sont plus lues par le code.
+
+| Table | Remplacée par |
+|---|---|
+| `user_workouts` | `workouts` et `personalized_workouts` |
+| `workout_logs` | `workout_sessions` |
+| `training_programs` / `user_program_enrollments` | Rien : les programmes d'entraînement ont été retirés |
+
+Les tables des anciens modules (running, vélo, mobilité, force) ont été supprimées par migration. L'historique de force a été repris dans `workout_sessions`.
 
 > **Détail technique**
 >
-> Les tables `user_workouts` et `workout_logs`, créées lors des premières migrations, ne sont plus référencées par le code applicatif actuel : elles ont été remplacées respectivement par `workouts`/`personalized_workouts` et par `workout_sessions`. Elles restent en base pour compatibilité mais peuvent être considérées comme obsolètes.
->
-> `workout_sessions.workout_id` est nullable : une session référence soit un `workout_id` (séance du catalogue), soit un `personalized_workout_id` (séance générée par IA), jamais les deux à la fois.
->
-> `scheduled_activities.activity_id` est une référence polymorphique (sans contrainte de clé étrangère) : selon `activity_type`, elle pointe vers `strength_sessions`.
->
-> Toutes les tables utilisateur utilisent des identifiants **UUID** générés par l'extension PostgreSQL `pgcrypto`, et les colonnes suivent la convention `snake_case`.
+> - `workout_sessions.results` est un `jsonb`. Son contrat est décrit dans [Enregistrement d'une séance](flux-log-workout.md).
+> - Une session référence soit `workout_id`, soit `personalized_workout_id`, jamais les deux.
+> - `scheduled_activities.activity_id` est une référence polymorphe, sans clé étrangère. Pour le type `skill`, elle pointe vers `skill_programs`.
+> - Identifiants **UUID** générés par l'extension PostgreSQL `pgcrypto`, colonnes en `snake_case`.
+> - Migrations : `backend/src/database/migrations/`. Seeds : `backend/src/database/seeds/`.

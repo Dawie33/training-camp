@@ -1,6 +1,6 @@
 # 🏋️‍♂️ Training Camp
 
-**Training Camp** est une plateforme multi-sports (cross-training, force, running, vélo, mobilité) qui génère des séances d'entraînement personnalisées grâce à l'intelligence artificielle. Chaque programme s'adapte au profil, au matériel disponible et aux objectifs de l'utilisateur.
+**Training Camp** est un coach CrossFit personnel. Il prépare votre séance du jour, enregistre vos résultats et mesure votre progression avec des chiffres concrets.
 
 ---
 
@@ -18,35 +18,41 @@
 
 | Document | Description |
 |----------|-------------|
-| [Génération de séances par IA](docs/generation-ia.md) | Comment l'intelligence artificielle génère les séances pour chaque sport |
-| [Enregistrement d'une séance (log)](docs/flux-log-workout.md) | Comment un utilisateur enregistre le résultat d'une séance réalisée |
-| [Authentification et sécurité](docs/auth-securite.md) | Flux de connexion, cookie JWT, mesures de sécurité en place |
-| [Schéma de base de données](docs/schema-base-de-donnees.md) | Tables principales et relations entre les données |
+| [Génération par IA](docs/generation-ia.md) | Les services d'intelligence artificielle, leur contexte partagé et la validation des réponses |
+| [Enregistrement d'une séance (log)](docs/flux-log-workout.md) | Comment une séance réalisée est saisie, stockée et reliée au calendrier |
+| [Authentification et sécurité](docs/auth-securite.md) | Flux de connexion par cookie, limites de débit et protections en place |
+| [Schéma de base de données](docs/schema-base-de-donnees.md) | Tables principales, relations et tables obsolètes |
+| [Diagnostic de performance](docs/diagnostic-performance.md) | Indicateurs calculés sans IA, seuils et règles de comparaison |
+| [Séance du jour et coach IA](docs/seance-du-jour-coach.md) | Recommandation quotidienne, création automatique du WOD et tâches mensuelles |
+| [Calendrier et planification](docs/calendrier-planification.md) | Les deux circuits de planification, le planificateur de la semaine et Google Calendar |
+| [Programmes de compétences](docs/programmes-competences.md) | Cycle de vie d'un programme de skill, étapes et journal de progression |
 
 ---
 
 ## À quoi sert ce produit ?
 
-- Générer des séances d'entraînement personnalisées par intelligence artificielle, sport par sport.
-- Centraliser plusieurs disciplines : cross-training, force, running, vélo, mobilité.
-- Suivre l'historique des séances et analyser la progression après chaque entraînement.
-- Planifier ses entraînements dans un calendrier, avec synchronisation Google Calendar.
-- Gérer des programmes de progression sur des compétences gymniques ou d'haltérophilie (skills).
-- Suivre ses records personnels (1RM) et leur évolution dans le temps.
+- Savoir chaque jour quoi faire, sans avoir à construire sa séance soi-même.
+- Garder une trace fiable de chaque séance : temps, charges, ressenti d'effort.
+- Mesurer objectivement sa progression, avec des indicateurs calculés et non des impressions.
+- Repérer ses points faibles : déséquilibres de force, filières énergétiques négligées, surcharge.
+- Progresser sur des mouvements techniques grâce à des programmes guidés.
 
 ---
 
 ## Fonctionnalités principales
 
-- **Génération de séances par IA** — WOD (Workout Of the Day) et séances adaptées au profil, au matériel et à la fatigue, pour le cross-training, la force, le running, le vélo et la mobilité.
-- **Profil utilisateur** — Prise en compte du niveau, des objectifs, des blessures et de l'équipement disponible.
-- **Suivi des records personnels** — Historique des 1RM (charges maximales) par exercice.
-- **Programmes de compétences (skills)** — Progressions guidées sur des mouvements gymniques ou d'haltérophilie.
-- **Calendrier d'entraînement** — Planification des séances avec synchronisation vers Google Calendar.
-- **Historique et analyse post-séance** — Log des entraînements réalisés et retour d'analyse généré par IA.
-- **Import de données d'activité** — Import de fichiers FIT (montres et capteurs sportifs).
-- **Tableau de bord** — Vue d'ensemble de l'activité et de la progression de l'utilisateur.
-- **Timer intégré** — Chronomètre pour suivre ses séances en temps réel (AMRAP, for time, etc.).
+- **Séance du jour automatique** — À la première visite du tableau de bord, le coach IA planifie la séance adaptée, ou recommande du repos.
+- **Test de benchmark mensuel** — Un benchmark est planifié chaque mois, en priorité celui testé il y a le plus longtemps.
+- **Génération de WOD (Workout Of the Day) par IA** — Séances adaptées au niveau, au matériel et à la fatigue récente.
+- **Catalogue de WOD** — WOD de référence et benchmarks officiels (Fran, Grace, Murph…).
+- **Log de séance** — Saisie des résultats par exercice, de l'effort ressenti et import de fichiers de montre (FIT).
+- **Diagnostic de performance** — Ratios de force, progression sur les benchmarks, charge d'entraînement, régularité.
+- **Bilans mensuels** — Synthèse rédigée par l'IA à partir des chiffres du diagnostic.
+- **Analyse post-séance** — Retour personnalisé du coach après chaque WOD.
+- **Records personnels (1RM)** — Charge maximale par mouvement et historique de son évolution.
+- **Programmes de compétences (skills)** — Progressions guidées vers un mouvement gymnique ou d'haltérophilie.
+- **Calendrier** — Planification des séances, avec synchronisation Google Calendar.
+- **Application installable** — Utilisable sur mobile comme une application native (PWA).
 
 ---
 
@@ -54,14 +60,16 @@
 
 ```mermaid
 graph LR
-    A[Utilisateur] --> B[Application Web Next.js]
-    B --> C[API Backend NestJS]
-    C --> D[Base de données PostgreSQL]
-    C --> E[Service de génération IA]
-    C --> F[Synchronisation Google Calendar]
+    A[Athlète] --> B[Application web]
+    B --> C[API backend]
+    C --> D[(Base de données)]
+    C --> E[Moteur de diagnostic]
+    C --> F[Coach IA OpenAI]
+    C --> G[Google Calendar]
+    E --> F
 ```
 
-L'utilisateur interagit avec l'application web pour créer et suivre ses séances. L'API backend gère la logique métier, appelle un service d'intelligence artificielle pour générer les entraînements, et stocke toutes les données en base. Une synchronisation optionnelle avec Google Calendar permet de retrouver ses séances planifiées dans son agenda personnel.
+L'athlète utilise l'application web, sur ordinateur ou sur mobile. L'API backend stocke les séances et calcule le diagnostic de performance sans IA. Ce diagnostic est ensuite transmis au coach IA. Ainsi, les séances générées, les recommandations et les bilans s'appuient tous sur les mêmes chiffres.
 
 ---
 
@@ -69,8 +77,9 @@ L'utilisateur interagit avec l'application web pour créer et suivre ses séance
 
 | Environnement | URL | Description |
 |---|---|---|
-| Développement | `http://localhost:3000` (frontend) / `http://localhost:3001/api` (backend) | Environnement local, base de données via Docker |
-| Production | `https://training-camp.onrender.com/api` (backend) | Environnement de production hébergé sur Render |
+| Développement | `http://localhost:3000` (application) / `http://localhost:3001/api` (API) | Poste local, base de données dans Docker |
+| Production (API) | `https://training-camp.onrender.com/api` | API hébergée sur Render |
+| Production (application) | *À préciser* | Hébergement du frontend non documenté dans le dépôt |
 
 ---
 
@@ -78,29 +87,36 @@ L'utilisateur interagit avec l'application web pour créer et suivre ses séance
 
 ```mermaid
 graph LR
-    A[Développeur] -->|Build de l'image| B[Docker]
-    B -->|Déploiement backend| C[Render]
-    B -->|Déploiement frontend| D[Hébergement web]
-    C --> E[Base de données PostgreSQL]
+    A[Développeur] -->|Pull request| B[GitHub]
+    B -->|Fusion sur main| C[Image Docker]
+    C -->|API| D[Render]
+    D --> E[(PostgreSQL)]
+    C -->|Application web| F[Hébergement web]
 ```
 
-Le backend et le frontend sont conteneurisés avec Docker. Le backend est déployé sur Render, connecté à une base de données PostgreSQL hébergée. Il n'existe pas encore de pipeline d'intégration continue (CI/CD) automatisé : les déploiements sont réalisés manuellement.
+Le code est hébergé sur GitHub et chaque évolution passe par une pull request. Le backend et le frontend disposent chacun d'une image Docker. L'API est déployée sur Render, reliée à une base PostgreSQL. Aucun pipeline CI/CD (Intégration et Déploiement Continus) n'est configuré dans le dépôt : les tests et le lint se lancent manuellement.
+
+> **Point de vigilance** : après un déploiement, les migrations de base de données doivent être appliquées en production.
 
 ---
 
 ## Stack technique
 
-- **Frontend :** Next.js 16 (React 19), TypeScript, TailwindCSS, Radix UI
-- **Backend :** NestJS 11, TypeScript, PostgreSQL, Knex.js
+- **Frontend :** Next.js 16 (React 19), TypeScript, TailwindCSS, Radix UI, Recharts
+- **Backend :** NestJS 11, TypeScript, Knex.js
+- **Base de données :** PostgreSQL 15
 - **Intelligence artificielle :** OpenAI (modèle `gpt-4.1`)
-- **Authentification :** JWT (JSON Web Token) via Passport.js
-- **Infrastructure :** Docker, Render
+- **Hébergement :** Docker, Render
 
 ---
 
 ## Documentation complémentaire
 
-- [Génération de séances par IA](docs/generation-ia.md)
+- [Génération par IA](docs/generation-ia.md)
 - [Enregistrement d'une séance (log)](docs/flux-log-workout.md)
 - [Authentification et sécurité](docs/auth-securite.md)
 - [Schéma de base de données](docs/schema-base-de-donnees.md)
+- [Diagnostic de performance](docs/diagnostic-performance.md)
+- [Séance du jour et coach IA](docs/seance-du-jour-coach.md)
+- [Calendrier et planification](docs/calendrier-planification.md)
+- [Programmes de compétences](docs/programmes-competences.md)
