@@ -441,31 +441,6 @@ export class LookupWorkoutDto {
 }
 
 /**
- * Un jour du plan hebdomadaire à générer (date, type de session, focus).
- */
-export class WeeklyPlanDayDto {
-  @IsString()
-  date!: string // 'YYYY-MM-DD'
-
-  @IsIn(['perso', 'box', 'rest'])
-  type!: string
-
-  @IsOptional()
-  @IsString()
-  focus?: string
-}
-
-/**
- * Liste des jours à planifier pour la génération d'un plan hebdomadaire.
- */
-export class WeeklyPlanDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => WeeklyPlanDayDto)
-  days!: WeeklyPlanDayDto[]
-}
-
-/**
  * DTO pour les résultats de benchmark
  * Supporte différents types de métriques selon le type de workout
  */

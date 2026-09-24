@@ -3,15 +3,8 @@ import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
-
-export interface WodAnalysis {
-  summary: string
-  performance_level: 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
-  comparison: string | null
-  strengths: string[]
-  improvements: string[]
-  next_steps: string
-}
+import { ZodError } from 'zod'
+import { WodAnalysis, WodAnalysisSchema } from './schemas/wod-analysis.schema'
 
 @Injectable()
 export class WorkoutAnalysisService {
@@ -107,8 +100,13 @@ Réponds en JSON avec exactement cette structure :
 
     let analysis: WodAnalysis
     try {
-      analysis = JSON.parse(content) as WodAnalysis
-    } catch {
+      analysis = WodAnalysisSchema.parse(JSON.parse(content))
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new InternalServerErrorException(
+          `Analyse IA invalide : ${error.errors.map((e) => `${e.path.join('.')} ${e.message}`).join(', ')}`
+        )
+      }
       throw new InternalServerErrorException('Réponse IA invalide')
     }
 

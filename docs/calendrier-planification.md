@@ -48,13 +48,12 @@ L'athlète indique, pour chaque jour de la semaine, ce qu'il prévoit. Aucune s�
 
 - **Jour « box »** : un créneau `box_session` est réservé dans `user_workout_schedule`.
 - **WOD ou Conditioning** (exclusifs l'un de l'autre) : un créneau `wod` ou `conditioning` dans `scheduled_activities`.
-- **Force** : un créneau `strength` dans `scheduled_activities`.
 - **Jour de repos** : rien n'est créé.
 - **Jour déjà occupé** : il est ignoré et signalé.
 
 Le contenu du WOD est généré ensuite, depuis la page de génération.
 
-> **Point d'attention** : le type `strength` est un reste de l'ancien module force, supprimé depuis. Il est encore accepté par l'API. Par ailleurs, l'endpoint `POST /workouts/weekly-plan`, qui générait les WOD de la semaine par IA, n'est plus appelé par le frontend.
+La force n'a pas d'étiquette propre : c'est une section de type `strength` à l'intérieur d'un WOD.
 
 ## Synchronisation Google Calendar
 

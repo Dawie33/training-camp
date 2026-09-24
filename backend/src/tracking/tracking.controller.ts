@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common'
 import { Request } from 'express'
+import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { SportType, TrackingService } from './tracking.service'
 
@@ -40,6 +41,7 @@ export class TrackingController {
   }
 
   @Get('report')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async getReport(
     @Req() req: AuthenticatedRequest,
     @Query('sport') sport?: string,

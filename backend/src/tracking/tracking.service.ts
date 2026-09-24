@@ -1,42 +1,17 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { PerformanceDiagnosticSummary, UserContextService } from 'src/workouts/services/user-context.service'
+import { ZodError } from 'zod'
+import { AIProgressionReport, AIProgressionReportSchema } from './schemas/progression-report.schema'
 
 export type SportType = 'crossfit'
 
-export interface TypeTrend {
-  type: string
-  trend: 'improving' | 'stable' | 'declining'
-  detail: string
-  session_count: number
-}
-
-export interface FitnessProfile {
-  cardio: 'beginner' | 'intermediate' | 'advanced' | 'elite'
-  strength: 'beginner' | 'intermediate' | 'advanced' | 'elite'
-  work_capacity: 'beginner' | 'intermediate' | 'advanced' | 'elite'
-  endurance: 'beginner' | 'intermediate' | 'advanced' | 'elite'
-}
-
-export interface ProgressionReport {
+export type ProgressionReport = AIProgressionReport & {
   sport: SportType
   period_months: number
-  period_summary: string
-  overall_trend: 'improving' | 'stable' | 'declining'
-  highlights: string[]
-  type_trends: TypeTrend[]
-  strengths: string[]
-  weak_points: string[]
-  recommendations: string[]
-  consistency_feedback: string
-  performance_highlights?: string[]
-  strength_progression?: string
-  movement_focus?: string[]
-  fitness_profile?: FitnessProfile
-  overall_fitness_level?: string
   generated_at: string
 }
 
@@ -280,7 +255,7 @@ ${this.jsonInstructions()}`
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  private async callAI(prompt: string): Promise<Omit<ProgressionReport, 'sport' | 'period_months' | 'generated_at'>> {
+  private async callAI(prompt: string): Promise<AIProgressionReport> {
     const completion = await this.openaiClientService.client.chat.completions.create({
       model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
@@ -290,8 +265,19 @@ ${this.jsonInstructions()}`
     })
 
     const content = completion.choices[0]?.message?.content
-    if (!content) throw new Error('No response from AI')
-    return JSON.parse(content)
+    if (!content) throw new BadRequestException('No response from AI')
+
+    try {
+      return AIProgressionReportSchema.parse(JSON.parse(content))
+    } catch (error) {
+      if (error instanceof SyntaxError) throw new BadRequestException('AI generated invalid JSON')
+      if (error instanceof ZodError) {
+        throw new BadRequestException(
+          `Report validation failed: ${error.errors.map((e) => `${e.path.join('.')} ${e.message}`).join(', ')}`
+        )
+      }
+      throw error
+    }
   }
 
   private jsonInstructions(): string {

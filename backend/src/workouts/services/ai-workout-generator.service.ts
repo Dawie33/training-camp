@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { ZodError } from 'zod'
 import { OpenAIClientService } from '../../common/ai/openai-client.service'
 import {
@@ -7,33 +7,12 @@ import {
 } from '../prompts/crossfit-generator.prompt'
 import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../schemas/workout.schema'
 import { ActiveSkillContext, UserContextService } from './user-context.service'
-import { WorkoutScheduleService } from './workout-schedule.service'
-import { WorkoutsService } from './workouts.service'
 
 /**
  * Type pour la structure du workout généré par l'IA
  * Inféré automatiquement depuis le schéma Zod
  */
 export type GeneratedWorkout = GeneratedWorkoutValidated
-
-/**
- * Un jour du plan hebdomadaire à générer.
- */
-export interface WeeklyPlanDayInput {
-  date: string // 'YYYY-MM-DD'
-  type: string // 'perso' | 'box' | 'rest'
-  focus?: string
-}
-
-/**
- * Résultat de la génération d'un plan hebdomadaire : jours planifiés avec succès,
- * jours ignorés (conflit de planification) et jours Box enregistrés.
- */
-export interface WeeklyPlanResult {
-  scheduled: { date: string; workout_name: string; schedule_id: string }[]
-  skipped: string[]
-  box_days: string[]
-}
 
 /**
  * Paramètres communs à la génération d'un workout via l'IA.
@@ -51,16 +30,13 @@ export interface WorkoutGenerationParams {
 
 /**
  * Génère des workouts CrossFit via OpenAI (générique ou personnalisé), retrouve des WODs
- * de référence connus, parse du texte libre en workout structuré et construit des plans
- * hebdomadaires.
+ * de référence connus et parse du texte libre en workout structuré.
  */
 @Injectable()
 export class AIWorkoutGeneratorService {
   constructor(
     private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService,
-    private readonly workoutsService: WorkoutsService,
-    private readonly workoutScheduleService: WorkoutScheduleService,
   ) {}
 
   /**
@@ -326,86 +302,6 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
       if (error instanceof BadRequestException) throw error
       throw new BadRequestException(`Impossible de trouver le WOD "${name}". S'il s'agit d'un WOD récent, colle ses détails dans le champ prévu.`)
     }
-  }
-
-  /**
-   * Génère un plan d'entraînement hebdomadaire pour les jours Perso et retourne le résumé
-   * @param userId ID de l'utilisateur
-   * @param days Tableau des jours avec leur type (perso/box/rest)
-   * @returns Résultat avec les workouts planifiés, les jours skippés et les jours Box
-   */
-  async generateWeeklyPlan(userId: string, days: WeeklyPlanDayInput[]): Promise<WeeklyPlanResult> {
-    const persoDays = days.filter((d) => d.type === 'perso')
-    const boxDayDates = days.filter((d) => d.type === 'box').map((d) => d.date)
-
-    const scheduled: WeeklyPlanResult['scheduled'] = []
-    const skipped: string[] = []
-    const savedBoxDays: string[] = []
-
-    await Promise.all([
-      ...persoDays.map(async (day) => {
-        try {
-          const wod = await this.generatePersonalizedWorkout(userId, {
-            workoutType: 'conditioning',
-            duration: 45,
-            techniqueFocus: day.focus ?? '',
-            skipSkillBlock: true,
-          })
-
-          const saved = await this.workoutsService.create({
-            name: wod.name,
-            description: wod.description,
-            workout_type: wod.workout_type,
-            estimated_duration: wod.estimated_duration,
-            difficulty: wod.difficulty,
-            intensity: wod.intensity,
-            blocks: wod.blocks as Record<string, unknown>,
-            equipment_required: wod.equipment_required || [],
-            focus_areas: wod.focus_areas || [],
-            tags: wod.tags || [],
-            coach_notes: wod.coach_notes || undefined,
-            isPublic: false,
-            status: 'published',
-            ai_generated: true,
-            created_by_user_id: userId,
-          })
-
-          try {
-            const schedule = await this.workoutScheduleService.create(userId, {
-              workout_id: saved.id,
-              scheduled_date: day.date,
-            })
-            scheduled.push({ date: day.date, workout_name: wod.name, schedule_id: schedule.id })
-          } catch (err) {
-            if (err instanceof ConflictException) {
-              skipped.push(day.date)
-            } else {
-              throw err
-            }
-          }
-        } catch (err) {
-          if (err instanceof ConflictException) {
-            skipped.push(day.date)
-          } else {
-            throw err
-          }
-        }
-      }),
-      ...boxDayDates.map(async (date) => {
-        try {
-          await this.workoutScheduleService.create(userId, {
-            scheduled_date: date,
-            session_type: 'box_session',
-          })
-          savedBoxDays.push(date)
-        } catch (err) {
-          if (!(err instanceof ConflictException)) throw err
-          // Already scheduled — silently skip
-        }
-      }),
-    ])
-
-    return { scheduled, skipped, box_days: savedBoxDays }
   }
 
   private async callOpenAI(systemPrompt: string, userPrompt: string): Promise<GeneratedWorkout> {

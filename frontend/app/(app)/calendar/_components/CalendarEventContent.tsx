@@ -7,7 +7,6 @@ export const statusColors: Record<string, { dot: string; text: string; bg: strin
 
 // Badge coloré par module (affiché uniquement pour les modules non-CrossFit)
 export const moduleBadges: Record<string, { label: string; color: string }> = {
-  strength: { label: 'FORCE', color: 'bg-violet-500/15 text-violet-700 border border-violet-500/30' },
   skill: { label: 'SKILL', color: 'bg-primary text-primary-foreground' },
 }
 
