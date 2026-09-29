@@ -142,7 +142,7 @@ frontend/
 
 ### Services frontend
 
-`frontend/services/apiClient.ts` — client HTTP de base (GET/POST/PATCH/PUT/DELETE), gère les headers JWT automatiquement.
+`frontend/services/apiClient.ts` — client HTTP de base (GET/POST/PATCH/PUT/DELETE). Requêtes en `credentials: 'include'` : le cookie JWT httpOnly est joint par le navigateur, aucun header d'authentification à gérer.
 
 `frontend/services/resourceApi.ts` — factory de clients CRUD génériques, à réutiliser pour les nouvelles ressources.
 
@@ -171,7 +171,7 @@ Pas de modale de log : le log se fait sur `/crossfit/log-workout`, qui écrit da
 **Backend `.env`** :
 ```
 DATABASE_HOST=localhost
-DATABASE_PORT=5432
+DATABASE_PORT=5435
 DATABASE_NAME=training_camp
 DATABASE_USER=postgres
 DATABASE_PASSWORD=...
@@ -182,10 +182,11 @@ NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 ```
 
-**Frontend `.env.local`** :
+**Frontend `.env.local`** (optionnel en dev) :
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
+BACKEND_URL=http://localhost:3001/api
 ```
+Lu côté serveur par le rewrite de `next.config.ts`. Ne pas définir `NEXT_PUBLIC_API_URL` en local : `apiClient` doit appeler `/api` (same-origin) pour que le cookie httpOnly soit transmis.
 
 En production, le backend est déployé sur Render (`https://training-camp.onrender.com/api`).
 
@@ -195,7 +196,7 @@ En production, le backend est déployé sur Render (`https://training-camp.onren
 
 ## Pièges connus
 
-- `npm run dev` lance frontend + backend via `concurrently`. Ne pas laisser tourner un backend séparé en parallèle (conflit port 3001).
+- `npm run dev` libère d'abord le port 3001 (script `predev` → `kill-port`), puis lance frontend + backend via `concurrently` : un backend démarré séparément sera arrêté.
 - `turbopack: { root: '../' }` dans `next.config.ts` provoque des redémarrages intempestifs du backend en watch mode — ne pas le remettre.
 - Les migrations Knex sont dans `backend/src/database/migrations/` (pas `backend/database/`).
 - GPT-4.1 ne connaît pas les workouts CrossFit Open postérieurs à début 2025. Utiliser le champ `referenceData` du endpoint `POST /workouts/lookup` pour injecter les détails exacts.

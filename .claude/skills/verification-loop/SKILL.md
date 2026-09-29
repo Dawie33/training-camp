@@ -46,7 +46,7 @@ Le cœur de la méthode, c'est de **choisir le critère** adapté. Dans CE proje
 | Cibler un fichier de test | tests filtrés | `npm test -- <motif>` |
 | Boucle qui se relance seule | tests en continu | `npm run test:watch` |
 | Vérifier que ça compile | compilation TypeScript/SWC | `npm run build` |
-| Nettoyer style/erreurs statiques | lint | `npm run lint` |
+| Nettoyer style/erreurs statiques | lint (frontend) | `npm --workspace frontend run lint` (depuis la racine) |
 | Appliquer un changement de schéma | migration | `npm run db:migrate` |
 | Corriger un bug **sans** test | reproduire puis vérifier la disparition | `curl ...`, script, ou clic dans l'UI |
 | Vérifier un endpoint en vrai | réponse HTTP attendue | `curl -i http://localhost:3001/api/...` |
