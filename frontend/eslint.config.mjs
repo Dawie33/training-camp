@@ -6,8 +6,8 @@ import tseslint from 'typescript-eslint'
 
 export default [
   {
-    // public/sw.js et public/workbox-*.js sont générés par next-pwa au build
-    ignores: ['.next/**', 'node_modules/**', 'out/**', '.turbo/**', 'public/sw.js', 'public/workbox-*.js'],
+    // public/sw.js s'exécute dans le contexte service worker (globals self/caches/clients)
+    ignores: ['.next/**', 'node_modules/**', 'out/**', '.turbo/**', 'public/sw.js'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

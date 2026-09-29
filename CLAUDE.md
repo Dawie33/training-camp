@@ -16,7 +16,8 @@ Monorepo npm workspaces :
 - Next.js 16 (App Router), React 19, TypeScript 5
 - TailwindCSS 3.4, Radix UI, Lucide React
 - TanStack Table, Recharts, Framer Motion
-- Sonner (toasts), @schedule-x (calendar), next-pwa
+- Sonner (toasts), @schedule-x (calendar)
+- PWA : installation via `public/manifest.json` uniquement, sans service worker. `public/sw.js` est un service worker de désinstallation pour les appareils qui avaient l'ancien (next-pwa) — ne pas le supprimer tant qu'ils n'ont pas été mis à jour.
 - Path alias : `@/*` → `frontend/*` (pas de `src/`)
 
 ### Backend
