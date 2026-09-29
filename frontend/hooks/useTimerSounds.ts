@@ -20,7 +20,9 @@ export function useTimerSounds() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      // Safari ancien expose seulement le constructeur préfixé
+      const legacyWindow = window as Window & { webkitAudioContext?: typeof AudioContext }
+      audioContextRef.current = new (window.AudioContext || legacyWindow.webkitAudioContext)()
     }
 
     return () => {

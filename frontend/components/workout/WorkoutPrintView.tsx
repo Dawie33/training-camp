@@ -61,7 +61,3 @@ export function WorkoutPrintView({ workout }: WorkoutPrintViewProps) {
     </>
   )
 }
-
-export function printWorkout() {
-  window.print()
-}

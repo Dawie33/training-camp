@@ -47,10 +47,11 @@ function Button({
   const Comp = asChild ? Slot : "button"
 
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      // Deux versions de @types/react coexistent (frontend 19.1 / racine 19.2 utilisée par Radix) : leurs `ref` sont incompatibles
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       {...(props as any)}
     />
   )

@@ -13,7 +13,7 @@ export class UsersService {
     ) { }
 
     private sanitizeUser(user: Record<string, unknown>): Omit<UserProfile, 'stats'> {
-        const { password, ...sanitized } = user
+        const { ...sanitized } = user
         return sanitized as Omit<UserProfile, 'stats'>
     }
 

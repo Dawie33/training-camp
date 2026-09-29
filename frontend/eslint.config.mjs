@@ -29,7 +29,22 @@ export default [
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        {
+          allowConstantExport: true,
+          // Exports imposés par Next.js (layout/page) et helpers de variantes shadcn/ui
+          allowExportNames: [
+            'metadata',
+            'generateMetadata',
+            'viewport',
+            'generateViewport',
+            'generateStaticParams',
+            'dynamic',
+            'revalidate',
+            'buttonVariants',
+            'badgeVariants',
+            'navigationMenuTriggerStyle',
+          ],
+        },
       ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/explicit-function-return-type': 'off',

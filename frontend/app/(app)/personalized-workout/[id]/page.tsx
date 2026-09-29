@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { RichSectionDisplay } from '@/components/workout/display/RichSectionDisplay'
-import { WorkoutPrintView, printWorkout } from '@/components/workout/WorkoutPrintView'
+import { WorkoutPrintView } from '@/components/workout/WorkoutPrintView'
 
 const ActiveWorkoutSession = dynamic(() => import('@/components/workout/ActiveWorkoutSession').then(m => ({ default: m.ActiveWorkoutSession })), { ssr: false })
 import { PersonalizedWorkout } from '@/domain/entities/workout'
@@ -137,7 +137,7 @@ function PersonalizedWorkoutDetailContent() {
 
             <div className="flex items-center gap-1 lg:gap-2">
               <button
-                onClick={printWorkout}
+                onClick={() => window.print()}
                 className="flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-xs lg:text-sm font-medium text-slate-300"
                 title="Exporter en PDF"
               >

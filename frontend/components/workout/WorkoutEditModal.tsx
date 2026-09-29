@@ -168,7 +168,7 @@ export default function WorkoutEditModal({ isOpen, onClose, workout }: WorkoutEd
         ...editedWorkout,
         id: workout.id, // ID du workout de base pour référence
       }
-      const response = await workoutsService.createPersonalizedWorkout(payload as any)
+      const response = await workoutsService.createPersonalizedWorkout(payload)
 
       if (response && response.id) {
         toast.success('Workout personnalisé créé avec succès ! Redirection...')

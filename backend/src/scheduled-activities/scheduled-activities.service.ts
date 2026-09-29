@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { GoogleCalendarService } from '../google-calendar/google-calendar.service'
 import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
-import { ActivityStatus, UnifiedActivity } from './types/unified-activity.type'
+import { UnifiedActivity } from './types/unified-activity.type'
 
 const ACTIVITY_LABELS: Record<string, string> = { skill: 'Skill', wod: 'WOD', conditioning: 'Conditioning' }
 

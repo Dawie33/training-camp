@@ -60,7 +60,7 @@ export function InteractiveWorkoutDisplay({ blocks, onSectionComplete, onExercis
   // Passer automatiquement à la section suivante quand elle est complétée
   useEffect(() => {
     if (currentSectionIndex < blocks.sections.length - 1) {
-      if (isSectionCompleted(currentSectionIndex)) {
+      if (completedSections[currentSectionIndex]) {
         setCurrentSectionIndex(prev => prev + 1)
       }
     }

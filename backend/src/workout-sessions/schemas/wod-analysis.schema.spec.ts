@@ -27,7 +27,7 @@ describe('WodAnalysisSchema', () => {
   })
 
   it('rejette une analyse sans résumé', () => {
-    const { summary: _summary, ...withoutSummary } = validAnalysis
+    const { summary: withoutSummary } = validAnalysis
 
     expect(WodAnalysisSchema.safeParse(withoutSummary).success).toBe(false)
   })

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches } from 'class-validator'
+import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches } from 'class-validator'
 
 export class UpdateProfileDto {
   @IsOptional()

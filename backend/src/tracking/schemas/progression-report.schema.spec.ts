@@ -39,7 +39,7 @@ describe('AIProgressionReportSchema', () => {
   })
 
   it('rejette un bilan sans recommandations', () => {
-    const { recommendations: _recommendations, ...withoutRecommendations } = validReport
+    const { recommendations: withoutRecommendations } = validReport
 
     expect(AIProgressionReportSchema.safeParse(withoutRecommendations).success).toBe(false)
   })

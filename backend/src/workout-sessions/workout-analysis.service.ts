@@ -12,7 +12,7 @@ export class WorkoutAnalysisService {
     @InjectConnection() private readonly knex: Knex,
     private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService
-  ) {}
+  ) { }
 
   async analyzeSession(sessionId: string, userId: string, force = false): Promise<WodAnalysis> {
     // 1. Récupérer la session
@@ -91,7 +91,7 @@ Réponds en JSON avec exactement cette structure :
         max_tokens: 800,
         response_format: { type: 'json_object' },
       })
-    } catch (err) {
+    } catch {
       throw new InternalServerErrorException('Erreur lors de la communication avec l\'IA')
     }
 

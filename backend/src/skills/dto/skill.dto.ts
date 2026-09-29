@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer'
 import { IsArray, IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator'
 
 export class GenerateSkillProgramDto {

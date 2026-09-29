@@ -16,11 +16,14 @@ export function useWorkoutSchedule(params?: UnifiedActivityQueryParams) {
     return () => { mountedRef.current = false }
   }, [])
 
+  // Dépendances primitives : un nouvel objet `params` à chaque rendu ne relance pas le fetch
+  const { start_date, end_date, status, module: activityModule } = params ?? {}
+
   const fetchSchedules = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await activitiesApi.getUnified(params)
+      const data = await activitiesApi.getUnified({ start_date, end_date, status, module: activityModule })
       if (!mountedRef.current) return
       setSchedules(data)
     } catch (err) {
@@ -31,7 +34,7 @@ export function useWorkoutSchedule(params?: UnifiedActivityQueryParams) {
     } finally {
       if (mountedRef.current) setLoading(false)
     }
-  }, [params?.start_date, params?.end_date, params?.status, params?.module])
+  }, [start_date, end_date, status, activityModule])
 
   useEffect(() => {
     fetchSchedules()

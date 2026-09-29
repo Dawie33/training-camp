@@ -1,6 +1,5 @@
 'use client'
 
-import { printWorkout } from '@/components/workout/WorkoutPrintView'
 import type { Workouts } from '@/domain/entities/workout'
 import { workoutsService } from '@/services'
 import type { UnifiedActivity } from '@/services/activities'
@@ -117,7 +116,7 @@ export function useCalendarPage() {
           setSelectedEvent(null)
           workoutsService.getById(schedule.workout_id!).then((w) => {
             setPrintWorkoutData(w)
-            setTimeout(printWorkout, 100)
+            setTimeout(() => window.print(), 100)
           }).catch(() => toast.error('Impossible de charger le workout'))
         } : undefined,
       }

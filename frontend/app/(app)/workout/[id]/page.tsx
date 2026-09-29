@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { WorkoutPrintView, printWorkout } from '@/components/workout/WorkoutPrintView'
+import { WorkoutPrintView } from '@/components/workout/WorkoutPrintView'
 import { WorkoutSectionCard } from './_components/WorkoutSectionCard'
 
 const WorkoutEditModal = dynamic(() => import('@/components/workout/WorkoutEditModal'), { ssr: false })
@@ -109,7 +109,7 @@ function WorkoutDetailContent() {
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Button variant="outline" size="icon" onClick={printWorkout} title="Exporter en PDF">
+              <Button variant="outline" size="icon" onClick={() => window.print()} title="Exporter en PDF">
                 <FileDown className="w-4 h-4" />
               </Button>
               {!workout.is_benchmark && (

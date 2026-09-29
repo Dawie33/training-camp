@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Check, ExternalLink, FileDown, SkipForward, Trash2 } from 'lucide-react'
-import { statusColors } from './CalendarEventContent'
+import { statusColors } from './calendar-event-styles'
 
 export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<string, unknown> }) {
   const status = (calendarEvent.status as string) || 'scheduled'
