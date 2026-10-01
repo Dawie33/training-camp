@@ -33,13 +33,13 @@ export class AISkillGeneratorService {
       })
 
       const completion = await this.openaiClientService.client.chat.completions.create({
-        model: 'gpt-4.1',
+        model: this.openaiClientService.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.7,
-        max_tokens: 4096,
+        ...this.openaiClientService.temperatureParam(0.7),
+        max_completion_tokens: 4096,
         response_format: { type: 'json_object' },
       })
 

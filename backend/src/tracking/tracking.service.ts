@@ -257,10 +257,10 @@ ${this.jsonInstructions()}`
 
   private async callAI(prompt: string): Promise<AIProgressionReport> {
     const completion = await this.openaiClientService.client.chat.completions.create({
-      model: 'gpt-4.1',
+      model: this.openaiClientService.model,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 2500,
+      ...this.openaiClientService.temperatureParam(0.7),
+      max_completion_tokens: 2500,
       response_format: { type: 'json_object' },
     })
 

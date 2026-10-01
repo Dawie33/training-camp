@@ -26,13 +26,13 @@ export class RecommendationsService {
       const stats = this.computeSessionStats(ctx)
 
       const completion = await this.openaiClientService.client.chat.completions.create({
-        model: 'gpt-4.1',
+        model: this.openaiClientService.model,
         messages: [
           { role: 'system', content: buildRecommendationSystemPrompt() },
           { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
         ],
-        temperature: 0.4,
-        max_tokens: 800,
+        ...this.openaiClientService.temperatureParam(0.4),
+        max_completion_tokens: 800,
         response_format: { type: 'json_object' },
       })
 

@@ -85,10 +85,10 @@ Réponds en JSON avec exactement cette structure :
     let completion
     try {
       completion = await this.openaiClientService.client.chat.completions.create({
-        model: 'gpt-4.1',
+        model: this.openaiClientService.model,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 800,
+        ...this.openaiClientService.temperatureParam(0.7),
+        max_completion_tokens: 800,
         response_format: { type: 'json_object' },
       })
     } catch {
