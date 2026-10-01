@@ -16,7 +16,9 @@ export class AuthController {
     res.cookie('access_token', token, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      // 'lax' suffit : le front appelle l'API via le rewrite Next.js (same-origin).
+      // Le navigateur n'envoie alors pas le cookie sur un POST venu d'un autre site (protection CSRF).
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
       path: '/',
     })
@@ -53,7 +55,7 @@ export class AuthController {
     res.clearCookie('access_token', {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      sameSite: 'lax',
       path: '/',
     })
     return { message: 'Logged out' }

@@ -56,6 +56,6 @@ Le frontend appelle toujours l'API via une réécriture d'URL Next.js (`/api` �
 >
 > `JwtStrategy` lit le jeton d'abord dans le cookie `access_token`. À défaut, il lit l'en-tête `Authorization: Bearer` (appels hors navigateur).
 >
-> En production, le cookie est posé avec `secure: true` et `sameSite: 'none'`. En local, il utilise `sameSite: 'lax'`.
+> Le cookie est posé avec `sameSite: 'lax'`, et `secure: true` en production. Comme le frontend passe par le rewrite Next.js, le cookie est « même origine » : `'lax'` suffit et empêche qu'un autre site déclenche une requête POST authentifiée (attaque CSRF). Ne pas repasser en `'none'` tant que le navigateur n'appelle pas le backend en direct.
 >
 > La validation des DTOs (`class-validator`) est globale, avec `whitelist: true` et `forbidNonWhitelisted: true`.
