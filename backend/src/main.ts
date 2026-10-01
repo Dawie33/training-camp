@@ -1,6 +1,8 @@
 // backend/src/main.ts
 import './env';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
@@ -66,7 +68,16 @@ async function runMigrations() {
 
 async function bootstrap() {
   await runMigrations()
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  const logger = new Logger('Bootstrap')
+
+  // En prod, les requêtes traversent Vercel (rewrite /api) puis le proxy Render :
+  // sans 'trust proxy', req.ip est l'IP du dernier proxy et le rate limiting est partagé par tous.
+  const trustProxy = app.get(ConfigService).get<number>('TRUST_PROXY', 0)
+  if (trustProxy > 0) {
+    app.set('trust proxy', trustProxy)
+  }
+  logger.log(`trust proxy: ${trustProxy}`)
 
   app.setGlobalPrefix('api')
   const frontendUrl = process.env.FRONTEND_URL
@@ -93,7 +104,6 @@ async function bootstrap() {
   app.use(cookieParser())
   const port = parseInt(process.env.PORT ?? '3001', 10)
   await app.listen(port)
-  const logger = new Logger('Bootstrap')
   logger.log(`Training Camp API running at http://localhost:${port}`)
 }
 

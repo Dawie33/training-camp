@@ -1,4 +1,4 @@
-import { Controller, Get, Ip, Logger } from '@nestjs/common'
+import { Controller, Get, Headers, Ip, Logger } from '@nestjs/common'
 import { HealthResponseDTO, InfoResponseDTO } from './dto/healthcheck.dto'
 import { HealthcheckService } from './healthcheck.service'
 
@@ -9,8 +9,15 @@ export class HealthcheckController {
   constructor(private readonly healthcheckService: HealthcheckService) {}
 
   @Get('/health')
-  async health(@Ip() request_ip: string): Promise<HealthResponseDTO> {
+  async health(
+    @Ip() request_ip: string,
+    @Headers('x-forwarded-for') forwardedFor?: string,
+  ): Promise<HealthResponseDTO> {
     this.logger.debug(`GET /health - received from client: ${request_ip}`);
+    // TEMPORAIRE : mesure de la chaîne de proxys pour régler TRUST_PROXY. À retirer une fois réglé.
+    if (forwardedFor) {
+      this.logger.log(`[trust-proxy-debug] req.ip=${request_ip} x-forwarded-for="${forwardedFor}"`);
+    }
     return { status: 'OK' };
   }
 
