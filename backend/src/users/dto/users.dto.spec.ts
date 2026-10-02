@@ -45,7 +45,7 @@ describe('UpdateUserDto (PATCH /users/me)', () => {
     ['un taux de masse grasse à 2 décimales', { body_fat_percentage: 14.25 }],
     ['un prénom vide', { firstName: '' }],
     ['un prénom de plus de 100 caractères', { firstName: 'a'.repeat(101) }],
-    ['un équipement qui n\'est pas une chaîne', { equipment_available: [{ slug: 'barbell' }] }],
+    ["un équipement qui n'est pas une chaîne", { equipment_available: [{ slug: 'barbell' }] }],
     ['plus de 100 équipements', { equipment_available: Array.from({ length: 101 }, (_, i) => `eq-${i}`) }],
   ])('rejette %s', async (_case, body) => {
     await expect(validate(body)).rejects.toThrow(BadRequestException)

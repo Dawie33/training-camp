@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common"
-import { Knex } from "knex"
-import { InjectModel } from "nest-knexjs"
-import { parseStoredInjuries } from "src/common/injuries/injury.schema"
-import { UserContextService } from "src/workouts/services/user-context.service"
-import { UpdateUserDto, UserProfile } from "./dto"
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { Knex } from 'knex'
+import { InjectModel } from 'nest-knexjs'
+import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
+import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UpdateUserDto, UserProfile } from './dto'
 
 /**
  * Colonnes de `users` renvoyées au client. C'est une liste blanche : une colonne
@@ -12,63 +12,53 @@ import { UpdateUserDto, UserProfile } from "./dto"
  * injuries est une donnée de santé : elle n'est exposée que via /users/me, à son propriétaire.
  */
 export const PUBLIC_USER_COLUMNS = [
-    'id',
-    'email',
-    'firstName',
-    'lastName',
-    'role',
-    'sport_level',
-    'height',
-    'weight',
-    'body_fat_percentage',
-    'equipment_available',
-    'injuries',
-    'created_at',
-    'updated_at',
+  'id',
+  'email',
+  'firstName',
+  'lastName',
+  'role',
+  'sport_level',
+  'height',
+  'weight',
+  'body_fat_percentage',
+  'equipment_available',
+  'injuries',
+  'created_at',
+  'updated_at',
 ]
 
 type PublicUser = Omit<UserProfile, 'stats'>
 
 @Injectable()
-
 export class UsersService {
-    constructor(
-        @InjectModel() private readonly knex: Knex,
-        private readonly userContextService: UserContextService
-    ) { }
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly userContextService: UserContextService
+  ) {}
 
-    /**
-     * Récupère un utilisateur par son ID avec ses statistiques.
-     * @param {string} id - Identifiant de l'utilisateur.
-     * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur correspondant à l'identifiant ou null si l'utilisateur n'existe pas.
-     * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
-     * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
-     */
-    async getProfile(id: string) {
-        const user: PublicUser | undefined = await this.knex('users')
-            .where({ id })
-            .first(PUBLIC_USER_COLUMNS)
+  /**
+   * Récupère un utilisateur par son ID avec ses statistiques.
+   * @param {string} id - Identifiant de l'utilisateur.
+   * @returns {Promise<User>} - Promesse qui renvoie l'utilisateur correspondant à l'identifiant ou lève NotFoundException si l'utilisateur n'existe pas.
+   * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
+   * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
+   */
+  async getProfile(id: string) {
+    const user: PublicUser | undefined = await this.knex('users').where({ id }).first(PUBLIC_USER_COLUMNS)
 
-        if (!user) return null
+    if (!user) throw new NotFoundException('Utilisateur introuvable')
 
-        // Les entrées à l'ancien format (onboarding) sont ignorées
-        user.injuries = parseStoredInjuries(user.injuries)
+    // Les entrées à l'ancien format (onboarding) sont ignorées
+    user.injuries = parseStoredInjuries(user.injuries)
 
-        // Récupérer les stats de l'utilisateur
-        const [workoutsCount, sessionsCount, totalTime] = await Promise.all([
-            this.knex('workouts')
-                .where({ created_by_user_id: id })
-                .count('* as count')
-                .first(),
-            this.knex('workout_sessions')
-                .where({ user_id: id })
-                .whereNotNull('completed_at')
-                .count('* as count')
-                .first(),
-            // Calculer le temps total des sessions complétées
-            this.knex('workout_sessions')
-                .select(
-                    this.knex.raw(`
+    // Récupérer les stats de l'utilisateur
+    const [workoutsCount, sessionsCount, totalTime] = await Promise.all([
+      this.knex('workouts').where({ created_by_user_id: id }).count('* as count').first(),
+      this.knex('workout_sessions').where({ user_id: id }).whereNotNull('completed_at').count('* as count').first(),
+      // Calculer le temps total des sessions complétées
+      this.knex('workout_sessions')
+        .select(
+          this.knex.raw(`
                         COALESCE(
                             SUM(
                                 CASE
@@ -82,51 +72,48 @@ export class UsersService {
                             0
                         ) as total_seconds
                     `)
-                )
-                .where({ user_id: id })
-                .whereNotNull('completed_at')
-                .first(),
-        ])
+        )
+        .where({ user_id: id })
+        .whereNotNull('completed_at')
+        .first(),
+    ])
 
-        return {
-            ...user,
-            stats: {
-                workouts: Number(workoutsCount?.count || 0),
-                sessions: Number(sessionsCount?.count || 0),
-                total_time_minutes: Math.round(Number(totalTime?.total_seconds || 0) / 60),
-            },
-        }
+    return {
+      ...user,
+      stats: {
+        workouts: Number(workoutsCount?.count || 0),
+        sessions: Number(sessionsCount?.count || 0),
+        total_time_minutes: Math.round(Number(totalTime?.total_seconds || 0) / 60),
+      },
     }
+  }
 
+  /**
+   * Mettre à jour un utilisateur.
+   * @param {string} id - Identifiant de l'utilisateur.
+   * @param {UpdateUserDto} data - Champs du profil modifiables par l'utilisateur.
+   * @returns {Promise<User>} - Promesse qui renvoie l'utilisateur mis à jour ou lève NotFoundException si l'utilisateur n'existe pas.
+   * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
+   */
+  async update(id: string, data: UpdateUserDto) {
+    const updateData: Record<string, unknown> = {}
 
-    /**
-     * Mettre à jour un utilisateur.
-     * @param {string} id - Identifiant de l'utilisateur.
-     * @param {UpdateUserDto} data - Champs du profil modifiables par l'utilisateur.
-     * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur mis à jour ou null si l'utilisateur n'existe pas.
-     * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
-     */
-    async update(id: string, data: UpdateUserDto) {
-        const updateData: Record<string, unknown> = {}
+    if (data.firstName !== undefined) updateData.firstName = data.firstName
+    if (data.lastName !== undefined) updateData.lastName = data.lastName
+    if (data.sport_level !== undefined) updateData.sport_level = data.sport_level
+    if (data.height !== undefined) updateData.height = data.height
+    if (data.weight !== undefined) updateData.weight = data.weight
+    if (data.body_fat_percentage !== undefined) updateData.body_fat_percentage = data.body_fat_percentage
+    if (data.equipment_available !== undefined)
+      updateData.equipment_available = JSON.stringify(data.equipment_available)
+    if (data.injuries !== undefined) updateData.injuries = JSON.stringify(data.injuries)
 
-        if (data.firstName !== undefined) updateData.firstName = data.firstName
-        if (data.lastName !== undefined) updateData.lastName = data.lastName
-        if (data.sport_level !== undefined) updateData.sport_level = data.sport_level
-        if (data.height !== undefined) updateData.height = data.height
-        if (data.weight !== undefined) updateData.weight = data.weight
-        if (data.body_fat_percentage !== undefined) updateData.body_fat_percentage = data.body_fat_percentage
-        if (data.equipment_available !== undefined) updateData.equipment_available = JSON.stringify(data.equipment_available)
-        if (data.injuries !== undefined) updateData.injuries = JSON.stringify(data.injuries)
+    const [row]: PublicUser[] = await this.knex('users').where({ id }).update(updateData).returning(PUBLIC_USER_COLUMNS)
 
-        const [row]: PublicUser[] = await this.knex('users')
-            .where({ id })
-            .update(updateData)
-            .returning(PUBLIC_USER_COLUMNS)
+    if (!row) throw new NotFoundException('Utilisateur introuvable')
 
-        if (!row) return null
+    this.userContextService.invalidateCache(id)
 
-        this.userContextService.invalidateCache(id)
-
-        return { ...row, injuries: parseStoredInjuries(row.injuries) }
-    }
+    return { ...row, injuries: parseStoredInjuries(row.injuries) }
+  }
 }

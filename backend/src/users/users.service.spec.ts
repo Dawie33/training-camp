@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
 import { UserContextService } from 'src/workouts/services/user-context.service'
@@ -36,7 +37,7 @@ describe('UsersService', () => {
   describe('PUBLIC_USER_COLUMNS', () => {
     it.each(['password', 'google_refresh_token', 'google_calendar_id', 'medical_notes'])(
       "n'expose pas la colonne sensible %s",
-      (column) => {
+      column => {
         expect(PUBLIC_USER_COLUMNS).not.toContain(column)
       }
     )
@@ -60,17 +61,14 @@ describe('UsersService', () => {
       expect(result).toEqual({ ...publicUser, stats: { workouts: 2, sessions: 2, total_time_minutes: 10 } })
     })
 
-    it("renvoie null sans calculer les stats si l'utilisateur n'existe pas", async () => {
+    it("lève une NotFoundException sans calculer les stats si l'utilisateur n'existe pas", async () => {
       // Arrange
       const userBuilder = createKnexBuilderMock({ first: undefined })
       const knexMock: any = jest.fn().mockReturnValue(userBuilder)
       const service = await buildService(knexMock)
 
-      // Act
-      const result = await service.getProfile('inconnu')
-
-      // Assert
-      expect(result).toBeNull()
+      // Act & Assert
+      await expect(service.getProfile('inconnu')).rejects.toThrow(NotFoundException)
       expect(knexMock).toHaveBeenCalledTimes(1)
     })
   })
@@ -90,6 +88,17 @@ describe('UsersService', () => {
       expect(builder.returning).toHaveBeenCalledWith(PUBLIC_USER_COLUMNS)
       expect(userContextService.invalidateCache).toHaveBeenCalledWith('u1')
       expect(result).toEqual(publicUser)
+    })
+
+    it("lève une NotFoundException sans invalider le cache si l'utilisateur n'existe pas", async () => {
+      // Arrange
+      const builder = createKnexBuilderMock({ returning: [] })
+      const knexMock: any = jest.fn().mockReturnValue(builder)
+      const service = await buildService(knexMock)
+
+      // Act & Assert
+      await expect(service.update('inconnu', { firstName: 'Dawie' })).rejects.toThrow(NotFoundException)
+      expect(userContextService.invalidateCache).not.toHaveBeenCalled()
     })
   })
 })
