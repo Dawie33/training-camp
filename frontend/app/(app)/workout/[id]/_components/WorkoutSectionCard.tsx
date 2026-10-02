@@ -1,4 +1,4 @@
-import { Exercise, WorkoutSection } from '@/domain/entities/workout-structure'
+import { Exercise, WorkoutSection } from '@/domain/entities/workout-structure';
 
 const FORMAT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   amrap: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
@@ -119,9 +119,9 @@ export function WorkoutSectionCard({ section }: { section: WorkoutSection }) {
 
         {/* Section metadata */}
         <div className="flex flex-wrap gap-2 mb-3">
-          {section.rounds && section.rounds > 1 && (
+          {section.rounds !== undefined && section.rounds !== null && (
             <span className="px-2 py-0.5 bg-secondary rounded text-xs text-muted-foreground border border-border">
-              {section.rounds} rounds
+              {section.rounds} {section.rounds === 1 ? 'round' : 'rounds'}
             </span>
           )}
           {section.rest_between_rounds && (
