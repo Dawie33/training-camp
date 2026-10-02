@@ -40,6 +40,15 @@ function getFormatLabel(section: WorkoutSection): string | null {
   return typeFormats[section.type] || null
 }
 
+function getRepetitionLabels(section: WorkoutSection) {
+  const format = section.format?.toLowerCase() || ''
+  const isSetBased = format.includes('set') || section.type === 'strength' || section.type === 'accessory'
+
+  return isSetBased
+    ? { singular: 'set', plural: 'sets' }
+    : { singular: 'round', plural: 'rounds' }
+}
+
 function ExerciseRow({ exercise, idx }: { exercise: Exercise; idx: number }) {
   return (
     <div className="flex items-start justify-between gap-3 p-3 bg-secondary/40 rounded-lg">
@@ -98,6 +107,7 @@ function ExerciseRow({ exercise, idx }: { exercise: Exercise; idx: number }) {
 export function WorkoutSectionCard({ section }: { section: WorkoutSection }) {
   const colors = getSectionColors(section)
   const formatLabel = getFormatLabel(section)
+  const repetitionLabels = getRepetitionLabels(section)
 
   return (
     <div className="space-y-4">
@@ -121,17 +131,17 @@ export function WorkoutSectionCard({ section }: { section: WorkoutSection }) {
         <div className="flex flex-wrap gap-2 mb-3">
           {section.rounds !== undefined && section.rounds !== null && (
             <span className="px-2 py-0.5 bg-secondary rounded text-xs text-muted-foreground border border-border">
-              {section.rounds} {section.rounds === 1 ? 'round' : 'rounds'}
+              {section.rounds} {section.rounds === 1 ? repetitionLabels.singular : repetitionLabels.plural}
             </span>
           )}
           {section.rest_between_rounds && (
             <span className="px-2 py-0.5 bg-secondary rounded text-xs text-muted-foreground border border-border">
-              Rest: {section.rest_between_rounds}s entre rounds
+              Rest: {section.rest_between_rounds}s entre {repetitionLabels.plural}
             </span>
           )}
           {section.between_rounds_task && (
             <span className="px-2 py-0.5 bg-secondary rounded text-xs text-muted-foreground border border-border">
-              Après chaque round : {section.between_rounds_task}
+              Après chaque {repetitionLabels.singular} : {section.between_rounds_task}
             </span>
           )}
           {section.focus && (
