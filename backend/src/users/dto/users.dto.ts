@@ -1,4 +1,5 @@
 import { IsArray, IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString, MinLength } from 'class-validator'
+import { NormalizeEmail } from 'src/common/decorators/normalize-email.decorator'
 
 const ALLOWED_USER_ORDER_BY = ['created_at', 'updated_at', 'email', 'firstName', 'lastName', 'role'] as const
 
@@ -25,6 +26,7 @@ export type UserProfile = {
 }
 
 export class CreateUserDto {
+  @NormalizeEmail()
   @IsEmail()
   email!: string
 
@@ -53,6 +55,7 @@ export class CreateUserDto {
 
 export class UpdateUserDto {
   @IsOptional()
+  @NormalizeEmail()
   @IsEmail()
   email?: string
 

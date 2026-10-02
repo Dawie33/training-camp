@@ -1,9 +1,11 @@
 import { IsEmail, IsString, MinLength } from 'class-validator'
+import { NormalizeEmail } from 'src/common/decorators/normalize-email.decorator'
 
 /**
  * DTOs pour l'authentification
  */
 export class SignupDto {
+  @NormalizeEmail()
   @IsEmail()
   email: string
 
@@ -19,6 +21,7 @@ export class SignupDto {
 }
 
 export class LoginDto {
+  @NormalizeEmail()
   @IsEmail()
   email: string
 
