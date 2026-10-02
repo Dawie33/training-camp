@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
 import { UserContextService } from "src/workouts/services/user-context.service"
-import { UpdateUserDto, UserProfile, UserQueryDto } from "./dto"
+import { UpdateUserDto, UserProfile } from "./dto"
 
 /**
  * Colonnes de `users` renvoyées au client. C'est une liste blanche : une colonne
@@ -94,99 +94,6 @@ export class UsersService {
 
 
     /**
-     * Récupère la liste des utilisateurs avec filtres et recherche.
-     * @param {UserQueryDto} query - Paramètres de la requête.
-     * @param {string} query.limit - Nombre d'utilisateurs à récupérer. Par défaut : 20.
-     * @param {string} query.offset - Décalage de pagination. Par défaut : 0.
-     * @param {string} query.search - Paramètre de recherche. S'il est défini, la valeur donnée dans l'étiquette de l'utilisateur sera recherchée.
-     * @param {string} query.role - Rôle de l'utilisateur. Par défaut : tous les utilisateurs sont récupérés.
-     * @param {string} query.orderBy - Colonne de tri. Par défaut : « created_at ».
-     * @param {string} query.orderDir - Sens de l'ordre. Par défaut : « desc ».
-     * @returns {Promise<{rows: User[], count: number}>} - Promesse qui renvoie un objet contenant les lignes et le nombre.
-     */
-    async findAll({ limit = '20', offset = '0', search = '', role, orderBy = 'created_at', orderDir = 'desc' }: UserQueryDto
-    ) {
-        let query = this.knex('users')
-            .select(PUBLIC_USER_COLUMNS.map((column) => `users.${column}`))
-            .select(this.knex.raw('COUNT(DISTINCT workouts.id) as workouts_count'))
-            .leftJoin('workouts', 'users.id', 'workouts.created_by_user_id')
-            .groupBy('users.id')
-
-        if (search) {
-            query = query.where(function () {
-                this.where('users.email', 'ilike', `%${search}%`)
-                    .orWhere('users.firstName', 'ilike', `%${search}%`)
-                    .orWhere('users.lastName', 'ilike', `%${search}%`)
-            })
-        }
-
-        if (role) {
-            query = query.where('users.role', role)
-        }
-
-        const rows = await query
-            .limit(Number(limit))
-            .offset(Number(offset))
-            .orderBy(orderBy, orderDir)
-
-        const countQuery = this.knex('users').count('* as count')
-
-        if (search) {
-            countQuery.where(function () {
-                this.where('email', 'ilike', `%${search}%`)
-                    .orWhere('firstName', 'ilike', `%${search}%`)
-                    .orWhere('lastName', 'ilike', `%${search}%`)
-            })
-        }
-        if (role) {
-            countQuery.where('role', role)
-        }
-
-        const countResult = await countQuery.first()
-
-        return {
-            rows,
-            count: Number(countResult?.count || 0),
-        }
-    }
-
-    /**
-     * Récupère un utilisateur par son ID.
-     * @param {string} id - Identifiant de l'utilisateur.
-     * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur correspondant à l'identifiant ou null si l'utilisateur n'existe pas.
-     * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
-     * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
-     */
-    async findOne(id: string) {
-        const user: PublicUser | undefined = await this.knex('users')
-            .where({ id })
-            .first(PUBLIC_USER_COLUMNS)
-
-        if (!user) return null
-
-        // Récupérer les stats de l'utilisateur
-        const [workoutsCount, sessionsCount] = await Promise.all([
-            this.knex('workouts')
-                .where({ created_by_user_id: id })
-                .count('* as count')
-                .first(),
-            this.knex('workout_sessions')
-                .where({ user_id: id })
-                .count('* as count')
-                .first(),
-        ])
-
-        return {
-            ...user,
-            stats: {
-                workouts: Number(workoutsCount?.count || 0),
-                sessions: Number(sessionsCount?.count || 0),
-            },
-        }
-    }
-
-
-    /**
      * Mettre à jour un utilisateur.
      * @param {string} id - Identifiant de l'utilisateur.
      * @param {Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }>} data - Données à mettre à jour.
@@ -218,18 +125,4 @@ export class UsersService {
 
         return row
     }
-
-    /**
-     * Supprime un utilisateur.
-     * @param {string} id - Identifiant de l'utilisateur à supprimer.
-     * @returns {Promise<{success: boolean}>} - Promesse qui renvoie un objet contenant le statut de la suppression.
-     */
-    async delete(id: string) {
-        await this.knex('users').where({ id }).delete()
-        return { success: true }
-    }
-
-
 }
-
-

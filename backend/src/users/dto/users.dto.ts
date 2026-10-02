@@ -1,7 +1,5 @@
-import { IsArray, IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString, MinLength } from 'class-validator'
+import { IsArray, IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString } from 'class-validator'
 import { NormalizeEmail } from 'src/common/decorators/normalize-email.decorator'
-
-const ALLOWED_USER_ORDER_BY = ['created_at', 'updated_at', 'email', 'firstName', 'lastName', 'role'] as const
 
 export type UserProfile = {
   id: string
@@ -21,34 +19,6 @@ export type UserProfile = {
     sessions: number
     total_time_minutes?: number
   }
-}
-
-export class CreateUserDto {
-  @NormalizeEmail()
-  @IsEmail()
-  email!: string
-
-  @IsString()
-  @MinLength(6)
-  password!: string
-
-  @IsString()
-  firstName!: string
-
-  @IsString()
-  lastName!: string
-
-  @IsOptional()
-  @IsString()
-  dateOfBirth?: string
-
-  @IsOptional()
-  @IsIn(['male', 'female', 'other'])
-  gender?: 'male' | 'female' | 'other'
-
-  @IsOptional()
-  @IsIn(['user', 'admin', 'coach'])
-  role?: 'user' | 'admin' | 'coach'
 }
 
 export class UpdateUserDto {
@@ -92,30 +62,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsArray()
   equipment_available?: string[]
-}
-
-export class UserQueryDto {
-  @IsOptional()
-  @IsString()
-  limit?: string
-
-  @IsOptional()
-  @IsString()
-  offset?: string
-
-  @IsOptional()
-  @IsString()
-  search?: string
-
-  @IsOptional()
-  @IsIn(['user', 'admin', 'coach'])
-  role?: 'user' | 'admin' | 'coach'
-
-  @IsOptional()
-  @IsIn(ALLOWED_USER_ORDER_BY)
-  orderBy?: typeof ALLOWED_USER_ORDER_BY[number]
-
-  @IsOptional()
-  @IsIn(['asc', 'desc'])
-  orderDir?: 'asc' | 'desc'
 }

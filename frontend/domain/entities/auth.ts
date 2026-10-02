@@ -39,15 +39,6 @@ export interface User {
   }
 }
 
-export interface CreateUserDTO {
-  email: string
-  username: string
-  password: string
-  firstName?: string
-  lastName?: string
-  role?: string
-}
-
 export interface UpdateUserDTO {
   email?: string
   username?: string
@@ -61,14 +52,6 @@ export interface UpdateUserDTO {
   weight?: number
   body_fat_percentage?: number
   equipment_available?: string[]
-}
-
-export interface UserQueryParams {
-  limit?: number
-  offset?: number
-  search?: string
-  role?: string
-  [key: string]: string | number | boolean | undefined
 }
 
 // Admin Stats
