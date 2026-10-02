@@ -3,16 +3,13 @@ import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcryptjs'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { UserContextService } from 'src/workouts/services/user-context.service'
 import { AuthResponseDto, LoginDto, SignupDto } from './dto/auth.dto'
-import { UpdateProfileDto } from './dto/update-profile.dto'
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel() private readonly knex: Knex,
     private jwtService: JwtService,
-    private readonly userContextService: UserContextService
   ) { }
 
   /**
@@ -117,116 +114,6 @@ export class AuthService {
 
     if (!user || !user.isActive) {
       return null
-    }
-
-    return user
-  }
-
-  /**
-   * Mettre à jour le profil d'un utilisateur
-   * @param {string} userId - Identifiant de l'utilisateur
-   * @param {UpdateProfileDto} updateProfileDto - Données du profil à mettre à jour
-   * @returns {Promise<User>} - Utilisateur mis à jour
-   */
-  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
-    const trx = await this.knex.transaction()
-
-    try {
-      // Colonnes JSON/JSONB (objets et arrays) qui nécessitent une conversion
-      const jsonColumns = [
-        'global_goals',
-        'injuries',
-        'physical_limitations',
-        'equipment_available',
-        'training_preferences',
-        'schedule_preferences'
-      ]
-
-      // Extraire equipment_available pour traitement séparé
-      const { equipment_available, ...restData } = updateProfileDto
-
-      // Filtrer les valeurs undefined et convertir les colonnes JSON
-      const dataToUpdate = Object.entries(restData).reduce<Record<string, string | number | boolean>>((acc, [key, value]) => {
-        if (value !== undefined) {
-          // Convertir les colonnes JSON (objets et arrays) en string pour PostgreSQL
-          if (jsonColumns.includes(key)) {
-            acc[key] = JSON.stringify(value)
-          } else {
-            acc[key] = value as string | number | boolean
-          }
-        }
-        return acc
-      }, {})
-
-      if (equipment_available !== undefined) {
-        dataToUpdate.equipment_available = JSON.stringify(equipment_available)
-      }
-
-      // Mettre à jour la table users
-      let user: UpdateProfileDto
-      if (Object.keys(dataToUpdate).length > 0) {
-        const [updatedUser] = await trx('users')
-          .where({ id: userId })
-          .update(dataToUpdate)
-          .returning(['id', 'email', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'sport_level', 'height', 'weight'])
-        user = updatedUser
-      } else {
-        user = await trx('users')
-          .where({ id: userId })
-          .first(['id', 'email', 'firstName', 'lastName', 'dateOfBirth', 'gender', 'sport_level', 'height', 'weight'])
-      }
-
-      // Gérer les équipements (user_equipments)
-      if (equipment_available && equipment_available.length > 0) {
-        // Supprimer les anciennes associations
-        await trx('user_equipments').where({ user_id: userId }).delete()
-
-        // Récupérer les IDs des équipements à partir des slugs
-        const equipments = await trx('equipments')
-          .whereIn('slug', equipment_available)
-          .select('id', 'slug')
-
-        // Insérer les nouvelles associations
-        const equipmentInserts = equipments.map(equip => ({
-          user_id: userId,
-          equipment_id: equip.id,
-          available: true,
-          meta: {}
-        }))
-
-        if (equipmentInserts.length > 0) {
-          await trx('user_equipments').insert(equipmentInserts)
-        }
-      }
-
-      await trx.commit()
-      this.userContextService.invalidateCache(userId)
-      return user
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
-  }
-
-  /**
-   * Récupérer le profil complet d'un utilisateur
-   * @param {string} userId - Identifiant de l'utilisateur
-   * @returns {Promise<User>} - Profil complet de l'utilisateur
-   */
-  async getFullProfile(userId: string) {
-    const user = await this.knex('users')
-      .where({ id: userId })
-      .first([
-        'id', 'email', 'firstName', 'lastName', 'role', 'isActive',
-        'dateOfBirth', 'gender', 'sport_level', 'height', 'weight',
-        'resting_heart_rate', 'max_heart_rate', 'body_fat_percentage',
-        'global_goals', 'injuries', 'physical_limitations', 'training_location',
-        'training_preferences', 'schedule_preferences', 'has_coach', 'premium_member',
-        'created_at', 'updated_at', 'lastLoginAt',
-      ])
-
-    if (!user) {
-      throw new UnauthorizedException('User not found')
     }
 
     return user

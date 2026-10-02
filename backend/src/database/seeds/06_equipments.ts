@@ -18,8 +18,8 @@ export async function seed(knex: Knex): Promise<void> {
     { slug: 'jump-rope', label: 'Corde à sauter', image_url: 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=100&h=100&fit=crop', meta: {} },
 
     // Reste du catalogue sélectionnable via le profil (frontend/domain/entities/equipment-options.ts)
-    // sans image dédiée pour l'instant — nécessaire pour que la synchro user_equipments
-    // (voir auth.service.ts) retrouve bien tous les slugs choisis par l'utilisateur.
+    // sans image dédiée pour l'instant. Les équipements choisis sont stockés en slugs
+    // dans users.equipment_available (PATCH /users/me).
     { slug: 'bodyweight', label: 'Poids du corps', meta: {} },
     { slug: 'mat', label: 'Tapis', meta: {} },
     { slug: 'band', label: 'Bande élastique', meta: {} },

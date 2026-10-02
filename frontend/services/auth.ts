@@ -24,10 +24,6 @@ export class AuthService {
     return apiClient.get<User>(`${this.endpoint}/me`)
   }
 
-  async getFullProfile(): Promise<User> {
-    return apiClient.get<User>(`${this.endpoint}/profile`)
-  }
-
   async logout(): Promise<void> {
     try {
       await apiClient.post(`${this.endpoint}/logout`)
