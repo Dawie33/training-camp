@@ -95,11 +95,12 @@ function ExerciseRow({ exercise, idx }: { exercise: Exercise; idx: number }) {
           )}
         </div>
       </div>
-      {exercise.reps && (
-        <div className="text-foreground font-semibold text-sm whitespace-nowrap">
-          {exercise.reps} reps
-        </div>
-      )}
+      <div className="flex flex-col items-end gap-1 text-foreground font-semibold text-sm whitespace-nowrap">
+        {exercise.sets !== undefined && exercise.sets !== null && (
+          <span>{exercise.sets} {exercise.sets === 1 ? 'set' : 'sets'}</span>
+        )}
+        {exercise.reps && <span>{exercise.reps} reps</span>}
+      </div>
     </div>
   )
 }
