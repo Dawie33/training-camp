@@ -4,6 +4,28 @@ import { InjectModel } from "nest-knexjs"
 import { UserContextService } from "src/workouts/services/user-context.service"
 import { UpdateUserDto, UserProfile, UserQueryDto } from "./dto"
 
+/**
+ * Colonnes de `users` renvoyées au client. C'est une liste blanche : une colonne
+ * n'est exposée que si elle est listée ici. Ne jamais y ajouter password,
+ * google_refresh_token ou medical_notes.
+ */
+export const PUBLIC_USER_COLUMNS = [
+    'id',
+    'email',
+    'firstName',
+    'lastName',
+    'role',
+    'sport_level',
+    'height',
+    'weight',
+    'body_fat_percentage',
+    'equipment_available',
+    'created_at',
+    'updated_at',
+]
+
+type PublicUser = Omit<UserProfile, 'stats'>
+
 @Injectable()
 
 export class UsersService {
@@ -12,26 +34,19 @@ export class UsersService {
         private readonly userContextService: UserContextService
     ) { }
 
-    private sanitizeUser(user: Record<string, unknown>): Omit<UserProfile, 'stats'> {
-        const { ...sanitized } = user
-        return sanitized as Omit<UserProfile, 'stats'>
-    }
-
     /**
      * Récupère un utilisateur par son ID avec ses statistiques.
      * @param {string} id - Identifiant de l'utilisateur.
      * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur correspondant à l'identifiant ou null si l'utilisateur n'existe pas.
-     * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
+     * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
      * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
      */
     async getProfile(id: string) {
-        const user = await this.knex('users')
+        const user: PublicUser | undefined = await this.knex('users')
             .where({ id })
-            .first()
+            .first(PUBLIC_USER_COLUMNS)
 
         if (!user) return null
-
-        const sanitizedUser = this.sanitizeUser(user)
 
         // Récupérer les stats de l'utilisateur
         const [workoutsCount, sessionsCount, totalTime] = await Promise.all([
@@ -68,7 +83,7 @@ export class UsersService {
         ])
 
         return {
-            ...sanitizedUser,
+            ...user,
             stats: {
                 workouts: Number(workoutsCount?.count || 0),
                 sessions: Number(sessionsCount?.count || 0),
@@ -92,7 +107,7 @@ export class UsersService {
     async findAll({ limit = '20', offset = '0', search = '', role, orderBy = 'created_at', orderDir = 'desc' }: UserQueryDto
     ) {
         let query = this.knex('users')
-            .select('users.*')
+            .select(PUBLIC_USER_COLUMNS.map((column) => `users.${column}`))
             .select(this.knex.raw('COUNT(DISTINCT workouts.id) as workouts_count'))
             .leftJoin('workouts', 'users.id', 'workouts.created_by_user_id')
             .groupBy('users.id')
@@ -114,8 +129,6 @@ export class UsersService {
             .offset(Number(offset))
             .orderBy(orderBy, orderDir)
 
-        const sanitizedRows = rows.map(user => this.sanitizeUser(user))
-
         const countQuery = this.knex('users').count('* as count')
 
         if (search) {
@@ -132,7 +145,7 @@ export class UsersService {
         const countResult = await countQuery.first()
 
         return {
-            rows: sanitizedRows,
+            rows,
             count: Number(countResult?.count || 0),
         }
     }
@@ -141,17 +154,15 @@ export class UsersService {
      * Récupère un utilisateur par son ID.
      * @param {string} id - Identifiant de l'utilisateur.
      * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur correspondant à l'identifiant ou null si l'utilisateur n'existe pas.
-     * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
+     * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
      * Les stats de l'utilisateur sont également récupérés et incluent le nombre de workout et de sessions qu'il a créées.
      */
     async findOne(id: string) {
-        const user = await this.knex('users')
+        const user: PublicUser | undefined = await this.knex('users')
             .where({ id })
-            .first()
+            .first(PUBLIC_USER_COLUMNS)
 
         if (!user) return null
-
-        const sanitizedUser = this.sanitizeUser(user)
 
         // Récupérer les stats de l'utilisateur
         const [workoutsCount, sessionsCount] = await Promise.all([
@@ -166,7 +177,7 @@ export class UsersService {
         ])
 
         return {
-            ...sanitizedUser,
+            ...user,
             stats: {
                 workouts: Number(workoutsCount?.count || 0),
                 sessions: Number(sessionsCount?.count || 0),
@@ -180,7 +191,7 @@ export class UsersService {
      * @param {string} id - Identifiant de l'utilisateur.
      * @param {Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }>} data - Données à mettre à jour.
      * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur mis à jour ou null si l'utilisateur n'existe pas.
-     * Le résultat inclut le mot de passe de l'utilisateur qui est masqué.
+     * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
      */
     async update(id: string, data: UpdateUserDto) {
         const updateData: Record<string, unknown> = {}
@@ -196,16 +207,16 @@ export class UsersService {
         if (data.body_fat_percentage !== undefined) updateData.body_fat_percentage = data.body_fat_percentage
         if (data.equipment_available !== undefined) updateData.equipment_available = JSON.stringify(data.equipment_available)
 
-        const [row] = await this.knex('users')
+        const [row]: PublicUser[] = await this.knex('users')
             .where({ id })
             .update(updateData)
-            .returning('*')
+            .returning(PUBLIC_USER_COLUMNS)
 
         if (!row) return null
 
         this.userContextService.invalidateCache(id)
 
-        return this.sanitizeUser(row)
+        return row
     }
 
     /**

@@ -14,8 +14,6 @@ export type UserProfile = {
   weight: number | null
   body_fat_percentage: number | null
   equipment_available: string[]
-  benchmark_results: Record<string, unknown>
-  is_active: boolean
   created_at: string
   updated_at: string
   stats?: {
