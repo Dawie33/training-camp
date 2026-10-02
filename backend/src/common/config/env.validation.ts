@@ -22,6 +22,9 @@ export const envValidationSchema = Joi.object({
   // Détermine quelle IP de X-Forwarded-For est utilisée comme req.ip (rate limiting).
   // 0 = l'IP de la connexion TCP. Trop grand = IP falsifiable par le client.
   TRUST_PROXY: Joi.number().integer().min(0).default(0),
+  // Secret partagé avec le frontend (proxy.ts) : s'il est défini, les requêtes sans
+  // l'en-tête x-origin-secret correspondant sont refusées (verrou d'origine).
+  ORIGIN_SECRET: Joi.string().min(32).optional(),
 
   // JWT
   JWT_SECRET: Joi.string().required(),

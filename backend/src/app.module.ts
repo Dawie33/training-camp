@@ -6,6 +6,7 @@ import { KnexModule } from 'nest-knexjs'
 import { AuthModule } from './auth/auth.module'
 import { AiModule } from './common/ai/ai.module'
 import { envValidationSchema } from './common/config/env.validation'
+import { OriginSecretModule } from './common/origin-secret/origin-secret.module'
 import knexConfig from './database/knexfile'
 import { EquipmentsModule } from './equipments/equipments.module'
 import { ExercisesModule } from './exercises/exercises.module'
@@ -29,6 +30,7 @@ import { WorkoutsModule } from './workouts/workouts.module'
       validationSchema: envValidationSchema,
     }),
     AiModule,
+    OriginSecretModule,
     ThrottlerModule.forRoot([
       {
         name: 'default',

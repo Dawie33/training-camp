@@ -86,6 +86,8 @@ Guards : `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées — **sans
 - **Rate limiting** : global 60 req/min via `ThrottlerGuard` (APP_GUARD). Limites spécifiques : login 10/min, signup 5/min, routes IA 10/min via `@Throttle()`.
 - **Validation** : `forbidNonWhitelisted: true` — les champs inconnus dans les DTOs sont rejetés (HTTP 400).
 - **JWT_SECRET** : doit être défini dans `.env`, l'app refuse de démarrer sinon (Joi required, pas de fallback).
+- **Verrou d'origine** : si `ORIGIN_SECRET` est défini, `OriginSecretMiddleware` (`common/origin-secret/`) refuse (403) toute requête sans l'en-tête `x-origin-secret` ajouté par `frontend/proxy.ts`, sauf `GET /api/health`. Non défini en local = désactivé.
+- **TRUST_PROXY** : nombre de proxys devant l'API (prod Vercel → Cloudflare → Render = `4`). Ne jamais l'activer sans le verrou d'origine : l'IP deviendrait falsifiable via un appel direct à Render. Voir [docs/auth-securite.md](docs/auth-securite.md).
 
 ### Modules existants
 

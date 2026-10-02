@@ -12,11 +12,15 @@ export class HealthcheckController {
   async health(
     @Ip() request_ip: string,
     @Headers('x-forwarded-for') forwardedFor?: string,
+    @Headers('x-origin-secret') originSecret?: string,
   ): Promise<HealthResponseDTO> {
     this.logger.debug(`GET /health - received from client: ${request_ip}`);
-    // TEMPORAIRE : mesure de la chaîne de proxys pour régler TRUST_PROXY. À retirer une fois réglé.
+    // TEMPORAIRE : réglage de TRUST_PROXY et vérification du verrou d'origine. À retirer une fois réglé.
+    // Ne logue que la présence du secret, jamais sa valeur.
     if (forwardedFor) {
-      this.logger.log(`[trust-proxy-debug] req.ip=${request_ip} x-forwarded-for="${forwardedFor}"`);
+      this.logger.log(
+        `[trust-proxy-debug] req.ip=${request_ip} x-forwarded-for="${forwardedFor}" origin-secret=${originSecret ? 'présent' : 'absent'}`,
+      );
     }
     return { status: 'OK' };
   }
