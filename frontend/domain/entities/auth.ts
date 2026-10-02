@@ -39,14 +39,10 @@ export interface User {
   }
 }
 
+// Champs modifiables via PATCH /users/me (voir UpdateUserDto côté backend)
 export interface UpdateUserDTO {
-  email?: string
-  username?: string
-  password?: string
   firstName?: string
   lastName?: string
-  role?: string
-  is_active?: boolean
   sport_level?: 'beginner' | 'intermediate' | 'advanced' | 'elite'
   height?: number
   weight?: number

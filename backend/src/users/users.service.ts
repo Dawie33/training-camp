@@ -96,18 +96,15 @@ export class UsersService {
     /**
      * Mettre à jour un utilisateur.
      * @param {string} id - Identifiant de l'utilisateur.
-     * @param {Partial<{ email: string; firstName: string; lastName: string; role: string; is_active: boolean }>} data - Données à mettre à jour.
+     * @param {UpdateUserDto} data - Champs du profil modifiables par l'utilisateur.
      * @returns {Promise<User | null>} - Promesse qui renvoie l'utilisateur mis à jour ou null si l'utilisateur n'existe pas.
      * Seules les colonnes de PUBLIC_USER_COLUMNS sont renvoyées.
      */
     async update(id: string, data: UpdateUserDto) {
         const updateData: Record<string, unknown> = {}
 
-        if (data.email !== undefined) updateData.email = data.email
         if (data.firstName !== undefined) updateData.firstName = data.firstName
         if (data.lastName !== undefined) updateData.lastName = data.lastName
-        if (data.role !== undefined) updateData.role = data.role
-        if (data.isActive !== undefined) updateData.is_active = data.isActive
         if (data.sport_level !== undefined) updateData.sport_level = data.sport_level
         if (data.height !== undefined) updateData.height = data.height
         if (data.weight !== undefined) updateData.weight = data.weight

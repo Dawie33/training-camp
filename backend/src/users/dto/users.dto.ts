@@ -1,5 +1,16 @@
-import { IsArray, IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString } from 'class-validator'
-import { NormalizeEmail } from 'src/common/decorators/normalize-email.decorator'
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator'
 
 export type UserProfile = {
   id: string
@@ -21,45 +32,51 @@ export type UserProfile = {
   }
 }
 
+/**
+ * Champs que l'utilisateur peut modifier sur son propre profil (PATCH /users/me).
+ * role, isActive et email sont volontairement absents : avec forbidNonWhitelisted,
+ * une requête qui les envoie est rejetée (400). Les bornes suivent le formulaire du front.
+ */
 export class UpdateUserDto {
   @IsOptional()
-  @NormalizeEmail()
-  @IsEmail()
-  email?: string
-
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   firstName?: string
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   lastName?: string
-
-  @IsOptional()
-  @IsIn(['user', 'admin', 'coach'])
-  role?: 'user' | 'admin' | 'coach'
-
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean
 
   @IsOptional()
   @IsIn(['beginner', 'intermediate', 'advanced', 'elite'])
   sport_level?: string
 
+  // Colonnes entières en base : un décimal ferait échouer la requête
   @IsOptional()
-  @IsNumber()
+  @IsInt()
+  @Min(100)
+  @Max(250)
   height?: number
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
+  @Min(30)
+  @Max(300)
   weight?: number
 
   @IsOptional()
-  @IsNumber()
+  @IsNumber({ maxDecimalPlaces: 1 })
+  @Min(3)
+  @Max(60)
   body_fat_percentage?: number
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
   equipment_available?: string[]
 }

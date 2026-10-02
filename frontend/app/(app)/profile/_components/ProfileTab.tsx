@@ -74,7 +74,7 @@ export function ProfileTab({
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">Poids (kg)</label>
-          <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="75" min="30" max="300" step="0.1" className={inputClass} />
+          <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="75" min="30" max="300" step="1" className={inputClass} />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">% Graisse</label>

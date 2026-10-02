@@ -1,6 +1,5 @@
 import { ArgumentMetadata, BadRequestException, ValidationPipe } from '@nestjs/common'
 import { LoginDto, SignupDto } from 'src/auth/dto/auth.dto'
-import { UpdateUserDto } from 'src/users/dto/users.dto'
 
 // Mêmes options que le ValidationPipe global de main.ts
 const pipe = new ValidationPipe({
@@ -28,16 +27,6 @@ describe('NormalizeEmail', () => {
       body(SignupDto)
     )
     expect(result.email).toBe('dawie@mail.com')
-  })
-
-  it("normalise l'email à la mise à jour du profil", async () => {
-    const result: UpdateUserDto = await pipe.transform({ email: 'Dawie@Mail.com' }, body(UpdateUserDto))
-    expect(result.email).toBe('dawie@mail.com')
-  })
-
-  it("laisse l'email absent quand il est optionnel", async () => {
-    const result: UpdateUserDto = await pipe.transform({ firstName: 'Dawie' }, body(UpdateUserDto))
-    expect(result.email).toBeUndefined()
   })
 
   it('rejette toujours un email invalide', async () => {
