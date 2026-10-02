@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
+import { parseStoredInjuries } from "src/common/injuries/injury.schema"
 import { UserContextService } from "src/workouts/services/user-context.service"
 import { UpdateUserDto, UserProfile } from "./dto"
 
@@ -8,6 +9,7 @@ import { UpdateUserDto, UserProfile } from "./dto"
  * Colonnes de `users` renvoyées au client. C'est une liste blanche : une colonne
  * n'est exposée que si elle est listée ici. Ne jamais y ajouter password,
  * google_refresh_token ou medical_notes.
+ * injuries est une donnée de santé : elle n'est exposée que via /users/me, à son propriétaire.
  */
 export const PUBLIC_USER_COLUMNS = [
     'id',
@@ -20,6 +22,7 @@ export const PUBLIC_USER_COLUMNS = [
     'weight',
     'body_fat_percentage',
     'equipment_available',
+    'injuries',
     'created_at',
     'updated_at',
 ]
@@ -47,6 +50,9 @@ export class UsersService {
             .first(PUBLIC_USER_COLUMNS)
 
         if (!user) return null
+
+        // Les entrées à l'ancien format (onboarding) sont ignorées
+        user.injuries = parseStoredInjuries(user.injuries)
 
         // Récupérer les stats de l'utilisateur
         const [workoutsCount, sessionsCount, totalTime] = await Promise.all([
@@ -110,6 +116,7 @@ export class UsersService {
         if (data.weight !== undefined) updateData.weight = data.weight
         if (data.body_fat_percentage !== undefined) updateData.body_fat_percentage = data.body_fat_percentage
         if (data.equipment_available !== undefined) updateData.equipment_available = JSON.stringify(data.equipment_available)
+        if (data.injuries !== undefined) updateData.injuries = JSON.stringify(data.injuries)
 
         const [row]: PublicUser[] = await this.knex('users')
             .where({ id })
@@ -120,6 +127,6 @@ export class UsersService {
 
         this.userContextService.invalidateCache(id)
 
-        return row
+        return { ...row, injuries: parseStoredInjuries(row.injuries) }
     }
 }

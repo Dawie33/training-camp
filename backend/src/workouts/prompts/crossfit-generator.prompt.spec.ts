@@ -10,7 +10,7 @@ function buildContext(overrides: Partial<UserAIContext> = {}): UserAIContext {
     oneRepMaxes: [],
     benchmarkResults: {},
     global_goals: {},
-    injuries: {},
+    injuries: [],
     physical_limitations: {},
     equipment_available: [],
     training_preferences: {},

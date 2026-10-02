@@ -1,4 +1,5 @@
 import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
+import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
 import { UserAIContext } from 'src/workouts/services/user-context.service'
 import { SessionStats } from '../schemas/recommendation.schema'
 
@@ -73,8 +74,8 @@ export function buildRecommendationUserPrompt(
   const goals = Object.keys(ctx.global_goals).filter((k) => ctx.global_goals[k])
   if (goals.length) lines.push(`Objectifs : ${goals.join(', ')}`)
 
-  const injuries = Object.keys(ctx.injuries)
-  if (injuries.length) lines.push(`Limitations : ${injuries.join(', ')}`)
+  const injuriesBlock = formatInjuriesForPrompt(ctx.injuries)
+  if (injuriesBlock) lines.push(injuriesBlock)
 
   // Stats globales
   lines.push('')

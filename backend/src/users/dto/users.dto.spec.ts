@@ -50,4 +50,42 @@ describe('UpdateUserDto (PATCH /users/me)', () => {
   ])('rejette %s', async (_case, body) => {
     await expect(validate(body)).rejects.toThrow(BadRequestException)
   })
+
+  describe('injuries', () => {
+    const injury = {
+      zone: 'shoulder',
+      side: 'right',
+      status: 'active',
+      severity: 'moderate',
+      painful_patterns: ['overhead', 'kipping'],
+      since: '2026-09',
+      notes: 'Douleur sur le jerk',
+    }
+
+    it('accepte une liste de blessures valides, et une liste vide', async () => {
+      await expect(validate({ injuries: [injury] })).resolves.toEqual(
+        expect.objectContaining({ injuries: [expect.objectContaining(injury)] })
+      )
+      await expect(validate({ injuries: [] })).resolves.toEqual(expect.objectContaining({ injuries: [] }))
+    })
+
+    it.each([
+      ['une zone inconnue', { ...injury, zone: 'tete' }],
+      ['un statut inconnu', { ...injury, status: 'gueri' }],
+      ['une famille de mouvements inconnue', { ...injury, painful_patterns: ['burpee'] }],
+      ['une famille en double', { ...injury, painful_patterns: ['overhead', 'overhead'] }],
+      ['une date au mauvais format', { ...injury, since: '09/2026' }],
+      ['une note de plus de 300 caractères', { ...injury, notes: 'a'.repeat(301) }],
+      ['un champ inconnu dans la blessure', { ...injury, diagnostic: 'tendinite' }],
+      ['un champ obligatoire manquant', { zone: 'knee', side: 'left', status: 'past', painful_patterns: [] }],
+    ])('rejette %s', async (_case, invalidInjury) => {
+      await expect(validate({ injuries: [invalidInjury] })).rejects.toThrow(BadRequestException)
+    })
+
+    it('rejette plus de 20 blessures', async () => {
+      await expect(validate({ injuries: Array.from({ length: 21 }, () => injury) })).rejects.toThrow(
+        BadRequestException
+      )
+    })
+  })
 })

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer'
 import {
   ArrayMaxSize,
   IsArray,
@@ -10,7 +11,11 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator'
+import { INJURIES_MAX_COUNT } from 'src/common/injuries/injury.constants'
+import type { Injury } from 'src/common/injuries/injury.constants'
+import { InjuryDto } from './injury.dto'
 
 export type UserProfile = {
   id: string
@@ -23,6 +28,7 @@ export type UserProfile = {
   weight: number | null
   body_fat_percentage: number | null
   equipment_available: string[]
+  injuries: Injury[]
   created_at: string
   updated_at: string
   stats?: {
@@ -79,4 +85,12 @@ export class UpdateUserDto {
   @IsString({ each: true })
   @MaxLength(50, { each: true })
   equipment_available?: string[]
+
+  // Liste complète : le front renvoie toutes les blessures à chaque enregistrement
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(INJURIES_MAX_COUNT)
+  @ValidateNested({ each: true })
+  @Type(() => InjuryDto)
+  injuries?: InjuryDto[]
 }

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
+import type { Injury } from 'src/common/injuries/injury.constants'
+import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
 
 /**
  * Résumé d'une analyse IA post-workout récente, utilisé comme contexte pour la génération.
@@ -92,7 +94,7 @@ export interface UserAIContext {
   oneRepMaxes: { lift: string; value: number }[]
   benchmarkResults: Record<string, { result: Record<string, number | string>; date: string }>
   global_goals: Record<string, boolean>
-  injuries: Record<string, unknown>
+  injuries: Injury[]
   physical_limitations: Record<string, unknown>
   equipment_available: string[]
   training_preferences: { preferred_duration?: number; sessions_per_week?: number }
@@ -294,7 +296,7 @@ export class UserContextService {
       oneRepMaxes: oneRepMaxes ?? [],
       benchmarkResults: profile?.benchmark_results ?? {},
       global_goals: profile?.global_goals ?? {},
-      injuries: profile?.injuries ?? {},
+      injuries: parseStoredInjuries(profile?.injuries),
       physical_limitations: profile?.physical_limitations ?? {},
       equipment_available: profile?.equipment_available ?? [],
       training_preferences: profile?.training_preferences ?? {},

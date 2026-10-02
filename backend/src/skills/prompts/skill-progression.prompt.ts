@@ -1,3 +1,6 @@
+import type { Injury } from 'src/common/injuries/injury.constants'
+import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
+
 export function buildSkillProgressionSystemPrompt(): string {
   return `Tu es un coach CrossFit certifie Level 3+ specialise dans la progression technique et le developpement de skills avances.
 
@@ -131,7 +134,7 @@ export interface SkillProgressionParams {
   constraints?: string
   userLevel?: string
   availableEquipment?: string[]
-  injuries?: Record<string, unknown>
+  injuries?: Injury[]
   physicalLimitations?: Record<string, unknown>
 }
 
@@ -145,7 +148,7 @@ export function buildSkillProgressionUserPrompt(params: SkillProgressionParams):
     mobility: 'Mobilite',
   }
 
-  const hasInjuries = injuries && Object.keys(injuries).length > 0
+  const injuriesBlock = formatInjuriesForPrompt(injuries ?? [])
   const hasPhysicalLimitations = physicalLimitations && Object.keys(physicalLimitations).length > 0
 
   let prompt = `Genere un programme de progression pour le skill suivant :
@@ -155,7 +158,7 @@ export function buildSkillProgressionUserPrompt(params: SkillProgressionParams):
 ${userLevel ? `**Niveau actuel** : ${userLevel}` : ''}
 ${currentCapabilities ? `**Capacites actuelles** : ${currentCapabilities}` : ''}
 ${constraints ? `**Contraintes / limitations** : ${constraints}` : ''}
-${hasInjuries ? `**Blessures a prendre en compte** : ${JSON.stringify(injuries)}\n\nIMPORTANT : Adapte la progression et exclus toute etape ou exercice qui aggraverait ces blessures.` : ''}
+${injuriesBlock ? `${injuriesBlock}\n\nIMPORTANT : Adapte la progression et exclus toute etape ou exercice qui aggraverait ces blessures.` : ''}
 ${hasPhysicalLimitations ? `**Limitations physiques** : ${JSON.stringify(physicalLimitations)}` : ''}
 ${availableEquipment && availableEquipment.length > 0 ? `**Equipement disponible** : ${availableEquipment.join(', ')}\n\nIMPORTANT : Utilise UNIQUEMENT l'equipement liste ci-dessus. Ne propose AUCUN exercice necessitant du materiel que l'utilisateur n'a pas. Si un exercice classique necessite du materiel indisponible, propose une alternative avec l'equipement disponible ou au poids du corps.` : ''}
 `

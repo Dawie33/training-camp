@@ -102,7 +102,7 @@ describe('UserContextService.getUserAIContext', () => {
     expect(result.sport_level).toBe('intermediate')
     expect(result.equipment_available).toEqual([])
     expect(result.training_preferences).toEqual({})
-    expect(result.injuries).toEqual({})
+    expect(result.injuries).toEqual([])
     expect(result.oneRepMaxes).toEqual([])
   })
 
@@ -114,7 +114,7 @@ describe('UserContextService.getUserAIContext', () => {
         height: 180,
         weight: 82,
         benchmark_results: { fran: { result: { time: '5:00' }, date: '2026-01-01' } },
-        injuries: { shoulder: 'left' },
+        injuries: [{ zone: 'shoulder', side: 'left', status: 'active', severity: 'moderate', painful_patterns: ['overhead'] }],
         physical_limitations: {},
         global_goals: { strength: true },
         equipment_available: ['barbell', 'rower'],
@@ -132,6 +132,9 @@ describe('UserContextService.getUserAIContext', () => {
     expect(result.height).toBe(180)
     expect(result.weight).toBe(82)
     expect(result.equipment_available).toEqual(['barbell', 'rower'])
+    expect(result.injuries).toEqual([
+      { zone: 'shoulder', side: 'left', status: 'active', severity: 'moderate', painful_patterns: ['overhead'] },
+    ])
     expect(result.oneRepMaxes).toEqual([{ lift: 'back_squat', value: 120 }])
     expect(knexMock).toHaveBeenNthCalledWith(1, 'users')
     expect(knexMock).toHaveBeenNthCalledWith(2, 'one_rep_maxes')
