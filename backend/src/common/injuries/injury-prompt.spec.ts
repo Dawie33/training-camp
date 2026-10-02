@@ -21,7 +21,7 @@ describe('formatInjuriesForPrompt', () => {
   it('décrit la blessure en français avec zone, côté, statut, familles et note', () => {
     const block = formatInjuriesForPrompt([activeShoulder])
 
-    expect(block).toContain('Épaule droite — ACTIVE, douleur sur certains mouvements — depuis 2026-09')
+    expect(block).toContain('Épaule, côté droit — ACTIVE, douleur sur certains mouvements — depuis 2026-09')
     expect(block).toContain('au-dessus de la tête (jerk, snatch')
     expect(block).toContain('kipping (')
     expect(block).toContain('« Douleur sur le jerk »')

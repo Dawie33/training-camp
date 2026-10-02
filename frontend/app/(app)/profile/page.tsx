@@ -3,14 +3,17 @@
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { useState } from 'react'
 import { EquipmentTab } from './_components/EquipmentTab'
+import { InjuriesTab } from './_components/InjuriesTab'
 import { ProfileTab } from './_components/ProfileTab'
+import { useInjuries } from './_hooks/useInjuries'
 import { useProfileForm } from './_hooks/useProfileForm'
 
-type Tab = 'profile' | 'equipment'
+type Tab = 'profile' | 'equipment' | 'injuries'
 
 const tabs: { key: Tab; label: string }[] = [
   { key: 'profile', label: 'Profil' },
   { key: 'equipment', label: 'Équipement' },
+  { key: 'injuries', label: 'Blessures' },
 ]
 
 function ProfilePage() {
@@ -26,6 +29,7 @@ function ProfilePage() {
     savingProfile, handleSaveProfile,
     equipment, savingEquipment, toggleEquipment, setEquipment, handleSaveEquipment,
   } = useProfileForm()
+  const injuries = useInjuries(fullUser)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -80,6 +84,19 @@ function ProfilePage() {
             onPreset={setEquipment}
             onClear={() => setEquipment([])}
             onSave={handleSaveEquipment}
+          />
+        )}
+
+        {activeTab === 'injuries' && (
+          <InjuriesTab
+            injuries={injuries.injuries}
+            editing={injuries.editing}
+            saving={injuries.saving}
+            onAdd={injuries.startAdd}
+            onEdit={injuries.startEdit}
+            onCancel={injuries.cancelEdit}
+            onSave={injuries.saveInjury}
+            onDelete={injuries.deleteInjury}
           />
         )}
 

@@ -1,3 +1,5 @@
+import type { Injury } from './injury'
+
 export interface SignupDto {
   email: string
   password: string
@@ -32,6 +34,7 @@ export interface User {
   weight?: number
   body_fat_percentage?: number
   equipment_available?: string[]
+  injuries?: Injury[]
   stats?: {
     workouts: number
     sessions: number
@@ -48,6 +51,7 @@ export interface UpdateUserDTO {
   weight?: number
   body_fat_percentage?: number
   equipment_available?: string[]
+  injuries?: Injury[]
 }
 
 // Admin Stats

@@ -13,9 +13,10 @@ const ZONE_LABELS: Record<InjuryZone, string> = {
   other: 'Autre zone',
 }
 
+// Forme invariable : « droite » ne s'accorde pas avec toutes les zones (genou, coude…)
 const SIDE_LABELS: Record<InjurySide, string> = {
-  left: 'gauche',
-  right: 'droite',
+  left: 'côté gauche',
+  right: 'côté droit',
   both: 'des deux côtés',
   none: '',
 }
@@ -55,7 +56,7 @@ const STATUS_RULES: Record<InjuryStatus, string> = {
 }
 
 function describeInjury(injury: Injury): string {
-  const zone = [ZONE_LABELS[injury.zone], SIDE_LABELS[injury.side]].filter(Boolean).join(' ')
+  const zone = [ZONE_LABELS[injury.zone], SIDE_LABELS[injury.side]].filter(Boolean).join(', ')
   const parts = [`${zone} — ${STATUS_LABELS[injury.status]}, ${SEVERITY_LABELS[injury.severity]}`]
   if (injury.since) parts.push(`depuis ${injury.since}`)
   if (injury.painful_patterns.length > 0) {
