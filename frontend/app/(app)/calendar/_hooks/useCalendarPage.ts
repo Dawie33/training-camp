@@ -44,11 +44,15 @@ export function useCalendarPage() {
     googleCalendarApi.getStatus().then(setGoogleConnected).catch(() => { })
 
     const params = new URLSearchParams(window.location.search)
-    if (params.get('google_connected') === 'true') {
+    const googleConnected = params.get('google_connected')
+    if (googleConnected === 'true') {
       setGoogleConnected(true)
       toast.success('Google Calendar connecté !')
-      window.history.replaceState({}, '', '/calendar')
+    } else if (googleConnected === 'false') {
+      // Refus chez Google, lien expiré ou erreur : le backend redirige ici dans tous les cas
+      toast.error('La connexion à Google Calendar a été annulée ou a échoué. Réessayez.')
     }
+    if (googleConnected) window.history.replaceState({}, '', '/calendar')
   }, [])
 
   const handleGoogleConnect = async () => {

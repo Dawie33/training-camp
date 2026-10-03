@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { google } from 'googleapis'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
@@ -46,12 +46,18 @@ export class GoogleCalendarService {
    * @param {string} state Le state signé créé par getAuthUrl, qui porte l'id de l'utilisateur.
    * @returns {Promise<void>} Une promesse résolue lorsque le jeton d'actualisation Google de l'utilisateur est mis à jour.
    * @throws {UnauthorizedException} Si le state est invalide ou expiré.
+   * @throws {BadRequestException} Si Google ne renvoie pas de refresh_token.
    */
   async handleCallback(code: string, state: string | undefined): Promise<void> {
     // Vérifié avant tout appel à Google : un state falsifié n'atteint jamais la base
     const userId = this.oauthState.verify(state)
     const oauth2Client = this.getOAuth2Client()
     const { tokens } = await oauth2Client.getToken(code)
+
+    // Sans refresh_token, aucune synchronisation possible : on ne marque pas l'utilisateur comme connecté
+    if (!tokens.refresh_token) {
+      throw new BadRequestException("Google n'a pas renvoyé de refresh_token")
+    }
 
     await this.knex('users').where({ id: userId }).update({ google_refresh_token: tokens.refresh_token })
   }
