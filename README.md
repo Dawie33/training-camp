@@ -105,7 +105,7 @@ Le code est hébergé sur GitHub et chaque évolution passe par une pull request
 - **Frontend :** Next.js 16 (React 19), TypeScript, TailwindCSS, Radix UI, Recharts
 - **Backend :** NestJS 11, TypeScript, Knex.js
 - **Base de données :** PostgreSQL 15
-- **Intelligence artificielle :** OpenAI (modèle `gpt-4.1`)
+- **Intelligence artificielle :** OpenAI (modèle `gpt-4.1` par défaut, configurable)
 - **Hébergement :** Docker, Render
 
 ---

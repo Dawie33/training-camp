@@ -24,7 +24,7 @@ Monorepo npm workspaces :
 - NestJS 11, TypeScript 5.7
 - PostgreSQL 15 via Knex.js (query builder + migrations)
 - JWT (Passport.js), class-validator/class-transformer (DTOs)
-- OpenAI API (`gpt-4.1`, `json_object`, Zod validation)
+- OpenAI API (`gpt-4.1` par défaut, configurable via `OPENAI_MODEL`, `json_object`, Zod validation)
 - `@nestjs/throttler` — rate limiting global + par route
 - Préfixe API : `/api`
 
@@ -107,13 +107,22 @@ Guards : `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées — **sans
 
 ### Pattern génération IA
 
-Trois services OpenAI distincts, chacun avec son fichier de prompt et son schéma Zod :
+Cinq services OpenAI, chacun avec son fichier de prompt et son schéma Zod :
 
 - `ai-workout-generator.service.ts` — génère les WODs (dans `WorkoutsModule`)
 - `ai-skill-generator.service.ts` — génère les programmes de compétences (dans `SkillsModule`)
 - `workout-analysis.service.ts` — analyse les sessions post-workout (dans `WorkoutSessionsModule`)
+- `tracking.service.ts` — bilans de progression (dans `TrackingModule`)
+- `recommendations.service.ts` — recommandation du coach (dans `RecommendationsModule`)
 
-Toutes les interactions OpenAI utilisent `model: 'gpt-4.1'`, `response_format: json_object`, et valident la réponse avec Zod. Si l'IA retourne `{"error": "UNKNOWN_WOD"}` sur un lookup de WOD, lever une `BadRequestException`.
+Tous passent par `OpenAIClientService` (`common/ai/`, module global) :
+
+- `model: this.openaiClientService.model` — lu dans `OPENAI_MODEL` (défaut `gpt-4.1`). Ne jamais coder le modèle en dur.
+- `...this.openaiClientService.temperatureParam(x)` — la température n'est envoyée qu'aux modèles gpt-4.x (GPT-5+ la refuse).
+- Délai maximal de 120 s (`OPENAI_TIMEOUT_MS`) et une seule nouvelle tentative (`OPENAI_MAX_RETRIES`), configurés une fois dans le client.
+- `response_format: json_object`, et la réponse est validée avec Zod.
+
+Blocs de prompt partagés : `formatInjuriesForPrompt()` (`common/injuries/`) pour les blessures, `buildDiagnosticPromptLines()` (`common/ai/`) pour le diagnostic calculé. Si l'IA retourne `{"error": "UNKNOWN_WOD"}` sur un lookup de WOD, lever une `BadRequestException`.
 
 ### UserContextService
 
