@@ -1,14 +1,19 @@
 /**
- * Slugifie une chaîne de caractères.
+ * Slugifie une chaîne de caractères : « Développé couché » → « developpe-couche ».
+ * Le contenu entre parenthèses est volontairement ignoré : « Fente bulgare (haltères) »
+ * donne le même slug que « Fente bulgare ».
  * @param s Chaîne à slugifier
  * @returns Chaîne slugifiée
  */
 export const slugify = (s: string) =>
   s
     .toLowerCase()
+    // Décompose « é » en « e » + accent, puis retire l'accent : sinon la lettre entière serait supprimée
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/\(.*?\)/g, '')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+|-+$/g, '')
 
 /**
  * Convertit de manière sécurisée une valeur en string JSON pour PostgreSQL.
@@ -18,10 +23,7 @@ export const slugify = (s: string) =>
  * @param defaultValue - Valeur par défaut si value est undefined/null/empty (par défaut: null)
  * @returns String JSON ou null
  */
-export const safeJsonStringify = (
-  value: unknown,
-  defaultValue: unknown = null
-): string | null => {
+export const safeJsonStringify = (value: unknown, defaultValue: unknown = null): string | null => {
   if (value === undefined || value === null || value === '') {
     return defaultValue === null ? null : JSON.stringify(defaultValue)
   }
