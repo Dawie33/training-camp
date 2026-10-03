@@ -14,9 +14,7 @@ export const envValidationSchema = Joi.object({
   OPENAI_MODEL: Joi.string().default('gpt-4.1'),
 
   // Application
-  NODE_ENV: Joi.string()
-    .valid('development', 'production', 'test')
-    .default('development'),
+  NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   // Même défaut que main.ts : 3000 est le port du frontend Next.js
   PORT: Joi.number().default(3001),
   // Nombre de proxys de confiance devant l'API (Express 'trust proxy').
@@ -27,12 +25,18 @@ export const envValidationSchema = Joi.object({
   // l'en-tête x-origin-secret correspondant sont refusées (verrou d'origine).
   ORIGIN_SECRET: Joi.string().min(32).optional(),
 
-  // JWT
-  JWT_SECRET: Joi.string().required(),
+  // JWT — 32 caractères minimum : un secret court se retrouve hors ligne à partir d'un seul jeton
+  JWT_SECRET: Joi.string().min(32).required(),
 
   // Google Calendar
   GOOGLE_CLIENT_ID: Joi.string().optional(),
   GOOGLE_CLIENT_SECRET: Joi.string().optional(),
   GOOGLE_REDIRECT_URI: Joi.string().optional(),
-  FRONTEND_URL: Joi.string().default('http://localhost:3000'),
+  // Origine CORS et redirection après la connexion Google. Obligatoire en production pour qu'un
+  // oubli de configuration empêche le démarrage au lieu de pointer silencieusement vers localhost.
+  FRONTEND_URL: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional().default('http://localhost:3000'),
+  }),
 }).or('DATABASE_URL', 'DATABASE_HOST') // Au moins l'un des deux doit être présent

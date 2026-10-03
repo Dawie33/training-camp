@@ -70,20 +70,20 @@ async function bootstrap() {
   await runMigrations()
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
   const logger = new Logger('Bootstrap')
+  const config = app.get(ConfigService)
 
   // En prod, les requêtes traversent Vercel (rewrite /api) puis le proxy Render :
   // sans 'trust proxy', req.ip est l'IP du dernier proxy et le rate limiting est partagé par tous.
-  const trustProxy = app.get(ConfigService).get<number>('TRUST_PROXY', 0)
+  const trustProxy = config.get<number>('TRUST_PROXY', 0)
   if (trustProxy > 0) {
     app.set('trust proxy', trustProxy)
   }
   logger.log(`trust proxy: ${trustProxy}`)
 
   app.setGlobalPrefix('api')
-  const frontendUrl = process.env.FRONTEND_URL
-  if (!frontendUrl) throw new Error('FRONTEND_URL env var is required')
+  // Obligatoire en production (Joi) : l'app refuse de démarrer si elle manque
   app.enableCors({
-    origin: frontendUrl,
+    origin: config.getOrThrow<string>('FRONTEND_URL'),
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

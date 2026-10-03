@@ -34,4 +34,26 @@ describe('envValidationSchema', () => {
   it('refuse un ORIGIN_SECRET de moins de 32 caractères', () => {
     expect(envValidationSchema.validate({ ...minimalEnv, ORIGIN_SECRET: 'court' }).error).toBeDefined()
   })
+
+  it('refuse un JWT_SECRET de moins de 32 caractères', () => {
+    expect(envValidationSchema.validate({ ...minimalEnv, JWT_SECRET: 'secret123' }).error).toBeDefined()
+  })
+
+  describe('FRONTEND_URL', () => {
+    it('vaut localhost:3000 par défaut en développement', () => {
+      expect(envValidationSchema.validate(minimalEnv).value.FRONTEND_URL).toBe('http://localhost:3000')
+    })
+
+    it('est obligatoire en production', () => {
+      expect(envValidationSchema.validate({ ...minimalEnv, NODE_ENV: 'production' }).error).toBeDefined()
+    })
+
+    it('est acceptée en production quand elle est définie', () => {
+      const env = { ...minimalEnv, NODE_ENV: 'production', FRONTEND_URL: 'https://training-camp.vercel.app' }
+      const { error, value } = envValidationSchema.validate(env)
+
+      expect(error).toBeUndefined()
+      expect(value.FRONTEND_URL).toBe('https://training-camp.vercel.app')
+    })
+  })
 })
