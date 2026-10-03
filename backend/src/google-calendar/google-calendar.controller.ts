@@ -6,7 +6,7 @@ import { GoogleCalendarService } from './google-calendar.service'
 
 @Controller('calendar/google')
 export class GoogleCalendarController {
-  constructor(private readonly googleCalendarService: GoogleCalendarService) { }
+  constructor(private readonly googleCalendarService: GoogleCalendarService) {}
 
   @Get('auth-url')
   @UseGuards(JwtAuthGuard)
@@ -15,17 +15,11 @@ export class GoogleCalendarController {
     return { url }
   }
 
-
   @Get('callback')
-  async callback(
-    @Query('code') code: string,
-    @Query('state') userId: string,
-    @Res() res: Response,
-  ) {
-    await this.googleCalendarService.handleCallback(code, userId)
+  async callback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    await this.googleCalendarService.handleCallback(code, state)
     return res.redirect(`${process.env.FRONTEND_URL}/calendar?google_connected=true`)
   }
-
 
   @Get('status')
   @UseGuards(JwtAuthGuard)
@@ -33,7 +27,6 @@ export class GoogleCalendarController {
     const connected = await this.googleCalendarService.isConnected(req.user.id)
     return { connected }
   }
-
 
   @Delete('disconnect')
   @UseGuards(JwtAuthGuard)

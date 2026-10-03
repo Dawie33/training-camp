@@ -2,61 +2,66 @@ import { Injectable } from '@nestjs/common'
 import { google } from 'googleapis'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { GoogleOAuthStateService } from './google-oauth-state.service'
 
 @Injectable()
 export class GoogleCalendarService {
-  constructor(@InjectModel() private readonly knex: Knex) { }
+  constructor(
+    @InjectModel() private readonly knex: Knex,
+    private readonly oauthState: GoogleOAuthStateService
+  ) {}
 
   /**
-  * Renvoie une nouvelle instance de client OAuth2 configurée avec les
-  * identifiants Google OAuth2 de l'application.
-  * @returns {google.auth.OAuth2} Une nouvelle instance de client OAuth2.
-  */
+   * Renvoie une nouvelle instance de client OAuth2 configurée avec les
+   * identifiants Google OAuth2 de l'application.
+   * @returns {google.auth.OAuth2} Une nouvelle instance de client OAuth2.
+   */
   private getOAuth2Client() {
     return new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI,
+      process.env.GOOGLE_REDIRECT_URI
     )
   }
 
   /**
-  * Renvoie une URL d'autorisation que l'utilisateur peut utiliser pour autoriser l'application 
-  * à accéder à son agenda Google.
-  * @param {string} userId L'identifiant de l'utilisateur.
-  * @returns {string} L'URL d'autorisation.
-  */
+   * Renvoie une URL d'autorisation que l'utilisateur peut utiliser pour autoriser l'application
+   * à accéder à son agenda Google.
+   * @param {string} userId L'identifiant de l'utilisateur.
+   * @returns {string} L'URL d'autorisation.
+   */
   getAuthUrl(userId: string): string {
     const oauth2Client = this.getOAuth2Client()
     return oauth2Client.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
       scope: ['https://www.googleapis.com/auth/calendar'],
-      state: userId,
+      state: this.oauthState.create(userId),
     })
   }
 
   /**
-  * Gère le rappel d'autorisation de Google OAuth2.
-  * @param {string} code Le code d'autorisation.
-  * @param {string} userId L'identifiant de l'utilisateur.
-  * @returns {Promise<void>} Une promesse résolue lorsque le jeton d'actualisation Google de l'utilisateur est mis à jour.
-  */
-  async handleCallback(code: string, userId: string): Promise<void> {
+   * Gère le rappel d'autorisation de Google OAuth2.
+   * @param {string} code Le code d'autorisation.
+   * @param {string} state Le state signé créé par getAuthUrl, qui porte l'id de l'utilisateur.
+   * @returns {Promise<void>} Une promesse résolue lorsque le jeton d'actualisation Google de l'utilisateur est mis à jour.
+   * @throws {UnauthorizedException} Si le state est invalide ou expiré.
+   */
+  async handleCallback(code: string, state: string | undefined): Promise<void> {
+    // Vérifié avant tout appel à Google : un state falsifié n'atteint jamais la base
+    const userId = this.oauthState.verify(state)
     const oauth2Client = this.getOAuth2Client()
     const { tokens } = await oauth2Client.getToken(code)
 
-    await this.knex('users')
-      .where({ id: userId })
-      .update({ google_refresh_token: tokens.refresh_token })
+    await this.knex('users').where({ id: userId }).update({ google_refresh_token: tokens.refresh_token })
   }
 
   /**
-  * Synchronise une séance d'entraînement avec Google Agenda.
-  * @param userId L'identifiant de l'utilisateur.
-  * @param workout La séance d'entraînement à synchroniser.
-  * @returns L'identifiant de l'événement créé en cas de succès, null sinon.
-  */
+   * Synchronise une séance d'entraînement avec Google Agenda.
+   * @param userId L'identifiant de l'utilisateur.
+   * @param workout La séance d'entraînement à synchroniser.
+   * @returns L'identifiant de l'événement créé en cas de succès, null sinon.
+   */
   async syncWorkout(
     userId: string,
     workout: {
@@ -64,7 +69,7 @@ export class GoogleCalendarService {
       scheduledDate: string
       duration?: number
       type?: string
-    },
+    }
   ): Promise<string | null> {
     const user = await this.knex('users').where({ id: userId }).first()
 
@@ -122,8 +127,6 @@ export class GoogleCalendarService {
       }
     }
 
-    await this.knex('users')
-      .where({ id: userId })
-      .update({ google_refresh_token: null })
+    await this.knex('users').where({ id: userId }).update({ google_refresh_token: null })
   }
 }
