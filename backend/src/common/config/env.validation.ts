@@ -17,7 +17,8 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
     .default('development'),
-  PORT: Joi.number().default(3000),
+  // Même défaut que main.ts : 3000 est le port du frontend Next.js
+  PORT: Joi.number().default(3001),
   // Nombre de proxys de confiance devant l'API (Express 'trust proxy').
   // Détermine quelle IP de X-Forwarded-For est utilisée comme req.ip (rate limiting).
   // 0 = l'IP de la connexion TCP. Trop grand = IP falsifiable par le client.
