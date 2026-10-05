@@ -1,22 +1,16 @@
-import { Controller, Get, Ip, Logger } from '@nestjs/common'
-import { HealthResponseDTO, InfoResponseDTO } from './dto/healthcheck.dto'
-import { HealthcheckService } from './healthcheck.service'
+import { Controller, Get } from '@nestjs/common'
+import { SkipThrottle } from '@nestjs/throttler'
+import { HealthResponseDTO } from './dto/healthcheck.dto'
 
+/**
+ * Sondé régulièrement par Render pour savoir si l'instance est vivante.
+ * Public (exempté du verrou d'origine), sans quota de requêtes et sans log.
+ */
 @Controller()
 export class HealthcheckController {
-  private readonly logger = new Logger(HealthcheckController.name);
-
-  constructor(private readonly healthcheckService: HealthcheckService) {}
-
   @Get('/health')
-  async health(@Ip() request_ip: string): Promise<HealthResponseDTO> {
-    this.logger.debug(`GET /health - received from client: ${request_ip}`);
-    return { status: 'OK' };
-  }
-
-  @Get('/info')
-  async getInfo(@Ip() request_ip: string): Promise<InfoResponseDTO> {
-    this.logger.debug(`GET /info - received from client: {${request_ip}}`);
-    return this.healthcheckService.readProjectDetails();
+  @SkipThrottle()
+  health(): HealthResponseDTO {
+    return { status: 'OK' }
   }
 }

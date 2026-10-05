@@ -1,15 +1,15 @@
 // backend/src/main.ts
-import './env';
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { ConfigService } from '@nestjs/config';
-import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-import knex from 'knex';
-import { resolve } from 'path';
-import { readdirSync } from 'fs';
+import './env'
+import { NestFactory } from '@nestjs/core'
+import { NestExpressApplication } from '@nestjs/platform-express'
+import { ConfigService } from '@nestjs/config'
+import { AppModule } from './app.module'
+import { Logger, ValidationPipe } from '@nestjs/common'
+import helmet from 'helmet'
+import cookieParser from 'cookie-parser'
+import knex from 'knex'
+import { resolve } from 'path'
+import { readdirSync } from 'fs'
 
 /**
  * Custom migration source : lit les fichiers .js compilés dans dist/
@@ -20,7 +20,7 @@ const migrationSource = {
   getMigrations(): Promise<string[]> {
     const dir = resolve(__dirname, 'database/migrations')
     const files = readdirSync(dir)
-      .filter((f) => f.endsWith('.js'))
+      .filter(f => f.endsWith('.js'))
       .sort()
     return Promise.resolve(files)
   },
@@ -30,7 +30,9 @@ const migrationSource = {
     return migration.replace(/\.js$/, '.ts')
   },
 
-  getMigration(migration: string): Promise<{ up: (knex: unknown) => Promise<void>; down: (knex: unknown) => Promise<void> }> {
+  getMigration(
+    migration: string
+  ): Promise<{ up: (knex: unknown) => Promise<void>; down: (knex: unknown) => Promise<void> }> {
     const filePath = resolve(__dirname, 'database/migrations', migration)
     return import(filePath)
   },
@@ -40,18 +42,19 @@ async function runMigrations() {
   const logger = new Logger('Migrations')
   const db = knex({
     client: 'pg',
-    connection: process.env.DATABASE_URL && process.env.NODE_ENV === 'production'
-      ? {
-          connectionString: process.env.DATABASE_URL,
-          ssl: { rejectUnauthorized: false },
-        }
-      : {
-          host: process.env.DATABASE_HOST,
-          port: Number(process.env.DATABASE_PORT ?? 5432),
-          user: process.env.DATABASE_USER,
-          password: process.env.DATABASE_PASSWORD,
-          database: process.env.DATABASE_NAME,
-        },
+    connection:
+      process.env.DATABASE_URL && process.env.NODE_ENV === 'production'
+        ? {
+            connectionString: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false },
+          }
+        : {
+            host: process.env.DATABASE_HOST,
+            port: Number(process.env.DATABASE_PORT ?? 5432),
+            user: process.env.DATABASE_USER,
+            password: process.env.DATABASE_PASSWORD,
+            database: process.env.DATABASE_NAME,
+          },
     migrations: { migrationSource },
   })
   try {
@@ -68,7 +71,10 @@ async function runMigrations() {
 
 async function bootstrap() {
   await runMigrations()
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  // En production : pas de logs debug/verbose (bruit inutile, et risque d'y écrire des données personnelles)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: process.env.NODE_ENV === 'production' ? ['fatal', 'error', 'warn', 'log'] : undefined,
+  })
   const logger = new Logger('Bootstrap')
   const config = app.get(ConfigService)
 
@@ -97,7 +103,7 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    }),
+    })
   )
 
   app.use(helmet())
@@ -107,7 +113,7 @@ async function bootstrap() {
   logger.log(`Training Camp API running at http://localhost:${port}`)
 }
 
-bootstrap().catch((err) => {
+bootstrap().catch(err => {
   console.error('Failed to start Nest application:', err)
   process.exit(1)
 })
