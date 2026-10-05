@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common'
+import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
 import { EquipmentsService } from './equipments.service'
@@ -86,7 +86,7 @@ describe('EquipmentsService.findAll', () => {
     const service = await buildService(knexMock)
 
     // Act
-    const result = await service.findAll({ limit: '5', offset: '10' })
+    const result = await service.findAll({ limit: 5, offset: 10 })
 
     // Assert
     expect(result).toEqual({ rows, count: 7 })
@@ -123,13 +123,13 @@ describe('EquipmentsService.findOne', () => {
     expect(knexMock).not.toHaveBeenCalled()
   })
 
-  it("lève BadRequestException si l'équipement est introuvable", async () => {
+  it("lève NotFoundException si l'équipement est introuvable", async () => {
     // Arrange
     const builder = createKnexBuilderMock({ first: undefined })
     const knexMock: any = jest.fn().mockReturnValue(builder)
     const service = await buildService(knexMock)
 
     // Act + Assert
-    await expect(service.findOne('unknown')).rejects.toThrow(BadRequestException)
+    await expect(service.findOne('unknown')).rejects.toThrow(NotFoundException)
   })
 })

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { EquipmentQueryDto } from './dto'
@@ -11,16 +11,16 @@ export class EquipmentsService {
   /**
    * Récupérer tous les équipements.
    * @param {QueryDto} query - Paramètres de la requête.
-   * @param {string} query.limit - Nombre d'équipements à récupérer. Par défaut : 50.
-   * @param {string} query.offset - Décalage de pagination. Par défaut : 0.
+   * @param {number} query.limit - Nombre d'équipements à récupérer (100 au maximum). Par défaut : 50.
+   * @param {number} query.offset - Décalage de pagination. Par défaut : 0.
    * @param {string} query.search - Paramètre de recherche. S'il est défini, la valeur donnée dans l'étiquette de l'équipement sera recherchée.
    * @param {string} query.orderBy - Colonne de tri. Par défaut : « created_at ».
    * @param {string} query.orderDir - Sens de l'ordre. Par défaut : « desc ».
    * @returns {Promise<{rows: Equipment[], count: number}>} - Promesse qui renvoie un objet contenant les lignes et le nombre.
    **/
   async findAll({
-    limit = '50',
-    offset = '0',
+    limit = 50,
+    offset = 0,
     search,
     orderBy = 'created_at',
     orderDir = 'desc',
@@ -31,7 +31,7 @@ export class EquipmentsService {
       query = query.where('label', 'ilike', `%${search}%`)
     }
 
-    const rows = await query.limit(Number(limit)).offset(Number(offset)).orderBy(orderBy, orderDir)
+    const rows = await query.limit(limit).offset(offset).orderBy(orderBy, orderDir)
 
     const countResult = await this.knex('equipments')
       .count('* as count')
@@ -52,6 +52,7 @@ export class EquipmentsService {
    * Récupère un equipment par son ID.
    * @param {string} id - ID de l'équipement.
    * @returns {Promise<Equipment>} - Promesse qui renvoie l'équipement trouvé.
+   * @throws {NotFoundException} Si aucun équipement ne correspond à cet id.
    */
   async findOne(id: string): Promise<Equipment> {
     if (!id) {
@@ -60,7 +61,7 @@ export class EquipmentsService {
     const equipment = await this.knex<Equipment>('equipments').where({ id }).first()
 
     if (!equipment) {
-      throw new BadRequestException('Equipments introuvable')
+      throw new NotFoundException('Équipement introuvable')
     }
 
     return equipment
