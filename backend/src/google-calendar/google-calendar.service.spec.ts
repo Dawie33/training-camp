@@ -1,8 +1,9 @@
 import { BadRequestException, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Test } from '@nestjs/testing'
+import { google } from 'googleapis'
 import { getConnectionToken } from 'nest-knexjs'
-import { GOOGLE_CALENDAR_ENV_VARS, GoogleCalendarService } from './google-calendar.service'
+import { GOOGLE_CALENDAR_ENV_VARS, GoogleCalendarService, isRevokedTokenError } from './google-calendar.service'
 import { GoogleOAuthStateService } from './google-oauth-state.service'
 
 const FULL_CONFIG: Record<string, string> = {
@@ -36,7 +37,7 @@ describe('GoogleCalendarService', () => {
 
     const service = moduleRef.get(GoogleCalendarService)
     // Aucun appel réseau vers Google pendant les tests
-    jest.spyOn(service as any, 'getOAuth2Client').mockReturnValue({ getToken })
+    jest.spyOn(service as any, 'getOAuth2Client').mockReturnValue({ getToken, setCredentials: jest.fn() })
     return service
   }
 
@@ -87,5 +88,75 @@ describe('GoogleCalendarService', () => {
     const service = await buildService()
 
     expect(service.isAvailable()).toBe(true)
+  })
+
+  describe('syncWorkout', () => {
+    const workout = { name: 'Fran', scheduledDate: '2026-10-05', duration: 30 }
+    let insert: jest.Mock
+
+    beforeEach(() => {
+      insert = jest.fn()
+      jest.spyOn(google, 'calendar').mockReturnValue({ events: { insert } } as any)
+    })
+
+    afterEach(() => jest.restoreAllMocks())
+
+    it("crée l'événement à 7 h, heure de Paris, et renvoie son id", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      insert.mockResolvedValue({ data: { id: 'event-1' } })
+
+      await expect(service.syncWorkout('user-1', workout)).resolves.toBe('event-1')
+      expect(builder.first).toHaveBeenCalledWith('google_refresh_token')
+      expect(insert.mock.calls[0][0].requestBody.start).toEqual({
+        dateTime: '2026-10-05T07:00:00',
+        timeZone: 'Europe/Paris',
+      })
+    })
+
+    it("ne contacte pas Google si l'utilisateur n'est pas connecté", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: null })
+
+      await expect(service.syncWorkout('user-1', workout)).resolves.toBeNull()
+      expect(insert).not.toHaveBeenCalled()
+    })
+
+    it('efface le token et renvoie null quand Google signale un accès révoqué', async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      insert.mockRejectedValue(
+        Object.assign(new Error('invalid_grant'), { response: { data: { error: 'invalid_grant' } } })
+      )
+
+      await expect(service.syncWorkout('user-1', workout)).resolves.toBeNull()
+      expect(builder.update).toHaveBeenCalledWith({ google_refresh_token: null })
+    })
+
+    it('garde le token et renvoie null sur une panne temporaire de Google', async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      insert.mockRejectedValue(new Error('Service Unavailable'))
+
+      await expect(service.syncWorkout('user-1', workout)).resolves.toBeNull()
+      expect(builder.update).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('isRevokedTokenError', () => {
+    it.each([
+      ['le corps de réponse invalid_grant', { response: { data: { error: 'invalid_grant' } } }],
+      ['le message invalid_grant', new Error('invalid_grant')],
+    ])('reconnaît %s', (_case, error) => {
+      expect(isRevokedTokenError(error)).toBe(true)
+    })
+
+    it.each([
+      ['une panne réseau', new Error('ECONNRESET')],
+      ['un quota dépassé', { response: { data: { error: 'rateLimitExceeded' } } }],
+      ['null', null],
+    ])('ne confond pas %s avec un accès révoqué', (_case, error) => {
+      expect(isRevokedTokenError(error)).toBe(false)
+    })
   })
 })

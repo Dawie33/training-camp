@@ -6,6 +6,15 @@ import { InjectModel } from 'nest-knexjs'
 import { buildEventTimes } from './calendar-event-time'
 import { GoogleOAuthStateService } from './google-oauth-state.service'
 
+/**
+ * Google répond `invalid_grant` quand le refresh_token a été révoqué (l'utilisateur a retiré l'accès
+ * depuis son compte Google) ou a expiré : il ne fonctionnera plus jamais.
+ */
+export function isRevokedTokenError(error: unknown): boolean {
+  const body = (error as { response?: { data?: { error?: unknown } } } | null)?.response?.data
+  return body?.error === 'invalid_grant' || (error instanceof Error && error.message.includes('invalid_grant'))
+}
+
 /** Sans l'une de ces variables, Google rejette la demande d'autorisation : la fonctionnalité est désactivée. */
 export const GOOGLE_CALENDAR_ENV_VARS = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI'] as const
 
@@ -112,26 +121,48 @@ export class GoogleCalendarService implements OnModuleInit {
   ): Promise<string | null> {
     if (!this.isAvailable()) return null
 
-    const user = await this.knex('users').where({ id: userId }).first()
-
-    if (!user?.google_refresh_token) return null
+    const refreshToken = await this.findRefreshToken(userId)
+    if (!refreshToken) return null
 
     const oauth2Client = this.getOAuth2Client()
-    oauth2Client.setCredentials({ refresh_token: user.google_refresh_token })
-
+    oauth2Client.setCredentials({ refresh_token: refreshToken })
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
 
-    const response = await calendar.events.insert({
-      calendarId: 'primary',
-      requestBody: {
-        summary: `🏋️ ${workout.name}`,
-        description: workout.type ? `Type: ${workout.type.replace(/_/g, ' ')}` : undefined,
-        ...buildEventTimes(workout.scheduledDate, workout.duration),
-        colorId: '11',
-      },
-    })
+    // La planification ne doit jamais échouer à cause de Google : on gère l'erreur ici et on renvoie null
+    try {
+      const response = await calendar.events.insert({
+        calendarId: 'primary',
+        requestBody: {
+          summary: `🏋️ ${workout.name}`,
+          description: workout.type ? `Type: ${workout.type.replace(/_/g, ' ')}` : undefined,
+          ...buildEventTimes(workout.scheduledDate, workout.duration),
+          colorId: '11',
+        },
+      })
+      return response.data.id ?? null
+    } catch (error) {
+      if (isRevokedTokenError(error)) {
+        // Token définitivement inutilisable : on déconnecte pour que l'utilisateur puisse se reconnecter
+        this.logger.warn(`Accès Google révoqué pour l'utilisateur ${userId} : token effacé`)
+        await this.clearRefreshToken(userId)
+      } else {
+        // Panne ou quota Google, sans doute temporaire : on garde la connexion
+        this.logger.error(
+          `Échec de la synchronisation Google pour l'utilisateur ${userId} : ${(error as Error).message}`
+        )
+      }
+      return null
+    }
+  }
 
-    return response.data.id ?? null
+  /** Ne lit que la colonne utile : inutile de charger le reste de la ligne users (hash du mot de passe compris). */
+  private async findRefreshToken(userId: string): Promise<string | null> {
+    const row = await this.knex('users').where({ id: userId }).first('google_refresh_token')
+    return row?.google_refresh_token ?? null
+  }
+
+  private async clearRefreshToken(userId: string): Promise<void> {
+    await this.knex('users').where({ id: userId }).update({ google_refresh_token: null })
   }
 
   /**
@@ -140,8 +171,7 @@ export class GoogleCalendarService implements OnModuleInit {
    * @returns Promesse qui se résout en true si l'utilisateur est connecté, false sinon
    */
   async isConnected(userId: string): Promise<boolean> {
-    const user = await this.knex('users').where({ id: userId }).first()
-    return !!user?.google_refresh_token
+    return (await this.findRefreshToken(userId)) !== null
   }
 
   /**
@@ -151,17 +181,17 @@ export class GoogleCalendarService implements OnModuleInit {
    * @returns Promesse qui se résout en rien
    */
   async disconnect(userId: string): Promise<void> {
-    const user = await this.knex('users').where({ id: userId }).first()
+    const refreshToken = await this.findRefreshToken(userId)
 
-    if (user?.google_refresh_token) {
+    if (refreshToken) {
       try {
         const oauth2Client = this.getOAuth2Client()
-        await oauth2Client.revokeToken(user.google_refresh_token)
+        await oauth2Client.revokeToken(refreshToken)
       } catch {
         // Token déjà révoqué côté Google, on continue quand même
       }
     }
 
-    await this.knex('users').where({ id: userId }).update({ google_refresh_token: null })
+    await this.clearRefreshToken(userId)
   }
 }
