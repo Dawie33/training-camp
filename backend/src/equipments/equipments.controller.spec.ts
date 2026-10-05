@@ -11,7 +11,12 @@ describe('EquipmentsController', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [EquipmentsController],
-      providers: [{ provide: EquipmentsService, useValue: { findAll: async () => ({ rows: [], count: 0 }) } }],
+      providers: [
+        {
+          provide: EquipmentsService,
+          useValue: { findAll: async () => ({ rows: [], count: 0 }), findOne: async (id: string) => ({ id }) },
+        },
+      ],
     })
       // Utilisateur connecté : on teste les routes exposées, pas l'authentification
       .overrideGuard(JwtAuthGuard)
@@ -28,6 +33,15 @@ describe('EquipmentsController', () => {
 
   it('permet de lire le catalogue', async () => {
     await request(app.getHttpServer()).get('/equipments').expect(200)
+  })
+
+  it('lit un équipement par son id', async () => {
+    const id = '3f1c2a4e-8b7d-4c1e-9a2f-5d6e7f8a9b0c'
+    await request(app.getHttpServer()).get(`/equipments/${id}`).expect(200, { id })
+  })
+
+  it("répond 400 quand l'id n'est pas un UUID (ex. un slug)", async () => {
+    await request(app.getHttpServer()).get('/equipments/pull-up-bar').expect(400)
   })
 
   it.each([

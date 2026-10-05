@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common'
+import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { EquipmentQueryDto } from './dto'
 import { EquipmentsService } from './equipments.service'
@@ -19,7 +19,8 @@ export class EquipmentsController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id') id: string) {
+  // ParseUUIDPipe : un slug ou un texte quelconque donne un 400 clair, au lieu d'une erreur 500 de PostgreSQL
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.findOne(id)
   }
 }
