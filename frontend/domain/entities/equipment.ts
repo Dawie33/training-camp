@@ -11,11 +11,3 @@ export interface Equipment {
     updated_at: string
     meta: Record<string, string>
 }
-
-export interface CreateEquipmentDTO {
-    label: string
-    description?: string
-    image_url?: string
-}
-
-export type UpdateEquipmentDTO = Partial<CreateEquipmentDTO>

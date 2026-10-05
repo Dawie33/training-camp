@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common"
 import { Knex } from "knex"
 import { InjectModel } from "nest-knexjs"
-import { slugify } from "src/common/utils/utils"
-import { CreateEquipmentDto, EquipmentQueryDto, UpdateEquipmentDto } from "./dto"
+import { EquipmentQueryDto } from "./dto"
 import { Equipment } from "./types/equipments.types"
 
 @Injectable()
@@ -64,75 +63,4 @@ export class EquipmentsService {
 
         return equipment
     }
-
-    /**
-     * Crée un nouvel équipement.
-     * @param {CreateEquipmentDto} data - Informations de l'équipement à créer.
-     * @returns {Promise<Equipment>} - Promesse qui renvoie l'équipement créé.
-     * @throws {BadRequestException} Si l'équipement n'a pas pu être créé.
-     */
-    async create(data: CreateEquipmentDto): Promise<Equipment> {
-        const [row] = await this.knex<Equipment>('equipments')
-            .insert({
-                slug: slugify(data.label),
-                label: data.label,
-                description: data.description,
-                image_url: data.image_url,
-                meta: data.meta || {},
-            })
-            .returning('*')
-
-        return row
-    }
-
-    /**
-     * Met à jour un équipement.
-     * @param {string} id - ID de l'équipement à mettre à jour.
-     * @param {UpdateEquipmentDto} data - Informations de l'équipement à mettre à jour.
-     * @returns {Promise<Equipment>} - Promesse qui renvoie l'équipement mis à jour.
-     * @throws {BadRequestException} Si l'équipement n'a pas pu être mis à jour.
-     */
-    async update(id: string, data: UpdateEquipmentDto): Promise<Equipment> {
-        const updateData: Partial<Equipment> = {}
-
-        if (data.label !== undefined) {
-            updateData.label = data.label
-            updateData.slug = slugify(data.label)
-        }
-        if (data.description !== undefined) {
-            updateData.description = data.description
-        }
-        if (data.meta !== undefined) {
-            updateData.meta = data.meta
-        }
-        if (data.image_url !== undefined) {
-            updateData.image_url = data.image_url
-        }
-
-        if (!id) {
-            throw new BadRequestException('id de l\'équipement manquant')
-        }
-
-        const [row] = await this.knex<Equipment>('equipments')
-            .where({ id })
-            .update(updateData)
-            .returning('*')
-
-        if (!row) {
-            throw new BadRequestException('Impossible de mettre à jour l\'équipement')
-        }
-
-        return row
-    }
-
-    /**
-     * Supprime un équipement.
-     * @param {string} id - ID de l'équipement à supprimer.
-     * @returns {Promise<{success: boolean}>} - Promesse qui renvoie un objet contenant le statut de la suppression.
-     */
-    async delete(id: string): Promise<{ success: boolean }> {
-        await this.knex('equipments').where({ id }).delete()
-        return { success: true }
-    }
-
 }
