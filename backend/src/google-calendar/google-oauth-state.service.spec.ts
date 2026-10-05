@@ -29,7 +29,18 @@ describe('GoogleOAuthStateService', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
-        ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true, load: [() => ({ JWT_SECRET })] }),
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () => ({
+              JWT_SECRET,
+              GOOGLE_CLIENT_ID: 'client-id',
+              GOOGLE_CLIENT_SECRET: 'client-secret',
+              GOOGLE_REDIRECT_URI: 'https://app.example.com/api/calendar/google/callback',
+            }),
+          ],
+        }),
         FakeKnexModule,
         GoogleCalendarModule,
       ],

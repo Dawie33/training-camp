@@ -7,13 +7,17 @@ import { GoogleCalendarService } from './google-calendar.service'
 
 const FRONTEND_URL = 'https://app.example.com'
 
-describe('GoogleCalendarController — callback', () => {
+describe('GoogleCalendarController', () => {
   let controller: GoogleCalendarController
-  let service: { handleCallback: jest.Mock }
+  let service: { handleCallback: jest.Mock; isAvailable: jest.Mock; isConnected: jest.Mock }
   let res: { redirect: jest.Mock }
 
   beforeEach(async () => {
-    service = { handleCallback: jest.fn().mockResolvedValue(undefined) }
+    service = {
+      handleCallback: jest.fn().mockResolvedValue(undefined),
+      isAvailable: jest.fn().mockReturnValue(true),
+      isConnected: jest.fn().mockResolvedValue(true),
+    }
     res = { redirect: jest.fn() }
 
     const moduleRef = await Test.createTestingModule({
@@ -57,5 +61,20 @@ describe('GoogleCalendarController — callback', () => {
     await callback('code', 'state-falsifie')
 
     expect(res.redirect).toHaveBeenCalledWith(`${FRONTEND_URL}/calendar?google_connected=false`)
+  })
+
+  describe('status', () => {
+    const req = { user: { id: 'user-1' } }
+
+    it("indique si la fonctionnalité est disponible et si l'utilisateur est connecté", async () => {
+      await expect(controller.status(req)).resolves.toEqual({ available: true, connected: true })
+    })
+
+    it('renvoie connected=false sans lire la base quand la fonctionnalité est indisponible', async () => {
+      service.isAvailable.mockReturnValue(false)
+
+      await expect(controller.status(req)).resolves.toEqual({ available: false, connected: false })
+      expect(service.isConnected).not.toHaveBeenCalled()
+    })
   })
 })

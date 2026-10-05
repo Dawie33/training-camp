@@ -56,9 +56,11 @@ export class GoogleCalendarController {
 
   @Get('status')
   @UseGuards(JwtAuthGuard)
-  async status(@Req() req) {
-    const connected = await this.googleCalendarService.isConnected(req.user.id)
-    return { connected }
+  async status(@Req() req): Promise<{ available: boolean; connected: boolean }> {
+    // available = false : le front masque le bouton au lieu d'envoyer vers une page d'erreur Google
+    const available = this.googleCalendarService.isAvailable()
+    const connected = available && (await this.googleCalendarService.isConnected(req.user.id))
+    return { available, connected }
   }
 
   @Delete('disconnect')

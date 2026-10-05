@@ -31,6 +31,7 @@ export function useCalendarPage() {
   const [parseBoxWodMode, setParseBoxWodMode] = useState<'instagram' | 'search'>('instagram')
   const [weeklyPlannerOpen, setWeeklyPlannerOpen] = useState(false)
   const [scheduleSkillOpen, setScheduleSkillOpen] = useState(false)
+  const [googleAvailable, setGoogleAvailable] = useState(false)
   const [googleConnected, setGoogleConnected] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [printWorkoutData, setPrintWorkoutData] = useState<Workouts | null>(null)
@@ -41,7 +42,13 @@ export function useCalendarPage() {
 
   // Google Calendar status + OAuth callback
   useEffect(() => {
-    googleCalendarApi.getStatus().then(setGoogleConnected).catch(() => { })
+    googleCalendarApi
+      .getStatus()
+      .then(({ available, connected }) => {
+        setGoogleAvailable(available)
+        setGoogleConnected(connected)
+      })
+      .catch(() => { })
 
     const params = new URLSearchParams(window.location.search)
     const googleConnected = params.get('google_connected')
@@ -227,7 +234,7 @@ export function useCalendarPage() {
     weeklyPlannerOpen, setWeeklyPlannerOpen,
     scheduleSkillOpen, setScheduleSkillOpen,
     // Google
-    googleConnected, googleLoading,
+    googleAvailable, googleConnected, googleLoading,
     handleGoogleConnect, handleGoogleDisconnect,
     // Print
     printWorkoutData,

@@ -6,9 +6,9 @@ export const googleCalendarApi = {
     return url
   },
 
-  async getStatus(): Promise<boolean> {
-    const { connected } = await apiClient.get<{ connected: boolean }>('/calendar/google/status')
-    return connected
+  /** available = false : la synchronisation n'est pas configurée sur le serveur, le bouton est masqué. */
+  async getStatus(): Promise<{ available: boolean; connected: boolean }> {
+    return apiClient.get<{ available: boolean; connected: boolean }>('/calendar/google/status')
   },
 
   async disconnect(): Promise<void> {

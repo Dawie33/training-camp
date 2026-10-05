@@ -1,15 +1,44 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { google } from 'googleapis'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { GoogleOAuthStateService } from './google-oauth-state.service'
 
+/** Sans l'une de ces variables, Google rejette la demande d'autorisation : la fonctionnalité est désactivée. */
+export const GOOGLE_CALENDAR_ENV_VARS = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI'] as const
+
 @Injectable()
-export class GoogleCalendarService {
+export class GoogleCalendarService implements OnModuleInit {
+  private readonly logger = new Logger(GoogleCalendarService.name)
+
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private readonly oauthState: GoogleOAuthStateService
+    private readonly oauthState: GoogleOAuthStateService,
+    private readonly config: ConfigService
   ) {}
+
+  onModuleInit(): void {
+    const missing = this.missingEnvVars()
+    if (missing.length > 0) {
+      this.logger.warn(`Google Calendar désactivé : ${missing.join(', ')} non définie(s)`)
+    }
+  }
+
+  private missingEnvVars(): string[] {
+    return GOOGLE_CALENDAR_ENV_VARS.filter(name => !this.config.get<string>(name))
+  }
+
+  /** La synchronisation Google Agenda est-elle configurée sur ce serveur ? */
+  isAvailable(): boolean {
+    return this.missingEnvVars().length === 0
+  }
+
+  private assertAvailable(): void {
+    if (!this.isAvailable()) {
+      throw new ServiceUnavailableException("La synchronisation Google Agenda n'est pas configurée")
+    }
+  }
 
   /**
    * Renvoie une nouvelle instance de client OAuth2 configurée avec les
@@ -18,9 +47,9 @@ export class GoogleCalendarService {
    */
   private getOAuth2Client() {
     return new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
+      this.config.get<string>('GOOGLE_CLIENT_ID'),
+      this.config.get<string>('GOOGLE_CLIENT_SECRET'),
+      this.config.get<string>('GOOGLE_REDIRECT_URI')
     )
   }
 
@@ -29,8 +58,10 @@ export class GoogleCalendarService {
    * à accéder à son agenda Google.
    * @param {string} userId L'identifiant de l'utilisateur.
    * @returns {string} L'URL d'autorisation.
+   * @throws {ServiceUnavailableException} Si la fonctionnalité n'est pas configurée.
    */
   getAuthUrl(userId: string): string {
+    this.assertAvailable()
     const oauth2Client = this.getOAuth2Client()
     return oauth2Client.generateAuthUrl({
       access_type: 'offline',
@@ -51,6 +82,7 @@ export class GoogleCalendarService {
   async handleCallback(code: string, state: string | undefined): Promise<void> {
     // Vérifié avant tout appel à Google : un state falsifié n'atteint jamais la base
     const userId = this.oauthState.verify(state)
+    this.assertAvailable()
     const oauth2Client = this.getOAuth2Client()
     const { tokens } = await oauth2Client.getToken(code)
 
@@ -77,6 +109,8 @@ export class GoogleCalendarService {
       type?: string
     }
   ): Promise<string | null> {
+    if (!this.isAvailable()) return null
+
     const user = await this.knex('users').where({ id: userId }).first()
 
     if (!user?.google_refresh_token) return null
