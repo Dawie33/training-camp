@@ -15,6 +15,13 @@ export function isRevokedTokenError(error: unknown): boolean {
   return body?.error === 'invalid_grant' || (error instanceof Error && error.message.includes('invalid_grant'))
 }
 
+/**
+ * Seul droit demandé : gérer les événements. Le scope `auth/calendar` donnerait aussi la lecture,
+ * la modification, la suppression et le partage de tous les agendas de l'utilisateur.
+ * À garder identique au scope déclaré sur l'écran de consentement de la console Google Cloud.
+ */
+export const GOOGLE_CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar.events']
+
 /** Sans l'une de ces variables, Google rejette la demande d'autorisation : la fonctionnalité est désactivée. */
 export const GOOGLE_CALENDAR_ENV_VARS = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI'] as const
 
@@ -76,7 +83,7 @@ export class GoogleCalendarService implements OnModuleInit {
     return oauth2Client.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
-      scope: ['https://www.googleapis.com/auth/calendar'],
+      scope: GOOGLE_CALENDAR_SCOPES,
       state: this.oauthState.create(userId),
     })
   }

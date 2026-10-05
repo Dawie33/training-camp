@@ -57,6 +57,12 @@ describe('GoogleOAuthStateService', () => {
     expect(stateService.verify(state)).toBe(ATTACKER_ID)
   })
 
+  it("ne demande à Google que le droit de gérer les événements de l'agenda", () => {
+    const scope = new URL(calendarService.getAuthUrl(ATTACKER_ID)).searchParams.get('scope')
+
+    expect(scope).toBe('https://www.googleapis.com/auth/calendar.events')
+  })
+
   it("rejette un state dont l'id a été remplacé par celui d'une victime", async () => {
     // L'attaquant décode son state, remplace son id par celui de la victime et recolle le JWT
     const [header, payload, signature] = stateFromAuthUrl(calendarService.getAuthUrl(ATTACKER_ID)).split('.')
