@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { google } from 'googleapis'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { buildEventTimes } from './calendar-event-time'
 import { GoogleOAuthStateService } from './google-oauth-state.service'
 
 /** Sans l'une de ces variables, Google rejette la demande d'autorisation : la fonctionnalité est désactivée. */
@@ -120,18 +121,12 @@ export class GoogleCalendarService implements OnModuleInit {
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
 
-    const startDate = new Date(workout.scheduledDate)
-    startDate.setHours(7, 0, 0, 0)
-    const endDate = new Date(startDate)
-    endDate.setMinutes(endDate.getMinutes() + (workout.duration ?? 60))
-
     const response = await calendar.events.insert({
       calendarId: 'primary',
       requestBody: {
         summary: `🏋️ ${workout.name}`,
         description: workout.type ? `Type: ${workout.type.replace(/_/g, ' ')}` : undefined,
-        start: { dateTime: startDate.toISOString() },
-        end: { dateTime: endDate.toISOString() },
+        ...buildEventTimes(workout.scheduledDate, workout.duration),
         colorId: '11',
       },
     })
