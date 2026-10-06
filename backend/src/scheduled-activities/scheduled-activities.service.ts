@@ -1,8 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { toDateOnly } from 'src/common/utils/date-only'
 import { GoogleCalendarService } from '../google-calendar/google-calendar.service'
-import { CreateScheduledActivityDto, UnifiedActivityQueryDto, UpdateScheduledActivityDto } from './dto/scheduled-activity.dto'
+import {
+  CreateScheduledActivityDto,
+  UnifiedActivityQueryDto,
+  UpdateScheduledActivityDto,
+} from './dto/scheduled-activity.dto'
 import { UnifiedActivity } from './types/unified-activity.type'
 
 const ACTIVITY_LABELS: Record<string, string> = { skill: 'Skill', wod: 'WOD', conditioning: 'Conditioning' }
@@ -20,8 +25,8 @@ export interface SkillEnrichment {
 export class ScheduledActivitiesService {
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private readonly googleCalendarService: GoogleCalendarService,
-  ) { }
+    private readonly googleCalendarService: GoogleCalendarService
+  ) {}
 
   /**
    * Enrichit un lot de programmes de skill : nom, catégorie, étape en cours et % de progression.
@@ -64,6 +69,44 @@ export class ScheduledActivitiesService {
   }
 
   /**
+   * Convertit une ligne de `scheduled_activities` en activité unifiée, enrichie du programme
+   * de skill lié s'il y en a un. Seul endroit où cette conversion est faite.
+   */
+  private toUnifiedActivity(row: Record<string, any>, skill?: SkillEnrichment): UnifiedActivity {
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      scheduled_date: toDateOnly(row.scheduled_date),
+      module: row.activity_type,
+      status: row.status,
+      title: skill?.title ?? (ACTIVITY_LABELS[row.activity_type] || row.activity_type),
+      notes: row.notes,
+      location: row.location,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      activity_type: row.activity_type,
+      activity_id: row.activity_id,
+      ...(skill && {
+        skill_program_id: skill.skill_program_id,
+        skill_name: skill.skill_name,
+        skill_category: skill.skill_category,
+        skill_step_title: skill.skill_step_title,
+        skill_progress: skill.skill_progress,
+      }),
+      _source: 'scheduled_activities',
+    }
+  }
+
+  /** Charge le programme de skill d'une seule ligne (création, mise à jour). */
+  private async enrichOne(row: Record<string, any>): Promise<UnifiedActivity> {
+    const skill =
+      row.activity_type === 'skill' && row.activity_id
+        ? (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
+        : undefined
+    return this.toUnifiedActivity(row, skill)
+  }
+
+  /**
    * Retourne la liste unifiée de toutes les activités planifiées d'un utilisateur
    * (CrossFit depuis user_workout_schedule + nouveaux modules depuis scheduled_activities)
    */
@@ -78,10 +121,14 @@ export class ScheduledActivitiesService {
         .select(
           'user_workout_schedule.*',
           this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
-          this.knex.raw(`COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`),
+          this.knex.raw(
+            `COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`
+          ),
           this.knex.raw(`COALESCE(workouts.difficulty, personalized_workouts.plan_json->>'difficulty') as difficulty`),
           this.knex.raw(`COALESCE(workouts.intensity, personalized_workouts.plan_json->>'intensity') as intensity`),
-          this.knex.raw(`COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`),
+          this.knex.raw(
+            `COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`
+          )
         )
         .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
         .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
@@ -111,9 +158,7 @@ export class ScheduledActivitiesService {
         activities.push({
           id: row.id,
           user_id: row.user_id,
-          scheduled_date: typeof row.scheduled_date === 'string'
-            ? row.scheduled_date.slice(0, 10)
-            : new Date(row.scheduled_date).toISOString().slice(0, 10),
+          scheduled_date: toDateOnly(row.scheduled_date),
           module: 'crossfit',
           status: row.status,
           title,
@@ -139,8 +184,7 @@ export class ScheduledActivitiesService {
 
     // --- Nouveaux modules (scheduled_activities) ---
     if (!moduleFilter || moduleFilter !== 'crossfit') {
-      let saQuery = this.knex('scheduled_activities')
-        .where('user_id', userId)
+      let saQuery = this.knex('scheduled_activities').where('user_id', userId)
 
       if (start_date) saQuery = saQuery.where('scheduled_date', '>=', start_date)
       if (end_date) saQuery = saQuery.where('scheduled_date', '<=', end_date)
@@ -150,47 +194,13 @@ export class ScheduledActivitiesService {
       const saRows = await saQuery.orderBy('scheduled_date', 'asc')
 
       // Batch-fetch les programmes de skill liés pour enrichir les créneaux skill planifiés
-      const skillProgramIds = saRows
-        .filter(r => r.activity_type === 'skill' && r.activity_id)
-        .map(r => r.activity_id)
+      const skillProgramIds = saRows.filter(r => r.activity_type === 'skill' && r.activity_id).map(r => r.activity_id)
       const skillEnrichmentMap = await this.getSkillEnrichment(skillProgramIds)
 
       for (const row of saRows) {
-        let title = ACTIVITY_LABELS[row.activity_type] || row.activity_type
-        let skillFields: Partial<UnifiedActivity> = {}
-
-        if (row.activity_type === 'skill' && row.activity_id) {
-          const skill = skillEnrichmentMap.get(row.activity_id)
-          if (skill) {
-            title = skill.title
-            skillFields = {
-              skill_program_id: skill.skill_program_id,
-              skill_name: skill.skill_name,
-              skill_category: skill.skill_category,
-              skill_step_title: skill.skill_step_title,
-              skill_progress: skill.skill_progress,
-            }
-          }
-        }
-
-        activities.push({
-          id: row.id,
-          user_id: row.user_id,
-          scheduled_date: typeof row.scheduled_date === 'string'
-            ? row.scheduled_date.slice(0, 10)
-            : new Date(row.scheduled_date).toISOString().slice(0, 10),
-          module: row.activity_type,
-          status: row.status,
-          title,
-          notes: row.notes,
-          location: row.location,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
-          activity_type: row.activity_type,
-          activity_id: row.activity_id,
-          ...skillFields,
-          _source: 'scheduled_activities',
-        })
+        const skill =
+          row.activity_type === 'skill' && row.activity_id ? skillEnrichmentMap.get(row.activity_id) : undefined
+        activities.push(this.toUnifiedActivity(row, skill))
       }
     }
 
@@ -214,10 +224,7 @@ export class ScheduledActivitiesService {
 
     // Vérifie que le programme de skill référencé appartient bien à l'utilisateur
     if (data.activity_type === 'skill' && data.activity_id) {
-      const program = await this.knex('skill_programs')
-        .where('id', data.activity_id)
-        .where('user_id', userId)
-        .first()
+      const program = await this.knex('skill_programs').where('id', data.activity_id).where('user_id', userId).first()
       if (!program) {
         throw new NotFoundException('Programme de skill non trouvé')
       }
@@ -236,62 +243,28 @@ export class ScheduledActivitiesService {
       .returning('*')
 
     // Sync Google Calendar en arrière-plan (silencieux si non connecté)
-    this.googleCalendarService.syncWorkout(userId, {
-      name: ACTIVITY_LABELS[data.activity_type] || data.activity_type,
-      scheduledDate: data.scheduled_date,
-    }).catch(() => undefined)
+    this.googleCalendarService
+      .syncWorkout(userId, {
+        name: ACTIVITY_LABELS[data.activity_type] || data.activity_type,
+        scheduledDate: data.scheduled_date,
+      })
+      .catch(() => undefined)
 
-    let title = ACTIVITY_LABELS[row.activity_type] || row.activity_type
-    let skillFields: Partial<UnifiedActivity> = {}
-
-    if (row.activity_type === 'skill' && row.activity_id) {
-      const skill = (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
-      if (skill) {
-        title = skill.title
-        skillFields = {
-          skill_program_id: skill.skill_program_id,
-          skill_name: skill.skill_name,
-          skill_category: skill.skill_category,
-          skill_step_title: skill.skill_step_title,
-          skill_progress: skill.skill_progress,
-        }
-      }
-    }
-
-    return {
-      id: row.id,
-      user_id: row.user_id,
-      scheduled_date: typeof row.scheduled_date === 'string'
-        ? row.scheduled_date.slice(0, 10)
-        : new Date(row.scheduled_date).toISOString().slice(0, 10),
-      module: row.activity_type,
-      status: row.status,
-      title,
-      notes: row.notes,
-      location: row.location,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      activity_type: row.activity_type,
-      activity_id: row.activity_id,
-      ...skillFields,
-      _source: 'scheduled_activities',
-    }
+    return this.enrichOne(row)
   }
 
   /**
    * Met à jour une activité planifiée (nouveaux modules uniquement)
    */
   async update(id: string, userId: string, data: UpdateScheduledActivityDto): Promise<UnifiedActivity> {
-    const existing = await this.knex('scheduled_activities')
-      .where('id', id)
-      .where('user_id', userId)
-      .first()
+    const existing = await this.knex('scheduled_activities').where('id', id).where('user_id', userId).first()
 
     if (!existing) {
       throw new NotFoundException('Activité non trouvée')
     }
 
-    if (data.scheduled_date && data.scheduled_date !== existing.scheduled_date) {
+    // existing.scheduled_date est un objet Date (colonne date) : on compare les jours, pas les types
+    if (data.scheduled_date && toDateOnly(data.scheduled_date) !== toDateOnly(existing.scheduled_date)) {
       const conflict = await this.knex('scheduled_activities')
         .where('user_id', userId)
         .where('scheduled_date', data.scheduled_date)
@@ -317,51 +290,14 @@ export class ScheduledActivitiesService {
       })
       .returning('*')
 
-    let updateTitle = ACTIVITY_LABELS[row.activity_type] || row.activity_type
-    let updateSkillFields: Partial<UnifiedActivity> = {}
-
-    if (row.activity_type === 'skill' && row.activity_id) {
-      const skill = (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
-      if (skill) {
-        updateTitle = skill.title
-        updateSkillFields = {
-          skill_program_id: skill.skill_program_id,
-          skill_name: skill.skill_name,
-          skill_category: skill.skill_category,
-          skill_step_title: skill.skill_step_title,
-          skill_progress: skill.skill_progress,
-        }
-      }
-    }
-
-    return {
-      id: row.id,
-      user_id: row.user_id,
-      scheduled_date: typeof row.scheduled_date === 'string'
-        ? row.scheduled_date.slice(0, 10)
-        : new Date(row.scheduled_date).toISOString().slice(0, 10),
-      module: row.activity_type,
-      status: row.status,
-      title: updateTitle,
-      notes: row.notes,
-      location: row.location,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      activity_type: row.activity_type,
-      activity_id: row.activity_id,
-      ...updateSkillFields,
-      _source: 'scheduled_activities',
-    }
+    return this.enrichOne(row)
   }
 
   /**
    * Supprime une activité planifiée (nouveaux modules uniquement)
    */
   async delete(id: string, userId: string): Promise<{ success: boolean }> {
-    const deleted = await this.knex('scheduled_activities')
-      .where('id', id)
-      .where('user_id', userId)
-      .delete()
+    const deleted = await this.knex('scheduled_activities').where('id', id).where('user_id', userId).delete()
 
     if (deleted === 0) {
       throw new NotFoundException('Activité non trouvée')
