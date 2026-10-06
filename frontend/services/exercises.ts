@@ -2,13 +2,12 @@
 // ============================================================================
 // Exercices API
 
-import { CreateExerciseDTO, Exercise, UpdateExerciseDTO } from "@/domain/entities/exercise"
+import { Exercise } from "@/domain/entities/exercise"
 import ResourceApi from "./resourceApi"
 
 // ============================================================================
-export const exercisesApi = new ResourceApi<Exercise, CreateExerciseDTO, UpdateExerciseDTO>(
-    '/exercises'
-)
+// Référentiel en lecture seule : aucune création, modification ni suppression via l'API
+export const exercisesApi = new ResourceApi<Exercise>('/exercises')
 
 export async function getExercises(params?: {
     limit?: number
@@ -29,16 +28,3 @@ export async function getExerciseByName(name: string): Promise<Exercise> {
     const apiClient = await import('./apiClient').then(m => m.apiClient)
     return apiClient.get<Exercise>(`/exercises/by-name/${encodeURIComponent(name)}`)
 }
-
-export async function createExercise(data: CreateExerciseDTO): Promise<Exercise> {
-    return exercisesApi.create(data)
-}
-
-export async function updateExercise(id: string, data: UpdateExerciseDTO): Promise<Exercise> {
-    return exercisesApi.update(id, data)
-}
-
-export async function deleteExercise(id: string): Promise<void> {
-    return exercisesApi.delete(id)
-}
-
