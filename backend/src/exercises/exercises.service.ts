@@ -79,15 +79,6 @@ export class ExercisesService {
     }
 
     /**
-     * Récupère un exercice par son identifiant.
-     * @param {string} id - Identifiant de l'exercice.
-     * @returns {Promise<Exercise | null>} - Promesse qui renvoie l'exercice correspondant à l'identifiant ou null si l'exercice n'existe pas.
-     */
-    async findOne(id: string) {
-        return this.knex('exercises').where({ id }).first()
-    }
-
-    /**
      * Récupère un exercice par son nom.
      * Recherche d'abord une correspondance exacte, sinon recherche avec ILIKE (insensible à la casse et pluriel tolérant)
      * @param {string} name - Nom de l'exercice.
@@ -110,70 +101,5 @@ export class ExercisesService {
             .first()
 
         return exercise || null
-    }
-
-    /**
-     * @param unlockedNames Noms de mouvements a autoriser meme au-dela du niveau
-     * declare (sport_level) : signal concret de maitrise (1RM enregistre, skill
-     * termine...). Compare par correspondance floue (insensible a la casse,
-     * espaces/tirets ignores) plutot qu'une egalite stricte, car le nom d'une
-     * competence ("Muscle-Up") ne correspond pas toujours exactement au nom de
-     * l'exercice en base ("Ring Muscle-Up").
-     */
-    async findForProgram({
-        difficulty,
-        equipment = [],
-        categories,
-        unlockedNames = [],
-    }: {
-        difficulty?: string
-        equipment?: string[]
-        categories?: string[]
-        unlockedNames?: string[]
-    }) {
-        let query = this.knex('exercises').where('isActive', true)
-
-        if (categories && categories.length > 0) {
-            query = query.whereIn('category', categories)
-        }
-
-        if (equipment.length > 0) {
-            query = query.whereRaw(
-                `NOT EXISTS (
-                    SELECT 1
-                    FROM jsonb_array_elements_text(COALESCE(equipment_required::jsonb, '[]'::jsonb)) AS required_equipment(value)
-                    WHERE NOT (required_equipment.value = ANY(?::text[]))
-                )`,
-                [equipment],
-            )
-        } else {
-            query = query.whereRaw(`COALESCE(equipment_required::jsonb, '[]'::jsonb) = '[]'::jsonb`)
-        }
-
-        const rows: Array<{ name: string; category: string; difficulty: string;[key: string]: unknown }> = await query.orderBy('name', 'asc')
-
-        if (!difficulty) {
-            return rows
-        }
-
-        const allowedDifficulties = new Set(this.allowedDifficulties(difficulty))
-        const unlockedPatterns = unlockedNames.map((name) => this.normalizeMovementName(name)).filter(Boolean)
-
-        return rows.filter((row) => {
-            if (allowedDifficulties.has(row.difficulty)) return true
-            if (unlockedPatterns.length === 0) return false
-            const normalizedName = this.normalizeMovementName(row.name)
-            return unlockedPatterns.some((pattern) => normalizedName.includes(pattern) || pattern.includes(normalizedName))
-        })
-    }
-
-    private allowedDifficulties(difficulty: string): string[] {
-        const levels = ['beginner', 'intermediate', 'advanced']
-        const index = levels.indexOf(difficulty)
-        return index >= 0 ? levels.slice(0, index + 1) : [difficulty]
-    }
-
-    private normalizeMovementName(value: string): string {
-        return value.toLowerCase().replace(/[-\s]/g, '')
     }
 }

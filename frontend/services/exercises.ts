@@ -19,10 +19,6 @@ export async function getExercises(params?: {
     return exercisesApi.getAll(params)
 }
 
-export async function getExercise(id: string): Promise<Exercise> {
-    return exercisesApi.getOne(id)
-}
-
 export async function getExerciseByName(name: string): Promise<Exercise> {
     // Utiliser l'endpoint spécifique by-name au lieu de l'endpoint par ID
     const apiClient = await import('./apiClient').then(m => m.apiClient)
