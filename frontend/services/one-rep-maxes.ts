@@ -14,6 +14,8 @@ export interface UpsertOneRepMaxDto {
   source: 'real' | 'estimated'
 }
 
+// Garder synchronisé avec ONE_REP_MAX_LIFTS (backend/src/one-rep-maxes/one-rep-max.constants.ts) :
+// un mouvement absent côté backend est rejeté (400) par PUT /one-rep-maxes/:lift.
 export const CROSSFIT_LIFTS: { value: string; label: string }[] = [
   { value: 'back_squat', label: 'Back Squat' },
   { value: 'front_squat', label: 'Front Squat' },

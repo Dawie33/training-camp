@@ -58,7 +58,8 @@ export function OneRepMaxTab({ oneRepMaxes, liftValues, savingLift, onSetEntry, 
                   value={entry.value}
                   onChange={(e) => onSetEntry(lift.value, { value: e.target.value })}
                   placeholder="kg"
-                  min="0"
+                  min="0.5"
+                  max="500"
                   step="0.5"
                   className="w-20 px-2.5 py-1.5 rounded-md bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-colors"
                 />

@@ -28,10 +28,13 @@ export function useOneRepMaxes() {
   const handleSaveLift = async (liftValue: string) => {
     const entry = liftValues[liftValue]
     if (!entry?.value) { toast.error('Veuillez entrer une valeur'); return }
+    // Mêmes bornes que le backend (ONE_REP_MAX_MAX_KG) : un message clair plutôt qu'une erreur 400 générique
+    const value = Number(entry.value)
+    if (!(value > 0 && value <= 500)) { toast.error('Le 1RM doit être compris entre 0,5 et 500 kg'); return }
     try {
       setSavingLift(liftValue)
       const result = await oneRepMaxesService.upsertOneRepMax(liftValue, {
-        value: Number(entry.value),
+        value,
         source: entry.source,
       })
       setOneRepMaxes((prev) => [...prev.filter((r) => r.lift !== liftValue), result])

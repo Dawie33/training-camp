@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Put, Request, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { UpsertOneRepMaxDto } from './dto/one-rep-max.dto'
+import { OneRepMaxLiftParamDto, UpsertOneRepMaxDto } from './dto/one-rep-max.dto'
 import { OneRepMaxesService } from './one-rep-maxes.service'
 
 @Controller('one-rep-maxes')
@@ -20,9 +20,9 @@ export class OneRepMaxesController {
 
   @Put(':lift')
   async upsert(
-    @Param('lift') lift: string,
+    @Param() { lift }: OneRepMaxLiftParamDto,
     @Body() dto: UpsertOneRepMaxDto,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.service.upsert(req.user.id, lift, dto.value, dto.source)
   }
