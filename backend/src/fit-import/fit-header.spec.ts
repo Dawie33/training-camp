@@ -71,4 +71,25 @@ describe('FitImportService.parseFitFile', () => {
     await expect(service.parseFitFile(buffer)).rejects.toThrow(BadRequestException)
     expect(Date.now() - start).toBeLessThan(100)
   })
+
+  it('renvoie 400 (et non 500) pour un en-tête correct mais un contenu corrompu', async () => {
+    // En-tête cohérent, mais les données ne sont pas des messages FIT : la librairie rejette
+    const corrupted = buildFitFile(60)
+    corrupted.fill(0xff, 14, corrupted.length - 2)
+
+    await expect(service.parseFitFile(corrupted)).rejects.toThrow('Fichier FIT invalide ou corrompu')
+  })
+
+  it("rejette tout l'envoi multiple si l'un des fichiers est corrompu", async () => {
+    await expect(
+      service.parseMultipleFitFiles([buildFitFile(3600), Buffer.from('pas un fichier fit')])
+    ).rejects.toThrow(BadRequestException)
+  })
+
+  it("additionne les durées d'un envoi multiple", async () => {
+    const result = await service.parseMultipleFitFiles([buildFitFile(1800), buildFitFile(600)])
+
+    expect(result.activities).toHaveLength(2)
+    expect(result.totals.duration_seconds).toBe(2400)
+  })
 })

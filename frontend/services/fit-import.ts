@@ -9,22 +9,6 @@ export interface HrZoneData {
   high_bpm: number | null
 }
 
-// Format renvoyé par /parse (fichier unique, rétrocompat)
-export interface ParsedFitData {
-  duration_seconds: number | null
-  calories: number | null
-  avg_heart_rate: number | null
-  max_heart_rate: number | null
-  min_heart_rate: number | null
-  distance_meters: number | null
-  sport: string | null
-  avg_temperature: number | null
-  avg_cadence: number | null
-  avg_power: number | null
-  max_power: number | null
-  hr_zones: HrZoneData[] | null
-}
-
 // Format enrichi par activité pour /parse-multiple
 export interface FitActivity {
   sport: string | null
@@ -67,25 +51,20 @@ export function getSportLabel(sport: string | null, index: number, totalActiviti
 }
 
 
-export async function parseFitFile(file: File): Promise<ParsedFitData> {
-  const formData = new FormData()
-  formData.append('file', file)
+// Même limite que le backend (FIT_MAX_FILE_SIZE dans fit-import.controller.ts)
+export const FIT_MAX_FILE_SIZE = 5 * 1024 * 1024
 
-  const response = await fetch(`${API_URL}/fit-import/parse`, {
-    method: 'POST',
-    body: formData,
-    credentials: 'include',
-  })
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => response.statusText)
-    throw new Error(text || `Erreur ${response.status}`)
+/** Levée avant tout envoi : son message est affiché tel quel à l'utilisateur. */
+export class FitFileTooLargeError extends Error {
+  constructor(fileName: string) {
+    super(`« ${fileName} » dépasse 5 Mo : ce n'est probablement pas un export de séance.`)
   }
-
-  return response.json()
 }
 
 export async function parseFitFiles(files: File[]): Promise<MultiActivityFitData> {
+  const tooLarge = files.find(file => file.size > FIT_MAX_FILE_SIZE)
+  if (tooLarge) throw new FitFileTooLargeError(tooLarge.name)
+
   const formData = new FormData()
   for (const file of files) {
     formData.append('files', file)

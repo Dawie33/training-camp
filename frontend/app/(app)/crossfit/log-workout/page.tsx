@@ -5,7 +5,7 @@ import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout
 import { RpeSelector } from '@/components/ui/rpe-selector'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
-import { parseFitFiles, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
+import { parseFitFiles, FitFileTooLargeError, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
 import { scheduleApi, sessionService, workoutsService } from '@/services'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -293,8 +293,8 @@ function LogWorkoutContent() {
         ? `${fileArray.length} activités importées (${runCount} course${runCount > 1 ? 's' : ''})`
         : 'Activité .fit importée'
       toast.success(label)
-    } catch {
-      toast.error('Impossible de lire le(s) fichier(s) .fit')
+    } catch (error) {
+      toast.error(error instanceof FitFileTooLargeError ? error.message : 'Impossible de lire le(s) fichier(s) .fit')
     } finally {
       setIsParsing(false)
     }

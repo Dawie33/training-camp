@@ -1,6 +1,6 @@
 'use client'
 
-import { FitActivity, getSportLabel, HrZoneData, MultiActivityFitData, parseFitFiles } from '@/services/fit-import'
+import { FitActivity, getSportLabel, HrZoneData, MultiActivityFitData, parseFitFiles, FitFileTooLargeError } from '@/services/fit-import'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -121,8 +121,8 @@ export function CorosImport({ accentColor = 'orange', onImport, onClear }: Props
         ? `${fileArray.length} activités importées (${runCount} course${runCount > 1 ? 's' : ''})`
         : 'Activité .fit importée'
       toast.success(label)
-    } catch {
-      toast.error('Impossible de lire le(s) fichier(s) .fit')
+    } catch (error) {
+      toast.error(error instanceof FitFileTooLargeError ? error.message : 'Impossible de lire le(s) fichier(s) .fit')
     } finally {
       setIsParsing(false)
     }

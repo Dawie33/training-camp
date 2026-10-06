@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import FitParser from 'fit-file-parser'
 import { assertValidFitHeader } from './fit-header'
 
@@ -9,7 +9,7 @@ export interface HrZoneData {
   high_bpm: number
 }
 
-// Format renvoyé par l'endpoint /parse (fichier unique, rétrocompat)
+// Données extraites d'un fichier FIT (une activité), avant enrichissement dans FitActivity
 export interface ParsedFitData {
   duration_seconds: number | null
   calories: number | null
@@ -95,17 +95,28 @@ function mergeHrZones(zonesList: (HrZoneData[] | null)[]): HrZoneData[] | null {
 
 function toPaceMinKm(duration_seconds: number | null, distance_meters: number | null): number | null {
   if (!duration_seconds || !distance_meters || distance_meters < 10) return null
-  return Math.round(((duration_seconds / 60) / (distance_meters / 1000)) * 100) / 100
+  return Math.round((duration_seconds / 60 / (distance_meters / 1000)) * 100) / 100
 }
 
 @Injectable()
 export class FitImportService {
+  private readonly logger = new Logger(FitImportService.name)
+
   async parseFitFile(buffer: Buffer): Promise<ParsedFitData> {
     // Avant la librairie : un en-tête incohérent la ferait boucler et bloquerait tout le serveur
     assertValidFitHeader(buffer)
 
     const parser = new FitParser({ mode: 'cascade' })
-    const fitData = await parser.parseAsync(buffer)
+    let fitData: Awaited<ReturnType<FitParser['parseAsync']>>
+    try {
+      // Les buffers de Multer reposent toujours sur un ArrayBuffer classique (jamais un SharedArrayBuffer),
+      // ce que le type générique Buffer<ArrayBufferLike> ne permet pas à TypeScript de savoir
+      fitData = await parser.parseAsync(buffer as Buffer<ArrayBuffer>)
+    } catch (error) {
+      // En-tête correct mais contenu corrompu : la librairie rejette avec un message brut (sinon 500)
+      this.logger.warn(`Fichier FIT illisible : ${error instanceof Error ? error.message : String(error)}`)
+      throw new BadRequestException('Fichier FIT invalide ou corrompu')
+    }
 
     const session = fitData.sessions?.[0] ?? fitData.activity?.sessions?.[0]
     if (!session) {
@@ -146,7 +157,11 @@ export class FitImportService {
   }
 
   async parseMultipleFitFiles(buffers: Buffer[]): Promise<MultiActivityFitData> {
-    const parsed = await Promise.all(buffers.map(b => this.parseFitFile(b)))
+    // L'un après l'autre plutôt qu'avec Promise.all : limite le pic de mémoire (offre gratuite Render)
+    const parsed: ParsedFitData[] = []
+    for (const buffer of buffers) {
+      parsed.push(await this.parseFitFile(buffer))
+    }
 
     const activities: FitActivity[] = parsed.map(d => ({
       sport: d.sport,
@@ -171,11 +186,11 @@ export class FitImportService {
     const totalDistance = activities.reduce((s, a) => s + (a.distance_meters ?? 0), 0)
     const powerWeightedSum = activities.reduce(
       (s, a) => s + (a.avg_power && a.duration_seconds ? a.avg_power * a.duration_seconds : 0),
-      0,
+      0
     )
     const powerWeightedDuration = activities.reduce(
       (s, a) => s + (a.avg_power && a.duration_seconds ? a.duration_seconds : 0),
-      0,
+      0
     )
 
     return {
