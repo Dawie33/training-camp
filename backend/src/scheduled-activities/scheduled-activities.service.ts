@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { toDateOnly } from 'src/common/utils/date-only'
+import { isUniqueViolation } from 'src/common/utils/postgres-errors'
 import { GoogleCalendarService } from '../google-calendar/google-calendar.service'
 import {
   CreateScheduledActivityDto,
@@ -11,6 +12,12 @@ import {
 import { UnifiedActivity } from './types/unified-activity.type'
 
 const ACTIVITY_LABELS: Record<string, string> = { skill: 'Skill', wod: 'WOD', conditioning: 'Conditioning' }
+
+/** Index unique (user_id, scheduled_date, activity_type) : migration unique_scheduled_activity_per_day */
+const UNIQUE_PER_DAY_INDEX = 'scheduled_activities_user_date_type_unique'
+
+const alreadyScheduled = (activityType: string) =>
+  new ConflictException(`Une activité ${activityType} est déjà planifiée pour cette date`)
 
 export interface SkillEnrichment {
   title: string
@@ -31,15 +38,22 @@ export class ScheduledActivitiesService {
   /**
    * Enrichit un lot de programmes de skill : nom, catégorie, étape en cours et % de progression.
    * Retourne une Map indexée par skill_program_id.
+   * Seuls les programmes de `userId` sont lus : un activity_id pointant vers le programme d'un autre
+   * utilisateur (donnée ancienne ou modifiée) ne révèle jamais ses informations.
    */
-  private async getSkillEnrichment(programIds: string[]): Promise<Map<string, SkillEnrichment>> {
+  private async getSkillEnrichment(userId: string, programIds: string[]): Promise<Map<string, SkillEnrichment>> {
     const map = new Map<string, SkillEnrichment>()
     const uniqueIds = [...new Set(programIds.filter(Boolean))]
     if (uniqueIds.length === 0) return map
 
-    const programs = await this.knex('skill_programs').whereIn('id', uniqueIds)
+    const programs = await this.knex('skill_programs').whereIn('id', uniqueIds).where('user_id', userId)
+    if (programs.length === 0) return map
+
     const steps = await this.knex('skill_program_steps')
-      .whereIn('program_id', uniqueIds)
+      .whereIn(
+        'program_id',
+        programs.map(p => p.id)
+      )
       .select('program_id', 'title', 'status')
 
     const stepsByProgram = new Map<string, Array<{ title: string; status: string }>>()
@@ -101,9 +115,31 @@ export class ScheduledActivitiesService {
   private async enrichOne(row: Record<string, any>): Promise<UnifiedActivity> {
     const skill =
       row.activity_type === 'skill' && row.activity_id
-        ? (await this.getSkillEnrichment([row.activity_id])).get(row.activity_id)
+        ? (await this.getSkillEnrichment(row.user_id, [row.activity_id])).get(row.activity_id)
         : undefined
     return this.toUnifiedActivity(row, skill)
+  }
+
+  /** Vérifie que le programme de skill appartient à l'utilisateur (404 sinon, sans dire qu'il existe). */
+  private async assertOwnsSkillProgram(userId: string, programId: string): Promise<void> {
+    const program = await this.knex('skill_programs').where('id', programId).where('user_id', userId).first()
+    if (!program) {
+      throw new NotFoundException('Programme de skill non trouvé')
+    }
+  }
+
+  /**
+   * Exécute une écriture et traduit une violation de l'index unique par jour en 409.
+   * La vérification préalable du service reste là pour le cas courant ; l'index couvre
+   * les requêtes simultanées (double clic) qui passaient toutes les deux.
+   */
+  private async rejectDuplicate<T>(activityType: string, write: () => Promise<T>): Promise<T> {
+    try {
+      return await write()
+    } catch (error) {
+      if (isUniqueViolation(error, UNIQUE_PER_DAY_INDEX)) throw alreadyScheduled(activityType)
+      throw error
+    }
   }
 
   /**
@@ -195,7 +231,7 @@ export class ScheduledActivitiesService {
 
       // Batch-fetch les programmes de skill liés pour enrichir les créneaux skill planifiés
       const skillProgramIds = saRows.filter(r => r.activity_type === 'skill' && r.activity_id).map(r => r.activity_id)
-      const skillEnrichmentMap = await this.getSkillEnrichment(skillProgramIds)
+      const skillEnrichmentMap = await this.getSkillEnrichment(userId, skillProgramIds)
 
       for (const row of saRows) {
         const skill =
@@ -219,28 +255,26 @@ export class ScheduledActivitiesService {
       .first()
 
     if (existing) {
-      throw new ConflictException(`Une activité ${data.activity_type} est déjà planifiée pour cette date`)
+      throw alreadyScheduled(data.activity_type)
     }
 
-    // Vérifie que le programme de skill référencé appartient bien à l'utilisateur
     if (data.activity_type === 'skill' && data.activity_id) {
-      const program = await this.knex('skill_programs').where('id', data.activity_id).where('user_id', userId).first()
-      if (!program) {
-        throw new NotFoundException('Programme de skill non trouvé')
-      }
+      await this.assertOwnsSkillProgram(userId, data.activity_id)
     }
 
-    const [row] = await this.knex('scheduled_activities')
-      .insert({
-        user_id: userId,
-        scheduled_date: data.scheduled_date,
-        activity_type: data.activity_type,
-        activity_id: data.activity_id || null,
-        status: 'scheduled',
-        location: data.location || null,
-        notes: data.notes || null,
-      })
-      .returning('*')
+    const [row] = await this.rejectDuplicate(data.activity_type, () =>
+      this.knex('scheduled_activities')
+        .insert({
+          user_id: userId,
+          scheduled_date: data.scheduled_date,
+          activity_type: data.activity_type,
+          activity_id: data.activity_id || null,
+          status: 'scheduled',
+          location: data.location || null,
+          notes: data.notes || null,
+        })
+        .returning('*')
+    )
 
     // Sync Google Calendar en arrière-plan (silencieux si non connecté)
     this.googleCalendarService
@@ -263,6 +297,11 @@ export class ScheduledActivitiesService {
       throw new NotFoundException('Activité non trouvée')
     }
 
+    // Sans ce contrôle, un PATCH pouvait relier l'activité au programme d'un autre utilisateur
+    if (existing.activity_type === 'skill' && data.activity_id && data.activity_id !== existing.activity_id) {
+      await this.assertOwnsSkillProgram(userId, data.activity_id)
+    }
+
     // existing.scheduled_date est un objet Date (colonne date) : on compare les jours, pas les types
     if (data.scheduled_date && toDateOnly(data.scheduled_date) !== toDateOnly(existing.scheduled_date)) {
       const conflict = await this.knex('scheduled_activities')
@@ -273,22 +312,24 @@ export class ScheduledActivitiesService {
         .first()
 
       if (conflict) {
-        throw new ConflictException(`Une activité ${existing.activity_type} est déjà planifiée pour cette date`)
+        throw alreadyScheduled(existing.activity_type)
       }
     }
 
-    const [row] = await this.knex('scheduled_activities')
-      .where('id', id)
-      .where('user_id', userId)
-      .update({
-        scheduled_date: data.scheduled_date ?? existing.scheduled_date,
-        status: data.status ?? existing.status,
-        activity_id: data.activity_id ?? existing.activity_id,
-        location: data.location ?? existing.location,
-        notes: data.notes ?? existing.notes,
-        updated_at: new Date(),
-      })
-      .returning('*')
+    const [row] = await this.rejectDuplicate(existing.activity_type, () =>
+      this.knex('scheduled_activities')
+        .where('id', id)
+        .where('user_id', userId)
+        .update({
+          scheduled_date: data.scheduled_date ?? existing.scheduled_date,
+          status: data.status ?? existing.status,
+          activity_id: data.activity_id ?? existing.activity_id,
+          location: data.location ?? existing.location,
+          notes: data.notes ?? existing.notes,
+          updated_at: new Date(),
+        })
+        .returning('*')
+    )
 
     return this.enrichOne(row)
   }

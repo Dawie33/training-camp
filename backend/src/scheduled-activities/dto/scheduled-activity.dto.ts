@@ -1,4 +1,6 @@
-import { IsDateString, IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator'
+import { IsDateString, IsEnum, IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator'
+
+export const SCHEDULED_ACTIVITY_NOTES_MAX_LENGTH = 500
 
 export class CreateScheduledActivityDto {
   @IsEnum(['skill', 'wod', 'conditioning'])
@@ -17,6 +19,7 @@ export class CreateScheduledActivityDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(SCHEDULED_ACTIVITY_NOTES_MAX_LENGTH)
   notes?: string
 }
 
@@ -39,6 +42,7 @@ export class UpdateScheduledActivityDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(SCHEDULED_ACTIVITY_NOTES_MAX_LENGTH)
   notes?: string
 }
 

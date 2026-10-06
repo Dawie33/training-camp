@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import {
   CreateScheduledActivityDto,
@@ -34,7 +46,7 @@ export class ScheduledActivitiesController {
   @Patch(':id')
   async update(
     @Request() req: { user: { id: string } },
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateScheduledActivityDto
   ) {
     return this.service.update(id, req.user.id, data)
@@ -44,7 +56,7 @@ export class ScheduledActivitiesController {
    * Supprime une activité planifiée (Vélo / Force)
    */
   @Delete(':id')
-  async delete(@Request() req: { user: { id: string } }, @Param('id') id: string) {
+  async delete(@Request() req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.delete(id, req.user.id)
   }
 
@@ -52,7 +64,7 @@ export class ScheduledActivitiesController {
    * Marque une activité comme complétée
    */
   @Patch(':id/complete')
-  async markAsCompleted(@Request() req: { user: { id: string } }, @Param('id') id: string) {
+  async markAsCompleted(@Request() req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.markAsCompleted(id, req.user.id)
   }
 
@@ -60,7 +72,7 @@ export class ScheduledActivitiesController {
    * Marque une activité comme sautée
    */
   @Patch(':id/skip')
-  async markAsSkipped(@Request() req: { user: { id: string } }, @Param('id') id: string) {
+  async markAsSkipped(@Request() req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
     return this.service.markAsSkipped(id, req.user.id)
   }
 }
