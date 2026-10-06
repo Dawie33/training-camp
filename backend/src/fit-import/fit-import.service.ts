@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import FitParser from 'fit-file-parser'
+import { assertValidFitHeader } from './fit-header'
 
 export interface HrZoneData {
   zone: number
@@ -100,6 +101,9 @@ function toPaceMinKm(duration_seconds: number | null, distance_meters: number | 
 @Injectable()
 export class FitImportService {
   async parseFitFile(buffer: Buffer): Promise<ParsedFitData> {
+    // Avant la librairie : un en-tête incohérent la ferait boucler et bloquerait tout le serveur
+    assertValidFitHeader(buffer)
+
     const parser = new FitParser({ mode: 'cascade' })
     const fitData = await parser.parseAsync(buffer)
 
