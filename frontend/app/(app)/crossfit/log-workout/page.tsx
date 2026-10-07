@@ -82,8 +82,9 @@ function parsePrescribedReps(reps?: number | string): number | null {
   if (typeof reps === 'number') return Number.isInteger(reps) && reps > 0 ? reps : null
   if (!reps) return null
   const trimmed = reps.trim()
-  if (!/^\d+$/.test(trimmed)) return null
-  const value = parseInt(trimmed, 10)
+  const match = trimmed.match(/^(\d+)(?:\s*reps?)?$/i)
+  if (!match) return null
+  const value = parseInt(match[1], 10)
   return value > 0 ? value : null
 }
 
@@ -100,6 +101,8 @@ interface ExerciseGroup {
   section: WorkoutSection
   exercises: Exercise[]
 }
+
+type AmrapScoreMode = 'rounds' | 'split'
 
 function getExerciseGroups(workout: Workouts): ExerciseGroup[] {
   const groups: ExerciseGroup[] = []
@@ -118,6 +121,49 @@ function getExerciseGroups(workout: Workouts): ExerciseGroup[] {
     walk(workout.blocks.sections)
   }
   return groups
+}
+
+function isMaxRepExercise(exercise: Exercise): boolean {
+  return /\bmax(?:imum)?\b/i.test(`${exercise.reps ?? ''} ${exercise.details ?? ''}`)
+}
+
+function getAmrapScoringExercises(workout: Workouts): Exercise[] {
+  const groups = getExerciseGroups(workout)
+  const amrapGroups = groups.filter(({ section }) =>
+    section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')
+  )
+  const conditioningGroups = groups.filter(({ section }) => CONDITIONING_SECTION_TYPES.includes(section.type))
+  const scoreGroups = amrapGroups.length > 0
+    ? amrapGroups
+    : conditioningGroups.length > 0
+      ? conditioningGroups
+      : groups
+
+  return scoreGroups.flatMap(group => group.exercises)
+}
+
+function getInitialAmrapScoreMode(workout: Workouts): AmrapScoreMode {
+  const scoreExercises = getAmrapScoringExercises(workout)
+  const openingReps = parsePrescribedReps(scoreExercises[0]?.reps)
+  const hasMaxRepFollowUp = scoreExercises.slice(1).some(isMaxRepExercise)
+
+  return openingReps !== null && hasMaxRepFollowUp ? 'split' : 'rounds'
+}
+
+function getAmrapDurationSeconds(workout: Workouts): number {
+  const findDuration = (sections: WorkoutSection[]): number | undefined => {
+    for (const section of sections) {
+      const isAmrapSection = section.type === 'amrap' || section.format?.toLowerCase().includes('amrap')
+      if (isAmrapSection && section.duration_min) return section.duration_min * 60
+      if (section.sections) {
+        const nestedDuration = findDuration(section.sections)
+        if (nestedDuration) return nestedDuration
+      }
+    }
+    return undefined
+  }
+
+  return findDuration(workout.blocks.sections) ?? 0
 }
 
 function hasConditioningSection(sections: WorkoutSection[]): boolean {
@@ -148,6 +194,10 @@ function LogWorkoutContent() {
   const [capNote, setCapNote] = useState('')
   const [rounds, setRounds] = useState('')
   const [bonusReps, setBonusReps] = useState('')
+  const [amrapScoreMode, setAmrapScoreMode] = useState<AmrapScoreMode>('rounds')
+  const [splitTimeMinutes, setSplitTimeMinutes] = useState('')
+  const [splitTimeSeconds, setSplitTimeSeconds] = useState('')
+  const [repsAfterSplit, setRepsAfterSplit] = useState('')
   const [rating, setRating] = useState<number>(0)
   const [rpe, setRpe] = useState<number>(0)
   const [notes, setNotes] = useState('')
@@ -197,14 +247,18 @@ function LogWorkoutContent() {
 
     if (presetWorkoutId) {
       workoutsService.getById(presetWorkoutId).then((found) => {
-        setSelectedWorkout({ ...found, personalized_id: undefined })
+        const workout = { ...found, personalized_id: undefined }
+        setSelectedWorkout(workout)
+        setAmrapScoreMode(getInitialAmrapScoreMode(workout))
         setSearch(found.name || '')
       }).catch(() => {})
     }
 
     if (presetPersonalizedId) {
       workoutsService.getPersonalizedWorkout(presetPersonalizedId).then((found) => {
-        setSelectedWorkout({ ...found.plan_json, personalized_id: found.id })
+        const workout = { ...found.plan_json, personalized_id: found.id }
+        setSelectedWorkout(workout)
+        setAmrapScoreMode(getInitialAmrapScoreMode(workout))
         setSearch(found.plan_json.name || '')
       }).catch(() => {})
     }
@@ -234,6 +288,20 @@ function LogWorkoutContent() {
     () => exerciseGroups.flatMap(g => g.exercises),
     [exerciseGroups]
   )
+
+  const splitScoreLabels = useMemo(() => {
+    const scoreExercises = selectedWorkout ? getAmrapScoringExercises(selectedWorkout) : []
+    const openingExercise = scoreExercises[0]
+    const maxRepExercise = scoreExercises.slice(1).find(isMaxRepExercise) ?? scoreExercises[1]
+    const openingReps = openingExercise ? parsePrescribedReps(openingExercise.reps) : null
+
+    return {
+      opening: openingExercise
+        ? `${openingReps !== null ? `${openingReps} ` : ''}${openingExercise.name}`
+        : 'première partie',
+      following: maxRepExercise?.name ?? 'mouvement suivant',
+    }
+  }, [selectedWorkout])
 
   // Pré-remplit ce que la prescription donne déjà (charge absolue, reps fixes) pour que
   // l'athlète n'ait à corriger que ce qui a réellement différé du plan.
@@ -271,6 +339,12 @@ function LogWorkoutContent() {
     setSearch(workout.name || '')
     setShowDropdown(false)
     setExerciseEntries({})
+    setAmrapScoreMode(getInitialAmrapScoreMode(workout))
+    setRounds('')
+    setBonusReps('')
+    setSplitTimeMinutes('')
+    setSplitTimeSeconds('')
+    setRepsAfterSplit('')
     setCapAtteint(false)
     setCapRounds('')
     setCapNote('')
@@ -306,20 +380,41 @@ function LogWorkoutContent() {
 
   const handleSave = async () => {
     const totalSeconds = (parseInt(timeMinutes || '0') * 60) + parseInt(timeSeconds || '0')
+    const sessionDurationSeconds = hasConditioning && isAmrap && selectedWorkout
+      ? getAmrapDurationSeconds(selectedWorkout) || totalSeconds
+      : totalSeconds
+    const splitMinutesValue = Number(splitTimeMinutes || 0)
+    const splitSecondsValue = Number(splitTimeSeconds || 0)
+    const splitTimeSecondsValue = splitMinutesValue * 60 + splitSecondsValue
+    const hasSplitTimeInput = splitTimeMinutes !== '' || splitTimeSeconds !== ''
+    const hasValidSplitTime = hasSplitTimeInput &&
+      Number.isInteger(splitMinutesValue) && splitMinutesValue >= 0 &&
+      Number.isInteger(splitSecondsValue) && splitSecondsValue >= 0 && splitSecondsValue < 60 &&
+      splitTimeSecondsValue > 0 && splitTimeSecondsValue <= 86400
+    const splitRepsValue = Number(repsAfterSplit)
+    const hasValidSplitReps = repsAfterSplit !== '' &&
+      Number.isInteger(splitRepsValue) && splitRepsValue >= 0 && splitRepsValue <= 10000
+
     if (hasConditioning && !isAmrap && !capAtteint && totalSeconds === 0) {
       toast.error('Saisis un temps ou coche "Cap atteint"')
       return
     }
-    if (hasConditioning && isAmrap && !rounds && !bonusReps) {
-      toast.error('Saisis un score AMRAP')
-      return
+    if (hasConditioning && isAmrap) {
+      if (amrapScoreMode === 'split' && (!hasValidSplitTime || !hasValidSplitReps)) {
+        toast.error('Saisis le temps du split et les reps après le split')
+        return
+      }
+      if (amrapScoreMode === 'rounds' && !rounds && !bonusReps) {
+        toast.error('Saisis un score AMRAP')
+        return
+      }
     }
 
     try {
       setIsSaving(true)
 
       const completedAt = new Date(wodDate)
-      const startedAt = new Date(completedAt.getTime() - totalSeconds * 1000)
+      const startedAt = new Date(completedAt.getTime() - sessionDurationSeconds * 1000)
 
       const sessionData: { workout_id?: string; personalized_workout_id?: string; started_at: string } = {
         started_at: startedAt.toISOString()
@@ -355,8 +450,6 @@ function LogWorkoutContent() {
       )
 
       const resultPayload: Record<string, unknown> = {
-        rounds: rounds ? parseInt(rounds) : undefined,
-        reps: bonusReps ? parseInt(bonusReps) : undefined,
         rating: rating > 0 ? rating : undefined,
         rpe: rpe > 0 ? rpe : undefined,
         exercise_results: exerciseResults.length > 0 ? exerciseResults : undefined,
@@ -366,6 +459,13 @@ function LogWorkoutContent() {
             totals: fitData.totals,
           },
         }),
+      }
+      if (hasConditioning && isAmrap && amrapScoreMode === 'split') {
+        resultPayload.split_time_seconds = splitTimeSecondsValue
+        resultPayload.reps_after_split = splitRepsValue
+      } else if (hasConditioning && isAmrap) {
+        resultPayload.rounds = rounds ? parseInt(rounds, 10) : undefined
+        resultPayload.reps = bonusReps ? parseInt(bonusReps, 10) : undefined
       }
       if (!isAmrap) {
         if (capAtteint) {
@@ -775,28 +875,99 @@ function LogWorkoutContent() {
           )}
 
           {hasConditioning && isAmrap && (
-            <div>
-              <label className="block text-sm text-muted-foreground mb-2">Score AMRAP</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  value={rounds}
-                  onChange={(e) => setRounds(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  className="w-28 px-4 py-3 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
-                />
-                <span className="text-muted-foreground font-semibold">rounds +</span>
-                <input
-                  type="number"
-                  value={bonusReps}
-                  onChange={(e) => setBonusReps(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  className="w-28 px-4 py-3 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
-                />
-                <span className="text-muted-foreground">reps</span>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-muted-foreground mb-2">Type de score</label>
+                <div className="flex gap-1 p-1 bg-muted/60 rounded-md" role="group" aria-label="Type de score AMRAP">
+                  <button
+                    type="button"
+                    aria-pressed={amrapScoreMode === 'rounds'}
+                    onClick={() => setAmrapScoreMode('rounds')}
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                      amrapScoreMode === 'rounds'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Rounds + reps
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={amrapScoreMode === 'split'}
+                    onClick={() => setAmrapScoreMode('split')}
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                      amrapScoreMode === 'split'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Temps + reps
+                  </button>
+                </div>
               </div>
+
+              {amrapScoreMode === 'split' ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-2">
+                      Temps pour terminer {splitScoreLabels.opening}
+                    </label>
+                    <TimeInput
+                      minutes={splitTimeMinutes}
+                      seconds={splitTimeSeconds}
+                      onMinutesChange={setSplitTimeMinutes}
+                      onSecondsChange={setSplitTimeSeconds}
+                      ariaLabel={`Temps pour terminer ${splitScoreLabels.opening}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-2">
+                      {splitScoreLabels.following} après {splitScoreLabels.opening}
+                    </label>
+                    <div className="relative w-36">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        step="1"
+                        min="0"
+                        max="10000"
+                        value={repsAfterSplit}
+                        onChange={(e) => setRepsAfterSplit(e.target.value)}
+                        placeholder="0"
+                        aria-label={`${splitScoreLabels.following} après ${splitScoreLabels.opening}`}
+                        className="w-full px-4 py-3 pr-12 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                        reps
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-2">Score AMRAP</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={rounds}
+                      onChange={(e) => setRounds(e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      className="w-28 px-4 py-3 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
+                    />
+                    <span className="text-muted-foreground font-semibold">rounds +</span>
+                    <input
+                      type="number"
+                      value={bonusReps}
+                      onChange={(e) => setBonusReps(e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      className="w-28 px-4 py-3 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
+                    />
+                    <span className="text-muted-foreground">reps</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -139,6 +139,8 @@ export interface WorkoutSessionResults {
     metrics?: WorkoutSessionMetrics
     block_progress?: Record<string, boolean>
     elapsed_time_seconds?: number
+    split_time_seconds?: number
+    reps_after_split?: number
     session_title?: string
     exercise_results?: ExerciseResult[]
     /** Format historique, texte libre par exercice. Lu seul — les nouvelles séances remplissent `exercise_results`. */

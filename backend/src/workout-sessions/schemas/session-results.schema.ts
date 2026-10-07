@@ -33,6 +33,8 @@ export const SessionResultsSchema = z
     elapsed_time_seconds: z.number().int().nonnegative().max(86400).optional(),
     rounds: z.number().int().nonnegative().max(1000).optional(),
     reps: z.number().int().nonnegative().max(10000).optional(),
+    split_time_seconds: z.number().int().nonnegative().max(86400).optional(),
+    reps_after_split: z.number().int().nonnegative().max(10000).optional(),
     cap_reached: z.boolean().optional(),
     rounds_completed: z.number().int().nonnegative().max(1000).optional(),
     partial_note: z.string().max(500).optional(),

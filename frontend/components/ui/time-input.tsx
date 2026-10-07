@@ -6,9 +6,10 @@ interface TimeInputProps {
   onMinutesChange: (v: string) => void
   onSecondsChange: (v: string) => void
   className?: string
+  ariaLabel?: string
 }
 
-export function TimeInput({ minutes, seconds, onMinutesChange, onSecondsChange, className }: TimeInputProps) {
+export function TimeInput({ minutes, seconds, onMinutesChange, onSecondsChange, className, ariaLabel }: TimeInputProps) {
   return (
     <div className={`flex items-center gap-2 ${className ?? ''}`}>
       <div className="flex-1 flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2">
@@ -19,6 +20,7 @@ export function TimeInput({ minutes, seconds, onMinutesChange, onSecondsChange, 
           value={minutes}
           onChange={(e) => onMinutesChange(e.target.value)}
           placeholder="0"
+          aria-label={ariaLabel ? `${ariaLabel}, minutes` : undefined}
           className="w-full bg-transparent text-foreground text-center text-lg font-mono outline-none"
         />
         <span className="text-muted-foreground text-sm">min</span>
@@ -32,6 +34,7 @@ export function TimeInput({ minutes, seconds, onMinutesChange, onSecondsChange, 
           value={seconds}
           onChange={(e) => onSecondsChange(e.target.value)}
           placeholder="0"
+          aria-label={ariaLabel ? `${ariaLabel}, secondes` : undefined}
           className="w-full bg-transparent text-foreground text-center text-lg font-mono outline-none"
         />
         <span className="text-muted-foreground text-sm">s</span>

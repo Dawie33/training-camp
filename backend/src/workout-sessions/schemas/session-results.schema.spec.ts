@@ -15,6 +15,11 @@ describe('SessionResultsSchema', () => {
     expect(parsed.success).toBe(true)
   })
 
+  it('accepte un score AMRAP fractionné et rejette ses valeurs négatives', () => {
+    expect(SessionResultsSchema.safeParse({ split_time_seconds: 372, reps_after_split: 24 }).success).toBe(true)
+    expect(SessionResultsSchema.safeParse({ split_time_seconds: -1, reps_after_split: -1 }).success).toBe(false)
+  })
+
   it('conserve les clés historiques non décrites par le contrat', () => {
     const parsed = SessionResultsSchema.parse({
       elapsed_time_seconds: 900,

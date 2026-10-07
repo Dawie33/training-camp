@@ -7,6 +7,18 @@ import { toast } from 'sonner'
 
 export function formatResult(results: WorkoutSession['results']): string {
   if (!results) return '—'
+  if (typeof results.split_time_seconds === 'number' || typeof results.reps_after_split === 'number') {
+    const scoreParts: string[] = []
+    if (typeof results.split_time_seconds === 'number') {
+      const minutes = Math.floor(results.split_time_seconds / 60)
+      const seconds = results.split_time_seconds % 60
+      scoreParts.push(`Split ${minutes}:${String(seconds).padStart(2, '0')}`)
+    }
+    if (typeof results.reps_after_split === 'number') {
+      scoreParts.push(`${results.reps_after_split} reps`)
+    }
+    return scoreParts.join(' · ')
+  }
   if (results.elapsed_time_seconds) {
     const s = results.elapsed_time_seconds
     const m = Math.floor(s / 60)
