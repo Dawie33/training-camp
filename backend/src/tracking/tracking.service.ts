@@ -148,11 +148,9 @@ export class TrackingService {
     const existing: Pick<TrackingReportRow, 'generated_at'> | undefined = await this.knex('tracking_reports')
       .where({ user_id: userId, sport: SPORT })
       .first('generated_at')
-    const now = new Date()
-    const sameMonth =
-      existing &&
-      new Date(existing.generated_at).getMonth() === now.getMonth() &&
-      new Date(existing.generated_at).getFullYear() === now.getFullYear()
+    // Mois comparés à Paris (« AAAA-MM ») : avec getMonth(), en UTC sur Render, une connexion
+    // le 1er à 0 h 30 restait dans le mois précédent et le bilan du mois n'était pas généré
+    const sameMonth = existing && toParisDate(existing.generated_at).slice(0, 7) === toParisDate(new Date()).slice(0, 7)
 
     if (sameMonth) return { generated: false }
 
