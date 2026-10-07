@@ -2,7 +2,8 @@ import { Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { Request } from 'express'
 import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { SportType, TrackingService } from './tracking.service'
+import { TrackingService } from './tracking.service'
+import { SportType } from './types/tracking.types'
 
 interface AuthenticatedRequest extends Request {
   user: { id: string; email: string }

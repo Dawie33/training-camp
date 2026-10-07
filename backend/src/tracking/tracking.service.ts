@@ -7,17 +7,7 @@ import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { PerformanceDiagnosticSummary, UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { AIProgressionReport, AIProgressionReportSchema } from './schemas/progression-report.schema'
-
-export type SportType = 'crossfit'
-
-export type ProgressionReport = AIProgressionReport & {
-  sport: SportType
-  period_months: number
-  generated_at: string
-}
-
-/** `reused` n'est pas enregistré : il indique seulement si la réponse vient d'un bilan existant. */
-export type GeneratedReport = ProgressionReport & { reused: boolean }
+import { GeneratedReport, ProgressionReport, SportType } from './types/tracking.types'
 
 /** Au-delà, la fenêtre glissante a bougé : le bilan enregistré ne décrit plus la même période. */
 const REUSE_MAX_AGE_MS = 24 * 3600 * 1000
