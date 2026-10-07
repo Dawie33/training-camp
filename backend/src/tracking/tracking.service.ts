@@ -4,10 +4,22 @@ import { toParisDate, toParisWeekStart } from 'src/common/utils/date-only'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
+import { SessionResults } from 'src/workout-sessions/schemas/session-results.schema'
 import { PerformanceDiagnosticSummary, UserContextService } from 'src/workouts/services/user-context.service'
 import { ZodError } from 'zod'
 import { AIProgressionReport, AIProgressionReportSchema } from './schemas/progression-report.schema'
-import { GeneratedReport, ProgressionReport, SportType } from './types/tracking.types'
+import {
+  BenchmarkHistoryRow,
+  CrossfitAggregate,
+  CrossfitSessionRow,
+  GeneratedReport,
+  OneRepMaxHistoryRow,
+  OneRepMaxRow,
+  ProgressionReport,
+  SportType,
+  TrackingProfileRow,
+  TrackingReportRow,
+} from './types/tracking.types'
 
 /** Au-delà, la fenêtre glissante a bougé : le bilan enregistré ne décrit plus la même période. */
 const REUSE_MAX_AGE_MS = 24 * 3600 * 1000
@@ -46,7 +58,9 @@ export class TrackingService {
     sport: SportType,
     months: number
   ): Promise<ProgressionReport | null> {
-    const row = await this.knex('tracking_reports')
+    const row: Pick<TrackingReportRow, 'period_months' | 'report' | 'generated_at'> | undefined = await this.knex(
+      'tracking_reports'
+    )
       .where({ user_id: userId, sport })
       .select('period_months', 'report', 'generated_at')
       .first()
@@ -57,7 +71,7 @@ export class TrackingService {
     if (Date.now() - generatedAt.getTime() >= REUSE_MAX_AGE_MS) return null
     if (await this.hasNewDataSince(userId, generatedAt)) return null
 
-    return (typeof row.report === 'string' ? JSON.parse(row.report) : row.report) as ProgressionReport
+    return this.parseReport(row.report)
   }
 
   /**
@@ -100,26 +114,28 @@ export class TrackingService {
   }
 
   async getLatestReports(userId: string): Promise<ProgressionReport[]> {
-    const rows = await this.knex('tracking_reports')
+    const rows: Pick<TrackingReportRow, 'report'>[] = await this.knex('tracking_reports')
       .where('user_id', userId)
-      .select('sport', 'period_months', 'report', 'generated_at')
+      .select('report')
       .orderBy('generated_at', 'desc')
 
-    return rows.map((row: any) => {
-      const report = typeof row.report === 'string' ? JSON.parse(row.report) : row.report
-      return report as ProgressionReport
-    })
+    return rows.map(row => this.parseReport(row.report))
   }
 
   async getSavedReport(userId: string, sport: SportType): Promise<ProgressionReport | null> {
-    const row = await this.knex('tracking_reports')
+    const row: Pick<TrackingReportRow, 'report'> | undefined = await this.knex('tracking_reports')
       .where('user_id', userId)
       .where('sport', sport)
       .select('report')
       .first()
 
     if (!row) return null
-    return (typeof row.report === 'string' ? JSON.parse(row.report) : row.report) as ProgressionReport
+    return this.parseReport(row.report)
+  }
+
+  /** Colonne jsonb : pg la décode déjà, mais une valeur insérée en texte peut revenir en string. */
+  private parseReport(report: TrackingReportRow['report']): ProgressionReport {
+    return typeof report === 'string' ? (JSON.parse(report) as ProgressionReport) : report
   }
 
   /**
@@ -128,7 +144,9 @@ export class TrackingService {
    * de dépendre d'un cron serveur (backend Render pas toujours up en continu).
    */
   async checkAndGenerateMonthlyReport(userId: string, sport: SportType): Promise<{ generated: boolean }> {
-    const existing = await this.knex('tracking_reports').where({ user_id: userId, sport }).first()
+    const existing: Pick<TrackingReportRow, 'generated_at'> | undefined = await this.knex('tracking_reports')
+      .where({ user_id: userId, sport })
+      .first('generated_at')
     const now = new Date()
     const sameMonth =
       existing &&
@@ -144,7 +162,13 @@ export class TrackingService {
   // ─── CrossFit ─────────────────────────────────────────────────────────────
 
   private async generateCrossfitReport(userId: string, months: number, since: Date): Promise<ProgressionReport> {
-    const [sessions, oneRepMaxes, ormHistory, benchmarkHistory, profile] = await Promise.all([
+    const [sessions, oneRepMaxes, ormHistory, benchmarkHistory, profile]: [
+      CrossfitSessionRow[],
+      OneRepMaxRow[],
+      OneRepMaxHistoryRow[],
+      BenchmarkHistoryRow[],
+      TrackingProfileRow | undefined,
+    ] = await Promise.all([
       this.knex('workout_sessions as ws')
         .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
         .select('ws.started_at', 'ws.completed_at', 'ws.results', 'w.name as workout_name', 'w.workout_type')
@@ -176,46 +200,50 @@ export class TrackingService {
     return { sport: 'crossfit', period_months: months, ...parsed, generated_at: new Date().toISOString() }
   }
 
-  private aggregateCrossfit(sessions: any[], ormHistory: any[], benchmarkHistory: any[]) {
+  private aggregateCrossfit(
+    sessions: CrossfitSessionRow[],
+    ormHistory: OneRepMaxHistoryRow[],
+    benchmarkHistory: BenchmarkHistoryRow[]
+  ): CrossfitAggregate {
     const total = sessions.length
     const weekSpan = this.computeWeekSpan(sessions)
     const avgPerWeek = (total / weekSpan).toFixed(1)
     const consistencyPct = this.computeConsistency(sessions, weekSpan)
 
-    const byType: Record<string, any[]> = {}
+    const countByType: Record<string, number> = {}
     for (const s of sessions) {
       const type = s.workout_type ?? 'libre'
-      if (!byType[type]) byType[type] = []
-      byType[type].push(s)
+      countByType[type] = (countByType[type] ?? 0) + 1
     }
 
     // Volume d'exposition par format, sans tendance : deux WODs d'un même format (Fran et
     // Murph sont tous deux « for time ») ne sont pas comparables entre eux. La progression
     // réelle se lit sur `benchmarkProgression`, où chaque workout est comparé à lui-même.
-    const typeStats = Object.entries(byType).map(([type, rows]) => ({ type, count: rows.length }))
+    const typeStats = Object.entries(countByType).map(([type, count]) => ({ type, count }))
 
+    // flatMap plutôt que filter + map : TypeScript garde ainsi `workout_name` non null
     const namedWorkouts = sessions
-      .filter(s => s.workout_name)
-      .map(s => {
+      .flatMap(s => {
+        if (!s.workout_name) return []
         const result = this.formatCFResult(s.results, s.workout_type)
         // started_at est un objet Date (timestamptz) : toString().split('T') donnait '' ou du texte tronqué
-        return result ? { name: s.workout_name, date: toParisDate(s.started_at), type: s.workout_type, result } : null
+        return result ? [{ name: s.workout_name, date: toParisDate(s.started_at), type: s.workout_type, result }] : []
       })
-      .filter((s): s is NonNullable<typeof s> => s !== null)
       .slice(-20)
 
-    const ormByLift: Record<string, { value: number; date: string }[]> = {}
+    // Valeurs dans l'ordre chronologique (requête triée par measured_at)
+    const ormValuesByLift: Record<string, number[]> = {}
     for (const h of ormHistory) {
-      if (!ormByLift[h.lift]) ormByLift[h.lift] = []
-      ormByLift[h.lift].push({ value: Number(h.value), date: h.measured_at })
+      if (!ormValuesByLift[h.lift]) ormValuesByLift[h.lift] = []
+      ormValuesByLift[h.lift].push(Number(h.value))
     }
-    const ormProgression = Object.entries(ormByLift)
-      .filter(([, entries]) => entries.length >= 2)
-      .map(([lift, entries]) => ({
+    const ormProgression = Object.entries(ormValuesByLift)
+      .filter(([, values]) => values.length >= 2)
+      .map(([lift, values]) => ({
         lift,
-        start: entries[0].value,
-        end: entries[entries.length - 1].value,
-        gain: entries[entries.length - 1].value - entries[0].value,
+        start: values[0],
+        end: values[values.length - 1],
+        gain: values[values.length - 1] - values[0],
       }))
 
     const benchByWorkout: Record<string, { score_type: string; score_value: number; calculated_level: string }[]> = {}
@@ -256,37 +284,37 @@ export class TrackingService {
   }
 
   private buildCrossfitPrompt(
-    agg: any,
-    orms: any[],
-    profile: any,
+    agg: CrossfitAggregate,
+    orms: OneRepMaxRow[],
+    profile: TrackingProfileRow | undefined,
     months: number,
     diagnostic?: PerformanceDiagnosticSummary
   ): string {
-    const ormStr = orms.length ? orms.map(o => `${o.lift}: ${o.value}kg`).join(', ') : 'Non renseignés'
+    // Number() : la colonne decimal arrive en "100.00", on veut "100kg"
+    const ormStr = orms.length ? orms.map(o => `${o.lift}: ${Number(o.value)}kg`).join(', ') : 'Non renseignés'
     const goals = profile?.global_goals
       ? Object.entries(profile.global_goals)
           .filter(([, v]) => v)
           .map(([k]) => k)
           .join(', ') || 'Non renseignés'
       : 'Non renseignés'
-    const typeLines = agg.typeStats
-      .map((t: any) => `- ${t.type} : ${t.count} séance${t.count > 1 ? 's' : ''}`)
-      .join('\n')
+    const typeLines = agg.typeStats.map(t => `- ${t.type} : ${t.count} séance${t.count > 1 ? 's' : ''}`).join('\n')
 
+    // Sans type, on n'affiche pas « (null) » dans le prompt
     const namedLines = agg.namedWorkouts.length
-      ? agg.namedWorkouts.map((w: any) => `- ${w.date} | ${w.name} (${w.type}) : ${w.result}`).join('\n')
+      ? agg.namedWorkouts.map(w => `- ${w.date} | ${w.name}${w.type ? ` (${w.type})` : ''} : ${w.result}`).join('\n')
       : '- Aucun workout nommé avec résultat enregistré'
 
     const ormProgressionLines = agg.ormProgression.length
       ? agg.ormProgression
-          .map((o: any) => `- ${o.lift}: ${o.start}kg → ${o.end}kg (${o.gain > 0 ? '+' : ''}${o.gain}kg)`)
+          .map(o => `- ${o.lift}: ${o.start}kg → ${o.end}kg (${o.gain > 0 ? '+' : ''}${o.gain}kg)`)
           .join('\n')
       : '- Aucun nouveau PR de force enregistré sur la période'
 
     const benchmarkProgressionLines = agg.benchmarkProgression.length
       ? agg.benchmarkProgression
           .map(
-            (b: any) =>
+            b =>
               `- ${b.name} : ${b.firstLevel} → ${b.lastLevel} (${b.count} test${b.count > 1 ? 's' : ''}, dernier score : ${b.lastScore})`
           )
           .join('\n')
@@ -391,30 +419,29 @@ ${this.jsonInstructions()}`
     }
   }
 
-  private formatCFResult(results: any, type: string): string | null {
+  private formatCFResult(results: SessionResults | null, type: string | null): string | null {
     if (!results) return null
     if (type === 'for_time' && results.elapsed_time_seconds) {
-      const s = results.elapsed_time_seconds as number
+      const s = results.elapsed_time_seconds
       return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
     }
-    if (type === 'amrap') {
-      const rounds = results.rounds as number | undefined
-      const reps = results.reps as number | undefined
-      if (rounds !== undefined) return `${rounds} rounds${reps ? ` + ${reps} reps` : ''}`
+    if (type === 'amrap' && results.rounds !== undefined) {
+      return `${results.rounds} rounds${results.reps ? ` + ${results.reps} reps` : ''}`
     }
-    if (results.load_kg) return `${results.load_kg}kg`
+    // `load_kg` à la racine : format historique, absent du schéma (passthrough), donc à vérifier
+    if (typeof results.load_kg === 'number' && results.load_kg > 0) return `${results.load_kg}kg`
     if (results.reps) return `${results.reps} reps`
     return null
   }
 
-  private computeWeekSpan(sessions: { started_at: string }[]): number {
+  private computeWeekSpan(sessions: { started_at: Date }[]): number {
     if (sessions.length < 2) return 1
     const first = new Date(sessions[0].started_at)
     const last = new Date(sessions[sessions.length - 1].started_at)
     return Math.max(1, Math.ceil((last.getTime() - first.getTime()) / (7 * 24 * 3600 * 1000)))
   }
 
-  private computeConsistency(sessions: { started_at: string | Date }[], weekSpan: number): number {
+  private computeConsistency(sessions: { started_at: Date }[], weekSpan: number): number {
     // Semaines comptées à Paris : une séance le lundi entre 0 h et 2 h ne bascule plus dans la semaine précédente
     const weekSet = new Set(sessions.map(s => toParisWeekStart(s.started_at)))
     return Math.round((weekSet.size / weekSpan) * 100)
