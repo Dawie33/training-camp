@@ -21,20 +21,14 @@ export class TrackingController {
   }
 
   @Get('report/saved')
-  async getSavedReport(
-    @Req() req: AuthenticatedRequest,
-    @Query('sport') sport?: string,
-  ) {
+  async getSavedReport(@Req() req: AuthenticatedRequest, @Query('sport') sport?: string) {
     const userId = req.user.id
     const validSport: SportType = VALID_SPORTS.includes(sport as SportType) ? (sport as SportType) : 'crossfit'
     return this.trackingService.getSavedReport(userId, validSport)
   }
 
   @Get('report/check-monthly')
-  async checkMonthlyReport(
-    @Req() req: AuthenticatedRequest,
-    @Query('sport') sport?: string,
-  ) {
+  async checkMonthlyReport(@Req() req: AuthenticatedRequest, @Query('sport') sport?: string) {
     const userId = req.user.id
     const validSport: SportType = VALID_SPORTS.includes(sport as SportType) ? (sport as SportType) : 'crossfit'
     return this.trackingService.checkAndGenerateMonthlyReport(userId, validSport)
@@ -42,11 +36,7 @@ export class TrackingController {
 
   @Get('report')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async getReport(
-    @Req() req: AuthenticatedRequest,
-    @Query('sport') sport?: string,
-    @Query('months') months?: string,
-  ) {
+  async getReport(@Req() req: AuthenticatedRequest, @Query('sport') sport?: string, @Query('months') months?: string) {
     const userId = req.user.id
     const validSport: SportType = VALID_SPORTS.includes(sport as SportType) ? (sport as SportType) : 'crossfit'
     const validMonths = Math.min(Math.max(Number(months) || 3, 1), 12)

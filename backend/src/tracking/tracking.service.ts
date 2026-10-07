@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
+import { toParisDate, toParisWeekStart } from 'src/common/utils/date-only'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
@@ -78,7 +79,8 @@ export class TrackingService {
   async checkAndGenerateMonthlyReport(userId: string, sport: SportType): Promise<{ generated: boolean }> {
     const existing = await this.knex('tracking_reports').where({ user_id: userId, sport }).first()
     const now = new Date()
-    const sameMonth = existing &&
+    const sameMonth =
+      existing &&
       new Date(existing.generated_at).getMonth() === now.getMonth() &&
       new Date(existing.generated_at).getFullYear() === now.getFullYear()
 
@@ -145,9 +147,8 @@ export class TrackingService {
       .filter(s => s.workout_name)
       .map(s => {
         const result = this.formatCFResult(s.results, s.workout_type)
-        return result
-          ? { name: s.workout_name, date: s.started_at.toString().split('T')[0], type: s.workout_type, result }
-          : null
+        // started_at est un objet Date (timestamptz) : toString().split('T') donnait '' ou du texte tronqué
+        return result ? { name: s.workout_name, date: toParisDate(s.started_at), type: s.workout_type, result } : null
       })
       .filter((s): s is NonNullable<typeof s> => s !== null)
       .slice(-20)
@@ -183,11 +184,21 @@ export class TrackingService {
       lastScore: this.formatScoreValue(entries[entries.length - 1].score_type, entries[entries.length - 1].score_value),
     }))
 
-    return { total, avgPerWeek, weekSpan, consistencyPct, typeStats, namedWorkouts, ormProgression, benchmarkProgression }
+    return {
+      total,
+      avgPerWeek,
+      weekSpan,
+      consistencyPct,
+      typeStats,
+      namedWorkouts,
+      ormProgression,
+      benchmarkProgression,
+    }
   }
 
   private formatScoreValue(scoreType: string, value: number): string {
-    if (scoreType === 'time_seconds') return `${Math.floor(value / 60)}:${String(Math.round(value % 60)).padStart(2, '0')}`
+    if (scoreType === 'time_seconds')
+      return `${Math.floor(value / 60)}:${String(Math.round(value % 60)).padStart(2, '0')}`
     if (scoreType === 'rounds') return `${value} rounds`
     if (scoreType === 'weight') return `${value}kg`
     return String(value)
@@ -198,11 +209,14 @@ export class TrackingService {
     orms: any[],
     profile: any,
     months: number,
-    diagnostic?: PerformanceDiagnosticSummary,
+    diagnostic?: PerformanceDiagnosticSummary
   ): string {
     const ormStr = orms.length ? orms.map(o => `${o.lift}: ${o.value}kg`).join(', ') : 'Non renseignés'
     const goals = profile?.global_goals
-      ? Object.entries(profile.global_goals).filter(([, v]) => v).map(([k]) => k).join(', ') || 'Non renseignés'
+      ? Object.entries(profile.global_goals)
+          .filter(([, v]) => v)
+          .map(([k]) => k)
+          .join(', ') || 'Non renseignés'
       : 'Non renseignés'
     const typeLines = agg.typeStats
       .map((t: any) => `- ${t.type} : ${t.count} séance${t.count > 1 ? 's' : ''}`)
@@ -213,13 +227,18 @@ export class TrackingService {
       : '- Aucun workout nommé avec résultat enregistré'
 
     const ormProgressionLines = agg.ormProgression.length
-      ? agg.ormProgression.map((o: any) => `- ${o.lift}: ${o.start}kg → ${o.end}kg (${o.gain > 0 ? '+' : ''}${o.gain}kg)`).join('\n')
+      ? agg.ormProgression
+          .map((o: any) => `- ${o.lift}: ${o.start}kg → ${o.end}kg (${o.gain > 0 ? '+' : ''}${o.gain}kg)`)
+          .join('\n')
       : '- Aucun nouveau PR de force enregistré sur la période'
 
     const benchmarkProgressionLines = agg.benchmarkProgression.length
       ? agg.benchmarkProgression
-        .map((b: any) => `- ${b.name} : ${b.firstLevel} → ${b.lastLevel} (${b.count} test${b.count > 1 ? 's' : ''}, dernier score : ${b.lastScore})`)
-        .join('\n')
+          .map(
+            (b: any) =>
+              `- ${b.name} : ${b.firstLevel} → ${b.lastLevel} (${b.count} test${b.count > 1 ? 's' : ''}, dernier score : ${b.lastScore})`
+          )
+          .join('\n')
       : '- Aucun benchmark testé sur la période'
 
     return `Tu es un coach CrossFit expert et analytique. Génère un bilan de progression CrossFit approfondi sur ${months} mois.
@@ -273,7 +292,7 @@ ${this.jsonInstructions()}`
       if (error instanceof SyntaxError) throw new BadRequestException('AI generated invalid JSON')
       if (error instanceof ZodError) {
         throw new BadRequestException(
-          `Report validation failed: ${error.errors.map((e) => `${e.path.join('.')} ${e.message}`).join(', ')}`
+          `Report validation failed: ${error.errors.map(e => `${e.path.join('.')} ${e.message}`).join(', ')}`
         )
       }
       throw error
@@ -315,8 +334,8 @@ ${this.jsonInstructions()}`
       type_trends: [],
       strengths: [],
       weak_points: [],
-      recommendations: ['Continue à t\'entraîner régulièrement pour débloquer ton bilan IA.'],
-      consistency_feedback: 'Données insuffisantes pour l\'instant.',
+      recommendations: ["Continue à t'entraîner régulièrement pour débloquer ton bilan IA."],
+      consistency_feedback: "Données insuffisantes pour l'instant.",
       generated_at: new Date().toISOString(),
     }
   }
@@ -344,14 +363,9 @@ ${this.jsonInstructions()}`
     return Math.max(1, Math.ceil((last.getTime() - first.getTime()) / (7 * 24 * 3600 * 1000)))
   }
 
-  private computeConsistency(sessions: { started_at: string }[], weekSpan: number): number {
-    const weekSet = new Set(sessions.map(s => {
-      const d = new Date(s.started_at)
-      const dow = d.getDay()
-      const monday = new Date(d)
-      monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1))
-      return monday.toISOString().split('T')[0]
-    }))
+  private computeConsistency(sessions: { started_at: string | Date }[], weekSpan: number): number {
+    // Semaines comptées à Paris : une séance le lundi entre 0 h et 2 h ne bascule plus dans la semaine précédente
+    const weekSet = new Set(sessions.map(s => toParisWeekStart(s.started_at)))
     return Math.round((weekSet.size / weekSpan) * 100)
   }
 }
