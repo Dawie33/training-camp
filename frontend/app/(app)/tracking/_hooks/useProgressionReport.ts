@@ -2,6 +2,7 @@
 
 import { apiClient } from '@/services/apiClient'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 export type SportType = 'crossfit'
 
@@ -36,6 +37,8 @@ export interface ProgressionReport {
   fitness_profile?: FitnessProfile
   overall_fitness_level?: string
   generated_at: string
+  /** Renvoyé par la génération seulement : vrai si le bilan enregistré était encore à jour */
+  reused?: boolean
 }
 
 export function useProgressionReport(sport: SportType) {
@@ -65,6 +68,11 @@ export function useProgressionReport(sport: SportType) {
         `/tracking/report?sport=${sport}&months=${months}`,
       )
       setReport(data)
+      if (data.reused) {
+        toast.info('Bilan déjà à jour', {
+          description: 'Aucune nouvelle séance, 1RM ou benchmark depuis le dernier bilan.',
+        })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur lors de la génération du bilan')
     } finally {

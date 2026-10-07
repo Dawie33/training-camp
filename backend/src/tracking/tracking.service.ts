@@ -16,6 +16,12 @@ export type ProgressionReport = AIProgressionReport & {
   generated_at: string
 }
 
+/** `reused` n'est pas enregistré : il indique seulement si la réponse vient d'un bilan existant. */
+export type GeneratedReport = ProgressionReport & { reused: boolean }
+
+/** Au-delà, la fenêtre glissante a bougé : le bilan enregistré ne décrit plus la même période. */
+const REUSE_MAX_AGE_MS = 24 * 3600 * 1000
+
 @Injectable()
 export class TrackingService {
   constructor(
@@ -24,25 +30,80 @@ export class TrackingService {
     private readonly userContextService: UserContextService
   ) {}
 
-  async generateReport(userId: string, sport: SportType, months: number): Promise<ProgressionReport> {
-    const since = new Date()
+  async generateReport(userId: string, sport: SportType, months: number): Promise<GeneratedReport> {
+    // Chaque génération est un appel IA payant : inutile de le refaire si rien n'a changé
+    const reusable = await this.findReusableReport(userId, sport, months)
+    if (reusable) return { ...reusable, reused: true }
+
+    // Heure du début et non de la fin : une séance loggée pendant l'appel IA (jusqu'à 120 s)
+    // doit compter comme nouvelle donnée pour le bilan suivant
+    const startedAt = new Date()
+    const since = new Date(startedAt)
     since.setMonth(since.getMonth() - months)
 
     const report = await this.generateCrossfitReport(userId, months, since)
 
-    await this.saveReport(userId, sport, months, report)
+    await this.saveReport(userId, sport, months, report, startedAt)
     this.userContextService.invalidateCache(userId)
-    return report
+    return { ...report, reused: false }
   }
 
-  private async saveReport(userId: string, sport: SportType, months: number, report: ProgressionReport): Promise<void> {
+  /**
+   * Bilan enregistré encore valable : même durée, moins de 24 h, et aucune donnée nouvelle depuis.
+   */
+  private async findReusableReport(
+    userId: string,
+    sport: SportType,
+    months: number
+  ): Promise<ProgressionReport | null> {
+    const row = await this.knex('tracking_reports')
+      .where({ user_id: userId, sport })
+      .select('period_months', 'report', 'generated_at')
+      .first()
+
+    if (!row || row.period_months !== months) return null
+
+    const generatedAt = new Date(row.generated_at)
+    if (Date.now() - generatedAt.getTime() >= REUSE_MAX_AGE_MS) return null
+    if (await this.hasNewDataSince(userId, generatedAt)) return null
+
+    return (typeof row.report === 'string' ? JSON.parse(row.report) : row.report) as ProgressionReport
+  }
+
+  /**
+   * Compare uniquement des dates posées par le serveur : `completed_at` vient du client et peut
+   * être antidaté (séance d'hier loggée aujourd'hui), alors que `updated_at` est posé à la
+   * création et à chaque modification. Une séance supprimée n'est pas détectée.
+   */
+  private async hasNewDataSince(userId: string, since: Date): Promise<boolean> {
+    const sinceIso = since.toISOString()
+    const [session, oneRepMax, benchmark] = await Promise.all([
+      this.knex('workout_sessions')
+        .where('user_id', userId)
+        .whereNotNull('completed_at')
+        .where('updated_at', '>', sinceIso)
+        .first('id'),
+      this.knex('one_rep_max_history').where('user_id', userId).where('measured_at', '>', sinceIso).first('id'),
+      this.knex('benchmark_history').where('user_id', userId).where('measured_at', '>', sinceIso).first('id'),
+    ])
+
+    return Boolean(session || oneRepMax || benchmark)
+  }
+
+  private async saveReport(
+    userId: string,
+    sport: SportType,
+    months: number,
+    report: ProgressionReport,
+    generatedAt: Date
+  ): Promise<void> {
     await this.knex('tracking_reports')
       .insert({
         user_id: userId,
         sport,
         period_months: months,
         report: JSON.stringify(report),
-        generated_at: new Date().toISOString(),
+        generated_at: generatedAt.toISOString(),
       })
       .onConflict(['user_id', 'sport'])
       .merge(['period_months', 'report', 'generated_at'])
@@ -86,8 +147,8 @@ export class TrackingService {
 
     if (sameMonth) return { generated: false }
 
-    await this.generateReport(userId, sport, 1)
-    return { generated: true }
+    const report = await this.generateReport(userId, sport, 1)
+    return { generated: !report.reused }
   }
 
   // ─── CrossFit ─────────────────────────────────────────────────────────────
