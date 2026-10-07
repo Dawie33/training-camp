@@ -1,7 +1,7 @@
 'use client'
 
-import { sessionService } from '@/services'
 import { WorkoutSession } from '@/domain/entities/workout'
+import { sessionService } from '@/services'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 

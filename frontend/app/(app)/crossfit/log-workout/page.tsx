@@ -1,12 +1,12 @@
 'use client'
 
-import { ExerciseResult, PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
-import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout-structure'
 import { RpeSelector } from '@/components/ui/rpe-selector'
 import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
-import { parseFitFiles, FitFileTooLargeError, MultiActivityFitData, HrZoneData, getSportLabel } from '@/services/fit-import'
+import { ExerciseResult, PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
+import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout-structure'
 import { scheduleApi, sessionService, workoutsService } from '@/services'
+import { FitFileTooLargeError, HrZoneData, MultiActivityFitData, getSportLabel, parseFitFiles } from '@/services/fit-import'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -251,7 +251,7 @@ function LogWorkoutContent() {
         setSelectedWorkout(workout)
         setAmrapScoreMode(getInitialAmrapScoreMode(workout))
         setSearch(found.name || '')
-      }).catch(() => {})
+      }).catch(() => { })
     }
 
     if (presetPersonalizedId) {
@@ -260,7 +260,7 @@ function LogWorkoutContent() {
         setSelectedWorkout(workout)
         setAmrapScoreMode(getInitialAmrapScoreMode(workout))
         setSearch(found.plan_json.name || '')
-      }).catch(() => {})
+      }).catch(() => { })
     }
   }, [searchParams])
 
@@ -653,11 +653,10 @@ function LogWorkoutContent() {
                                 type="button"
                                 onClick={() => handleEntryChange(idx, { scaled: !entry.scaled, scalingNote: entry.scaled ? '' : entry.scalingNote })}
                                 aria-pressed={entry.scaled}
-                                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${
-                                  entry.scaled
+                                className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${entry.scaled
                                     ? 'bg-orange-500/10 border-orange-500/40 text-orange-600'
                                     : 'bg-secondary border-border text-muted-foreground hover:text-foreground'
-                                }`}
+                                  }`}
                               >
                                 {entry.scaled ? 'Scaled' : 'RX'}
                               </button>
@@ -833,11 +832,10 @@ function LogWorkoutContent() {
                 <label className="block text-sm text-muted-foreground">Temps réalisé</label>
                 <button
                   onClick={() => setCapAtteint(!capAtteint)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
-                    capAtteint
+                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${capAtteint
                       ? 'bg-destructive/10 border-destructive/40 text-destructive'
                       : 'bg-secondary border-border text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                 >
                   Cap atteint
                 </button>
@@ -883,11 +881,10 @@ function LogWorkoutContent() {
                     type="button"
                     aria-pressed={amrapScoreMode === 'rounds'}
                     onClick={() => setAmrapScoreMode('rounds')}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-                      amrapScoreMode === 'rounds'
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${amrapScoreMode === 'rounds'
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                      }`}
                   >
                     Rounds + reps
                   </button>
@@ -895,11 +892,10 @@ function LogWorkoutContent() {
                     type="button"
                     aria-pressed={amrapScoreMode === 'split'}
                     onClick={() => setAmrapScoreMode('split')}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-                      amrapScoreMode === 'split'
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${amrapScoreMode === 'split'
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                      }`}
                   >
                     Temps + reps
                   </button>
