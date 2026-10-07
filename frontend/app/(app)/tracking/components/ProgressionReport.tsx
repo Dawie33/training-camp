@@ -15,16 +15,12 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
-import { FitnessProfile, ProgressionReport, SportType, TypeTrend, useProgressionReport } from '../_hooks/useProgressionReport'
+import { FitnessProfile, ProgressionReport, TypeTrend, useProgressionReport } from '../_hooks/useProgressionReport'
 
 const TREND_CONFIG: Record<TypeTrend['trend'], { icon: LucideIcon; color: string; bg: string; label: string }> = {
   improving: { icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-600/10 border-emerald-600/20', label: 'En progression' },
   stable: { icon: Minus, color: 'text-muted-foreground', bg: 'bg-muted border-border', label: 'Stable' },
   declining: { icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/10 border-destructive/20', label: 'En baisse' },
-}
-
-const SPORT_CONFIG: Record<SportType, { label: string; icon: LucideIcon; color: string }> = {
-  crossfit: { label: 'CrossFit', icon: Flame, color: 'text-orange-600' },
 }
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -262,28 +258,20 @@ function ReportContent({ report }: { report: ProgressionReport }) {
   )
 }
 
-interface ProgressionReportPanelProps {
-  sport: SportType
-}
-
-export function ProgressionReportPanel({ sport }: ProgressionReportPanelProps) {
-  const { report, loading, error, generate } = useProgressionReport(sport)
+export function ProgressionReportPanel() {
+  const { report, loading, error, generate } = useProgressionReport()
   const [selectedMonths, setSelectedMonths] = useState(3)
-  const cfg = SPORT_CONFIG[sport]
-  const SportIcon = cfg.icon
 
   return (
     <div className="p-6 bg-card border border-border rounded-lg">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <SportIcon className={`w-4 h-4 ${cfg.color}`} />
-            <h2 className="font-display text-xl font-semibold">
-              Bilan IA — {cfg.label}
-            </h2>
+            <Flame className="w-4 h-4 text-orange-600" />
+            <h2 className="font-display text-xl font-semibold">Bilan IA — CrossFit</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            L&apos;IA analyse toutes tes séances {cfg.label} et te donne un retour de coach
+            L&apos;IA analyse toutes tes séances CrossFit et te donne un retour de coach
           </p>
         </div>
 
@@ -324,7 +312,7 @@ export function ProgressionReportPanel({ sport }: ProgressionReportPanelProps) {
 
       {!report && !loading && (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <SportIcon className="w-10 h-10 text-muted-foreground opacity-40 mb-3" />
+          <Flame className="w-10 h-10 text-muted-foreground opacity-40 mb-3" />
           <p className="text-muted-foreground mb-1">Ton bilan IA est prêt à être généré</p>
           <p className="text-xs text-muted-foreground">L'analyse prend environ 5-10 secondes</p>
         </div>

@@ -120,7 +120,7 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
     const { service, generate, save, userContextService } = await setup()
 
     // Act
-    const result = await service.generateReport('user-1', 'crossfit', 3)
+    const result = await service.generateReport('user-1', 3)
 
     // Assert
     expect(result).toEqual({ ...savedReport, reused: true })
@@ -132,7 +132,7 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
   it('régénère quand aucun bilan n’est enregistré', async () => {
     const { service, generate } = await setup({ saved: null })
 
-    const result = await service.generateReport('user-1', 'crossfit', 3)
+    const result = await service.generateReport('user-1', 3)
 
     expect(result).toEqual({ ...newReport, reused: false })
     expect(generate).toHaveBeenCalledTimes(1)
@@ -141,7 +141,7 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
   it('régénère quand la durée demandée est différente', async () => {
     const { service, generate } = await setup()
 
-    const result = await service.generateReport('user-1', 'crossfit', 6)
+    const result = await service.generateReport('user-1', 6)
 
     expect(result.reused).toBe(false)
     expect(generate).toHaveBeenCalledTimes(1)
@@ -152,7 +152,7 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
       saved: { period_months: 3, generated_at: new Date(Date.now() - 25 * HOUR) },
     })
 
-    const result = await service.generateReport('user-1', 'crossfit', 3)
+    const result = await service.generateReport('user-1', 3)
 
     expect(result.reused).toBe(false)
     expect(generate).toHaveBeenCalledTimes(1)
@@ -165,7 +165,7 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
   ] as const)('régénère quand %s a été enregistré depuis le bilan', async (_label, table) => {
     const { service, generate, userContextService } = await setup({ newData: { [table]: true } })
 
-    const result = await service.generateReport('user-1', 'crossfit', 3)
+    const result = await service.generateReport('user-1', 3)
 
     expect(result).toEqual({ ...newReport, reused: false })
     expect(generate).toHaveBeenCalledTimes(1)
@@ -176,7 +176,7 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
     const generatedAt = new Date(Date.now() - 2 * HOUR)
     const { service, builders } = await setup({ saved: { period_months: 3, generated_at: generatedAt } })
 
-    await service.generateReport('user-1', 'crossfit', 3)
+    await service.generateReport('user-1', 3)
 
     expect(builders.workout_sessions.whereNotNull).toHaveBeenCalledWith('completed_at')
     expect(builders.workout_sessions.where).toHaveBeenCalledWith('updated_at', '>', generatedAt.toISOString())
@@ -191,9 +191,9 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
       return newReport
     })
 
-    await service.generateReport('user-1', 'crossfit', 3)
+    await service.generateReport('user-1', 3)
 
-    const savedAt = save.mock.calls[0][4] as Date
+    const savedAt = save.mock.calls[0][3] as Date
     expect(savedAt.getTime()).toBeLessThanOrEqual(calledAt)
   })
 
@@ -206,6 +206,6 @@ describe('TrackingService — réutilisation du bilan enregistré', () => {
       .mockResolvedValueOnce({ generated_at: new Date('2020-01-01T00:00:00Z') })
       .mockResolvedValueOnce({ period_months: 1, generated_at: new Date(Date.now() - 2 * HOUR), report: savedReport })
 
-    await expect(service.checkAndGenerateMonthlyReport('user-1', 'crossfit')).resolves.toEqual({ generated: false })
+    await expect(service.checkAndGenerateMonthlyReport('user-1')).resolves.toEqual({ generated: false })
   })
 })

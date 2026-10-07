@@ -3,13 +3,10 @@ import { Request } from 'express'
 import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { TrackingService } from './tracking.service'
-import { SportType } from './types/tracking.types'
 
 interface AuthenticatedRequest extends Request {
   user: { id: string; email: string }
 }
-
-const VALID_SPORTS: SportType[] = ['crossfit']
 
 @Controller('tracking')
 @UseGuards(JwtAuthGuard)
@@ -22,29 +19,19 @@ export class TrackingController {
   }
 
   @Get('report/saved')
-  async getSavedReport(@Req() req: AuthenticatedRequest, @Query('sport') sport?: string) {
-    const userId = req.user.id
-    const validSport: SportType = VALID_SPORTS.includes(sport as SportType) ? (sport as SportType) : 'crossfit'
-    return this.trackingService.getSavedReport(userId, validSport)
+  async getSavedReport(@Req() req: AuthenticatedRequest) {
+    return this.trackingService.getSavedReport(req.user.id)
   }
 
   @Post('report/check-monthly')
-  async checkMonthlyReport(@Req() req: AuthenticatedRequest, @Query('sport') sport?: string) {
-    const userId = req.user.id
-    const validSport: SportType = VALID_SPORTS.includes(sport as SportType) ? (sport as SportType) : 'crossfit'
-    return this.trackingService.checkAndGenerateMonthlyReport(userId, validSport)
+  async checkMonthlyReport(@Req() req: AuthenticatedRequest) {
+    return this.trackingService.checkAndGenerateMonthlyReport(req.user.id)
   }
 
   @Post('report')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async generateReport(
-    @Req() req: AuthenticatedRequest,
-    @Query('sport') sport?: string,
-    @Query('months') months?: string
-  ) {
-    const userId = req.user.id
-    const validSport: SportType = VALID_SPORTS.includes(sport as SportType) ? (sport as SportType) : 'crossfit'
+  async generateReport(@Req() req: AuthenticatedRequest, @Query('months') months?: string) {
     const validMonths = Math.min(Math.max(Number(months) || 3, 1), 12)
-    return this.trackingService.generateReport(userId, validSport, validMonths)
+    return this.trackingService.generateReport(req.user.id, validMonths)
   }
 }

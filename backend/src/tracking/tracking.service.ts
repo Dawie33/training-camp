@@ -24,6 +24,12 @@ import {
 /** Au-delà, la fenêtre glissante a bougé : le bilan enregistré ne décrit plus la même période. */
 const REUSE_MAX_AGE_MS = 24 * 3600 * 1000
 
+/**
+ * Seul sport suivi depuis le recentrage CrossFit. La colonne `sport` de `tracking_reports` est
+ * conservée (clé unique avec `user_id`) : elle reste écrite, mais n'est plus un paramètre de l'API.
+ */
+const SPORT: SportType = 'crossfit'
+
 @Injectable()
 export class TrackingService {
   constructor(
@@ -32,9 +38,9 @@ export class TrackingService {
     private readonly userContextService: UserContextService
   ) {}
 
-  async generateReport(userId: string, sport: SportType, months: number): Promise<GeneratedReport> {
+  async generateReport(userId: string, months: number): Promise<GeneratedReport> {
     // Chaque génération est un appel IA payant : inutile de le refaire si rien n'a changé
-    const reusable = await this.findReusableReport(userId, sport, months)
+    const reusable = await this.findReusableReport(userId, months)
     if (reusable) return { ...reusable, reused: true }
 
     // Heure du début et non de la fin : une séance loggée pendant l'appel IA (jusqu'à 120 s)
@@ -45,7 +51,7 @@ export class TrackingService {
 
     const report = await this.generateCrossfitReport(userId, months, since)
 
-    await this.saveReport(userId, sport, months, report, startedAt)
+    await this.saveReport(userId, months, report, startedAt)
     this.userContextService.invalidateCache(userId)
     return { ...report, reused: false }
   }
@@ -53,15 +59,11 @@ export class TrackingService {
   /**
    * Bilan enregistré encore valable : même durée, moins de 24 h, et aucune donnée nouvelle depuis.
    */
-  private async findReusableReport(
-    userId: string,
-    sport: SportType,
-    months: number
-  ): Promise<ProgressionReport | null> {
+  private async findReusableReport(userId: string, months: number): Promise<ProgressionReport | null> {
     const row: Pick<TrackingReportRow, 'period_months' | 'report' | 'generated_at'> | undefined = await this.knex(
       'tracking_reports'
     )
-      .where({ user_id: userId, sport })
+      .where({ user_id: userId, sport: SPORT })
       .select('period_months', 'report', 'generated_at')
       .first()
 
@@ -96,7 +98,6 @@ export class TrackingService {
 
   private async saveReport(
     userId: string,
-    sport: SportType,
     months: number,
     report: ProgressionReport,
     generatedAt: Date
@@ -104,7 +105,7 @@ export class TrackingService {
     await this.knex('tracking_reports')
       .insert({
         user_id: userId,
-        sport,
+        sport: SPORT,
         period_months: months,
         report: JSON.stringify(report),
         generated_at: generatedAt.toISOString(),
@@ -122,10 +123,10 @@ export class TrackingService {
     return rows.map(row => this.parseReport(row.report))
   }
 
-  async getSavedReport(userId: string, sport: SportType): Promise<ProgressionReport | null> {
+  async getSavedReport(userId: string): Promise<ProgressionReport | null> {
     const row: Pick<TrackingReportRow, 'report'> | undefined = await this.knex('tracking_reports')
       .where('user_id', userId)
-      .where('sport', sport)
+      .where('sport', SPORT)
       .select('report')
       .first()
 
@@ -139,13 +140,13 @@ export class TrackingService {
   }
 
   /**
-   * Régénère le bilan d'un sport s'il n'a pas encore été généré ce mois-ci.
+   * Régénère le bilan s'il n'a pas encore été généré ce mois-ci.
    * Appelé silencieusement à la connexion (voir AuthContext frontend) pour éviter
    * de dépendre d'un cron serveur (backend Render pas toujours up en continu).
    */
-  async checkAndGenerateMonthlyReport(userId: string, sport: SportType): Promise<{ generated: boolean }> {
+  async checkAndGenerateMonthlyReport(userId: string): Promise<{ generated: boolean }> {
     const existing: Pick<TrackingReportRow, 'generated_at'> | undefined = await this.knex('tracking_reports')
-      .where({ user_id: userId, sport })
+      .where({ user_id: userId, sport: SPORT })
       .first('generated_at')
     const now = new Date()
     const sameMonth =
@@ -155,7 +156,7 @@ export class TrackingService {
 
     if (sameMonth) return { generated: false }
 
-    const report = await this.generateReport(userId, sport, 1)
+    const report = await this.generateReport(userId, 1)
     return { generated: !report.reused }
   }
 
@@ -190,14 +191,14 @@ export class TrackingService {
       this.knex('users').select('sport_level', 'global_goals').where('id', userId).first(),
     ])
 
-    if (sessions.length < 3) return this.notEnoughData('crossfit', months, sessions.length)
+    if (sessions.length < 3) return this.notEnoughData(months, sessions.length)
 
     const agg = this.aggregateCrossfit(sessions, ormHistory, benchmarkHistory)
     const { diagnostic } = await this.userContextService.getUserAIContext(userId)
     const prompt = this.buildCrossfitPrompt(agg, oneRepMaxes, profile, months, diagnostic)
     const parsed = await this.callAI(prompt)
 
-    return { sport: 'crossfit', period_months: months, ...parsed, generated_at: new Date().toISOString() }
+    return { sport: SPORT, period_months: months, ...parsed, generated_at: new Date().toISOString() }
   }
 
   private aggregateCrossfit(
@@ -402,10 +403,10 @@ ${this.jsonInstructions()}`
 }`
   }
 
-  private notEnoughData(sport: SportType, months: number, count: number): ProgressionReport {
+  private notEnoughData(months: number, count: number): ProgressionReport {
     const noun = count <= 1 ? 'séance complétée' : 'séances complétées'
     return {
-      sport,
+      sport: SPORT,
       period_months: months,
       period_summary: `Pas assez de données sur ${months} mois (${count} ${noun}). Continue à t'entraîner pour débloquer ton bilan !`,
       overall_trend: 'stable',

@@ -41,7 +41,7 @@ export interface ProgressionReport {
   reused?: boolean
 }
 
-export function useProgressionReport(sport: SportType) {
+export function useProgressionReport() {
   const [report, setReport] = useState<ProgressionReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -49,24 +49,20 @@ export function useProgressionReport(sport: SportType) {
   useEffect(() => {
     async function loadSaved() {
       try {
-        const data = await apiClient.get<ProgressionReport | null>(
-          `/tracking/report/saved?sport=${sport}`,
-        )
+        const data = await apiClient.get<ProgressionReport | null>('/tracking/report/saved')
         if (data) setReport(data)
       } catch {
         // Pas de rapport sauvegardé, on laisse l'UI inviter à générer
       }
     }
     loadSaved()
-  }, [sport])
+  }, [])
 
   async function generate(months = 3) {
     setLoading(true)
     setError(null)
     try {
-      const data = await apiClient.post<ProgressionReport>(
-        `/tracking/report?sport=${sport}&months=${months}`,
-      )
+      const data = await apiClient.post<ProgressionReport>(`/tracking/report?months=${months}`)
       setReport(data)
       if (data.reused) {
         toast.info('Bilan déjà à jour', {

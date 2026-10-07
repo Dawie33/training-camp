@@ -92,7 +92,7 @@ function TrackingContent() {
           {/* Historique : bilan IA et données brutes */}
           {activeTab === 'history' && (
             <div className="space-y-6">
-              <ProgressionReportPanel sport="crossfit" />
+              <ProgressionReportPanel />
 
               <div className="p-6 bg-card border border-border rounded-lg">
                 <div className="flex items-center gap-2 mb-6">
