@@ -64,7 +64,7 @@ export function useProgressionReport(sport: SportType) {
     setLoading(true)
     setError(null)
     try {
-      const data = await apiClient.get<ProgressionReport>(
+      const data = await apiClient.post<ProgressionReport>(
         `/tracking/report?sport=${sport}&months=${months}`,
       )
       setReport(data)

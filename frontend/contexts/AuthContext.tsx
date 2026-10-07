@@ -11,7 +11,7 @@ import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
  * en dev/Render où le backend n'est pas toujours up en continu.
  */
 function checkMonthlyReport() {
-  apiClient.get('/tracking/report/check-monthly?sport=crossfit').catch(() => {})
+  apiClient.post('/tracking/report/check-monthly?sport=crossfit').catch(() => {})
 }
 
 /**

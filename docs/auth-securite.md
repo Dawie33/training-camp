@@ -74,10 +74,10 @@ Deux réglages en découlent :
 | Génération de programme de compétence (`POST /skills/generate-ai`) | 10 |
 | Analyse post-séance (`POST /workout-sessions/:id/analyze`) | 10 |
 | Séance du jour (`GET /recommendations/daily-session/check`) | 10 |
-| Bilan de progression à la demande (`GET /tracking/report`) | 10 |
+| Bilan de progression à la demande (`POST /tracking/report`) | 10 |
 | Recommandation du coach — lecture / régénération | 60 / 5 |
 
-> **Exception assumée** : `GET /tracking/report/check-monthly` garde la limite par défaut. Il est appelé à chaque connexion et ne génère qu'un bilan par mois.
+> **Exception assumée** : `POST /tracking/report/check-monthly` garde la limite par défaut. Il est appelé à chaque connexion et ne génère qu'un bilan par mois.
 
 > **Détail technique**
 >
