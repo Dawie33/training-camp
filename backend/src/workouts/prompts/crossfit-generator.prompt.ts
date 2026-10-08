@@ -204,7 +204,7 @@ Tu dois TOUJOURS retourner un JSON avec cette structure :
 {
   "name": "Nom du WOD",
   "description": "Description courte (1-2 phrases) incluant le stimulus recherché",
-  "workout_type": "technique_metcon|strength_max|conditioning|strength_accessory|benchmark",
+  "workout_type": "technique_metcon|strength_max|conditioning|strength_accessory|benchmark|vo2max|core",
   "estimated_duration": 45,
   "difficulty": "beginner|intermediate|advanced|elite",
   "intensity": "moderate|high|very_high",
@@ -312,14 +312,27 @@ Varie et combine ces modalités selon le type de workout :
 ### strength_max
 1. Warmup (10 min) : spécifique au lift
 2. Strength (30-40 min) : Build to heavy single/double/triple OU 5x5@80%
-3. Accessory (10 min) : 2-3 mouvements accessoires
+3. Accessory (10 min) : 2-3 mouvements accessoires liés au lift du jour (ex : front squat → pause squat, split squat, RDL). PAS de gainage isolé (planche, hollow, crunch) : le tronc a sa propre séance "core"
 4. Cooldown (5 min)
 
 ### conditioning
 1. Warmup (10 min)
 2. MetCon principal (20-25 min) : haute intensité, multi-modal
-3. Finisher optionnel (5 min) : abs/cardio
+3. Finisher optionnel (5 min) : cardio uniquement, PAS d'abdos ni de gainage isolé
 4. Cooldown (5 min)
+
+### core
+Séance courte (35-45 min) centrée sur le tronc. Utilise les types de section existants (warmup, emom, strength, finisher, cooldown).
+1. Warmup (8 min) : dead bug, cat-cow, hollow/arch, bird dog
+2. Gymnastique du tronc (10-12 min) : EMOM technique — T2B ou K2E stricts, L-sit, hollow-to-arch à la barre
+3. Force du tronc (12-15 min) : 3-4 tours en superset couvrant les 3 familles — anti-extension (ab wheel, planche RKC), anti-rotation (Pallof press, landmine), anti-inclinaison latérale (suitcase carry, planche latérale, Copenhagen)
+4. Carries / flexion (8-10 min) : farmer, front rack ou overhead carry + un peu de flexion (GHD sit-ups, V-ups). Volume GHD limité pour un débutant
+5. Cooldown (5 min) : respiration, mobilité
+
+### Travail du tronc dans les autres types
+- Les mouvements gymniques qui sollicitent le tronc (T2B, GHD sit-ups, V-ups) restent autorisés dans un metcon : ils font partie du "G" de M-G-W
+- 2-3 min d'activation du tronc dans l'échauffement restent autorisées
+- En dehors du type "core", ne JAMAIS ajouter de bloc de gainage/abdos isolé (finisher abs, accessoires planche/hollow)
 
 ### benchmark
 - Respecter EXACTEMENT le format des benchmarks célèbres
@@ -672,7 +685,7 @@ function pickRandomFormat(): string {
 /**
  * Construit le prompt utilisateur demandant la génération d'un WOD précis, avec des
  * instructions de structure spécifiques selon le `workoutType` (technique_metcon,
- * strength_max, conditioning, vo2max, benchmark).
+ * strength_max, conditioning, vo2max, benchmark, core).
  * @param params Paramètres de génération (type, durée, niveau, équipement, focus)
  * @returns Le prompt utilisateur complet
  */
@@ -694,6 +707,7 @@ export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): strin
     'strength_accessory': 'Force avec volume + mouvements accessoires',
     'benchmark': `Benchmark CrossFit officiel${benchmarkName ? ` : ${benchmarkName}` : ''}`,
     'vo2max': 'Intervalles cardio haute intensité pour améliorer la VO2max',
+    'core': 'Séance tronc/gainage : gymnastique du tronc, force anti-mouvement et carries',
   }
 
   let prompt = `Génère un WOD CrossFit avec les paramètres suivants :
@@ -718,6 +732,9 @@ ${additionalInstructions ? `\n**Instructions additionnelles** : ${additionalInst
   } else if (workoutType === 'conditioning') {
     const format = pickRandomFormat()
     prompt += `\nFocus sur haute intensité métabolique. **Format MetCon imposé : ${format}** — utilise CE format, pas un autre. Multi-modal (combiner M-G-W).`
+  } else if (workoutType === 'core') {
+    prompt += `\nStructure : 8min warmup → 10-12min EMOM gymnastique du tronc → 12-15min force du tronc en superset (anti-extension, anti-rotation, anti-inclinaison latérale) → 8-10min carries/flexion → 5min cooldown. Durée totale 35-45 min maximum, même si la durée demandée est plus longue.`
+    prompt += `\nworkout_type = "core". Pas de metcon à haute intensité : qualité d'exécution et contrôle avant tout.`
   } else if (workoutType === 'vo2max') {
     const vo2maxProtocols = ['billat_30_30', 'norwegian_4x4', 'tabata_cardio', '3x5min'] as const
     const protocol = vo2maxProtocols[Math.floor(Math.random() * vo2maxProtocols.length)]

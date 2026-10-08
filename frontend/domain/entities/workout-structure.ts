@@ -124,6 +124,7 @@ export const WORKOUT_TYPES = {
     { value: 'strength_max', label: 'Force Max (RM)' },
     { value: 'conditioning', label: 'Conditioning' },
     { value: 'vo2max', label: 'VO2max (intervalles cardio)' },
+    { value: 'core', label: 'Core / Gainage' },
     { value: 'benchmark', label: 'Benchmark (Fran, Murph, etc.)' },
   ]
 } as const

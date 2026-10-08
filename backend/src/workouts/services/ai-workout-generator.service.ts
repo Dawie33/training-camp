@@ -25,7 +25,6 @@ export interface WorkoutGenerationParams {
   focus?: string | string[]
   additionalInstructions?: string
   skipSkillBlock?: boolean
-  techniqueFocus?: string // 'skills' | 'altero' | 'conditioning' | '' (auto)
 }
 
 /**
@@ -71,13 +70,12 @@ export class AIWorkoutGeneratorService {
       ? params.equipment
       : context.equipment_available.length > 0 ? context.equipment_available : undefined
 
-    const skillInstruction = params.skipSkillBlock ? null : this.buildSkillInstruction(context.activeSkills)
+    // Une séance core n'a ni MetCon ni bloc skill : le travail de compétence n'y a pas sa place
+    const skillInstruction = params.skipSkillBlock || params.workoutType === 'core'
+      ? null
+      : this.buildSkillInstruction(context.activeSkills)
 
-    const techniqueInstruction = params.techniqueFocus !== undefined
-      ? this.buildTechniqueInstruction(params.techniqueFocus, { equipment: equipment ?? [], level: difficulty })
-      : null
-
-    const additionalInstructions = [techniqueInstruction, skillInstruction, params.additionalInstructions]
+    const additionalInstructions = [skillInstruction, params.additionalInstructions]
       .filter(Boolean)
       .join('\n\n') || undefined
 
@@ -179,46 +177,6 @@ export class AIWorkoutGeneratorService {
     ]
       .filter(Boolean)
       .join('\n')
-  }
-
-  private buildTechniqueInstruction(focus: string, ctx: { equipment: string[]; level: string }): string | null {
-    const equipNote = ctx.equipment.length
-      ? `Équipement disponible UNIQUEMENT : ${ctx.equipment.join(', ')}. N'utilise QUE cet équipement, rien d'autre.`
-      : `Pas d'équipement spécifique — mouvements au poids du corps uniquement.`
-    const levelNote = `Niveau athlète : ${ctx.level}.`
-    const header = `CONTRAINTES ABSOLUES :\n- ${equipNote}\n- ${levelNote}\n- Adapte les mouvements et les charges à ces contraintes.\n`
-    const core = `4) CORE / GAINAGE (5-10 min) — abdos et gainage : planches, hollow body, hollow rocks, toes-to-bar lent, sit-ups. PAS de conditioning.`
-
-    const map: Record<string, string> = {
-      skills: `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance technique gymnastics pure :
-${header}
-1) WARMUP (10 min) — mobilité, activation spécifique gymnastics
-2) TECHNIQUE GYMNASTICS (25-30 min) — choisis UN mouvement adapté au niveau ET à l'équipement disponible (ex: si pas d'anneaux → barre uniquement). Propose des progressions adaptées au niveau : si débutant sur ce mouvement, commence par les prérequis (ex: strict pull-ups, dips, banded MU). Plusieurs séries avec temps de repos suffisant.
-3) RENFORCEMENT SPÉCIFIQUE (10 min) — force auxiliaire liée au mouvement travaillé (ex: dips, ring rows, hollow holds, pike push-ups)
-${core}`,
-      altero: `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance haltérophilie pure :
-${header}
-1) WARMUP (10 min) — échauffement haltérophilie, mobilité épaules/hanches/chevilles
-2) TECHNIQUE HALTÉROPHILIE (25-30 min) — snatch ou clean & jerk selon l'équipement. Complexes techniques progressifs ou travail de force spécifique (ex: 6x2 à 70%, puis 4x1 à 80%). Temps de repos complet entre les séries (2-3 min). Adapte les charges au niveau.
-3) RENFORCEMENT COMPLÉMENTAIRE (10 min) — overhead squat, RDL, press derrière la nuque, ou autre exercice spécifique haltérophilie adapté à l'équipement
-${core}`,
-      conditioning: `STRUCTURE OBLIGATOIRE — vrai WOD/MetCon conditioning, PAS de séance technique isolée :
-${header}
-1) WARMUP (8-10 min) — activation cardio-respiratoire et mobilité générale
-2) METCON (20-30 min) — un vrai WOD qui MÉLANGE du monostructural (course, rameur, bike/assault bike, double-unders) ET des mouvements fonctionnels à haute intensité (burpees, devil press, box jump, wall balls, kettlebell swings, thrusters...). Format libre adapté à l'équipement disponible : AMRAP, For Time, EMOM, ou intervalles. Charges/volumes adaptés au niveau.
-3) FINISHER optionnel (5 min) — core/gainage léger si le temps le permet
-Objectif : séance cardio-intense, essoufflante, PAS une séance de technique pure.`,
-    }
-
-    if (map[focus]) return map[focus]
-
-    // Auto — l'IA choisit la dominante, toujours sans MetCon et avec le contexte utilisateur
-    return `STRUCTURE OBLIGATOIRE — PAS DE METCON, séance technique/force pure :
-${header}
-1) WARMUP (10 min) — mobilité et activation adaptés à la séance
-2) TRAVAIL PRINCIPAL (25-30 min) — choisis UNE dominante adaptée à l'équipement disponible et au niveau : gymnastics technique, haltérophilie, ou force. Plusieurs séries qualitatives avec temps de repos complet. Si un mouvement n'est pas réalisable avec l'équipement, propose une alternative adaptée.
-3) RENFORCEMENT COMPLÉMENTAIRE (10 min) — exercices spécifiques à la dominante choisie, adaptés à l'équipement
-${core}`
   }
 
   /**

@@ -19,6 +19,7 @@ Un programme équilibré sur 3 semaines doit couvrir :
 - **Force/puissance** : séance à dominante strength_max (1-2x/semaine)
 - **Conditionnement métabolique** : conditioning (2-3x/semaine)
 - **Technique/seuil** : technique_metcon (1x/semaine)
+- **Tronc/gainage** : core (1x/semaine, 2 max) — jamais la veille ni le jour d'une séance lourde de squat/deadlift
 
 ## Règles de récupération
 - RPE 9-10 hier → recommander séance légère ou repos
@@ -31,7 +32,7 @@ Un programme équilibré sur 3 semaines doit couvrir :
 - **Urgence faible** : 3-7 jours sans une modalité (rotation normale)
 
 ## Types de séance
-- **crossfit** : technique_metcon, strength_max, conditioning, benchmark, vo2max
+- **crossfit** : technique_metcon, strength_max, conditioning, benchmark, vo2max, core
 - **rest** : récupération active (type "active_recovery")
 
 ## Durée suggérée par niveau

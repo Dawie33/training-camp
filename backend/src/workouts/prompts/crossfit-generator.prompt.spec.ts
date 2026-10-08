@@ -115,6 +115,15 @@ describe('buildCrossFitSystemPrompt', () => {
     expect(prompt).toContain('strict avant kipping')
   })
 
+  it('réserve le gainage isolé au type core : pas d\'abdos en finisher ni en accessoire de force', () => {
+    const prompt = buildCrossFitSystemPrompt()
+
+    expect(prompt).toContain('### core')
+    expect(prompt).toContain('Finisher optionnel (5 min) : cardio uniquement')
+    expect(prompt).not.toContain('abs/cardio')
+    expect(prompt).toContain('PAS de gainage isolé')
+  })
+
   it('sans équipement fourni → utilise le preset crossfit par défaut', () => {
     const prompt = buildCrossFitSystemPrompt()
 
@@ -169,5 +178,18 @@ describe('buildCrossFitWorkoutPrompt', () => {
 
     expect(prompt).toContain('Protocole VO2max imposé')
     expect(prompt).toContain('workout_type = "vo2max"')
+  })
+
+  it('workoutType core → impose la structure tronc et plafonne la durée à 45 min', () => {
+    const prompt = buildCrossFitWorkoutPrompt({
+      workoutType: 'core',
+      duration: 60,
+      difficulty: 'intermediate',
+    })
+
+    expect(prompt).toContain('Séance tronc/gainage')
+    expect(prompt).toContain('anti-extension, anti-rotation, anti-inclinaison latérale')
+    expect(prompt).toContain('35-45 min maximum')
+    expect(prompt).toContain('workout_type = "core"')
   })
 })
