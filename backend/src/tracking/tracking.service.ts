@@ -357,12 +357,12 @@ ${this.jsonInstructions()}`
       model: this.openaiClientService.model,
       messages: [{ role: 'user', content: prompt }],
       ...this.openaiClientService.temperatureParam(0.7),
-      max_completion_tokens: 2500,
+      ...this.openaiClientService.completionParams(2500),
       response_format: { type: 'json_object' },
     })
 
     const content = completion.choices[0]?.message?.content
-    if (!content) throw new BadRequestException('No response from AI')
+    if (!content) throw new BadRequestException(this.openaiClientService.emptyResponseMessage(completion))
 
     try {
       return AIProgressionReportSchema.parse(JSON.parse(content))

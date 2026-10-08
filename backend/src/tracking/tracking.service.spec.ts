@@ -152,7 +152,11 @@ describe('TrackingService — seuil de 3 séances avant l’appel à l’IA', ()
 
     const service = await createService({
       knex: jest.fn((table: keyof typeof queries) => queries[table]),
-      openai: { client: { chat: { completions: { create: createCompletion } } }, temperatureParam: () => ({}) },
+      openai: {
+        client: { chat: { completions: { create: createCompletion } } },
+        temperatureParam: () => ({}),
+        completionParams: (n: number) => ({ max_completion_tokens: n }),
+      },
       userContext: userContextService,
     })
     jest.spyOn(internalsOf(service), 'saveReport').mockResolvedValue(undefined)

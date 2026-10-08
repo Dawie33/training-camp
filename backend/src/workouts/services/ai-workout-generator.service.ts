@@ -313,13 +313,13 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
           { role: 'user', content: userPrompt }
         ],
         ...this.openaiClientService.temperatureParam(0.8),
-        max_completion_tokens: 4096,
+        ...this.openaiClientService.completionParams(4096),
         response_format: { type: 'json_object' }
       })
 
       const content = completion.choices[0]?.message?.content
       if (!content) {
-        throw new BadRequestException('No response from AI')
+        throw new BadRequestException(this.openaiClientService.emptyResponseMessage(completion))
       }
 
       const workoutData = JSON.parse(content)

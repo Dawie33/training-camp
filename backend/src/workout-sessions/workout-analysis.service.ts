@@ -88,7 +88,7 @@ Réponds en JSON avec exactement cette structure :
         model: this.openaiClientService.model,
         messages: [{ role: 'user', content: prompt }],
         ...this.openaiClientService.temperatureParam(0.7),
-        max_completion_tokens: 800,
+        ...this.openaiClientService.completionParams(800),
         response_format: { type: 'json_object' },
       })
     } catch {
@@ -96,7 +96,7 @@ Réponds en JSON avec exactement cette structure :
     }
 
     const content = completion.choices[0]?.message?.content
-    if (!content) throw new InternalServerErrorException('Réponse vide de l\'IA')
+    if (!content) throw new InternalServerErrorException(this.openaiClientService.emptyResponseMessage(completion))
 
     let analysis: WodAnalysis
     try {

@@ -32,12 +32,12 @@ export class RecommendationsService {
           { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
         ],
         ...this.openaiClientService.temperatureParam(0.4),
-        max_completion_tokens: 800,
+        ...this.openaiClientService.completionParams(800),
         response_format: { type: 'json_object' },
       })
 
       const content = completion.choices[0]?.message?.content
-      if (!content) throw new BadRequestException('No response from AI')
+      if (!content) throw new BadRequestException(this.openaiClientService.emptyResponseMessage(completion))
 
       const recommendation = AIRecommendationSchema.parse(JSON.parse(content))
 
