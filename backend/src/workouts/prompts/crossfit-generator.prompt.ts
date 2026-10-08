@@ -293,7 +293,7 @@ Varie et combine ces modalités selon le type de workout :
 
 ### Chipper
 - Liste longue d'exercices (8-12) à faire une fois
-- For Time avec cap
+- For Time avec un cap calculé depuis le volume (voir CALCUL DE DURÉE)
 - Exemple : 50-40-30-20-10 de différents mouvements
 
 ### Ladder (rep scheme différent par mouvement, montant et/ou descendant)
@@ -478,6 +478,7 @@ Exemple :
 6. **Durée réaliste** : Total 30-60 minutes incluant warmup/cooldown
 7. **Format OBLIGATOIRE** : Le champ \`format\` est **obligatoire** pour toutes les sections autres que \`warmup\` et \`cooldown\`. Valeurs acceptées : \`"AMRAP Xmin"\`, \`"EMOM Xmin"\`, \`"For Time (cap Xmin)"\`, \`"Tabata"\`, \`"Chipper"\`, \`"Straight Sets"\`, \`"E2MOM Xmin"\`, \`"Circuit"\`, \`"Build to Heavy"\`. Pour \`warmup\` et \`cooldown\` uniquement : \`null\`.
 8. **Tâche insérée entre les rounds** : si le WOD comporte un mouvement fixe à répéter après CHAQUE round (buy-in/cash-out du type "Perform 30 double-unders after each round"), ne l'ajoute PAS comme exercice classique du round ni dans \`rest_between_rounds\` (qui est un temps de repos passif en secondes). Utilise le champ \`"between_rounds_task"\` de la section pour le décrire en texte libre.
+9. **Hiérarchie des consignes** : contraintes de l'athlète (consignes de la demande, blessures, limitations) > travail technique imposé > diagnostic et ratios > méthodologie générale. Si le travail technique contredit une contrainte (ex : skill muscle-up alors que l'athlète demande de ménager les épaules), supprime le travail technique plutôt que d'enfreindre la contrainte. Les options de scaling respectent aussi les contraintes (ex : pas de jumping pull-up si l'athlète demande "pas de saut").
 
 ## 9. PROTOCOLES VO2MAX
 
@@ -526,7 +527,7 @@ Calcule \`duration_min\` de chaque section depuis le bas — ne jamais distribue
 - **warmup / cooldown** : somme des exercices. Ex : 3min row + 2min mobilité + 10×PVC (20s) = ~6 min
 - **AMRAP** : \`duration_min\` = durée exacte de l'AMRAP. Ex : AMRAP 15min → 15
 - **EMOM** : \`duration_min\` = nombre de minutes. Ex : EMOM 12min → 12
-- **For Time** : \`duration_min\` = cap time estimé (15-25 min selon volume)
+- **For Time / Chipper** : additionne les temps de référence de chaque exercice, puis cap = ce total + 10-20 % (ex : volume estimé à 25 min → cap 28-30 min). \`duration_min\` = cap. Un cap trop large ne sert plus à rien : si le volume ne rentre pas dans la durée de MetCon prévue pour le workout_type, réduis les reps plutôt que d'allonger le cap
 - **strength** : sets × (temps par set + repos). Ex : 5×3 avec 3min de repos = 5×1min + 4×3min = 17min → 15-20
 
 **Temps de référence CrossFit :**
@@ -535,7 +536,9 @@ Calcule \`duration_min\` de chaque section depuis le bas — ne jamais distribue
 - SkiErg 500m → 2-3 min | Bike 1km → 2-3 min
 - Burpees : 10 reps ≈ 45s | 20 reps ≈ 1.5 min
 - Air squats/thrusters/push-ups : 15-21 reps ≈ 30-60s par set
-- Pull-ups : 10 reps ≈ 45s | Muscle-ups : 5 reps ≈ 30-45s
+- Kipping pull-ups : 10 reps ≈ 45s | Strict pull-ups : 10 reps ≈ 1-1.5 min (fractionnés) | Muscle-ups : 5 reps ≈ 30-45s
+- Négatives lentes (5 s de descente) : 5 reps ≈ 1 min
+- Walking lunges : 20 reps ≈ 1 min | Sit-ups : 25 reps ≈ 1 min
 - KB Swings / Wall Balls : 21 reps ≈ 1-1.5 min
 - Repos entre séries force : 2-4 min | Repos gymnastic : 1-2 min
 
@@ -673,7 +676,8 @@ export interface CrossFitWorkoutParams {
   equipment?: string[]
   focus?: string // Ex: "upper body", "legs", "olympic lifts"
   benchmarkName?: string // Si type=benchmark, nom du benchmark
-  additionalInstructions?: string
+  athleteConstraints?: string // Consignes saisies par l'athlète : prioritaires sur tout le reste
+  skillInstruction?: string // Travail technique ajouté automatiquement depuis les skills actifs
 }
 
 const METCON_FORMATS = ['AMRAP', 'EMOM', 'For Time', 'Tabata', 'Chipper', 'E2MOM'] as const
@@ -697,7 +701,8 @@ export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): strin
     equipment = [],
     focus,
     benchmarkName,
-    additionalInstructions = ''
+    athleteConstraints,
+    skillInstruction,
   } = params
 
   const workoutTypeDescriptions: Record<string, string> = {
@@ -710,14 +715,21 @@ export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): strin
     'core': 'Séance tronc/gainage : gymnastique du tronc, force anti-mouvement et carries',
   }
 
-  let prompt = `Génère un WOD CrossFit avec les paramètres suivants :
+  // Les contraintes passent en tête : elles doivent primer sur le skill et la structure type
+  const constraintsBlock = athleteConstraints
+    ? `\n## CONTRAINTES DE L'ATHLÈTE (PRIORITAIRES)\n${athleteConstraints}\n` +
+      '→ Ces contraintes priment sur tout le reste (travail technique, diagnostic, ratios, structure type).' +
+      ' Aucun exercice, aucune section et aucune option de scaling ne doit les enfreindre.\n'
+    : ''
 
+  let prompt = `Génère un WOD CrossFit avec les paramètres suivants :
+${constraintsBlock}
 **Type de workout** : ${workoutTypeDescriptions[workoutType] || workoutType}
 **Niveau** : ${difficulty}
 **Durée totale** : ${duration} minutes
 ${equipment.length > 0 ? `**Équipement disponible** : ${equipment.join(', ')}` : ''}
 ${focus ? `**Focus** : ${focus}` : ''}
-${additionalInstructions ? `\n**Instructions additionnelles** : ${additionalInstructions}` : ''}
+${skillInstruction ? `\n${skillInstruction}` : ''}
 `
 
   // Instructions spécifiques par type
@@ -762,7 +774,13 @@ Pour le bloc intervalles :
   }
 
   prompt += `\n\nCrée un workout CrossFit structuré, équilibré et adapté à ce niveau.
-Respecte la méthodologie CrossFit et fournis des scaling options pour tous les mouvements.
+Respecte la méthodologie CrossFit et fournis des scaling options pour tous les mouvements.`
+
+  if (athleteConstraints) {
+    prompt += `\nAvant de répondre, vérifie chaque exercice ET chaque option de scaling contre les contraintes de l'athlète : "${athleteConstraints}".`
+  }
+
+  prompt += `
 
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 

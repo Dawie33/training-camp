@@ -14,6 +14,9 @@ import { ActiveSkillContext, UserContextService } from './user-context.service'
  */
 export type GeneratedWorkout = GeneratedWorkoutValidated
 
+// Types de séance dont la structure ne prévoit pas de bloc skill_work
+const SKILL_FREE_WORKOUT_TYPES = ['core', 'conditioning', 'vo2max']
+
 /**
  * Paramètres communs à la génération d'un workout via l'IA.
  */
@@ -51,7 +54,7 @@ export class AIWorkoutGeneratorService {
       difficulty: params.difficulty || 'intermediate',
       equipment: params.equipment,
       focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
-      additionalInstructions: params.additionalInstructions
+      athleteConstraints: params.additionalInstructions,
     })
     return this.callOpenAI(systemPrompt, userPrompt)
   }
@@ -70,23 +73,22 @@ export class AIWorkoutGeneratorService {
       ? params.equipment
       : context.equipment_available.length > 0 ? context.equipment_available : undefined
 
-    // Une séance core n'a ni MetCon ni bloc skill : le travail de compétence n'y a pas sa place
-    const skillInstruction = params.skipSkillBlock || params.workoutType === 'core'
+    const workoutType = params.workoutType || 'conditioning'
+
+    // core, conditioning et vo2max n'ont pas de bloc skill : le travail de compétence n'y a pas sa place
+    const skillInstruction = params.skipSkillBlock || SKILL_FREE_WORKOUT_TYPES.includes(workoutType)
       ? null
       : this.buildSkillInstruction(context.activeSkills)
 
-    const additionalInstructions = [skillInstruction, params.additionalInstructions]
-      .filter(Boolean)
-      .join('\n\n') || undefined
-
     const systemPrompt = buildCrossFitSystemPrompt(equipment, context)
     const userPrompt = buildCrossFitWorkoutPrompt({
-      workoutType: params.workoutType || 'conditioning',
+      workoutType,
       duration: params.duration,
       difficulty,
       equipment,
       focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
-      additionalInstructions,
+      athleteConstraints: params.additionalInstructions,
+      skillInstruction: skillInstruction ?? undefined,
     })
     return this.callOpenAI(systemPrompt, userPrompt)
   }
@@ -166,14 +168,14 @@ export class AIWorkoutGeneratorService {
       : '(jamais travaillé)'
 
     return [
-      `**TRAVAIL TECHNIQUE À INTÉGRER OBLIGATOIREMENT** ${lastTrainedNote} :`,
+      `**TRAVAIL TECHNIQUE À INTÉGRER** ${lastTrainedNote}, sauf s'il contredit les contraintes de l'athlète :`,
       `Skill : "${skill.skill_name}" (${skill.skill_category})`,
       `Étape : "${skill.step_title}"`,
       skill.step_description ? `Objectif : ${skill.step_description}` : null,
       exercisesText ? `Exercices de progression :\n${exercisesText}` : null,
       skill.coaching_tips ? `Tips : ${skill.coaching_tips}` : null,
       `→ Inclus une section "skill_work" de 15-20 min AVANT le MetCon avec ces exercices.`,
-      `→ Si pertinent, intègre "${skill.skill_name}" ou ses variantes progressives dans le MetCon.`,
+      `→ Si pertinent et compatible avec les contraintes, intègre "${skill.skill_name}" ou ses variantes progressives dans le MetCon.`,
     ]
       .filter(Boolean)
       .join('\n')

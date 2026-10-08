@@ -19,6 +19,16 @@ function buildContext(overrides: Partial<UserAIContext> = {}): UserAIContext {
     activeSkills: [],
     completedSkillNames: [],
     progressionReports: [],
+    diagnostic: {
+      weak_ratios: [],
+      underworked_domains: [],
+      load_zone: null,
+      load_change_pct: null,
+      most_scaled_movements: [],
+      benchmark_trends: [],
+      sessions_per_week: 0,
+      consistency_pct: 0,
+    },
     ...overrides,
   }
 }
@@ -124,6 +134,23 @@ describe('buildCrossFitSystemPrompt', () => {
     expect(prompt).toContain('PAS de gainage isolé')
   })
 
+  it('fait primer les contraintes de l\'athlète sur le travail technique, y compris dans le scaling', () => {
+    const prompt = buildCrossFitSystemPrompt()
+
+    expect(prompt).toContain('Hiérarchie des consignes')
+    expect(prompt).toContain('supprime le travail technique plutôt que d\'enfreindre la contrainte')
+    expect(prompt).toContain('Les options de scaling respectent aussi les contraintes')
+  })
+
+  it('calcule le cap des For Time / Chipper depuis le volume plutôt qu\'une fourchette fixe', () => {
+    const prompt = buildCrossFitSystemPrompt()
+
+    expect(prompt).toContain('cap = ce total + 10-20 %')
+    expect(prompt).not.toContain('cap time estimé (15-25 min selon volume)')
+    expect(prompt).toContain('Walking lunges : 20 reps')
+    expect(prompt).toContain('Sit-ups : 25 reps')
+  })
+
   it('sans équipement fourni → utilise le preset crossfit par défaut', () => {
     const prompt = buildCrossFitSystemPrompt()
 
@@ -191,5 +218,25 @@ describe('buildCrossFitWorkoutPrompt', () => {
     expect(prompt).toContain('anti-extension, anti-rotation, anti-inclinaison latérale')
     expect(prompt).toContain('35-45 min maximum')
     expect(prompt).toContain('workout_type = "core"')
+  })
+
+  it('contraintes de l\'athlète → en tête du prompt, rappelées à la fin pour la vérification finale', () => {
+    const prompt = buildCrossFitWorkoutPrompt({
+      workoutType: 'conditioning',
+      duration: 45,
+      difficulty: 'intermediate',
+      athleteConstraints: 'pas de saut',
+    })
+
+    expect(prompt).toContain('CONTRAINTES DE L\'ATHLÈTE (PRIORITAIRES)')
+    expect(prompt.indexOf('pas de saut')).toBeLessThan(prompt.indexOf('**Type de workout**'))
+    expect(prompt).toContain('vérifie chaque exercice ET chaque option de scaling contre les contraintes de l\'athlète : "pas de saut"')
+  })
+
+  it('sans contraintes → ni bloc prioritaire ni vérification finale', () => {
+    const prompt = buildCrossFitWorkoutPrompt({ workoutType: 'conditioning', duration: 45, difficulty: 'intermediate' })
+
+    expect(prompt).not.toContain('CONTRAINTES DE L\'ATHLÈTE')
+    expect(prompt).not.toContain('vérifie chaque exercice')
   })
 })
