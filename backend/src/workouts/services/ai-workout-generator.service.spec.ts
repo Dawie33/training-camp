@@ -37,7 +37,7 @@ function buildContext(overrides: Partial<UserAIContext> = {}): UserAIContext {
     completedSkillNames: [],
     progressionReports: [],
     diagnostic: {
-      weak_ratios: [],
+      ratio_imbalances: [],
       underworked_domains: [],
       load_zone: null,
       load_change_pct: null,

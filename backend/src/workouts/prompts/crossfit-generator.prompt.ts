@@ -8,35 +8,9 @@ import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
 import { EQUIPMENT_PRESETS } from '../constants/equipment.constants'
 import { UserAIContext } from '../services/user-context.service'
 
-function buildDiagnosticRatios(oneRepMaxes: { lift: string; value: number }[]): string[] {
-  const rm: Record<string, number> = {}
-  for (const r of oneRepMaxes) rm[r.lift] = r.value
-
-  const notes: string[] = []
-  const cleanAndJerk = rm['clean_and_jerk'] ?? rm['clean']
-
-  const checkBelow = (num: number | undefined, den: number | undefined, label: string, threshold: number, hint: string) => {
-    if (!num || !den) return
-    const pct = Math.round((num / den) * 100)
-    if (pct < threshold) notes.push(`- ${label} : ${pct}% (repère ≥${threshold}%) — ${hint}`)
-  }
-  const checkAbove = (num: number | undefined, den: number | undefined, label: string, threshold: number, hint: string) => {
-    if (!num || !den) return
-    const pct = Math.round((num / den) * 100)
-    if (pct > threshold) notes.push(`- ${label} : ${pct}% (repère ≤${threshold}%) — ${hint}`)
-  }
-
-  checkBelow(rm['snatch'], cleanAndJerk, 'Snatch / Clean & Jerk', 78, 'snatch en retard — prioriser technique et mobilité overhead')
-  checkBelow(rm['front_squat'], rm['back_squat'], 'Front Squat / Back Squat', 80, 'position de réception ou gainage antérieur à travailler')
-  checkAbove(cleanAndJerk, rm['back_squat'], 'Clean & Jerk / Back Squat', 75, 'C&J proche du 1RM back squat — la limite est probablement la force max, pas la technique')
-  checkBelow(rm['deadlift'], rm['back_squat'], 'Deadlift / Back Squat', 120, 'deadlift relativement faible par rapport au squat — renforcer la chaîne postérieure')
-
-  return notes
-}
-
 /**
  * Construit la section "profil de l'athlète" injectée dans les prompts de génération
- * IA : niveau, 1RMs (avec ratios diagnostiques), benchmarks, objectifs, limitations
+ * IA : niveau, 1RMs, benchmarks, objectifs, limitations
  * physiques, équipement, activité récente et bilans de progression.
  * @param context Contexte utilisateur agrégé (voir UserContextService)
  * @returns Le texte de la section à insérer dans le prompt système
@@ -64,14 +38,6 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     lines.push('**Forces (1RM mesurés)** :')
     for (const rm of context.oneRepMaxes) {
       lines.push(`- ${rm.lift} : ${rm.value}kg`)
-    }
-
-    const ratioNotes = buildDiagnosticRatios(context.oneRepMaxes)
-    if (ratioNotes.length > 0) {
-      lines.push('')
-      lines.push('**Ratios diagnostiques (déséquilibres détectés)** :')
-      lines.push(...ratioNotes)
-      lines.push('→ Oriente le skill_work ou le strength du jour vers le point faible identifié si pertinent pour ce workout.')
     }
   }
 
@@ -169,8 +135,16 @@ export function buildAthleteContextSection(context: UserAIContext): string {
   lines.push(
     '**Directives** : Adapte le workout à ce profil. Respecte les limitations physiques.' +
       ' Utilise l\'équipement disponible. Programme en cohérence avec l\'activité récente et les bilans de progression.' +
-      ' Quand le diagnostic calculé signale un déséquilibre de force, une filière délaissée ou un mouvement souvent scalé,' +
+      ' Quand le diagnostic calculé signale une filière délaissée ou un mouvement souvent scalé,' +
       ' fais-en une cible explicite du workout plutôt que de programmer au hasard.',
+  )
+  // Un ratio se corrige sous charge, pas dans un metcon ; en cibler plusieurs à la fois
+  // reviendrait à charger le même patron tous les jours
+  lines.push(
+    '**Déséquilibres de force** : ils se travaillent dans le bloc force ou haltérophilie, jamais dans le metcon.' +
+      ' Si le workout comporte un tel bloc, cible UN SEUL déséquilibre par séance : un ratio trop bas désigne' +
+      ' le mouvement du numérateur, un ratio trop haut désigne celui du dénominateur comme limitant.' +
+      ' Sans bloc force ou haltérophilie, ignore-les.',
   )
 
   return lines.join('\n')

@@ -62,6 +62,15 @@ export interface RecentSession {
   perceived_effort?: number
 }
 
+/** Ratio de force sorti de sa fourchette cible, dans un sens ou dans l'autre. */
+export interface RatioImbalance {
+  label: string
+  value_pct: number
+  target: string
+  direction: 'below' | 'above'
+  reading: string
+}
+
 /**
  * Synthèse du diagnostic calculé, sous une forme assez compacte pour tenir dans un prompt.
  *
@@ -69,8 +78,11 @@ export interface RecentSession {
  * et les alertes. Les séries complètes restent dans le module analytics.
  */
 export interface PerformanceDiagnosticSummary {
-  /** Ratios de force hors fourchette basse, avec la lecture coach de l'écart. */
-  weak_ratios: { label: string; value_pct: number; target: string; reading: string }[]
+  /**
+   * Ratios de force hors fourchette, avec la lecture coach de l'écart. Un ratio trop haut
+   * compte autant qu'un trop bas : il désigne le mouvement du dénominateur comme limitant.
+   */
+  ratio_imbalances: RatioImbalance[]
   /** Domaines temporels sous 10 % du volume — un athlète ne progresse que là où il s'expose. */
   underworked_domains: string[]
   load_zone: string | null
@@ -326,14 +338,19 @@ export class UserContextService {
     const overview = await this.analyticsService.getOverview(userId, 3)
 
     return {
-      weak_ratios: overview.strength_ratios.ratios
-        .filter(ratio => ratio.verdict === 'below' && ratio.value_pct !== null)
-        .map(ratio => ({
-          label: ratio.label,
-          value_pct: ratio.value_pct as number,
-          target: `${ratio.target_min_pct}-${ratio.target_max_pct} %`,
-          reading: ratio.interpretation,
-        })),
+      ratio_imbalances: overview.strength_ratios.ratios.flatMap(ratio =>
+        (ratio.verdict === 'below' || ratio.verdict === 'above') && ratio.value_pct !== null
+          ? [
+              {
+                label: ratio.label,
+                value_pct: ratio.value_pct,
+                target: `${ratio.target_min_pct}-${ratio.target_max_pct} %`,
+                direction: ratio.verdict,
+                reading: ratio.interpretation,
+              },
+            ]
+          : []
+      ),
 
       underworked_domains: overview.energy_systems.domains
         .filter(domain => overview.energy_systems.underworked.includes(domain.domain))

@@ -1,4 +1,9 @@
-import { PerformanceDiagnosticSummary } from 'src/workouts/services/user-context.service'
+import { PerformanceDiagnosticSummary, RatioImbalance } from 'src/workouts/services/user-context.service'
+
+const DIRECTION_LABELS: Record<RatioImbalance['direction'], string> = {
+  below: 'trop bas',
+  above: 'trop haut',
+}
 
 const TREND_LABELS: Record<string, string> = {
   improving: '↑ progression',
@@ -11,6 +16,20 @@ const LOAD_ZONE_LABELS: Record<string, string> = {
   optimal: 'zone optimale',
   caution: 'vigilance — la charge monte vite',
   high_risk: 'RISQUE ÉLEVÉ — réduire le volume',
+}
+
+/**
+ * Met en forme les déséquilibres de force, une ligne par ratio, avec le sens de l'écart :
+ * c'est lui qui dit quel mouvement est limitant.
+ *
+ * @param imbalances Ratios hors fourchette issus du diagnostic
+ * @returns Les lignes à insérer dans le prompt
+ */
+export function formatRatioImbalances(imbalances: RatioImbalance[]): string[] {
+  return imbalances.map(
+    ratio =>
+      `- ${ratio.label} : ${ratio.value_pct} %, ${DIRECTION_LABELS[ratio.direction]} (cible ${ratio.target}) — ${ratio.reading}`
+  )
 }
 
 /**
@@ -28,11 +47,9 @@ export function buildDiagnosticPromptLines(diagnostic?: PerformanceDiagnosticSum
 
   const lines: string[] = []
 
-  if (diagnostic.weak_ratios.length > 0) {
+  if (diagnostic.ratio_imbalances.length > 0) {
     lines.push('### Déséquilibres de force mesurés')
-    for (const ratio of diagnostic.weak_ratios) {
-      lines.push(`- ${ratio.label} : ${ratio.value_pct} % (cible ${ratio.target}) — ${ratio.reading}`)
-    }
+    lines.push(...formatRatioImbalances(diagnostic.ratio_imbalances))
   }
 
   if (diagnostic.underworked_domains.length > 0) {

@@ -1,5 +1,10 @@
 import type { Injury } from 'src/common/injuries/injury.constants'
 import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
+import { formatRatioImbalances } from 'src/common/ai/diagnostic-prompt'
+import type { RatioImbalance } from 'src/workouts/services/user-context.service'
+
+/** Catégories où les ratios entre 1RM ont un sens : il n'en existe pas pour la gymnastique ni la mobilité. */
+const STRENGTH_RATIO_CATEGORIES: SkillProgressionParams['skillCategory'][] = ['olympic_lifting', 'strength']
 
 export function buildSkillProgressionSystemPrompt(): string {
   return `Tu es un coach CrossFit certifie Level 3+ specialise dans la progression technique et le developpement de skills avances.
@@ -136,10 +141,22 @@ export interface SkillProgressionParams {
   availableEquipment?: string[]
   injuries?: Injury[]
   physicalLimitations?: Record<string, unknown>
+  /** Déséquilibres de force mesurés, pris en compte seulement en haltérophilie et en force. */
+  strengthImbalances?: RatioImbalance[]
 }
 
 export function buildSkillProgressionUserPrompt(params: SkillProgressionParams): string {
-  const { skillName, skillCategory, currentCapabilities, constraints, userLevel, availableEquipment, injuries, physicalLimitations } = params
+  const {
+    skillName,
+    skillCategory,
+    currentCapabilities,
+    constraints,
+    userLevel,
+    availableEquipment,
+    injuries,
+    physicalLimitations,
+    strengthImbalances,
+  } = params
 
   const categoryLabels: Record<string, string> = {
     gymnastics: 'Gymnastique CrossFit',
@@ -162,6 +179,19 @@ ${injuriesBlock ? `${injuriesBlock}\n\nIMPORTANT : Adapte la progression et excl
 ${hasPhysicalLimitations ? `**Limitations physiques** : ${JSON.stringify(physicalLimitations)}` : ''}
 ${availableEquipment && availableEquipment.length > 0 ? `**Equipement disponible** : ${availableEquipment.join(', ')}\n\nIMPORTANT : Utilise UNIQUEMENT l'equipement liste ci-dessus. Ne propose AUCUN exercice necessitant du materiel que l'utilisateur n'a pas. Si un exercice classique necessite du materiel indisponible, propose une alternative avec l'equipement disponible ou au poids du corps.` : ''}
 `
+
+  if (STRENGTH_RATIO_CATEGORIES.includes(skillCategory) && strengthImbalances && strengthImbalances.length > 0) {
+    prompt += `
+**Desequilibres de force mesures (chiffres calcules, ne pas les recalculer)** :
+${formatRatioImbalances(strengthImbalances).join('\n')}
+
+IMPORTANT : Un ratio trop bas designe le mouvement du numerateur comme limitant, un ratio trop haut celui du denominateur.
+- Si la limite est technique (ex. snatch bas par rapport au C&J), le coeur du programme reste le travail technique et de mobilite.
+- Si la limite est la force (ex. C&J proche du back squat), ajoute du travail de force sur le mouvement limitant en accessoire, a chaque etape.
+- Si le mouvement limitant est une position (ex. front squat bas = reception du clean), integre-le dans les exercices recommandes.
+Ignore les desequilibres sans lien avec ${skillName}.
+`
+  }
 
   prompt += `\nCree un programme de progression structure, progressif et adapte.
 Chaque etape doit avoir des criteres de validation clairs et mesurables.

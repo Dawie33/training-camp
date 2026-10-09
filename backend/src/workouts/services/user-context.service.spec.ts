@@ -302,4 +302,39 @@ describe('UserContextService.getUserAIContext', () => {
     // Assert
     expect(result.completedSkillNames).toEqual(['Muscle-Up', 'Handstand Walk'])
   })
+
+  it('ratio_imbalances : garde les ratios trop bas ET trop hauts, écarte les autres', async () => {
+    // Arrange
+    const ratio = (key: string, verdict: string, value_pct: number | null) => ({
+      key,
+      label: key,
+      value_pct,
+      target_min_pct: 70,
+      target_max_pct: 75,
+      verdict,
+      interpretation: `lecture ${key}`,
+    })
+    analyticsMock.getOverview.mockResolvedValueOnce({
+      ...emptyOverview,
+      strength_ratios: {
+        ratios: [
+          ratio('trop_bas', 'below', 60),
+          ratio('trop_haut', 'above', 90),
+          ratio('dans_la_cible', 'in_range', 72),
+          ratio('sans_1rm', 'unavailable', null),
+        ],
+        missing_lifts: [],
+      },
+    })
+    const service = await buildService(createKnexMock())
+
+    // Act
+    const result = await service.getUserAIContext('user-ratios')
+
+    // Assert
+    expect(result.diagnostic.ratio_imbalances).toEqual([
+      { label: 'trop_bas', value_pct: 60, target: '70-75 %', direction: 'below', reading: 'lecture trop_bas' },
+      { label: 'trop_haut', value_pct: 90, target: '70-75 %', direction: 'above', reading: 'lecture trop_haut' },
+    ])
+  })
 })

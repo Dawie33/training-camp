@@ -20,7 +20,7 @@ function buildContext(overrides: Partial<UserAIContext> = {}): UserAIContext {
     completedSkillNames: [],
     progressionReports: [],
     diagnostic: {
-      weak_ratios: [],
+      ratio_imbalances: [],
       underworked_domains: [],
       load_zone: null,
       load_change_pct: null,
@@ -42,7 +42,7 @@ describe('buildAthleteContextSection', () => {
     expect(section).not.toContain('Règle du microcycle')
   })
 
-  it('snatch faible par rapport au clean & jerk (< 78%) → alerte affichée', () => {
+  it('1RM connus → les liste sans recalculer de ratio (le diagnostic est la seule source)', () => {
     const section = buildAthleteContextSection(
       buildContext({
         oneRepMaxes: [
@@ -52,57 +52,39 @@ describe('buildAthleteContextSection', () => {
       }),
     )
 
-    expect(section).toContain('Ratios diagnostiques')
-    expect(section).toContain('Snatch / Clean & Jerk : 70%')
-  })
-
-  it('ratios tous dans les repères → aucune alerte affichée', () => {
-    const section = buildAthleteContextSection(
-      buildContext({
-        oneRepMaxes: [
-          { lift: 'snatch', value: 80 },
-          { lift: 'clean_and_jerk', value: 100 },
-          { lift: 'front_squat', value: 119 },
-          { lift: 'back_squat', value: 140 },
-          { lift: 'deadlift', value: 175 },
-        ],
-      }),
-    )
-
+    expect(section).toContain('- snatch : 70kg')
     expect(section).not.toContain('Ratios diagnostiques')
+    expect(section).not.toContain('Déséquilibres de force mesurés')
   })
 
-  it('clean & jerk trop proche du back squat (> 75%) → alerte force max', () => {
+  it('déséquilibre trop haut dans le diagnostic → affiché avec son sens et sa lecture', () => {
     const section = buildAthleteContextSection(
       buildContext({
-        oneRepMaxes: [
-          { lift: 'clean_and_jerk', value: 90 },
-          { lift: 'back_squat', value: 100 },
-        ],
+        diagnostic: {
+          ...buildContext().diagnostic,
+          ratio_imbalances: [
+            {
+              label: 'Clean & Jerk / Back Squat',
+              value_pct: 90,
+              target: '70-75 %',
+              direction: 'above',
+              reading: 'C&J proche du back squat : c\'est la force maximale qu\'il faut monter.',
+            },
+          ],
+        },
       }),
     )
 
-    expect(section).toContain('Clean & Jerk / Back Squat : 90%')
-    expect(section).toContain('force max')
+    expect(section).toContain('Déséquilibres de force mesurés')
+    expect(section).toContain('Clean & Jerk / Back Squat : 90 %, trop haut (cible 70-75 %)')
+    expect(section).toContain('force maximale')
   })
 
-  it('fallback sur "clean" quand "clean_and_jerk" est absent', () => {
-    const section = buildAthleteContextSection(
-      buildContext({
-        oneRepMaxes: [
-          { lift: 'snatch', value: 70 },
-          { lift: 'clean', value: 100 },
-        ],
-      }),
-    )
+  it('consigne : les déséquilibres de force se travaillent dans le bloc force, un seul par séance', () => {
+    const section = buildAthleteContextSection(buildContext())
 
-    expect(section).toContain('Snatch / Clean & Jerk : 70%')
-  })
-
-  it('un seul 1RM connu → ne calcule aucun ratio (pas de crash)', () => {
-    const section = buildAthleteContextSection(buildContext({ oneRepMaxes: [{ lift: 'back_squat', value: 100 }] }))
-
-    expect(section).not.toContain('Ratios diagnostiques')
+    expect(section).toContain('jamais dans le metcon')
+    expect(section).toContain('UN SEUL déséquilibre')
   })
 
   it('séance récente présente → ajoute la règle anti-répétition de stress du microcycle', () => {

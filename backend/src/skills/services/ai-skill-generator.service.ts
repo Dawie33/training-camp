@@ -30,6 +30,7 @@ export class AISkillGeneratorService {
         availableEquipment: params.availableEquipment?.length ? params.availableEquipment : ctx.equipment_available,
         injuries: ctx.injuries,
         physicalLimitations: ctx.physical_limitations,
+        strengthImbalances: ctx.diagnostic.ratio_imbalances,
       })
 
       const completion = await this.openaiClientService.client.chat.completions.create({
