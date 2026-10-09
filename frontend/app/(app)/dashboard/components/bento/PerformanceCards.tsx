@@ -10,18 +10,23 @@ import {
   AcwrZone,
   BenchmarkProgress,
   EnergySystemsResult,
-  LatestSessionAnalysis,
+  LatestSession,
   MovementExposureResult,
   PerformanceLevel,
   PerformanceOverview,
+  SessionAnalysis,
   SkillProgressResult,
   StrengthHistoryResult,
   StrengthRatiosResult,
   TrainingLoadResult,
   TrainingVolumeResult,
 } from '@/services/analytics'
+import { Button } from '@/components/ui/button'
 import { CROSSFIT_LIFTS } from '@/services/one-rep-maxes'
-import { AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react'
+import { sessionService } from '@/services/sessions'
+import { AlertTriangle, Loader2, Sparkles, TrendingDown, TrendingUp } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { SkillOfTheDayCard } from '../SkillOfTheDayCard'
 import { BentoCard, BentoStat } from './BentoCard'
 
@@ -273,19 +278,49 @@ function StrengthBalanceCard({ data }: { data: StrengthRatiosResult }) {
 }
 
 /**
- * Retour du coach sur la dernière séance analysée.
- * Le contenu vient d'une analyse déjà stockée — l'affichage ne déclenche aucune génération.
+ * Retour du coach sur la dernière séance terminée.
+ * L'affichage ne déclenche aucune génération : tant que la séance n'est pas analysée, la carte
+ * propose de lancer l'analyse plutôt que de montrer celle d'une séance plus ancienne.
  */
-function LatestAnalysisCard({ analysis }: { analysis: LatestSessionAnalysis | null }) {
-  if (!analysis) return null
+function LatestSessionCard({ session }: { session: LatestSession }) {
+  const [analysis, setAnalysis] = useState<SessionAnalysis | null>(session.analysis)
+  const [analyzing, setAnalyzing] = useState(false)
+
+  const date = new Date(session.session_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+
+  const handleAnalyze = async () => {
+    setAnalyzing(true)
+    try {
+      setAnalysis(await sessionService.analyzeSession(session.session_id))
+    } catch {
+      toast.error("Impossible de générer l'analyse")
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  if (!analysis) {
+    // Pas de href : toute la carte deviendrait un lien et avalerait le clic du bouton
+    return (
+      <BentoCard eyebrow="Ta dernière séance" title={session.workout_name}>
+        <p className="text-xs text-muted-foreground mb-2.5">{date}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+          Le coach n&apos;a pas encore analysé cette séance.
+        </p>
+        <Button size="sm" onClick={handleAnalyze} disabled={analyzing}>
+          {analyzing ? <Loader2 className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
+          {analyzing ? 'Analyse en cours…' : 'Analyser cette séance'}
+        </Button>
+      </BentoCard>
+    )
+  }
 
   const level = PERFORMANCE_LEVELS[analysis.performance_level]
-  const date = new Date(analysis.session_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
 
   return (
     <BentoCard
       eyebrow="Retour sur ta dernière séance"
-      title={analysis.workout_name}
+      title={session.workout_name}
       href={`/tracking`}
     >
       <div className="flex items-center gap-2 flex-wrap mb-2.5">
@@ -433,7 +468,10 @@ export function PerformanceCards({ overview, loading }: { overview: PerformanceO
   return (
     <>
       <WeakPointCard data={overview.strength_ratios} />
-      <LatestAnalysisCard analysis={overview.latest_analysis} />
+      {/* key : repart d'un état neuf si une autre séance devient la dernière */}
+      {overview.latest_session && (
+        <LatestSessionCard key={overview.latest_session.session_id} session={overview.latest_session} />
+      )}
       <LoadCard load={overview.load} />
       <VolumeCard volume={overview.volume} />
       <StrengthHistoryCard data={overview.strength_history} />

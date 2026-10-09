@@ -128,16 +128,21 @@ export interface StrengthHistoryResult {
 
 export type PerformanceLevel = 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
 
-export interface LatestSessionAnalysis {
-  session_id: string
-  workout_name: string
-  session_date: string
+export interface SessionAnalysis {
   summary: string
   performance_level: PerformanceLevel
   comparison: string | null
   strengths: string[]
   improvements: string[]
   next_steps: string
+}
+
+/** Dernière séance terminée — `analysis` vaut null tant qu'elle n'a pas été analysée. */
+export interface LatestSession {
+  session_id: string
+  workout_name: string
+  session_date: string
+  analysis: SessionAnalysis | null
 }
 
 export interface SkillProgress {
@@ -165,7 +170,7 @@ export interface PerformanceOverview {
   load: TrainingLoadResult
   movements: MovementExposureResult
   skills: SkillProgressResult
-  latest_analysis: LatestSessionAnalysis | null
+  latest_session: LatestSession | null
   computed_at: string
 }
 

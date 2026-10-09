@@ -12,8 +12,9 @@ import { computeTrainingVolume } from './calculators/training-volume'
 import {
   BenchmarkProgress,
   EnergySystemsResult,
-  LatestSessionAnalysis,
+  LatestSession,
   MovementExposureResult,
+  SessionAnalysis,
   SkillProgressResult,
   StrengthHistoryResult,
   StrengthRatiosResult,
@@ -31,8 +32,8 @@ export interface PerformanceOverview {
   load: TrainingLoadResult
   movements: MovementExposureResult
   skills: SkillProgressResult
-  /** Relecture de la dernière analyse stockée — aucune génération IA déclenchée ici. */
-  latest_analysis: LatestSessionAnalysis | null
+  /** Dernière séance terminée et relecture de son analyse stockée — aucune génération IA déclenchée ici. */
+  latest_session: LatestSession | null
   computed_at: string
 }
 
@@ -69,7 +70,7 @@ export class AnalyticsService {
       oneRepMaxHistoryRows,
       skillPrograms,
       skillSteps,
-      latestAnalysisRow,
+      latestSessionRow,
     ] = await Promise.all([
       this.knex('workout_sessions')
         .select('started_at', 'completed_at', 'results')
@@ -113,7 +114,9 @@ export class AnalyticsService {
           this.knex.raw("COALESCE(w.name, pw.plan_json->>'name') as workout_name"),
         )
         .where('ws.user_id', userId)
-        .whereNotNull('ws.ai_analysis')
+        // La vraie dernière séance, analysée ou non : filtrer sur ai_analysis afficherait
+        // une vieille séance dès que l'athlète ne lance pas l'analyse.
+        .whereNotNull('ws.completed_at')
         .orderBy('ws.started_at', 'desc')
         .first(),
     ])
@@ -157,23 +160,33 @@ export class AnalyticsService {
       load: computeTrainingLoad(durations),
       movements: computeMovementExposure(loggedExercises, oneRepMaxes),
       skills: computeSkillProgress(skillPrograms, skillSteps),
-      latest_analysis: this.readLatestAnalysis(latestAnalysisRow),
+      latest_session: this.readLatestSession(latestSessionRow),
       computed_at: new Date().toISOString(),
     }
   }
 
+  /** Relit la dernière séance terminée et, si elle existe, son analyse stockée. */
+  private readLatestSession(row: Record<string, unknown> | undefined): LatestSession | null {
+    if (!row) return null
+
+    return {
+      session_id: String(row.id),
+      workout_name: typeof row.workout_name === 'string' ? row.workout_name : 'Séance',
+      session_date: new Date(row.started_at as string).toISOString(),
+      analysis: this.readAnalysis(row.ai_analysis),
+    }
+  }
+
   /**
-   * Relit l'analyse stockée de la dernière séance analysée.
+   * Relit une analyse stockée.
    * Renvoie null dès qu'un champ attendu manque, plutôt qu'un objet à moitié vide.
    */
-  private readLatestAnalysis(row: Record<string, unknown> | undefined): LatestSessionAnalysis | null {
-    if (!row?.ai_analysis) return null
+  private readAnalysis(raw: unknown): SessionAnalysis | null {
+    if (!raw) return null
 
     let analysis: Record<string, unknown>
     try {
-      analysis = typeof row.ai_analysis === 'string'
-        ? JSON.parse(row.ai_analysis)
-        : (row.ai_analysis as Record<string, unknown>)
+      analysis = typeof raw === 'string' ? JSON.parse(raw) : (raw as Record<string, unknown>)
     } catch {
       return null
     }
@@ -181,11 +194,8 @@ export class AnalyticsService {
     if (typeof analysis?.performance_level !== 'string') return null
 
     return {
-      session_id: String(row.id),
-      workout_name: typeof row.workout_name === 'string' ? row.workout_name : 'Séance',
-      session_date: new Date(row.started_at as string).toISOString(),
       summary: typeof analysis.summary === 'string' ? analysis.summary : '',
-      performance_level: analysis.performance_level as LatestSessionAnalysis['performance_level'],
+      performance_level: analysis.performance_level as SessionAnalysis['performance_level'],
       comparison: typeof analysis.comparison === 'string' ? analysis.comparison : null,
       strengths: Array.isArray(analysis.strengths) ? analysis.strengths.filter(s => typeof s === 'string') : [],
       improvements: Array.isArray(analysis.improvements) ? analysis.improvements.filter(s => typeof s === 'string') : [],

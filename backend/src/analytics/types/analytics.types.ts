@@ -138,23 +138,28 @@ export interface StrengthHistoryResult {
 
 export type PerformanceLevel = 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
 
-/**
- * Analyse de la dernière séance analysée.
- *
- * Contrairement au reste du module, ce bloc n'est pas calculé : il **relit** une
- * analyse déjà produite et stockée par `WorkoutAnalysisService`. Aucun appel à
- * l'IA n'est déclenché ici.
- */
-export interface LatestSessionAnalysis {
-  session_id: string
-  workout_name: string
-  session_date: string
+/** Analyse IA d'une séance, telle que stockée par `WorkoutAnalysisService`. */
+export interface SessionAnalysis {
   summary: string
   performance_level: PerformanceLevel
   comparison: string | null
   strengths: string[]
   improvements: string[]
   next_steps: string
+}
+
+/**
+ * Dernière séance terminée, avec son analyse si elle a été générée.
+ *
+ * Contrairement au reste du module, l'analyse n'est pas calculée : elle **relit** ce
+ * que `WorkoutAnalysisService` a stocké. Aucun appel à l'IA n'est déclenché ici —
+ * `analysis` vaut null tant que l'athlète n'a pas demandé l'analyse de la séance.
+ */
+export interface LatestSession {
+  session_id: string
+  workout_name: string
+  session_date: string
+  analysis: SessionAnalysis | null
 }
 
 export interface SkillProgress {
