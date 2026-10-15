@@ -36,8 +36,8 @@ export interface JsonCompletionRequest<S extends z.ZodTypeAny> {
 export class OpenAIClientService {
   private readonly logger = new Logger(OpenAIClientService.name)
   readonly client: OpenAI
-  readonly model: string = process.env.OPENAI_MODEL ?? 'gpt-4.1'
-  // Les gpt-4.x n'ont pas de phase de raisonnement ; les modèles plus récents (GPT-5+) si
+  readonly model: string = process.env.OPENAI_MODEL ?? 'gpt-6-luna'
+  // Les gpt-4.x n'ont pas de phase de raisonnement ; les modèles plus récents (GPT-5+ et GPT-6) si
   private readonly isReasoningModel = !this.model.startsWith('gpt-4')
 
   constructor() {

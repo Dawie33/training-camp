@@ -11,7 +11,7 @@ export const envValidationSchema = Joi.object({
 
   // OpenAI
   OPENAI_API_KEY: Joi.string().required(),
-  OPENAI_MODEL: Joi.string().default('gpt-4.1'),
+  OPENAI_MODEL: Joi.string().default('gpt-6-luna'),
 
   // Application
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
