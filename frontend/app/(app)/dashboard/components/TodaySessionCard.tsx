@@ -1,10 +1,16 @@
 'use client'
 
-import { CoachRecommendation, DailySessionResult, recommendationsService } from '@/services/recommendations'
+import {
+  CoachProposal,
+  CoachRecommendation,
+  DailySessionResult,
+  recommendationsService,
+} from '@/services/recommendations'
 import type { WorkoutSchedule } from '@/services/schedule'
-import { ArrowRight, Brain, CheckCircle2, Heart } from 'lucide-react'
+import { ArrowRight, Brain, CheckCircle2, Heart, Loader2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 const URGENCY_LABELS: Record<CoachRecommendation['urgency'], string> = {
   high: 'Prioritaire',
@@ -36,6 +42,86 @@ function CoachReason({ recommendation }: { recommendation: CoachRecommendation }
       </p>
       <p className="text-sm text-foreground font-medium leading-snug">{recommendation.reason}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">{recommendation.coaching_insight}</p>
+    </div>
+  )
+}
+
+/**
+ * Le WOD que le coach aurait programmé, quand le créneau du jour est pris par une autre séance.
+ * Généré seulement à la demande : la séance planifiée par l'athlète reste en place.
+ */
+function CoachProposalBlock({ schedule }: { schedule: WorkoutSchedule }) {
+  const [proposal, setProposal] = useState<CoachProposal | null>(schedule.coach_proposal ?? null)
+  const [generating, setGenerating] = useState(false)
+  const completed = schedule.status === 'completed'
+
+  const handleGenerate = async () => {
+    setGenerating(true)
+    try {
+      setProposal(await recommendationsService.generateProposal())
+    } catch {
+      toast.error("Le coach n'a pas pu préparer sa proposition, réessaie dans un instant")
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-dashed border-border p-4">
+      <p className="flex items-center gap-1.5 eyebrow">
+        <Sparkles className="w-3.5 h-3.5 text-primary" aria-hidden />
+        L&apos;idée du coach
+      </p>
+
+      {!proposal ? (
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <p className="text-sm text-muted-foreground">
+            {completed
+              ? 'Ta séance est faite, rien à refaire aujourd\'hui. Tu peux voir ce que le coach avait prévu, pour une prochaine fois.'
+              : 'Ta séance est calée. Tu peux la comparer avec ce que le coach aurait programmé selon ton cycle.'}
+          </p>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-semibold hover:bg-secondary transition-colors disabled:opacity-60"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                Le coach prépare ton WOD…
+              </>
+            ) : (
+              'Voir le WOD du coach'
+            )}
+          </button>
+        </div>
+      ) : proposal.workout_id ? (
+        <div className="space-y-3">
+          <div>
+            <h4 className="font-display text-lg font-semibold leading-tight">{proposal.workout_name}</h4>
+            <p className="text-sm text-muted-foreground capitalize mt-0.5">
+              {[proposal.recommended_type.replace(/_/g, ' '), `${proposal.suggested_duration} min`].join(' · ')}
+            </p>
+          </div>
+          <CoachReason recommendation={proposal} />
+          <Link
+            href={`/workout/${proposal.workout_id}`}
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:opacity-80 transition-opacity"
+          >
+            Ouvrir le WOD
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden />
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Heart className="w-4 h-4 text-primary shrink-0" aria-hidden />
+            Le coach conseillait du repos aujourd&apos;hui.
+          </p>
+          <CoachReason recommendation={proposal} />
+        </div>
+      )}
     </div>
   )
 }
@@ -88,6 +174,9 @@ function PlannedSession({ schedule }: { schedule: WorkoutSchedule }) {
           </Link>
         )}
       </div>
+
+      {/* Séance planifiée par l'athlète : la proposition du coach reste disponible à côté */}
+      {!recommendation && <CoachProposalBlock schedule={schedule} />}
     </div>
   )
 }

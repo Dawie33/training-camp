@@ -9,7 +9,7 @@ import { RecommendationsService } from './services/recommendations.service'
 export class RecommendationsController {
   constructor(
     private readonly recommendationsService: RecommendationsService,
-    private readonly dailySessionService: DailySessionService,
+    private readonly dailySessionService: DailySessionService
   ) {}
 
   /**
@@ -20,6 +20,16 @@ export class RecommendationsController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async checkDailySession(@Request() req: { user: { id: string } }) {
     return this.dailySessionService.checkAndGenerateDailySession(req.user.id)
+  }
+
+  /**
+   * Génère la proposition du coach quand le créneau du jour est occupé par une autre séance.
+   * Renvoie la proposition déjà enregistrée sans rappeler l'IA.
+   */
+  @Post('daily-session/proposal')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async generateProposal(@Request() req: { user: { id: string } }) {
+    return this.dailySessionService.generateProposal(req.user.id)
   }
 
   @Get('next-session')

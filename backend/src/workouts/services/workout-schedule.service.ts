@@ -233,6 +233,18 @@ export class WorkoutScheduleService {
   }
 
   /**
+   * Enregistre la proposition du coach sur un créneau occupé par une autre séance
+   * @param id ID de la planification
+   * @param userId ID de l'utilisateur
+   * @param proposal WOD proposé (ou repos) et explication du coach
+   */
+  async setCoachProposal(id: string, userId: string, proposal: Record<string, unknown>) {
+    await this.knex('user_workout_schedule')
+      .where({ id, user_id: userId })
+      .update({ coach_proposal: JSON.stringify(proposal), updated_at: this.knex.fn.now() })
+  }
+
+  /**
    * Met à jour une planification
    * @param id ID de la planification
    * @param userId ID de l'utilisateur

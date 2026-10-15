@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
 import { WorkoutScheduleService } from 'src/workouts/services/workout-schedule.service'
 import { WorkoutsService } from 'src/workouts/services/workouts.service'
@@ -10,6 +10,13 @@ export type CoachRecommendationSnapshot = Pick<
   AIRecommendation,
   'recommended_type' | 'urgency' | 'reason' | 'coaching_insight' | 'suggested_duration'
 >
+
+/** WOD que le coach aurait proposé quand le créneau du jour est déjà pris par une autre séance. */
+export interface CoachProposal extends CoachRecommendationSnapshot {
+  /** Null quand le coach conseille du repos. */
+  workout_id: string | null
+  workout_name: string | null
+}
 
 export interface DailySessionResult {
   generated: boolean
@@ -86,30 +93,7 @@ export class DailySessionService {
         }
       }
 
-      const wod = await this.generator.generatePersonalizedWorkout(userId, {
-        workoutType: recommendation.recommended_type,
-        duration: recommendation.suggested_duration,
-        focus: recommendation.suggested_focus ?? undefined,
-        additionalInstructions: recommendation.suggested_instructions ?? undefined,
-      })
-
-      const saved = await this.workoutsService.create({
-        name: wod.name,
-        description: wod.description,
-        workout_type: wod.workout_type,
-        estimated_duration: wod.estimated_duration,
-        difficulty: wod.difficulty,
-        intensity: wod.intensity,
-        blocks: wod.blocks as Record<string, unknown>,
-        equipment_required: wod.equipment_required || [],
-        focus_areas: wod.focus_areas || [],
-        tags: wod.tags || [],
-        coach_notes: wod.coach_notes || undefined,
-        isPublic: false,
-        status: 'published',
-        ai_generated: true,
-        created_by_user_id: userId,
-      })
+      const saved = await this.generateWorkout(userId, recommendation)
 
       const schedule = await this.scheduleService.create(userId, {
         workout_id: saved.id,
@@ -132,5 +116,71 @@ export class DailySessionService {
 
       return { generated: false, reason: 'failed', schedule: null }
     }
+  }
+
+  /**
+   * Génère, à la demande, le WOD que le coach aurait proposé pour aujourd'hui.
+   *
+   * Utile quand le créneau du jour est occupé par une séance planifiée par l'athlète : la séance
+   * reste en place, la proposition est seulement gardée à côté. Au plus un appel OpenAI par jour :
+   * une proposition déjà enregistrée est renvoyée telle quelle.
+   *
+   * @param userId ID de l'utilisateur
+   * @throws NotFoundException si aucun créneau n'existe aujourd'hui
+   */
+  async generateProposal(userId: string): Promise<CoachProposal> {
+    const today = new Date().toISOString().slice(0, 10)
+
+    const schedule = await this.scheduleService.findByDate(userId, today)
+    if (!schedule) throw new NotFoundException("Aucune séance planifiée aujourd'hui")
+
+    if (schedule.coach_proposal) return schedule.coach_proposal as CoachProposal
+
+    const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId)
+
+    const workout =
+      recommendation.recommended_sport === 'rest' ? null : await this.generateWorkout(userId, recommendation)
+
+    const proposal: CoachProposal = {
+      ...toSnapshot(recommendation),
+      workout_id: workout?.id ?? null,
+      workout_name: workout?.name ?? null,
+    }
+    await this.scheduleService.setCoachProposal(schedule.id as string, userId, { ...proposal })
+
+    return proposal
+  }
+
+  /** Génère le WOD correspondant à la recommandation et l'enregistre comme workout privé de l'athlète. */
+  private async generateWorkout(
+    userId: string,
+    recommendation: AIRecommendation
+  ): Promise<{ id: string; name: string }> {
+    const wod = await this.generator.generatePersonalizedWorkout(userId, {
+      workoutType: recommendation.recommended_type,
+      duration: recommendation.suggested_duration,
+      focus: recommendation.suggested_focus ?? undefined,
+      additionalInstructions: recommendation.suggested_instructions ?? undefined,
+    })
+
+    const saved = await this.workoutsService.create({
+      name: wod.name,
+      description: wod.description,
+      workout_type: wod.workout_type,
+      estimated_duration: wod.estimated_duration,
+      difficulty: wod.difficulty,
+      intensity: wod.intensity,
+      blocks: wod.blocks as Record<string, unknown>,
+      equipment_required: wod.equipment_required || [],
+      focus_areas: wod.focus_areas || [],
+      tags: wod.tags || [],
+      coach_notes: wod.coach_notes || undefined,
+      isPublic: false,
+      status: 'published',
+      ai_generated: true,
+      created_by_user_id: userId,
+    })
+
+    return { id: saved.id, name: wod.name }
   }
 }
