@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { ZodError } from 'zod'
+import { z } from 'zod'
+import { AIInvalidResponseException } from '../../common/ai/ai-invalid-response.exception'
 import { OpenAIClientService } from '../../common/ai/openai-client.service'
 import {
   buildCrossFitSystemPrompt,
@@ -16,6 +17,9 @@ export type GeneratedWorkout = GeneratedWorkoutValidated
 
 // Types de séance dont la structure ne prévoit pas de bloc skill_work
 const SKILL_FREE_WORKOUT_TYPES = ['core', 'conditioning', 'vo2max']
+
+// Réponse de l'IA quand elle ne connaît pas le WOD demandé (voir le prompt de lookupWorkoutByName)
+const UnknownWodSchema = z.object({ error: z.literal('UNKNOWN_WOD') })
 
 /**
  * Paramètres communs à la génération d'un workout via l'IA.
@@ -56,7 +60,7 @@ export class AIWorkoutGeneratorService {
       focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
       athleteConstraints: params.additionalInstructions,
     })
-    return this.callOpenAI(systemPrompt, userPrompt)
+    return this.callOpenAI('génération de workout', systemPrompt, userPrompt, GeneratedWorkoutSchema)
   }
 
   /**
@@ -90,7 +94,7 @@ export class AIWorkoutGeneratorService {
       athleteConstraints: params.additionalInstructions,
       skillInstruction: skillInstruction ?? undefined,
     })
-    return this.callOpenAI(systemPrompt, userPrompt)
+    return this.callOpenAI('génération de workout personnalisé', systemPrompt, userPrompt, GeneratedWorkoutSchema)
   }
 
   /**
@@ -210,10 +214,13 @@ Si le workout comporte plusieurs groupes de rounds avec des charges différentes
 Exemple : "3 rounds de 50 DU + 10 Deadlifts (100kg), 2 rounds de 50 DU + 10 Deadlifts (120kg), 1 round de 50 DU + 10 Deadlifts (140kg)" → 3 sections distinctes avec rounds: 3, rounds: 2, rounds: 1`
 
     try {
-      return await this.callOpenAI(systemPrompt, userPrompt)
+      return await this.callOpenAI('extraction de workout depuis un texte', systemPrompt, userPrompt, GeneratedWorkoutSchema)
     } catch (error) {
-      if (error instanceof BadRequestException) throw error
-      throw new BadRequestException('Le texte ne semble pas contenir un workout valide')
+      // Réponse inexploitable : le texte ne décrit sans doute pas un workout, réessayer n'y changerait rien
+      if (error instanceof AIInvalidResponseException) {
+        throw new BadRequestException('Le texte ne semble pas contenir un workout valide')
+      }
+      throw error
     }
   }
 
@@ -256,52 +263,35 @@ Note : ta connaissance s'arrête à début 2025, les Open récents (26.x) ne son
 IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
     }
 
-    try {
-      return await this.callOpenAI(systemPrompt, userPrompt)
-    } catch (error) {
-      if (error instanceof BadRequestException) throw error
+    const result = await this.callOpenAI(
+      'recherche de WOD',
+      systemPrompt,
+      userPrompt,
+      z.union([UnknownWodSchema, GeneratedWorkoutSchema])
+    )
+
+    if ('error' in result) {
       throw new BadRequestException(`Impossible de trouver le WOD "${name}". S'il s'agit d'un WOD récent, colle ses détails dans le champ prévu.`)
     }
+
+    return result
   }
 
-  private async callOpenAI(systemPrompt: string, userPrompt: string): Promise<GeneratedWorkout> {
-    try {
-      const completion = await this.openaiClientService.client.chat.completions.create({
-        model: this.openaiClientService.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        ...this.openaiClientService.temperatureParam(0.8),
-        ...this.openaiClientService.completionParams(4096),
-        response_format: { type: 'json_object' }
-      })
-
-      const content = completion.choices[0]?.message?.content
-      if (!content) {
-        throw new BadRequestException(this.openaiClientService.emptyResponseMessage(completion))
-      }
-
-      const workoutData = JSON.parse(content)
-
-      if (workoutData.error === 'UNKNOWN_WOD') {
-        throw new BadRequestException('UNKNOWN_WOD')
-      }
-
-      return GeneratedWorkoutSchema.parse(workoutData)
-    } catch (error) {
-      console.error('Error generating workout with AI:', error)
-
-      if (error instanceof SyntaxError) {
-        throw new BadRequestException('AI generated invalid JSON')
-      }
-
-      if (error instanceof ZodError) {
-        const errorMessages = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-        throw new BadRequestException(`Workout validation failed: ${errorMessages}`)
-      }
-
-      throw new BadRequestException(`Failed to generate workout: ${error.message}`)
-    }
+  private callOpenAI<S extends z.ZodTypeAny>(
+    purpose: string,
+    systemPrompt: string,
+    userPrompt: string,
+    schema: S
+  ): Promise<z.output<S>> {
+    return this.openaiClientService.createJsonCompletion({
+      purpose,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.8,
+      maxOutputTokens: 4096,
+      schema
+    })
   }
 }

@@ -1,9 +1,8 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
-import { ZodError } from 'zod'
 import { WodAnalysis, WodAnalysisSchema } from './schemas/wod-analysis.schema'
 
 @Injectable()
@@ -82,33 +81,13 @@ Réponds en JSON avec exactement cette structure :
   "next_steps": "Conseil concret pour progresser sur ce workout"
 }`
 
-    let completion
-    try {
-      completion = await this.openaiClientService.client.chat.completions.create({
-        model: this.openaiClientService.model,
-        messages: [{ role: 'user', content: prompt }],
-        ...this.openaiClientService.temperatureParam(0.7),
-        ...this.openaiClientService.completionParams(800),
-        response_format: { type: 'json_object' },
-      })
-    } catch {
-      throw new InternalServerErrorException('Erreur lors de la communication avec l\'IA')
-    }
-
-    const content = completion.choices[0]?.message?.content
-    if (!content) throw new InternalServerErrorException(this.openaiClientService.emptyResponseMessage(completion))
-
-    let analysis: WodAnalysis
-    try {
-      analysis = WodAnalysisSchema.parse(JSON.parse(content))
-    } catch (error) {
-      if (error instanceof ZodError) {
-        throw new InternalServerErrorException(
-          `Analyse IA invalide : ${error.errors.map((e) => `${e.path.join('.')} ${e.message}`).join(', ')}`
-        )
-      }
-      throw new InternalServerErrorException('Réponse IA invalide')
-    }
+    const analysis = await this.openaiClientService.createJsonCompletion({
+      purpose: 'analyse de séance',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      maxOutputTokens: 800,
+      schema: WodAnalysisSchema,
+    })
 
     await this.knex('workout_sessions')
       .where({ id: sessionId })

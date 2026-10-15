@@ -142,9 +142,7 @@ describe('TrackingService — seuil de 3 séances avant l’appel à l’IA', ()
       benchmark_history: createQueryMock([]),
       users: createQueryMock([{ sport_level: 'intermediate', global_goals: null }]),
     }
-    const createCompletion = jest
-      .fn()
-      .mockResolvedValue({ choices: [{ message: { content: JSON.stringify(aiReport) } }] })
+    const createJsonCompletion = jest.fn().mockResolvedValue(aiReport)
     const userContextService = {
       getUserAIContext: jest.fn().mockResolvedValue({ diagnostic: undefined }),
       invalidateCache: jest.fn(),
@@ -153,15 +151,13 @@ describe('TrackingService — seuil de 3 séances avant l’appel à l’IA', ()
     const service = await createService({
       knex: jest.fn((table: keyof typeof queries) => queries[table]),
       openai: {
-        client: { chat: { completions: { create: createCompletion } } },
-        temperatureParam: () => ({}),
-        completionParams: (n: number) => ({ max_completion_tokens: n }),
+        createJsonCompletion,
       },
       userContext: userContextService,
     })
     jest.spyOn(internalsOf(service), 'saveReport').mockResolvedValue(undefined)
 
-    return { service, createCompletion, userContextService }
+    return { service, createJsonCompletion, userContextService }
   }
 
   it.each([
@@ -169,11 +165,11 @@ describe('TrackingService — seuil de 3 séances avant l’appel à l’IA', ()
     [1, '1 séance complétée'],
     [2, '2 séances complétées'],
   ])('avec %i séance(s), renvoie un bilan d’attente sans appeler l’IA', async (count, wording) => {
-    const { service, createCompletion, userContextService } = await setup(count)
+    const { service, createJsonCompletion, userContextService } = await setup(count)
 
     const result = await service.generateReport('user-1', 3)
 
-    expect(createCompletion).not.toHaveBeenCalled()
+    expect(createJsonCompletion).not.toHaveBeenCalled()
     expect(userContextService.getUserAIContext).not.toHaveBeenCalled()
     expect(result.period_summary).toBe(
       `Pas assez de données sur 3 mois (${wording}). Continue à t'entraîner pour débloquer ton bilan !`
@@ -182,11 +178,11 @@ describe('TrackingService — seuil de 3 séances avant l’appel à l’IA', ()
   })
 
   it('appelle l’IA dès 3 séances', async () => {
-    const { service, createCompletion } = await setup(3)
+    const { service, createJsonCompletion } = await setup(3)
 
     const result = await service.generateReport('user-1', 3)
 
-    expect(createCompletion).toHaveBeenCalledTimes(1)
+    expect(createJsonCompletion).toHaveBeenCalledTimes(1)
     expect(result.period_summary).toBe(aiReport.period_summary)
   })
 })

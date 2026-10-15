@@ -1,7 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
-import { ZodError } from 'zod'
 import { buildRecommendationSystemPrompt, buildRecommendationUserPrompt } from '../prompts/recommendation.prompt'
 import { AIRecommendationSchema, NextSessionRecommendation, SessionStats } from '../schemas/recommendation.schema'
 
@@ -21,41 +20,28 @@ export class RecommendationsService {
       return cached.data
     }
 
-    try {
-      const ctx = await this.userContextService.getUserAIContext(userId)
-      const stats = this.computeSessionStats(ctx)
+    const ctx = await this.userContextService.getUserAIContext(userId)
+    const stats = this.computeSessionStats(ctx)
 
-      const completion = await this.openaiClientService.client.chat.completions.create({
-        model: this.openaiClientService.model,
-        messages: [
-          { role: 'system', content: buildRecommendationSystemPrompt() },
-          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
-        ],
-        ...this.openaiClientService.temperatureParam(0.4),
-        ...this.openaiClientService.completionParams(800),
-        response_format: { type: 'json_object' },
-      })
+    const recommendation = await this.openaiClientService.createJsonCompletion({
+      purpose: 'recommandation du coach',
+      messages: [
+        { role: 'system', content: buildRecommendationSystemPrompt() },
+        { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
+      ],
+      temperature: 0.4,
+      maxOutputTokens: 800,
+      schema: AIRecommendationSchema,
+    })
 
-      const content = completion.choices[0]?.message?.content
-      if (!content) throw new BadRequestException(this.openaiClientService.emptyResponseMessage(completion))
-
-      const recommendation = AIRecommendationSchema.parse(JSON.parse(content))
-
-      const result: NextSessionRecommendation = {
-        recommendation,
-        session_stats: stats,
-        generated_at: new Date().toISOString(),
-      }
-
-      this.cache.set(userId, { data: result, expiresAt: Date.now() + this.TTL_MS })
-      return result
-    } catch (error) {
-      if (error instanceof SyntaxError) throw new BadRequestException('AI generated invalid JSON')
-      if (error instanceof ZodError) {
-        throw new BadRequestException(`Recommendation validation failed: ${error.errors.map((e) => e.message).join(', ')}`)
-      }
-      throw new BadRequestException(`Failed to generate recommendation: ${(error as Error).message}`)
+    const result: NextSessionRecommendation = {
+      recommendation,
+      session_stats: stats,
+      generated_at: new Date().toISOString(),
     }
+
+    this.cache.set(userId, { data: result, expiresAt: Date.now() + this.TTL_MS })
+    return result
   }
 
   invalidateCache(userId: string): void {

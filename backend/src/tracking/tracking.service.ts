@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 import { toParisDate, toParisWeekStart } from 'src/common/utils/date-only'
 import { Knex } from 'knex'
@@ -6,7 +6,6 @@ import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { SessionResults } from 'src/workout-sessions/schemas/session-results.schema'
 import { PerformanceDiagnosticSummary, UserContextService } from 'src/workouts/services/user-context.service'
-import { ZodError } from 'zod'
 import { AIProgressionReport, AIProgressionReportSchema } from './schemas/progression-report.schema'
 import {
   BenchmarkHistoryRow,
@@ -352,29 +351,14 @@ ${this.jsonInstructions()}`
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  private async callAI(prompt: string): Promise<AIProgressionReport> {
-    const completion = await this.openaiClientService.client.chat.completions.create({
-      model: this.openaiClientService.model,
+  private callAI(prompt: string): Promise<AIProgressionReport> {
+    return this.openaiClientService.createJsonCompletion({
+      purpose: 'bilan de progression',
       messages: [{ role: 'user', content: prompt }],
-      ...this.openaiClientService.temperatureParam(0.7),
-      ...this.openaiClientService.completionParams(2500),
-      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      maxOutputTokens: 2500,
+      schema: AIProgressionReportSchema,
     })
-
-    const content = completion.choices[0]?.message?.content
-    if (!content) throw new BadRequestException(this.openaiClientService.emptyResponseMessage(completion))
-
-    try {
-      return AIProgressionReportSchema.parse(JSON.parse(content))
-    } catch (error) {
-      if (error instanceof SyntaxError) throw new BadRequestException('AI generated invalid JSON')
-      if (error instanceof ZodError) {
-        throw new BadRequestException(
-          `Report validation failed: ${error.errors.map(e => `${e.path.join('.')} ${e.message}`).join(', ')}`
-        )
-      }
-      throw error
-    }
   }
 
   private jsonInstructions(): string {

@@ -115,12 +115,13 @@ Cinq services OpenAI, chacun avec son fichier de prompt et son schéma Zod :
 - `tracking.service.ts` — bilans de progression (dans `TrackingModule`)
 - `recommendations.service.ts` — recommandation du coach (dans `RecommendationsModule`)
 
-Tous passent par `OpenAIClientService` (`common/ai/`, module global) :
+Tous appellent `openaiClientService.createJsonCompletion({ purpose, messages, temperature, maxOutputTokens, schema })` (`common/ai/`, module global), qui centralise :
 
-- `model: this.openaiClientService.model` — lu dans `OPENAI_MODEL` (défaut `gpt-4.1`). Ne jamais coder le modèle en dur.
-- `...this.openaiClientService.temperatureParam(x)` — la température n'est envoyée qu'aux modèles gpt-4.x (GPT-5+ la refuse).
-- Délai maximal de 120 s (`OPENAI_TIMEOUT_MS`) et une seule nouvelle tentative (`OPENAI_MAX_RETRIES`), configurés une fois dans le client.
-- `response_format: json_object`, et la réponse est validée avec Zod.
+- le modèle, lu dans `OPENAI_MODEL` (défaut `gpt-4.1`). Ne jamais coder le modèle en dur.
+- la température, envoyée seulement aux modèles gpt-4.x (GPT-5+ la refuse).
+- le délai maximal de 120 s (`OPENAI_TIMEOUT_MS`) et une seule nouvelle tentative (`OPENAI_MAX_RETRIES`).
+- `response_format: json_object` et la validation Zod de la réponse.
+- les erreurs : timeout → 504, erreur OpenAI → 502, réponse vide/hors JSON/hors schéma → `AIInvalidResponseException` (502). Messages génériques ; le détail (Zod, OpenAI) ne va que dans les logs. Ne pas envelopper l'appel dans un `try/catch` qui renverrait `error.message` au client.
 
 Blocs de prompt partagés : `formatInjuriesForPrompt()` (`common/injuries/`) pour les blessures, `buildDiagnosticPromptLines()` (`common/ai/`) pour le diagnostic calculé. Si l'IA retourne `{"error": "UNKNOWN_WOD"}` sur un lookup de WOD, lever une `BadRequestException`.
 
