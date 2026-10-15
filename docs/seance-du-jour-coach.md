@@ -56,7 +56,6 @@ Le benchmark mensuel choisit en priorité un benchmark jamais testé, puis le pl
 >
 > - Endpoint : `GET /api/recommendations/daily-session/check` → `DailySessionService.checkAndGenerateDailySession()`.
 > - La recommandation vient de `RecommendationsService`, avec un cache mémoire de 2 heures par athlète. Ce cache est perdu à chaque redémarrage du backend.
-> - `GET /recommendations/next-session` lit la recommandation ; `POST /recommendations/next-session/refresh` la régénère.
 > - Le WOD est enregistré dans `workouts` (`ai_generated: true`, privé), puis planifié dans `user_workout_schedule`.
 > - La recommandation est copiée dans `user_workout_schedule.coach_recommendation`.
 > - Côté frontend, `TodaySessionCard` mutualise les appels simultanés (StrictMode) pour éviter deux générations.

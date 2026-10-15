@@ -44,10 +44,6 @@ export class RecommendationsService {
     return result
   }
 
-  invalidateCache(userId: string): void {
-    this.cache.delete(userId)
-  }
-
   private computeSessionStats(ctx: UserAIContext): SessionStats {
     const ALL_SPORTS = ['crossfit'] as const
 
