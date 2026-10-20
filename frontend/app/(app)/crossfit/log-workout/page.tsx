@@ -166,6 +166,30 @@ function getAmrapDurationSeconds(workout: Workouts): number {
   return findDuration(workout.blocks.sections) ?? 0
 }
 
+/**
+ * Time cap du metcon, en secondes : celui écrit dans le format (« For Time (cap 12min) »),
+ * sinon la durée de la section, qui porte le cap pour un For Time.
+ * Renvoie 0 quand le workout n'en indique aucun.
+ */
+function getTimeCapSeconds(workout: Workouts): number {
+  const findCap = (sections: WorkoutSection[]): number | undefined => {
+    for (const section of sections) {
+      if (CONDITIONING_SECTION_TYPES.includes(section.type)) {
+        const capInFormat = section.format?.match(/cap\s*(\d+)\s*min/i)
+        if (capInFormat) return parseInt(capInFormat[1], 10) * 60
+        if (section.duration_min) return section.duration_min * 60
+      }
+      if (section.sections) {
+        const nestedCap = findCap(section.sections)
+        if (nestedCap) return nestedCap
+      }
+    }
+    return undefined
+  }
+
+  return findCap(workout.blocks.sections) ?? 0
+}
+
 function hasConditioningSection(sections: WorkoutSection[]): boolean {
   for (const section of sections) {
     if (section.type === 'warmup' || section.type === 'cooldown') continue
@@ -380,9 +404,14 @@ function LogWorkoutContent() {
 
   const handleSave = async () => {
     const totalSeconds = (parseInt(timeMinutes || '0') * 60) + parseInt(timeSeconds || '0')
-    const sessionDurationSeconds = hasConditioning && isAmrap && selectedWorkout
-      ? getAmrapDurationSeconds(selectedWorkout) || totalSeconds
-      : totalSeconds
+    // Sans chrono final (AMRAP, cap atteint), l'effort a duré le temps prévu par le workout :
+    // c'est cet écart début/fin que le diagnostic lit pour classer la séance par filière.
+    let sessionDurationSeconds = totalSeconds
+    if (hasConditioning && selectedWorkout && isAmrap) {
+      sessionDurationSeconds = getAmrapDurationSeconds(selectedWorkout) || totalSeconds
+    } else if (hasConditioning && selectedWorkout && capAtteint) {
+      sessionDurationSeconds = getTimeCapSeconds(selectedWorkout) || totalSeconds
+    }
     const splitMinutesValue = Number(splitTimeMinutes || 0)
     const splitSecondsValue = Number(splitTimeSeconds || 0)
     const splitTimeSecondsValue = splitMinutesValue * 60 + splitSecondsValue
