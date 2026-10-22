@@ -6,6 +6,9 @@ import { InjectModel } from 'nest-knexjs'
 import { isUniqueViolation } from 'src/common/utils/postgres-errors'
 import { AuthResponseDto, LoginDto, SignupDto } from './dto/auth.dto'
 
+// Les anciens hash restent valides : bcrypt stocke le coût dans le hash et compare() le relit
+export const BCRYPT_COST = 12
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,7 +32,7 @@ export class AuthService {
     }
 
     // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_COST)
 
     // Créer l'utilisateur
     const [user] = await this.knex('users')

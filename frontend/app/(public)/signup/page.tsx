@@ -110,6 +110,7 @@ export default function SignupPage() {
                   className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm"
                   placeholder="••••••••"
                   minLength={6}
+                  maxLength={72}
                 />
                 <button
                   type="button"

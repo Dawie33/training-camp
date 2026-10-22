@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator'
+import { IsByteLength, IsEmail, IsString, MinLength } from 'class-validator'
 import { NormalizeEmail } from 'src/common/decorators/normalize-email.decorator'
 
 /**
@@ -9,8 +9,9 @@ export class SignupDto {
   @IsEmail()
   email: string
 
+  // bcrypt ignore ce qui dépasse 72 octets : la limite porte sur les octets UTF-8, pas les caractères (é = 2 octets)
   @IsString()
-  @MinLength(6)
+  @IsByteLength(6, 72)
   password: string
 
   @IsString()

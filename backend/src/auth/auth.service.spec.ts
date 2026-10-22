@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt'
 import { Test } from '@nestjs/testing'
 import * as bcrypt from 'bcryptjs'
 import { getConnectionToken } from 'nest-knexjs'
-import { AuthService } from './auth.service'
+import { AuthService, BCRYPT_COST } from './auth.service'
 
 const storedUser = {
   id: 'user-1',
@@ -70,6 +70,7 @@ describe('AuthService', () => {
       const { password } = builder.insert.mock.calls[0][0]
       expect(password).not.toBe('secret123')
       expect(await bcrypt.compare('secret123', password)).toBe(true)
+      expect(bcrypt.getRounds(password)).toBe(BCRYPT_COST)
     })
 
     it("renvoie un token signé avec l'id et l'email, et l'utilisateur créé", async () => {
