@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcryptjs'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { isUniqueViolation } from 'src/common/utils/postgres-errors'
 import { AuthResponseDto, LoginDto, SignupDto } from './dto/auth.dto'
 
 @Injectable()
@@ -39,6 +40,14 @@ export class AuthService {
         lastName,
       })
       .returning(['id', 'email', 'firstName', 'lastName', 'role'])
+      .catch((error: unknown) => {
+        // Deux inscriptions simultanées passent toutes deux la vérification ci-dessus :
+        // la contrainte unique sur l'email tranche, on la traduit en 409 au lieu d'une 500
+        if (isUniqueViolation(error)) {
+          throw new ConflictException('Email already exists')
+        }
+        throw error
+      })
 
     // Générer le token JWT
     const payload = { sub: user.id, email: user.email }
