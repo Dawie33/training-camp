@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, Post, Request, Res, UseGuards } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { Throttle } from '@nestjs/throttler'
-import type { Response } from 'express'
+import type { CookieOptions, Response } from 'express'
 import { AuthService } from './auth.service'
 import { LoginDto, SignupDto } from './dto/auth.dto'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
@@ -8,27 +9,33 @@ import type { RequestWithUser } from './types/auth.types'
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  /** Options communes à la pose et à l'effacement : un cookie ne s'efface qu'avec les mêmes options. */
+  private readonly cookieOptions: CookieOptions
 
-  private setCookieToken(res: Response, token: string): void {
-    const isProduction = process.env.NODE_ENV === 'production'
-    res.cookie('access_token', token, {
+  constructor(
+    private authService: AuthService,
+    config: ConfigService
+  ) {
+    this.cookieOptions = {
       httpOnly: true,
-      secure: isProduction,
+      secure: config.get<string>('NODE_ENV') === 'production',
       // 'lax' suffit : le front appelle l'API via le rewrite Next.js (same-origin).
       // Le navigateur n'envoie alors pas le cookie sur un POST venu d'un autre site (protection CSRF).
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
       path: '/',
+    }
+  }
+
+  private setCookieToken(res: Response, token: string): void {
+    res.cookie('access_token', token, {
+      ...this.cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
     })
   }
 
   @Post('signup')
   @Throttle({ default: { ttl: 60000, limit: 5 } })
-  async signup(
-    @Body() signupDto: SignupDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async signup(@Body() signupDto: SignupDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.signup(signupDto)
     this.setCookieToken(res, result.access_token)
     return { user: result.user }
@@ -37,10 +44,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @Throttle({ default: { ttl: 60000, limit: 10 } })
-  async login(
-    @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(loginDto)
     this.setCookieToken(res, result.access_token)
     return { user: result.user }
@@ -50,13 +54,7 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   logout(@Res({ passthrough: true }) res: Response) {
-    const isProduction = process.env.NODE_ENV === 'production'
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
-      path: '/',
-    })
+    res.clearCookie('access_token', this.cookieOptions)
     return { message: 'Logged out' }
   }
 

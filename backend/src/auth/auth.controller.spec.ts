@@ -1,4 +1,5 @@
 import { INestApplication, UnauthorizedException, ValidationPipe } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
@@ -19,8 +20,14 @@ const authService = { signup: jest.fn(), login: jest.fn(), validateUser: jest.fn
 const jwtService = new JwtService({ secret: JWT_SECRET })
 const validToken = () => jwtService.sign({ sub: 'user-1', email: 'dawie@mail.com' }, { expiresIn: '7d' })
 
-/** Application de test : vraie JwtStrategy, vrai ValidationPipe et cookie-parser ; seul AuthService est simulé. */
-async function createApp({ withThrottler = false } = {}): Promise<INestApplication> {
+/** ConfigService réduit aux deux variables lues par le module auth. */
+function fakeConfig(nodeEnv: string): Partial<ConfigService> {
+  const values: Record<string, string> = { JWT_SECRET, NODE_ENV: nodeEnv }
+  return { get: (key: string) => values[key], getOrThrow: (key: string) => values[key] }
+}
+
+/** Application de test : vraie JwtStrategy, vrai ValidationPipe et cookie-parser ; seuls AuthService et ConfigService sont simulés. */
+async function createApp({ withThrottler = false, nodeEnv = 'development' } = {}): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({
     imports: [
       PassportModule,
@@ -30,6 +37,7 @@ async function createApp({ withThrottler = false } = {}): Promise<INestApplicati
     providers: [
       JwtStrategy,
       { provide: AuthService, useValue: authService },
+      { provide: ConfigService, useValue: fakeConfig(nodeEnv) },
       ...(withThrottler ? [{ provide: APP_GUARD, useClass: ThrottlerGuard }] : []),
     ],
   }).compile()
@@ -55,17 +63,6 @@ function accessTokenCookie(res: request.Response): string {
   return cookies.find(cookie => cookie.startsWith('access_token=')) ?? ''
 }
 
-const originalEnv = { JWT_SECRET: process.env.JWT_SECRET, NODE_ENV: process.env.NODE_ENV }
-
-beforeAll(() => {
-  // JwtStrategy lit le secret à sa construction
-  process.env.JWT_SECRET = JWT_SECRET
-})
-
-afterAll(() => {
-  process.env.JWT_SECRET = originalEnv.JWT_SECRET
-})
-
 beforeEach(() => {
   jest.resetAllMocks()
   authService.signup.mockResolvedValue({ access_token: 'signed-token', user })
@@ -78,10 +75,6 @@ describe('AuthController', () => {
 
   beforeAll(async () => {
     app = await createApp()
-  })
-
-  afterEach(() => {
-    process.env.NODE_ENV = originalEnv.NODE_ENV
   })
 
   afterAll(async () => {
@@ -102,8 +95,6 @@ describe('AuthController', () => {
     })
 
     it("est posé au login, sans l'attribut Secure hors production", async () => {
-      process.env.NODE_ENV = 'development'
-
       const res = await request(app.getHttpServer()).post('/auth/login').send(loginBody).expect(200)
 
       const cookie = accessTokenCookie(res)
@@ -112,11 +103,16 @@ describe('AuthController', () => {
     })
 
     it("porte l'attribut Secure en production", async () => {
-      process.env.NODE_ENV = 'production'
+      // NODE_ENV est lu une fois, à la construction du contrôleur : il faut une application dédiée
+      const productionApp = await createApp({ nodeEnv: 'production' })
 
-      const res = await request(app.getHttpServer()).post('/auth/login').send(loginBody).expect(200)
+      try {
+        const res = await request(productionApp.getHttpServer()).post('/auth/login').send(loginBody).expect(200)
 
-      expect(accessTokenCookie(res)).toContain('Secure')
+        expect(accessTokenCookie(res)).toContain('Secure')
+      } finally {
+        await productionApp.close()
+      }
     })
 
     it("n'est pas posé quand la connexion échoue", async () => {
