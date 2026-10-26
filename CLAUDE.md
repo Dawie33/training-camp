@@ -44,7 +44,7 @@ Les commandes sont définies dans le fichier .claude/rules/commands.md
 2. `npm run dev` → démarrer l'application
 3. Après modification du schéma : `npm --workspace backend run db:migrate:make -- <nom>` puis éditer la migration
 4. Lancer les tests après chaque changement backend
-5. Vérifier le lint avant de commiter (`npm --workspace frontend run lint` + `npm --workspace backend run build`)
+5. Vérifier avant de commiter : `npm --workspace frontend run lint` + `npm --workspace backend run typecheck` (`nest build` utilise SWC, qui ne vérifie pas les types)
 
 ## Conventions de code
 

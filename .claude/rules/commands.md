@@ -26,5 +26,6 @@ npm --workspace backend run test:e2e                     # Tests e2e
 npm --workspace frontend run lint                        # ESLint frontend
 npm --workspace frontend run lint:fix                    # ESLint fix
 npm --workspace backend run format                       # Prettier backend
-npm --workspace backend run build                        # Vérifier TS backend
+npm --workspace backend run build                        # Compiler le backend (SWC, sans vérification des types)
+npm --workspace backend run typecheck                    # Vérifier les types TS backend (tsc --noEmit)
 ```
