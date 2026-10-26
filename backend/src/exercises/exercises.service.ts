@@ -8,7 +8,7 @@ export class ExercisesService {
   constructor(@InjectModel() private readonly knex: Knex) {}
 
   /**
-   * Récupérer tous les exercices.
+   * Récupérer tous les exercices actifs (un exercice désactivé n'apparaît plus dans les écrans).
    * @param {QueryDto} query - Paramètres de la requête.
    * @param {number} query.limit - Nombre d'exercices à récupérer (500 au maximum). Par défaut : 50.
    * @param {number} query.offset - Décalage de pagination. Par défaut : 0.
@@ -27,7 +27,7 @@ export class ExercisesService {
     orderBy = 'created_at',
     orderDir = 'desc',
   }: ExerciseQueryDto) {
-    let query = this.knex('exercises').select('*')
+    let query = this.knex('exercises').select('*').where('isActive', true)
 
     // Recherche par nom
     if (search) {
@@ -52,7 +52,7 @@ export class ExercisesService {
     const rows = await query.limit(limit).offset(offset).orderBy(orderBy, orderDir)
 
     // Count avec les mêmes filtres
-    let countQuery = this.knex('exercises').count({ count: '*' })
+    let countQuery = this.knex('exercises').count({ count: '*' }).where('isActive', true)
 
     if (search) {
       countQuery = countQuery.where('name', 'ilike', `%${search}%`)
@@ -74,14 +74,14 @@ export class ExercisesService {
   }
 
   /**
-   * Récupère un exercice par son nom.
+   * Récupère un exercice actif par son nom.
    * Recherche d'abord une correspondance exacte, sinon recherche avec ILIKE (insensible à la casse et pluriel tolérant)
    * @param {string} name - Nom de l'exercice.
    * @returns {Promise<Exercise | null>} - Promesse qui renvoie l'exercice correspondant au nom ou null si l'exercice n'existe pas.
    */
   async findByName(name: string) {
     // Essayer une correspondance exacte d'abord
-    let exercise = await this.knex('exercises').where({ name: name }).first()
+    let exercise = await this.knex('exercises').where({ name: name, isActive: true }).first()
 
     if (exercise) {
       return exercise
@@ -90,7 +90,11 @@ export class ExercisesService {
     // Sinon, recherche insensible à la casse et au pluriel
     // Enlever le 's' final si présent pour supporter "Air Squats" -> "Air Squat"
     const singularName = name.endsWith('s') ? name.slice(0, -1) : name
-    exercise = await this.knex('exercises').where('name', 'ilike', singularName).orWhere('name', 'ilike', name).first()
+    // Les deux ilike sont regroupés entre parenthèses : sans ça, SQL lirait « A OR (B AND isActive) »
+    exercise = await this.knex('exercises')
+      .where('isActive', true)
+      .andWhere(qb => qb.where('name', 'ilike', singularName).orWhere('name', 'ilike', name))
+      .first()
 
     return exercise || null
   }
