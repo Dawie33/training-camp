@@ -90,6 +90,12 @@ export class AuthService {
       throw new UnauthorizedException('Les données de connexion sont invalides')
     }
 
+    // Compte désactivé : même message qu'un mauvais mot de passe, pour ne pas révéler l'état du compte.
+    // Vérifié après bcrypt pour que le temps de réponse ne le révèle pas non plus.
+    if (!user.isActive) {
+      throw new UnauthorizedException('Les données de connexion sont invalides')
+    }
+
     // Mettre à jour lastLoginAt
     await this.knex('users').where({ id: user.id }).update({ lastLoginAt: this.knex.fn.now() })
 
