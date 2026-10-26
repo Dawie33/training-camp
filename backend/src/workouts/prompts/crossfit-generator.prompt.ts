@@ -16,7 +16,7 @@ import { UserAIContext } from '../services/user-context.service'
  * @returns Le texte de la section à insérer dans le prompt système
  */
 export function buildAthleteContextSection(context: UserAIContext): string {
-  const lines: string[] = ['## PROFIL DE L\'ATHLÈTE', '']
+  const lines: string[] = ["## PROFIL DE L'ATHLÈTE", '']
 
   const levelMap: Record<string, string> = {
     beginner: 'Débutant',
@@ -54,7 +54,7 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     }
   }
 
-  const goalKeys = Object.keys(context.global_goals).filter((k) => context.global_goals[k])
+  const goalKeys = Object.keys(context.global_goals).filter(k => context.global_goals[k])
   if (goalKeys.length > 0) {
     lines.push('')
     lines.push(`**Objectifs** : ${goalKeys.join(', ')}`)
@@ -93,18 +93,21 @@ export function buildAthleteContextSection(context: UserAIContext): string {
       const label = sportLabels[s.sport] ?? s.sport
       lines.push(`- ${s.date} — ${label}${type}, ${s.duration_minutes}min${effort}`)
     }
-    lines.push('→ Tiens compte de la charge globale tous sports pour adapter l\'intensité et éviter la surcharge.')
+    lines.push("→ Tiens compte de la charge globale tous sports pour adapter l'intensité et éviter la surcharge.")
     lines.push(
       '→ Règle du microcycle : si une séance récente (< 48h) était déjà lourde/intense sur le même pattern de mouvement' +
         ' (ex. strength_max sur squat/hinge, ou skill gymnastique à haut volume), évite de reproduire le même stress' +
-        ' articulaire/contractile aujourd\'hui — oriente plutôt vers un pattern complémentaire ou une autre modalité.',
+        " articulaire/contractile aujourd'hui — oriente plutôt vers un pattern complémentaire ou une autre modalité."
     )
   }
 
   if (context.recentAnalyses.length > 0) {
     const levelLabel: Record<string, string> = {
-      pr: 'PR', above_average: 'au-dessus de la moyenne', average: 'dans la moyenne',
-      below_average: 'en dessous de la moyenne', first_time: 'première fois',
+      pr: 'PR',
+      above_average: 'au-dessus de la moyenne',
+      average: 'dans la moyenne',
+      below_average: 'en dessous de la moyenne',
+      first_time: 'première fois',
     }
     lines.push('')
     lines.push('**Analyses IA récentes (points forts / axes à travailler)** :')
@@ -120,13 +123,21 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     lines.push('')
     lines.push('**Bilans de progression IA (multi-semaines)** :')
     for (const r of context.progressionReports) {
-      const trendLabel = r.overall_trend === 'improving' ? '↑ En progression' : r.overall_trend === 'declining' ? '↓ En baisse' : '→ Stable'
+      const trendLabel =
+        r.overall_trend === 'improving'
+          ? '↑ En progression'
+          : r.overall_trend === 'declining'
+            ? '↓ En baisse'
+            : '→ Stable'
       lines.push(`- Sport : ${r.sport} | Période : ${r.period_months} mois | Tendance : ${trendLabel}`)
       if (r.weak_points.length > 0) lines.push(`  Points à travailler : ${r.weak_points.join(', ')}`)
-      if (r.recommendations.length > 0) lines.push(`  Recommandations coach : ${r.recommendations.slice(0, 2).join(' / ')}`)
+      if (r.recommendations.length > 0)
+        lines.push(`  Recommandations coach : ${r.recommendations.slice(0, 2).join(' / ')}`)
       if (r.overall_fitness_level) lines.push(`  Condition physique globale : ${r.overall_fitness_level}`)
     }
-    lines.push('→ Utilise ces bilans pour orienter le type de workout (cardio si carence, force si stagnation des 1RMs, etc.).')
+    lines.push(
+      '→ Utilise ces bilans pour orienter le type de workout (cardio si carence, force si stagnation des 1RMs, etc.).'
+    )
   }
 
   lines.push(...buildDiagnosticPromptLines(context.diagnostic))
@@ -134,9 +145,9 @@ export function buildAthleteContextSection(context: UserAIContext): string {
   lines.push('')
   lines.push(
     '**Directives** : Adapte le workout à ce profil. Respecte les limitations physiques.' +
-      ' Utilise l\'équipement disponible. Programme en cohérence avec l\'activité récente et les bilans de progression.' +
+      " Utilise l'équipement disponible. Programme en cohérence avec l'activité récente et les bilans de progression." +
       ' Quand le diagnostic calculé signale une filière délaissée ou un mouvement souvent scalé,' +
-      ' fais-en une cible explicite du workout plutôt que de programmer au hasard.',
+      ' fais-en une cible explicite du workout plutôt que de programmer au hasard.'
   )
   // Un ratio se corrige sous charge, pas dans un metcon ; en cibler plusieurs à la fois
   // reviendrait à charger le même patron tous les jours
@@ -144,7 +155,7 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     '**Déséquilibres de force** : ils se travaillent dans le bloc force ou haltérophilie, jamais dans le metcon.' +
       ' Si le workout comporte un tel bloc, cible UN SEUL déséquilibre par séance : un ratio trop bas désigne' +
       ' le mouvement du numérateur, un ratio trop haut désigne celui du dénominateur comme limitant.' +
-      ' Sans bloc force ou haltérophilie, ignore-les.',
+      ' Sans bloc force ou haltérophilie, ignore-les.'
   )
 
   return lines.join('\n')
@@ -158,9 +169,10 @@ export function buildAthleteContextSection(context: UserAIContext): string {
  * @returns Le prompt système complet
  */
 export function buildCrossFitSystemPrompt(availableEquipment?: string[], userContext?: UserAIContext): string {
-  const equipmentList = availableEquipment && availableEquipment.length > 0
-    ? availableEquipment.join('", "')
-    : EQUIPMENT_PRESETS.crossfit.join('", "')
+  const equipmentList =
+    availableEquipment && availableEquipment.length > 0
+      ? availableEquipment.join('", "')
+      : EQUIPMENT_PRESETS.crossfit.join('", "')
 
   const athleteSection = userContext ? `\n${buildAthleteContextSection(userContext)}\n` : ''
 
@@ -680,13 +692,13 @@ export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): strin
   } = params
 
   const workoutTypeDescriptions: Record<string, string> = {
-    'technique_metcon': 'Skill work technique suivi d\'un MetCon',
-    'strength_max': 'Force maximale ou heavy lifting avec accessoires',
-    'conditioning': 'MetCon haute intensité orienté conditionnement',
-    'strength_accessory': 'Force avec volume + mouvements accessoires',
-    'benchmark': `Benchmark CrossFit officiel${benchmarkName ? ` : ${benchmarkName}` : ''}`,
-    'vo2max': 'Intervalles cardio haute intensité pour améliorer la VO2max',
-    'core': 'Séance tronc/gainage : gymnastique du tronc, force anti-mouvement et carries',
+    technique_metcon: "Skill work technique suivi d'un MetCon",
+    strength_max: 'Force maximale ou heavy lifting avec accessoires',
+    conditioning: 'MetCon haute intensité orienté conditionnement',
+    strength_accessory: 'Force avec volume + mouvements accessoires',
+    benchmark: `Benchmark CrossFit officiel${benchmarkName ? ` : ${benchmarkName}` : ''}`,
+    vo2max: 'Intervalles cardio haute intensité pour améliorer la VO2max',
+    core: 'Séance tronc/gainage : gymnastique du tronc, force anti-mouvement et carries',
   }
 
   // Les contraintes passent en tête : elles doivent primer sur le skill et la structure type
@@ -725,9 +737,9 @@ ${skillInstruction ? `\n${skillInstruction}` : ''}
     const vo2maxProtocols = ['billat_30_30', 'norwegian_4x4', 'tabata_cardio', '3x5min'] as const
     const protocol = vo2maxProtocols[Math.floor(Math.random() * vo2maxProtocols.length)]
     const protocolDescriptions: Record<string, string> = {
-      'billat_30_30': 'Billat 30/30 — 30s sprint maximal / 30s récupération active, 10-15 répétitions',
-      'norwegian_4x4': 'Norvégien 4×4 min — 4 intervalles de 4 min à 90-95% FCmax, 3 min récup active',
-      'tabata_cardio': 'Tabata Cardio — 8 rounds 20s max / 10s repos, répété 2-3x',
+      billat_30_30: 'Billat 30/30 — 30s sprint maximal / 30s récupération active, 10-15 répétitions',
+      norwegian_4x4: 'Norvégien 4×4 min — 4 intervalles de 4 min à 90-95% FCmax, 3 min récup active',
+      tabata_cardio: 'Tabata Cardio — 8 rounds 20s max / 10s repos, répété 2-3x',
       '3x5min': '3×5 min à vVO2max avec 5 min récupération active entre chaque',
     }
     prompt += `

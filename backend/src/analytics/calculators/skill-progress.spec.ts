@@ -42,10 +42,7 @@ describe('computeSkillProgress', () => {
   })
 
   it('laisse l’étape en cours nulle quand aucune n’est ouverte', () => {
-    const result = computeSkillProgress(
-      [program('p1', 'Double Under')],
-      [step('p1', 'Single unders', 'completed')]
-    )
+    const result = computeSkillProgress([program('p1', 'Double Under')], [step('p1', 'Single unders', 'completed')])
 
     expect(result.skills[0].current_step_title).toBeNull()
     expect(result.skills[0].progress_pct).toBe(100)
@@ -54,11 +51,7 @@ describe('computeSkillProgress', () => {
   it('classe les programmes du plus avancé au moins avancé', () => {
     const result = computeSkillProgress(
       [program('p1', 'Muscle Up'), program('p2', 'Handstand Walk')],
-      [
-        step('p1', 'A', 'locked'),
-        step('p2', 'B', 'completed'),
-        step('p2', 'C', 'completed'),
-      ]
+      [step('p1', 'A', 'locked'), step('p2', 'B', 'completed'), step('p2', 'C', 'completed')]
     )
 
     expect(result.skills.map(s => s.skill_name)).toEqual(['Handstand Walk', 'Muscle Up'])

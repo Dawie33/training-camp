@@ -69,9 +69,7 @@ export function computeEnergySystems(sessions: ScoredSession[]): EnergySystemsRe
   })
 
   // Sans volume suffisant, une répartition ne veut rien dire : on ne crie pas au déséquilibre sur 3 séances.
-  const underworked = scored >= 8
-    ? domains.filter(d => d.share_pct < UNDERWORKED_THRESHOLD_PCT).map(d => d.domain)
-    : []
+  const underworked = scored >= 8 ? domains.filter(d => d.share_pct < UNDERWORKED_THRESHOLD_PCT).map(d => d.domain) : []
 
   return { total_scored_sessions: scored, domains, underworked }
 }

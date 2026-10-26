@@ -1,7 +1,28 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { CreateWorkoutDto, GeneratePersonalizedWorkoutDto, GenerateWorkoutDto, LookupWorkoutDto, ParseWorkoutTextDto, SaveBenchmarkResultDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
+import {
+  CreateWorkoutDto,
+  GeneratePersonalizedWorkoutDto,
+  GenerateWorkoutDto,
+  LookupWorkoutDto,
+  ParseWorkoutTextDto,
+  SaveBenchmarkResultDto,
+  WorkoutDto,
+  WorkoutQueryDto,
+} from '../dto/workout.dto'
 import { AIWorkoutGeneratorService, GeneratedWorkout } from '../services/ai-workout-generator.service'
 import { WorkoutsService } from '../services/workouts.service'
 
@@ -12,8 +33,8 @@ import { WorkoutsService } from '../services/workouts.service'
 export class WorkoutsController {
   constructor(
     private readonly service: WorkoutsService,
-    private readonly aiGenerator: AIWorkoutGeneratorService,
-  ) { }
+    private readonly aiGenerator: AIWorkoutGeneratorService
+  ) {}
 
   /**
    * Liste les workouts correspondant aux filtres de recherche.
@@ -80,7 +101,8 @@ export class WorkoutsController {
   @UseGuards(JwtAuthGuard)
   async getPersonalizedWorkouts(
     @Request() req: { user: { id: string } },
-    @Query() query: WorkoutQueryDto & {
+    @Query()
+    query: WorkoutQueryDto & {
       limit?: string
       offset?: string
       search?: string
@@ -110,10 +132,7 @@ export class WorkoutsController {
    */
   @Get('personalized/:id')
   @UseGuards(JwtAuthGuard)
-  async getPersonalizedWorkout(
-    @Param('id') id: string,
-    @Request() req: { user: { id: string } },
-  ) {
+  async getPersonalizedWorkout(@Param('id') id: string, @Request() req: { user: { id: string } }) {
     return await this.service.getPersonalizedWorkout(id, req.user.id)
   }
 
@@ -141,14 +160,10 @@ export class WorkoutsController {
    */
   @Post('personalized')
   @UseGuards(JwtAuthGuard)
-  async createPersonalizedWorkouts(
-    @Body() data: WorkoutDto,
-    @Request() req: { user: { id: string } },
-  ) {
+  async createPersonalizedWorkouts(@Body() data: WorkoutDto, @Request() req: { user: { id: string } }) {
     const response = await this.service.createPersonalizedWorkout(data, req.user.id)
     return response
   }
-
 
   /**
    * Crée un workout dans le référentiel commun.
@@ -197,7 +212,7 @@ export class WorkoutsController {
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   async generatePersonalizedWithAI(
     @Body() dto: GeneratePersonalizedWorkoutDto,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ): Promise<GeneratedWorkout> {
     return this.aiGenerator.generatePersonalizedWorkout(req.user.id, dto)
   }
@@ -222,10 +237,7 @@ export class WorkoutsController {
    */
   @Post('benchmark-result')
   @UseGuards(JwtAuthGuard)
-  async saveBenchmarkResult(
-    @Request() req: { user: { id: string } },
-    @Body() body: SaveBenchmarkResultDto
-  ) {
+  async saveBenchmarkResult(@Request() req: { user: { id: string } }, @Body() body: SaveBenchmarkResultDto) {
     return await this.service.saveBenchmarkResult(req.user.id, body)
   }
 
@@ -249,10 +261,7 @@ export class WorkoutsController {
    */
   @Delete('personalized/:id')
   @UseGuards(JwtAuthGuard)
-  async deletePersonalizedWorkout(
-    @Param('id') id: string,
-    @Request() req: { user: { id: string } },
-  ) {
+  async deletePersonalizedWorkout(@Param('id') id: string, @Request() req: { user: { id: string } }) {
     await this.service.deletePersonalizedWorkout(id, req.user.id)
     return { success: true, message: 'Workout personnalisé supprimé' }
   }
@@ -267,7 +276,4 @@ export class WorkoutsController {
   async remove(@Param('id') id: string) {
     return await this.service.remove(id)
   }
-
 }
-
-

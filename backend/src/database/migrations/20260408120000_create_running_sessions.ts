@@ -1,7 +1,7 @@
 import type { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable('running_sessions', (table) => {
+  await knex.schema.createTable('running_sessions', table => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
     table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
     // Lien optionnel vers la planification calendrier
@@ -13,13 +13,13 @@ export async function up(knex: Knex): Promise<void> {
 
     // Métriques de performance
     table.decimal('distance_km', 6, 2).nullable()
-    table.integer('duration_seconds').nullable()           // durée réelle
-    table.integer('avg_pace_seconds_per_km').nullable()   // allure moyenne (s/km)
+    table.integer('duration_seconds').nullable() // durée réelle
+    table.integer('avg_pace_seconds_per_km').nullable() // allure moyenne (s/km)
     table.integer('avg_heart_rate').nullable()
     table.integer('max_heart_rate').nullable()
     table.integer('elevation_gain_m').nullable()
     table.integer('calories').nullable()
-    table.integer('perceived_effort').nullable()          // RPE 1-10
+    table.integer('perceived_effort').nullable() // RPE 1-10
 
     // Plan IA (structure de la séance générée)
     table.jsonb('ai_plan').nullable()

@@ -57,13 +57,13 @@ Retourne UNIQUEMENT ce JSON :
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 }
 
-export function buildRecommendationUserPrompt(
-  ctx: UserAIContext,
-  stats: SessionStats,
-): string {
+export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: SessionStats): string {
   const sportLabels = SPORT_LABELS
   const levelMap: Record<string, string> = {
-    beginner: 'Débutant', intermediate: 'Intermédiaire', advanced: 'Avancé', elite: 'Elite',
+    beginner: 'Débutant',
+    intermediate: 'Intermédiaire',
+    advanced: 'Avancé',
+    elite: 'Elite',
   }
 
   const lines: string[] = []
@@ -72,7 +72,7 @@ export function buildRecommendationUserPrompt(
   lines.push('## PROFIL ATHLÈTE')
   lines.push(`Niveau : ${levelMap[ctx.sport_level] ?? ctx.sport_level}`)
 
-  const goals = Object.keys(ctx.global_goals).filter((k) => ctx.global_goals[k])
+  const goals = Object.keys(ctx.global_goals).filter(k => ctx.global_goals[k])
   if (goals.length) lines.push(`Objectifs : ${goals.join(', ')}`)
 
   const injuriesBlock = formatInjuriesForPrompt(ctx.injuries)
@@ -108,7 +108,8 @@ export function buildRecommendationUserPrompt(
     lines.push('')
     lines.push('## BILANS DE PROGRESSION')
     for (const r of ctx.progressionReports.slice(0, 3)) {
-      const trend = r.overall_trend === 'improving' ? '↑ progression' : r.overall_trend === 'declining' ? '↓ baisse' : '→ stable'
+      const trend =
+        r.overall_trend === 'improving' ? '↑ progression' : r.overall_trend === 'declining' ? '↓ baisse' : '→ stable'
       lines.push(`- ${sportLabels[r.sport] ?? r.sport} : ${trend}`)
       if (r.weak_points.length) lines.push(`  Points faibles : ${r.weak_points.join(', ')}`)
     }
@@ -119,7 +120,9 @@ export function buildRecommendationUserPrompt(
   lines.push('')
   lines.push('## MISSION')
   lines.push('Analyse cette situation et recommande LA prochaine séance optimale pour cet athlète.')
-  lines.push('Appuie-toi en priorité sur le DIAGNOSTIC CALCULÉ : un déséquilibre de force, une filière délaissée ou un mouvement souvent scalé sont des cibles prioritaires.')
+  lines.push(
+    'Appuie-toi en priorité sur le DIAGNOSTIC CALCULÉ : un déséquilibre de force, une filière délaissée ou un mouvement souvent scalé sont des cibles prioritaires.'
+  )
   lines.push('Sois direct et précis. La recommandation doit être actionnable immédiatement.')
 
   return lines.join('\n')

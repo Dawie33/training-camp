@@ -27,8 +27,22 @@ const analyticsMock = { getOverview: jest.fn().mockResolvedValue(emptyOverview) 
  * dernier maillon appelé par le service.
  */
 const CHAIN_METHODS = [
-  'select', 'where', 'whereNotNull', 'whereRaw', 'whereIn', 'leftJoin', 'join',
-  'orderBy', 'limit', 'offset', 'groupBy', 'first', 'on', 'andOnVal', 'andOn', 'pluck',
+  'select',
+  'where',
+  'whereNotNull',
+  'whereRaw',
+  'whereIn',
+  'leftJoin',
+  'join',
+  'orderBy',
+  'limit',
+  'offset',
+  'groupBy',
+  'first',
+  'on',
+  'andOnVal',
+  'andOn',
+  'pluck',
 ]
 
 function createChainableBuilder(resolvedValue: unknown) {
@@ -114,7 +128,9 @@ describe('UserContextService.getUserAIContext', () => {
         height: 180,
         weight: 82,
         benchmark_results: { fran: { result: { time: '5:00' }, date: '2026-01-01' } },
-        injuries: [{ zone: 'shoulder', side: 'left', status: 'active', severity: 'moderate', painful_patterns: ['overhead'] }],
+        injuries: [
+          { zone: 'shoulder', side: 'left', status: 'active', severity: 'moderate', painful_patterns: ['overhead'] },
+        ],
         physical_limitations: {},
         global_goals: { strength: true },
         equipment_available: ['barbell', 'rower'],
@@ -144,8 +160,18 @@ describe('UserContextService.getUserAIContext', () => {
     // Arrange
     const knexMock = createKnexMock({
       cfSessions: [
-        { started_at: '2026-08-27T18:00:00Z', completed_at: '2026-08-27T18:50:00Z', workout_type: 'strength', perceived_effort: '7' },
-        { started_at: '2026-08-28T10:00:00Z', completed_at: '2026-08-28T10:45:00Z', workout_type: 'metcon', perceived_effort: '8' },
+        {
+          started_at: '2026-08-27T18:00:00Z',
+          completed_at: '2026-08-27T18:50:00Z',
+          workout_type: 'strength',
+          perceived_effort: '7',
+        },
+        {
+          started_at: '2026-08-28T10:00:00Z',
+          completed_at: '2026-08-28T10:45:00Z',
+          workout_type: 'metcon',
+          perceived_effort: '8',
+        },
       ],
     })
     const service = await buildService(knexMock)
@@ -183,14 +209,19 @@ describe('UserContextService.getUserAIContext', () => {
     expect(result.recentSessions[19].date).toBe('2026-01-06')
   })
 
-  it('recentAnalyses : parse ai_analysis qu\'il soit JSON string ou déjà objet', async () => {
+  it("recentAnalyses : parse ai_analysis qu'il soit JSON string ou déjà objet", async () => {
     // Arrange
     const knexMock = createKnexMock({
       recentAnalyses: [
         {
           started_at: '2026-08-20T10:00:00Z',
           workout_name: 'Fran',
-          ai_analysis: JSON.stringify({ performance_level: 'pr', strengths: ['pacing'], improvements: ['grip'], next_steps: 'plus de volume' }),
+          ai_analysis: JSON.stringify({
+            performance_level: 'pr',
+            strengths: ['pacing'],
+            improvements: ['grip'],
+            next_steps: 'plus de volume',
+          }),
         },
         {
           started_at: '2026-08-15T10:00:00Z',
@@ -206,26 +237,50 @@ describe('UserContextService.getUserAIContext', () => {
 
     // Assert
     expect(result.recentAnalyses).toEqual([
-      { date: '2026-08-20', workout_name: 'Fran', performance_level: 'pr', strengths: ['pacing'], improvements: ['grip'], next_steps: 'plus de volume' },
-      { date: '2026-08-15', workout_name: 'Grace', performance_level: 'average', strengths: [], improvements: [], next_steps: '' },
+      {
+        date: '2026-08-20',
+        workout_name: 'Fran',
+        performance_level: 'pr',
+        strengths: ['pacing'],
+        improvements: ['grip'],
+        next_steps: 'plus de volume',
+      },
+      {
+        date: '2026-08-15',
+        workout_name: 'Grace',
+        performance_level: 'average',
+        strengths: [],
+        improvements: [],
+        next_steps: '',
+      },
     ])
   })
 
-  it('activeSkills : parse recommended_exercises qu\'il soit JSON string ou déjà tableau', async () => {
+  it("activeSkills : parse recommended_exercises qu'il soit JSON string ou déjà tableau", async () => {
     // Arrange
     const knexMock = createKnexMock({
       activeSkills: [
         {
-          program_id: 'p1', skill_name: 'Muscle-up', skill_category: 'gymnastics',
-          step_id: 's1', step_title: 'Strict pull-ups', step_description: undefined,
+          program_id: 'p1',
+          skill_name: 'Muscle-up',
+          skill_category: 'gymnastics',
+          step_id: 's1',
+          step_title: 'Strict pull-ups',
+          step_description: undefined,
           recommended_exercises: JSON.stringify([{ name: 'Strict pull-up', sets: 5, reps: 5 }]),
-          coaching_tips: undefined, last_trained: null,
+          coaching_tips: undefined,
+          last_trained: null,
         },
         {
-          program_id: 'p2', skill_name: 'Snatch', skill_category: 'weightlifting',
-          step_id: 's2', step_title: 'Overhead squat', step_description: undefined,
+          program_id: 'p2',
+          skill_name: 'Snatch',
+          skill_category: 'weightlifting',
+          step_id: 's2',
+          step_title: 'Overhead squat',
+          step_description: undefined,
           recommended_exercises: [{ name: 'Overhead squat', sets: 3, reps: 5 }],
-          coaching_tips: undefined, last_trained: '2026-08-01',
+          coaching_tips: undefined,
+          last_trained: '2026-08-01',
         },
       ],
     })
@@ -239,13 +294,21 @@ describe('UserContextService.getUserAIContext', () => {
     expect(result.activeSkills[1].recommended_exercises).toEqual([{ name: 'Overhead squat', sets: 3, reps: 5 }])
   })
 
-  it('progressionReports : parse report qu\'il soit JSON string ou déjà objet', async () => {
+  it("progressionReports : parse report qu'il soit JSON string ou déjà objet", async () => {
     // Arrange
     const knexMock = createKnexMock({
       progressionReports: [
         {
-          sport: 'crossfit', period_months: 3, generated_at: '2026-08-01',
-          report: JSON.stringify({ overall_trend: 'improving', period_summary: 'Progression continue', strengths: ['engine'], weak_points: ['gymnastics'], recommendations: ['plus de skill work'] }),
+          sport: 'crossfit',
+          period_months: 3,
+          generated_at: '2026-08-01',
+          report: JSON.stringify({
+            overall_trend: 'improving',
+            period_summary: 'Progression continue',
+            strengths: ['engine'],
+            weak_points: ['gymnastics'],
+            recommendations: ['plus de skill work'],
+          }),
         },
       ],
     })
@@ -257,9 +320,15 @@ describe('UserContextService.getUserAIContext', () => {
     // Assert
     expect(result.progressionReports).toEqual([
       {
-        sport: 'crossfit', period_months: 3, overall_trend: 'improving', period_summary: 'Progression continue',
-        strengths: ['engine'], weak_points: ['gymnastics'], recommendations: ['plus de skill work'],
-        overall_fitness_level: undefined, generated_at: '2026-08-01',
+        sport: 'crossfit',
+        period_months: 3,
+        overall_trend: 'improving',
+        period_summary: 'Progression continue',
+        strengths: ['engine'],
+        weak_points: ['gymnastics'],
+        recommendations: ['plus de skill work'],
+        overall_fitness_level: undefined,
+        generated_at: '2026-08-01',
       },
     ])
   })

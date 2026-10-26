@@ -1,4 +1,4 @@
-import type { Knex } from "knex"
+import type { Knex } from 'knex'
 
 const SLUGS = ['murph', 'annie', 'diane', 'elizabeth', 'isabel', 'kelly']
 
@@ -19,8 +19,8 @@ export async function up(knex: Knex): Promise<void> {
             duration_min: 10,
             exercises: [
               { name: 'Light Jog', duration: '5 min' },
-              { name: 'Dynamic Stretching', duration: '5 min' }
-            ]
+              { name: 'Dynamic Stretching', duration: '5 min' },
+            ],
           },
           {
             type: 'for_time',
@@ -33,19 +33,17 @@ export async function up(knex: Knex): Promise<void> {
               { name: 'Pull-Up', reps: '100' },
               { name: 'Push-Up', reps: '200' },
               { name: 'Air Squat', reps: '300' },
-              { name: 'Run', distance: '1 mile' }
+              { name: 'Run', distance: '1 mile' },
             ],
-            details: 'RX avec gilet lesté 9kg/6kg'
+            details: 'RX avec gilet lesté 9kg/6kg',
           },
           {
             type: 'cooldown',
             title: 'Retour au calme',
             duration_min: 5,
-            exercises: [
-              { name: 'Walk', duration: '5 min' }
-            ]
-          }
-        ]
+            exercises: [{ name: 'Walk', duration: '5 min' }],
+          },
+        ],
       }),
       estimated_duration: 60,
       intensity: 'very_high',
@@ -62,10 +60,11 @@ export async function up(knex: Knex): Promise<void> {
       isPublic: true,
       status: 'published',
       is_benchmark: true,
-      coach_notes: "Hero WOD en hommage au Lt. Michael Murphy. Partitionnez les reps (ex: 20 rounds de 5 pull-ups/10 push-ups/15 squats) pour gérer l'effort.",
+      coach_notes:
+        "Hero WOD en hommage au Lt. Michael Murphy. Partitionnez les reps (ex: 20 rounds de 5 pull-ups/10 push-ups/15 squats) pour gérer l'effort.",
       tags: JSON.stringify(['hero-wod', 'benchmark', 'bodyweight']),
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -82,8 +81,8 @@ export async function up(knex: Knex): Promise<void> {
             duration_min: 6,
             exercises: [
               { name: 'Single-Under', reps: '50' },
-              { name: 'Sit-Up Practice', reps: '10' }
-            ]
+              { name: 'Sit-Up Practice', reps: '10' },
+            ],
           },
           {
             type: 'for_time',
@@ -93,18 +92,16 @@ export async function up(knex: Knex): Promise<void> {
             goal: 'Terminer le plus rapidement possible',
             exercises: [
               { name: 'Double-Under', reps: '50-40-30-20-10' },
-              { name: 'Sit-Up', reps: '50-40-30-20-10' }
-            ]
+              { name: 'Sit-Up', reps: '50-40-30-20-10' },
+            ],
           },
           {
             type: 'cooldown',
             title: 'Retour au calme',
             duration_min: 5,
-            exercises: [
-              { name: 'Stretch', duration: '5 min', details: 'Focus mollets et abdos' }
-            ]
-          }
-        ]
+            exercises: [{ name: 'Stretch', duration: '5 min', details: 'Focus mollets et abdos' }],
+          },
+        ],
       }),
       estimated_duration: 20,
       intensity: 'high',
@@ -121,10 +118,11 @@ export async function up(knex: Knex): Promise<void> {
       isPublic: true,
       status: 'published',
       is_benchmark: true,
-      coach_notes: 'La compétence limitante est souvent les double-unders : travaillez la régularité plutôt que la vitesse brute.',
+      coach_notes:
+        'La compétence limitante est souvent les double-unders : travaillez la régularité plutôt que la vitesse brute.',
       tags: JSON.stringify(['bodyweight', 'benchmark', 'classic']),
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -142,8 +140,8 @@ export async function up(knex: Knex): Promise<void> {
             exercises: [
               { name: 'Rowing', duration: '5 min' },
               { name: 'Deadlift Practice', reps: '10', details: 'Charge légère' },
-              { name: 'Wall Walk', reps: '3' }
-            ]
+              { name: 'Wall Walk', reps: '3' },
+            ],
           },
           {
             type: 'for_time',
@@ -153,18 +151,16 @@ export async function up(knex: Knex): Promise<void> {
             goal: 'Terminer le plus rapidement possible',
             exercises: [
               { name: 'Deadlift', reps: '21-15-9', weight: '102kg/70kg', details: 'RX: 225lbs/155lbs' },
-              { name: 'Handstand Push-Up', reps: '21-15-9' }
-            ]
+              { name: 'Handstand Push-Up', reps: '21-15-9' },
+            ],
           },
           {
             type: 'cooldown',
             title: 'Retour au calme',
             duration_min: 5,
-            exercises: [
-              { name: 'Stretch', duration: '5 min', details: 'Focus dos et épaules' }
-            ]
-          }
-        ]
+            exercises: [{ name: 'Stretch', duration: '5 min', details: 'Focus dos et épaules' }],
+          },
+        ],
       }),
       estimated_duration: 20,
       intensity: 'very_high',
@@ -184,7 +180,7 @@ export async function up(knex: Knex): Promise<void> {
       coach_notes: "Cassez les handstand push-ups tôt si besoin pour éviter l'échec musculaire en fin de série.",
       tags: JSON.stringify(['barbell', 'benchmark', 'classic']),
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -202,8 +198,8 @@ export async function up(knex: Knex): Promise<void> {
             exercises: [
               { name: 'Rowing', duration: '5 min' },
               { name: 'Clean Practice', reps: '10', details: 'Barre vide' },
-              { name: 'Ring Support Hold', duration: '30 sec' }
-            ]
+              { name: 'Ring Support Hold', duration: '30 sec' },
+            ],
           },
           {
             type: 'for_time',
@@ -213,18 +209,16 @@ export async function up(knex: Knex): Promise<void> {
             goal: 'Terminer le plus rapidement possible',
             exercises: [
               { name: 'Clean', reps: '21-15-9', weight: '61kg/43kg', details: 'RX: 135lbs/95lbs' },
-              { name: 'Ring Dip', reps: '21-15-9' }
-            ]
+              { name: 'Ring Dip', reps: '21-15-9' },
+            ],
           },
           {
             type: 'cooldown',
             title: 'Retour au calme',
             duration_min: 5,
-            exercises: [
-              { name: 'Stretch', duration: '5 min', details: 'Focus épaules et poitrine' }
-            ]
-          }
-        ]
+            exercises: [{ name: 'Stretch', duration: '5 min', details: 'Focus épaules et poitrine' }],
+          },
+        ],
       }),
       estimated_duration: 20,
       intensity: 'very_high',
@@ -244,7 +238,7 @@ export async function up(knex: Knex): Promise<void> {
       coach_notes: "Technique de clean propre indispensable pour économiser de l'énergie sur les 45 reps.",
       tags: JSON.stringify(['barbell', 'benchmark', 'classic']),
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -261,8 +255,8 @@ export async function up(knex: Knex): Promise<void> {
             duration_min: 8,
             exercises: [
               { name: 'Rowing', duration: '5 min' },
-              { name: 'Snatch Practice', reps: '10', details: 'Barre vide, focus technique' }
-            ]
+              { name: 'Snatch Practice', reps: '10', details: 'Barre vide, focus technique' },
+            ],
           },
           {
             type: 'for_time',
@@ -270,19 +264,15 @@ export async function up(knex: Knex): Promise<void> {
             format: 'For Time - Cap 8 min',
             duration_min: 8,
             goal: 'Terminer le plus rapidement possible',
-            exercises: [
-              { name: 'Snatch', reps: '30', weight: '61kg/43kg', details: 'RX: 135lbs/95lbs' }
-            ]
+            exercises: [{ name: 'Snatch', reps: '30', weight: '61kg/43kg', details: 'RX: 135lbs/95lbs' }],
           },
           {
             type: 'cooldown',
             title: 'Retour au calme',
             duration_min: 5,
-            exercises: [
-              { name: 'Stretch', duration: '5 min', details: 'Focus épaules et hanches' }
-            ]
-          }
-        ]
+            exercises: [{ name: 'Stretch', duration: '5 min', details: 'Focus épaules et hanches' }],
+          },
+        ],
       }),
       estimated_duration: 15,
       intensity: 'very_high',
@@ -299,10 +289,11 @@ export async function up(knex: Knex): Promise<void> {
       isPublic: true,
       status: 'published',
       is_benchmark: true,
-      coach_notes: 'Un des benchmarks les plus techniques. Ne visez la charge RX que si votre technique de snatch est fiable.',
+      coach_notes:
+        'Un des benchmarks les plus techniques. Ne visez la charge RX que si votre technique de snatch est fiable.',
       tags: JSON.stringify(['barbell', 'weightlifting', 'benchmark']),
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -319,8 +310,8 @@ export async function up(knex: Knex): Promise<void> {
             duration_min: 8,
             exercises: [
               { name: 'Light Jog', duration: '5 min' },
-              { name: 'Box Jump Practice', reps: '10' }
-            ]
+              { name: 'Box Jump Practice', reps: '10' },
+            ],
           },
           {
             type: 'for_time',
@@ -332,23 +323,25 @@ export async function up(knex: Knex): Promise<void> {
             exercises: [
               { name: 'Run', distance: '400m' },
               { name: 'Box Jump', reps: '30', details: 'RX: 24in/20in' },
-              { name: 'Wall Ball', reps: '30', weight: '9kg/6kg', details: 'RX: 20lbs/14lbs' }
-            ]
+              { name: 'Wall Ball', reps: '30', weight: '9kg/6kg', details: 'RX: 20lbs/14lbs' },
+            ],
           },
           {
             type: 'cooldown',
             title: 'Retour au calme',
             duration_min: 5,
-            exercises: [
-              { name: 'Walk', duration: '5 min' }
-            ]
-          }
-        ]
+            exercises: [{ name: 'Walk', duration: '5 min' }],
+          },
+        ],
       }),
       estimated_duration: 45,
       intensity: 'high',
       difficulty: 'intermediate',
-      scaling_options: JSON.stringify(['box jump plus bas ou step-up', 'wall ball plus léger', 'réduire la distance de course']),
+      scaling_options: JSON.stringify([
+        'box jump plus bas ou step-up',
+        'wall ball plus léger',
+        'réduire la distance de course',
+      ]),
       equipment_required: JSON.stringify(['wall-ball', 'plyo-box']),
       focus_areas: JSON.stringify(['endurance', 'conditioning']),
       metrics_tracked: JSON.stringify(['time']),
@@ -360,11 +353,12 @@ export async function up(knex: Knex): Promise<void> {
       isPublic: true,
       status: 'published',
       is_benchmark: true,
-      coach_notes: 'WOD long : gérez votre rythme de course dès le premier round pour ne pas vous cramer sur les box jumps.',
+      coach_notes:
+        'WOD long : gérez votre rythme de course dès le premier round pour ne pas vous cramer sur les box jumps.',
       tags: JSON.stringify(['benchmark', 'classic', 'endurance']),
       created_at: new Date(),
-      updated_at: new Date()
-    }
+      updated_at: new Date(),
+    },
   ])
 }
 

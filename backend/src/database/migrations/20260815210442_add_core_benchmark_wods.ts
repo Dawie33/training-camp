@@ -1,4 +1,4 @@
-import type { Knex } from "knex"
+import type { Knex } from 'knex'
 
 const SLUGS = ['cindy', 'fran', 'helen', 'dt']
 
@@ -20,8 +20,8 @@ export async function up(knex: Knex): Promise<void> {
               duration_min: 5,
               exercises: [
                 { name: 'Jump Rope', duration: '3 min' },
-                { name: 'Shoulder Circles', reps: '10' }
-              ]
+                { name: 'Shoulder Circles', reps: '10' },
+              ],
             },
             {
               type: 'amrap',
@@ -32,18 +32,16 @@ export async function up(knex: Knex): Promise<void> {
               exercises: [
                 { name: 'Pull-Up', reps: '5' },
                 { name: 'Push-Up', reps: '10' },
-                { name: 'Air Squat', reps: '15' }
-              ]
+                { name: 'Air Squat', reps: '15' },
+              ],
             },
             {
               type: 'cooldown',
               title: 'Retour au calme',
               duration_min: 5,
-              exercises: [
-                { name: 'Walk', duration: '5 min' }
-              ]
-            }
-          ]
+              exercises: [{ name: 'Walk', duration: '5 min' }],
+            },
+          ],
         }),
         estimated_duration: 30,
         intensity: 'high',
@@ -63,7 +61,7 @@ export async function up(knex: Knex): Promise<void> {
         coach_notes: 'Workout benchmark classique. Visez un rythme constant.',
         tags: JSON.stringify(['bodyweight', 'classic', 'benchmark']),
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       },
       {
         id: knex.raw('gen_random_uuid()'),
@@ -80,8 +78,8 @@ export async function up(knex: Knex): Promise<void> {
               duration_min: 8,
               exercises: [
                 { name: 'Rowing', duration: '5 min' },
-                { name: 'Thruster Practice', reps: '10', details: 'Avec barre vide ou légère' }
-              ]
+                { name: 'Thruster Practice', reps: '10', details: 'Avec barre vide ou légère' },
+              ],
             },
             {
               type: 'for_time',
@@ -92,18 +90,16 @@ export async function up(knex: Knex): Promise<void> {
               description: '21-15-9 reps de chaque exercice',
               exercises: [
                 { name: 'Thruster', reps: '21-15-9', weight: '43kg/30kg', details: 'RX: 95lbs/65lbs' },
-                { name: 'Pull-Up', reps: '21-15-9' }
-              ]
+                { name: 'Pull-Up', reps: '21-15-9' },
+              ],
             },
             {
               type: 'cooldown',
               title: 'Retour au calme',
               duration_min: 5,
-              exercises: [
-                { name: 'Stretch', duration: '5 min', details: 'Focus épaules et dos' }
-              ]
-            }
-          ]
+              exercises: [{ name: 'Stretch', duration: '5 min', details: 'Focus épaules et dos' }],
+            },
+          ],
         }),
         estimated_duration: 25,
         intensity: 'very_high',
@@ -123,7 +119,7 @@ export async function up(knex: Knex): Promise<void> {
         coach_notes: 'Un des benchmarks les plus iconiques. Gérez votre rythme dès le début.',
         tags: JSON.stringify(['barbell', 'benchmark', 'classic']),
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       },
       {
         id: knex.raw('gen_random_uuid()'),
@@ -140,8 +136,8 @@ export async function up(knex: Knex): Promise<void> {
               duration_min: 8,
               exercises: [
                 { name: 'Light Jog', duration: '5 min' },
-                { name: 'KB Swing Practice', reps: '10', details: 'Technique focus' }
-              ]
+                { name: 'KB Swing Practice', reps: '10', details: 'Technique focus' },
+              ],
             },
             {
               type: 'for_time',
@@ -153,18 +149,16 @@ export async function up(knex: Knex): Promise<void> {
               exercises: [
                 { name: 'Run', distance: '400m' },
                 { name: 'Kettlebell Swing', reps: '21', weight: '24kg/16kg', details: 'RX: 53lbs/35lbs' },
-                { name: 'Pull-Up', reps: '12' }
-              ]
+                { name: 'Pull-Up', reps: '12' },
+              ],
             },
             {
               type: 'cooldown',
               title: 'Retour au calme',
               duration_min: 5,
-              exercises: [
-                { name: 'Walk', duration: '5 min' }
-              ]
-            }
-          ]
+              exercises: [{ name: 'Walk', duration: '5 min' }],
+            },
+          ],
         }),
         estimated_duration: 25,
         intensity: 'high',
@@ -184,7 +178,7 @@ export async function up(knex: Knex): Promise<void> {
         coach_notes: 'Gardez un rythme soutenu sur la course, cassez les KB swings et pull-ups si nécessaire.',
         tags: JSON.stringify(['running', 'kettlebell', 'benchmark']),
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       },
       {
         id: knex.raw('gen_random_uuid()'),
@@ -201,8 +195,8 @@ export async function up(knex: Knex): Promise<void> {
               duration_min: 8,
               exercises: [
                 { name: 'Rowing', duration: '5 min' },
-                { name: 'Barbell Complex', reps: '5', details: 'Barre vide: deadlift + hang clean + jerk' }
-              ]
+                { name: 'Barbell Complex', reps: '5', details: 'Barre vide: deadlift + hang clean + jerk' },
+              ],
             },
             {
               type: 'for_time',
@@ -214,18 +208,16 @@ export async function up(knex: Knex): Promise<void> {
               exercises: [
                 { name: 'Deadlift', reps: '12', weight: '70kg/48kg', details: 'RX: 155lbs/105lbs' },
                 { name: 'Hang Power Clean', reps: '9', weight: '70kg/48kg' },
-                { name: 'Push Jerk', reps: '6', weight: '70kg/48kg' }
-              ]
+                { name: 'Push Jerk', reps: '6', weight: '70kg/48kg' },
+              ],
             },
             {
               type: 'cooldown',
               title: 'Retour au calme',
               duration_min: 5,
-              exercises: [
-                { name: 'Stretch', duration: '5 min', details: 'Focus épaules, dos et hanches' }
-              ]
-            }
-          ]
+              exercises: [{ name: 'Stretch', duration: '5 min', details: 'Focus épaules, dos et hanches' }],
+            },
+          ],
         }),
         estimated_duration: 30,
         intensity: 'very_high',
@@ -245,8 +237,8 @@ export async function up(knex: Knex): Promise<void> {
         coach_notes: 'Workout très exigeant sur les épaules. Prenez le temps de bien respirer.',
         tags: JSON.stringify(['barbell', 'weightlifting', 'benchmark']),
         created_at: new Date(),
-        updated_at: new Date()
-      }
+        updated_at: new Date(),
+      },
     ])
     .onConflict('slug')
     .ignore()

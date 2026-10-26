@@ -62,10 +62,7 @@ describe('OriginSecretMiddleware', () => {
     })
 
     it('refuse un secret faux de même longueur', async () => {
-      await request(app.getHttpServer())
-        .get('/api/workouts')
-        .set(ORIGIN_SECRET_HEADER, 'b'.repeat(64))
-        .expect(403)
+      await request(app.getHttpServer()).get('/api/workouts').set(ORIGIN_SECRET_HEADER, 'b'.repeat(64)).expect(403)
     })
 
     it('refuse un secret de longueur différente', async () => {

@@ -49,7 +49,7 @@ const PATTERN_LABELS: Record<PainfulPattern, string> = {
 
 const STATUS_RULES: Record<InjuryStatus, string> = {
   active:
-    "ACTIVE : exclus tout mouvement qui sollicite la zone ou les familles douloureuses et remplace-le par une variante qui préserve le stimulus de la séance. Si la douleur est quotidienne, mets la zone au repos complet, travaille le reste du corps et recommande de consulter un professionnel de santé.",
+    'ACTIVE : exclus tout mouvement qui sollicite la zone ou les familles douloureuses et remplace-le par une variante qui préserve le stimulus de la séance. Si la douleur est quotidienne, mets la zone au repos complet, travaille le reste du corps et recommande de consulter un professionnel de santé.',
   recovering:
     "EN REPRISE : garde les mouvements de la zone mais adapte-les : charge ≤ 60-70 % du 1RM, amplitude contrôlée, tempo lent, aucun kipping sollicitant la zone. Ajoute un exercice de renforcement ciblé dans l'accessoire.",
   past: "ANTÉCÉDENT : aucune exclusion. Ajoute de la prévention ciblée dans l'accessoire et limite la montée en volume sur la zone.",
@@ -60,7 +60,7 @@ function describeInjury(injury: Injury): string {
   const parts = [`${zone} — ${STATUS_LABELS[injury.status]}, ${SEVERITY_LABELS[injury.severity]}`]
   if (injury.since) parts.push(`depuis ${injury.since}`)
   if (injury.painful_patterns.length > 0) {
-    parts.push(`douloureux : ${injury.painful_patterns.map((p) => PATTERN_LABELS[p]).join(' ; ')}`)
+    parts.push(`douloureux : ${injury.painful_patterns.map(p => PATTERN_LABELS[p]).join(' ; ')}`)
   }
   if (injury.notes) parts.push(`note de l'athlète : « ${injury.notes} »`)
   return `- ${parts.join(' — ')}`
@@ -73,8 +73,8 @@ function describeInjury(injury: Injury): string {
 export function formatInjuriesForPrompt(injuries: Injury[]): string {
   if (injuries.length === 0) return ''
 
-  const statuses = [...new Set(injuries.map((i) => i.status))]
-  const rules = statuses.map((status) => `- ${STATUS_RULES[status]}`)
+  const statuses = [...new Set(injuries.map(i => i.status))]
+  const rules = statuses.map(status => `- ${STATUS_RULES[status]}`)
 
   return [
     "**Blessures et douleurs** (déclarées par l'athlète — adapte la programmation, ne pose jamais de diagnostic) :",

@@ -34,8 +34,8 @@ import { WorkoutsModule } from './workouts/workouts.module'
     ThrottlerModule.forRoot([
       {
         name: 'default',
-        ttl: 60000,  // 1 minute
-        limit: 60,   // 60 requêtes par minute par IP (routes normales)
+        ttl: 60000, // 1 minute
+        limit: 60, // 60 requêtes par minute par IP (routes normales)
       },
     ]),
     KnexModule.forRoot({ config: knexConfig[process.env.NODE_ENV || 'development'] }),
@@ -62,4 +62,4 @@ import { WorkoutsModule } from './workouts/workouts.module'
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

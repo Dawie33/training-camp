@@ -1,7 +1,7 @@
-import type { Knex } from "knex";
+import type { Knex } from 'knex'
 
 export async function seed(knex: Knex): Promise<void> {
-  await knex('users').del();
+  await knex('users').del()
   await knex('users').insert([
     {
       id: knex.raw('gen_random_uuid()'),
@@ -10,7 +10,7 @@ export async function seed(knex: Knex): Promise<void> {
       firstName: 'John',
       lastName: 'Doe',
       isActive: true,
-      emailVerified: true
+      emailVerified: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -19,7 +19,7 @@ export async function seed(knex: Knex): Promise<void> {
       firstName: 'Jane',
       lastName: 'Smith',
       isActive: true,
-      emailVerified: false
-    }
-  ]);
+      emailVerified: false,
+    },
+  ])
 }

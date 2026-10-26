@@ -28,7 +28,7 @@ export const InjurySchema = z.object({
 export function parseStoredInjuries(raw: unknown): Injury[] {
   const value = typeof raw === 'string' ? safeJsonParse(raw) : raw
   if (!Array.isArray(value)) return []
-  return value.flatMap((entry) => {
+  return value.flatMap(entry => {
     const parsed = InjurySchema.safeParse(entry)
     return parsed.success ? [parsed.data] : []
   })

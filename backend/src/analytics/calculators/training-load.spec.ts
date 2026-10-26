@@ -30,10 +30,7 @@ describe('computeTrainingLoad', () => {
   })
 
   it('signale l’indisponibilité tant qu’aucune séance ne porte de RPE', () => {
-    const result = computeTrainingLoad(
-      [{ started_at: '2026-09-21T09:00:00.000Z', duration_seconds: 3600 }],
-      now
-    )
+    const result = computeTrainingLoad([{ started_at: '2026-09-21T09:00:00.000Z', duration_seconds: 3600 }], now)
 
     expect(result.available).toBe(false)
     expect(result.sessions_with_rpe).toBe(0)

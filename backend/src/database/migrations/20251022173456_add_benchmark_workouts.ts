@@ -1,4 +1,4 @@
-import type { Knex } from "knex";
+import type { Knex } from 'knex'
 
 /**
  * Migration obsolète - Les benchmarks pour Running, Cycling et Musculation

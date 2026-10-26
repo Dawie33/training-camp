@@ -18,18 +18,15 @@ describe('computeMovementExposure', () => {
   })
 
   it('exprime la charge moyenne en pourcentage du 1RM', () => {
-    const result = computeMovementExposure(
-      [{ name: 'Back Squat', load_kg: 90, reps_completed: 15, scaled: false }],
-      { back_squat: 150 }
-    )
+    const result = computeMovementExposure([{ name: 'Back Squat', load_kg: 90, reps_completed: 15, scaled: false }], {
+      back_squat: 150,
+    })
 
     expect(find(result, 'Back Squat').pct_of_1rm).toBe(60)
   })
 
   it('reste exploitable sans 1RM correspondant', () => {
-    const result = computeMovementExposure([
-      { name: 'Wall Ball', load_kg: 9, reps_completed: 60, scaled: false },
-    ])
+    const result = computeMovementExposure([{ name: 'Wall Ball', load_kg: 9, reps_completed: 60, scaled: false }])
 
     const wallBall = find(result, 'Wall Ball')
     expect(wallBall.pct_of_1rm).toBeNull()

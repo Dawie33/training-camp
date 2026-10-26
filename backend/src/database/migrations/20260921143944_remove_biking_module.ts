@@ -24,7 +24,7 @@ export async function down(knex: Knex): Promise<void> {
       CHECK (activity_type IN ('strength', 'biking', 'skill', 'mobility', 'wod', 'conditioning'))
   `)
 
-  await knex.schema.createTable('biking_sessions', (table) => {
+  await knex.schema.createTable('biking_sessions', table => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
     table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
     table.uuid('scheduled_activity_id').nullable().references('id').inTable('scheduled_activities').onDelete('SET NULL')

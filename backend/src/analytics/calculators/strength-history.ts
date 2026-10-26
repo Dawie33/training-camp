@@ -29,9 +29,7 @@ export function computeStrengthHistory(entries: OneRepMaxEntry[]): StrengthHisto
   }
 
   const lifts: StrengthLiftHistory[] = [...byLift.entries()].map(([lift, rows]) => {
-    const sorted = [...rows].sort(
-      (a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime()
-    )
+    const sorted = [...rows].sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime())
 
     const points = sorted.map(row => ({
       value: row.value,

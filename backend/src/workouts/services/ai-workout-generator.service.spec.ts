@@ -20,7 +20,7 @@ const muscleUpSkill: ActiveSkillContext = {
  * Réutilise le workout d'exemple du prompt système comme réponse IA valide pour le schéma Zod.
  */
 function exampleWorkoutJson(): string {
-  const blocks = [...buildCrossFitSystemPrompt().matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => m[1])
+  const blocks = [...buildCrossFitSystemPrompt().matchAll(/```json\n([\s\S]*?)\n```/g)].map(m => m[1])
   return blocks[blocks.length - 1]
 }
 
@@ -83,12 +83,15 @@ describe('AIWorkoutGeneratorService.generatePersonalizedWorkout', () => {
     return createJsonCompletion.mock.calls[0][0].messages[1].content
   }
 
-  it.each(['conditioning', 'vo2max', 'core'])('type %s → n\'injecte pas le travail technique du skill actif', async (workoutType) => {
-    await service.generatePersonalizedWorkout('user-1', { workoutType, duration: 45 })
+  it.each(['conditioning', 'vo2max', 'core'])(
+    "type %s → n'injecte pas le travail technique du skill actif",
+    async workoutType => {
+      await service.generatePersonalizedWorkout('user-1', { workoutType, duration: 45 })
 
-    expect(sentUserPrompt()).not.toContain('TRAVAIL TECHNIQUE')
-    expect(sentUserPrompt()).not.toContain('Muscle-Up')
-  })
+      expect(sentUserPrompt()).not.toContain('TRAVAIL TECHNIQUE')
+      expect(sentUserPrompt()).not.toContain('Muscle-Up')
+    }
+  )
 
   it('sans type précisé → défaut conditioning, donc pas de travail technique', async () => {
     await service.generatePersonalizedWorkout('user-1', { duration: 45 })
@@ -96,15 +99,15 @@ describe('AIWorkoutGeneratorService.generatePersonalizedWorkout', () => {
     expect(sentUserPrompt()).not.toContain('TRAVAIL TECHNIQUE')
   })
 
-  it('type technique_metcon → injecte le skill, subordonné aux contraintes de l\'athlète', async () => {
+  it("type technique_metcon → injecte le skill, subordonné aux contraintes de l'athlète", async () => {
     await service.generatePersonalizedWorkout('user-1', { workoutType: 'technique_metcon', duration: 60 })
 
     expect(sentUserPrompt()).toContain('Muscle-Up')
-    expect(sentUserPrompt()).toContain('sauf s\'il contredit les contraintes de l\'athlète')
+    expect(sentUserPrompt()).toContain("sauf s'il contredit les contraintes de l'athlète")
     expect(sentUserPrompt()).not.toContain('OBLIGATOIREMENT')
   })
 
-  it('consignes de l\'athlète → placées dans les contraintes prioritaires, avant le travail technique', async () => {
+  it("consignes de l'athlète → placées dans les contraintes prioritaires, avant le travail technique", async () => {
     await service.generatePersonalizedWorkout('user-1', {
       workoutType: 'technique_metcon',
       duration: 60,
@@ -112,7 +115,7 @@ describe('AIWorkoutGeneratorService.generatePersonalizedWorkout', () => {
     })
 
     const prompt = sentUserPrompt()
-    expect(prompt).toContain('CONTRAINTES DE L\'ATHLÈTE (PRIORITAIRES)')
+    expect(prompt).toContain("CONTRAINTES DE L'ATHLÈTE (PRIORITAIRES)")
     expect(prompt.indexOf('ne sollicite pas les épaules')).toBeLessThan(prompt.indexOf('TRAVAIL TECHNIQUE'))
   })
 })
@@ -120,12 +123,12 @@ describe('AIWorkoutGeneratorService.generatePersonalizedWorkout', () => {
 describe('AIWorkoutGeneratorService — WOD inconnu ou texte inexploitable', () => {
   const userContext = {} as UserContextService
 
-  it('lookup : WOD inconnu de l\'IA → 400 qui invite à coller les détails', async () => {
+  it("lookup : WOD inconnu de l'IA → 400 qui invite à coller les détails", async () => {
     const service = new AIWorkoutGeneratorService(mockOpenAI('{"error": "UNKNOWN_WOD"}').openai, userContext)
 
     await expect(service.lookupWorkoutByName('Open 26.1')).rejects.toThrow(
       new BadRequestException(
-        'Impossible de trouver le WOD "Open 26.1". S\'il s\'agit d\'un WOD récent, colle ses détails dans le champ prévu.'
+        "Impossible de trouver le WOD \"Open 26.1\". S'il s'agit d'un WOD récent, colle ses détails dans le champ prévu."
       )
     )
   })

@@ -1,4 +1,4 @@
-import type { Knex } from "knex";
+import type { Knex } from 'knex'
 
 const additionalCrossfitExercises = [
   ['Down Up', 'down-up', 'strength', 'beginner', [], true, 'reps'],
@@ -38,7 +38,15 @@ const additionalCrossfitExercises = [
   ['Push Jerk', 'push-jerk', 'olympic_lifting', 'intermediate', ['barbell', 'plates'], false, 'weight'],
   ['Squat Clean', 'squat-clean', 'olympic_lifting', 'advanced', ['barbell', 'plates'], false, 'weight'],
   ['Split Jerk', 'split-jerk', 'olympic_lifting', 'advanced', ['barbell', 'plates'], false, 'weight'],
-  ['Sumo Deadlift High Pull', 'sumo-deadlift-high-pull', 'olympic_lifting', 'intermediate', ['barbell', 'plates'], false, 'weight'],
+  [
+    'Sumo Deadlift High Pull',
+    'sumo-deadlift-high-pull',
+    'olympic_lifting',
+    'intermediate',
+    ['barbell', 'plates'],
+    false,
+    'weight',
+  ],
   ['Wall Walk', 'wall-walk', 'gymnastics', 'intermediate', ['wall'], true, 'reps'],
   ['Handstand Walk', 'handstand-walk', 'gymnastics', 'advanced', [], true, 'distance'],
   ['Handstand Hold', 'handstand-hold', 'gymnastics', 'advanced', [], true, 'time'],
@@ -60,7 +68,15 @@ const additionalCrossfitExercises = [
   ['Sledgehammer Swings', 'sledgehammer-swings', 'cardio', 'intermediate', ['sledgehammer', 'tire'], false, 'reps'],
   ['Landmine Press', 'landmine-press', 'strength', 'intermediate', ['landmine', 'plates'], false, 'weight'],
   ['Landmine Row', 'landmine-row', 'strength', 'intermediate', ['landmine', 'plates'], false, 'weight'],
-  ['Landmine Squat to Press', 'landmine-squat-to-press', 'strength', 'intermediate', ['landmine', 'plates'], false, 'weight'],
+  [
+    'Landmine Squat to Press',
+    'landmine-squat-to-press',
+    'strength',
+    'intermediate',
+    ['landmine', 'plates'],
+    false,
+    'weight',
+  ],
   ['Banded Pull-Apart', 'banded-pull-apart', 'strength', 'beginner', ['band'], false, 'reps'],
   ['Medicine Ball Clean', 'medicine-ball-clean', 'strength', 'beginner', ['medicine-ball'], false, 'reps'],
 ].map(([name, slug, category, difficulty, equipment, bodyweightOnly, measurementType]) => ({
@@ -83,7 +99,7 @@ const additionalCrossfitExercises = [
 }))
 
 export async function seed(knex: Knex): Promise<void> {
-  await knex('exercises').del();
+  await knex('exercises').del()
   await knex('exercises').insert([
     // Bodyweight exercises
     {
@@ -103,7 +119,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Ne pas arrondir le dos.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -122,7 +138,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Contrôler la descente.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -141,7 +157,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Garder les coudes près du corps.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -160,7 +176,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Commencer doucement, augmenter progressivement.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -179,7 +195,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Atterrir en contrôle, ne pas sauter en arrière.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
 
     // Barbell exercises
@@ -200,7 +216,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Utiliser un rack avec sécurités.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -219,7 +235,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Ne jamais arrondir le dos.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -238,7 +254,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Toujours avoir un pareur ou utiliser des sécurités.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -257,7 +273,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Gainer le tronc, ne pas cambrer le dos.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
 
     // Cardio exercises
@@ -278,13 +294,13 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Garder le dos droit.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
       name: 'Assault Bike',
       slug: 'assault-bike',
-      description: 'Vélo d\'assaut.',
+      description: "Vélo d'assaut.",
       instructions: 'Pédaler et pousser/tirer les bras simultanément.',
       category: 'cardio',
       muscle_groups: JSON.stringify(['full-body']),
@@ -294,10 +310,10 @@ export async function seed(knex: Knex): Promise<void> {
       bodyweight_only: false,
       measurement_type: 'calories',
       contraindications: JSON.stringify([]),
-      safety_notes: 'Adapter l\'intensité progressivement.',
+      safety_notes: "Adapter l'intensité progressivement.",
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -316,7 +332,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Surface adaptée, chaussures avec amorti.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
 
     // Kettlebell exercises
@@ -337,7 +353,7 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Extension de hanche, pas de squat.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
@@ -353,10 +369,10 @@ export async function seed(knex: Knex): Promise<void> {
       bodyweight_only: false,
       measurement_type: 'reps',
       contraindications: JSON.stringify(['douleur épaule']),
-      safety_notes: 'Apprendre le mouvement sans charge d\'abord.',
+      safety_notes: "Apprendre le mouvement sans charge d'abord.",
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
 
     // Core exercises
@@ -377,14 +393,14 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Ne pas creuser le dos.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     {
       id: knex.raw('gen_random_uuid()'),
       name: 'Sit-Up',
       slug: 'sit-up',
       description: 'Relevé de buste.',
-      instructions: 'Allongé sur le dos, pieds fixés, remonter jusqu\'aux genoux.',
+      instructions: "Allongé sur le dos, pieds fixés, remonter jusqu'aux genoux.",
       category: 'strength',
       muscle_groups: JSON.stringify(['abs', 'hip-flexors']),
       difficulty: 'beginner',
@@ -396,8 +412,8 @@ export async function seed(knex: Knex): Promise<void> {
       safety_notes: 'Contrôler la descente.',
       video_url: null,
       image_url: null,
-      isActive: true
+      isActive: true,
     },
     ...additionalCrossfitExercises,
-  ]);
+  ])
 }

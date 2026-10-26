@@ -14,10 +14,7 @@ const body = (metatype: ArgumentMetadata['metatype']): ArgumentMetadata => ({ ty
 
 describe('NormalizeEmail', () => {
   it('met en minuscules et retire les espaces au login', async () => {
-    const result: LoginDto = await pipe.transform(
-      { email: '  Dawie@Mail.COM ', password: 'secret123' },
-      body(LoginDto)
-    )
+    const result: LoginDto = await pipe.transform({ email: '  Dawie@Mail.COM ', password: 'secret123' }, body(LoginDto))
     expect(result.email).toBe('dawie@mail.com')
   })
 

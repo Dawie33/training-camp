@@ -1,7 +1,7 @@
 import type { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable('strength_sessions', (table) => {
+  await knex.schema.createTable('strength_sessions', table => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
     table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
 
@@ -23,7 +23,7 @@ export async function up(knex: Knex): Promise<void> {
     // Séries effectuées : [{ exercise_name, set_number, reps, weight_kg, rpe, notes }]
     table.jsonb('sets_logged').nullable()
 
-    table.integer('perceived_effort').nullable()  // RPE 1-10
+    table.integer('perceived_effort').nullable() // RPE 1-10
     table.integer('duration_minutes').nullable()
     table.text('notes').nullable()
 

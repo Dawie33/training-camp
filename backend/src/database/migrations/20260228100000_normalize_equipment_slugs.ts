@@ -19,18 +19,19 @@ export async function up(knex: Knex): Promise<void> {
   const users = await knex('users').whereNotNull('equipment_available').select('id', 'equipment_available')
 
   for (const user of users) {
-    const slugs: string[] = typeof user.equipment_available === 'string'
-      ? JSON.parse(user.equipment_available)
-      : user.equipment_available
+    const slugs: string[] =
+      typeof user.equipment_available === 'string' ? JSON.parse(user.equipment_available) : user.equipment_available
 
     if (!Array.isArray(slugs) || slugs.length === 0) continue
 
     const updated = slugs.map(s => SLUG_MAP[s] ?? s)
     if (updated.join(',') === slugs.join(',')) continue
 
-    await knex('users').where({ id: user.id }).update({
-      equipment_available: JSON.stringify(updated),
-    })
+    await knex('users')
+      .where({ id: user.id })
+      .update({
+        equipment_available: JSON.stringify(updated),
+      })
   }
 }
 
@@ -44,17 +45,18 @@ export async function down(knex: Knex): Promise<void> {
   const users = await knex('users').whereNotNull('equipment_available').select('id', 'equipment_available')
 
   for (const user of users) {
-    const slugs: string[] = typeof user.equipment_available === 'string'
-      ? JSON.parse(user.equipment_available)
-      : user.equipment_available
+    const slugs: string[] =
+      typeof user.equipment_available === 'string' ? JSON.parse(user.equipment_available) : user.equipment_available
 
     if (!Array.isArray(slugs) || slugs.length === 0) continue
 
     const restored = slugs.map(s => REVERSE_MAP[s] ?? s)
     if (restored.join(',') === slugs.join(',')) continue
 
-    await knex('users').where({ id: user.id }).update({
-      equipment_available: JSON.stringify(restored),
-    })
+    await knex('users')
+      .where({ id: user.id })
+      .update({
+        equipment_available: JSON.stringify(restored),
+      })
   }
 }

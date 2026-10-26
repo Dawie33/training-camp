@@ -27,38 +27,26 @@ describe('computeTrainingVolume', () => {
 
   it('mesure la régularité sur les semaines réellement entraînées', () => {
     // Deux semaines actives sur une période qui en couvre quatre
-    const result = computeTrainingVolume([
-      { started_at: '2026-09-01T10:00:00' },
-      { started_at: '2026-09-22T10:00:00' },
-    ])
+    const result = computeTrainingVolume([{ started_at: '2026-09-01T10:00:00' }, { started_at: '2026-09-22T10:00:00' }])
 
     expect(result.consistency_pct).toBeLessThan(100)
     expect(result.consistency_pct).toBeGreaterThan(0)
   })
 
   it('plafonne la régularité à 100 %', () => {
-    const result = computeTrainingVolume([
-      { started_at: '2026-09-14T10:00:00' },
-      { started_at: '2026-09-16T10:00:00' },
-    ])
+    const result = computeTrainingVolume([{ started_at: '2026-09-14T10:00:00' }, { started_at: '2026-09-16T10:00:00' }])
 
     expect(result.consistency_pct).toBeLessThanOrEqual(100)
   })
 
   it('trie les semaines par ordre chronologique', () => {
-    const result = computeTrainingVolume([
-      { started_at: '2026-09-22T10:00:00' },
-      { started_at: '2026-09-01T10:00:00' },
-    ])
+    const result = computeTrainingVolume([{ started_at: '2026-09-22T10:00:00' }, { started_at: '2026-09-01T10:00:00' }])
 
     expect(result.weeks[0].week_start < result.weeks[1].week_start).toBe(true)
   })
 
   it('ignore les dates invalides', () => {
-    const result = computeTrainingVolume([
-      { started_at: '2026-09-01T10:00:00' },
-      { started_at: 'pas une date' },
-    ])
+    const result = computeTrainingVolume([{ started_at: '2026-09-01T10:00:00' }, { started_at: 'pas une date' }])
 
     expect(result.total_sessions).toBe(1)
   })
