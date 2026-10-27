@@ -34,6 +34,25 @@ export interface MultiActivityFitData {
     distance_meters: number | null
     avg_power: number | null
     hr_zones: HrZoneData[] | null
+    hr_max_reference: HrMaxReference | null
+  }
+}
+
+/** FC max qui a servi au calcul des zones : profil, sinon 220 − âge, sinon le max de la séance (zones surestimées) */
+export interface HrMaxReference {
+  bpm: number
+  source: 'profile' | 'age' | 'session'
+}
+
+export function describeHrMaxReference(reference: HrMaxReference | null | undefined): string | null {
+  if (!reference) return null
+  switch (reference.source) {
+    case 'profile':
+      return `Calculées sur ta FC max (${reference.bpm} bpm, profil)`
+    case 'age':
+      return `Calculées sur une FC max estimée à ${reference.bpm} bpm (220 − âge). Renseigne ta FC max dans ton profil pour plus de précision.`
+    case 'session':
+      return `Calculées sur la FC la plus haute de la séance (${reference.bpm} bpm), faute de FC max ou de date de naissance dans ton profil : les zones hautes sont surestimées.`
   }
 }
 

@@ -1,13 +1,22 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import FitParser from 'fit-file-parser'
+import { Knex } from 'knex'
+import { InjectModel } from 'nest-knexjs'
 import { assertValidFitHeader } from './fit-header'
+import {
+  computeHrZonesFromSamples,
+  HrMaxReference,
+  HrSample,
+  HrZoneData,
+  mergeHrZones,
+  resolveMaxHr,
+  zonesFromDeviceTimeInZone,
+} from './hr-zones'
 
-export interface HrZoneData {
-  zone: number
-  label: string
-  seconds: number
-  high_bpm: number
-}
+export type { HrMaxReference, HrMaxSource, HrZoneData } from './hr-zones'
+
+type ParsedFit = Awaited<ReturnType<FitParser['parseAsync']>>
+type ParsedSession = NonNullable<ParsedFit['sessions']>[number]
 
 // Données extraites d'un fichier FIT (une activité), avant enrichissement dans FitActivity
 export interface ParsedFitData {
@@ -22,7 +31,10 @@ export interface ParsedFitData {
   avg_cadence: number | null
   avg_power: number | null
   max_power: number | null
-  hr_zones: HrZoneData[] | null
+  /** Points de FC de la séance, gardés pour calculer les zones une fois la FC max de référence connue */
+  hr_samples: HrSample[]
+  /** Temps par zone calculé par la montre (avec ses propres bornes), utilisé si le fichier n'a pas de points de FC */
+  device_time_in_hr_zone: number[] | null
 }
 
 // Format enrichi par activité pour /parse-multiple
@@ -50,47 +62,14 @@ export interface MultiActivityFitData {
     distance_meters: number | null
     avg_power: number | null
     hr_zones: HrZoneData[] | null
+    /** FC max qui a servi au calcul des zones et son origine (profil, 220 − âge ou max de la séance) */
+    hr_max_reference: HrMaxReference | null
   }
 }
 
-const ZONE_LABELS = ['Recovery', 'Easy', 'Aerobic', 'Threshold', 'VO2 Max']
-const ZONE_THRESHOLDS = [0.6, 0.7, 0.8, 0.9, 1.0]
-
-function computeHrZones(records: { heart_rate?: number }[], maxHr: number): HrZoneData[] {
-  const zoneCounts = [0, 0, 0, 0, 0]
-
-  for (const r of records) {
-    if (!r.heart_rate) continue
-    const pct = r.heart_rate / maxHr
-    if (pct < ZONE_THRESHOLDS[0]) zoneCounts[0]++
-    else if (pct < ZONE_THRESHOLDS[1]) zoneCounts[1]++
-    else if (pct < ZONE_THRESHOLDS[2]) zoneCounts[2]++
-    else if (pct < ZONE_THRESHOLDS[3]) zoneCounts[3]++
-    else zoneCounts[4]++
-  }
-
-  return zoneCounts.map((count, i) => ({
-    zone: i + 1,
-    label: ZONE_LABELS[i],
-    seconds: count,
-    high_bpm: Math.round(maxHr * ZONE_THRESHOLDS[i]),
-  }))
-}
-
-function mergeHrZones(zonesList: (HrZoneData[] | null)[]): HrZoneData[] | null {
-  const valid = zonesList.filter((z): z is HrZoneData[] => z != null && z.length > 0)
-  if (!valid.length) return null
-
-  const merged: HrZoneData[] = valid[0].map(z => ({ ...z, seconds: 0 }))
-  for (const zones of valid) {
-    for (const zone of zones) {
-      const target = merged.find(m => m.zone === zone.zone)
-      if (target) target.seconds += zone.seconds
-    }
-  }
-
-  const result = merged.filter(z => z.seconds > 0)
-  return result.length ? result : null
+interface UserHrProfile {
+  max_heart_rate: number | null
+  dateOfBirth: Date | string | null
 }
 
 function toPaceMinKm(duration_seconds: number | null, distance_meters: number | null): number | null {
@@ -98,16 +77,58 @@ function toPaceMinKm(duration_seconds: number | null, distance_meters: number | 
   return Math.round((duration_seconds / 60 / (distance_meters / 1000)) * 100) / 100
 }
 
+/**
+ * Points de FC de la séance. On prend ceux rangés dans les tours de la session (`session.laps[].records`),
+ * sinon la liste à plat (`fitData.records`) pour un fichier sans tours.
+ */
+function extractHrSamples(fitData: ParsedFit, session: ParsedSession): HrSample[] {
+  const lapRecords = session.laps?.flatMap(lap => lap.records ?? []) ?? []
+  const records = lapRecords.length ? lapRecords : (fitData.records ?? [])
+
+  return records
+    .filter(r => typeof r.heart_rate === 'number' && r.heart_rate > 0)
+    .map(r => {
+      const time = r.timestamp ? new Date(r.timestamp).getTime() : NaN
+      return { timestampMs: Number.isNaN(time) ? null : time, heartRate: r.heart_rate as number }
+    })
+}
+
+/** Zones d'une activité : d'après les points de FC si on en a, sinon d'après le découpage de la montre. */
+function computeActivityZones(data: ParsedFitData, maxHr: HrMaxReference | null): HrZoneData[] | null {
+  if (!maxHr) return null
+
+  let zones: HrZoneData[] | null = null
+  if (data.hr_samples.length) {
+    zones = computeHrZonesFromSamples(data.hr_samples, maxHr.bpm)
+  } else if (data.device_time_in_hr_zone?.length) {
+    zones = zonesFromDeviceTimeInZone(data.device_time_in_hr_zone, maxHr.bpm)
+  }
+
+  return zones && zones.some(z => z.seconds > 0) ? zones : null
+}
+
+/** FC la plus haute atteinte sur l'ensemble des activités (résumé de session ou points de FC). */
+function highestSessionHr(parsed: ParsedFitData[]): number {
+  return parsed.reduce(
+    (max, d) => d.hr_samples.reduce((m, s) => Math.max(m, s.heartRate), Math.max(max, d.max_heart_rate ?? 0)),
+    0
+  )
+}
+
 @Injectable()
 export class FitImportService {
   private readonly logger = new Logger(FitImportService.name)
+
+  constructor(@InjectModel() private readonly knex: Knex) {}
 
   async parseFitFile(buffer: Buffer): Promise<ParsedFitData> {
     // Avant la librairie : un en-tête incohérent la ferait boucler et bloquerait tout le serveur
     assertValidFitHeader(buffer)
 
-    const parser = new FitParser({ mode: 'cascade' })
-    let fitData: Awaited<ReturnType<FitParser['parseAsync']>>
+    // `both` : les points restent rangés par tour ET disponibles à plat dans `records`.
+    // En `cascade` seul, `fitData.records` n'est jamais rempli (les zones de secours n'étaient donc jamais calculées).
+    const parser = new FitParser({ mode: 'both' })
+    let fitData: ParsedFit
     try {
       // Les buffers de Multer reposent toujours sur un ArrayBuffer classique (jamais un SharedArrayBuffer),
       // ce que le type générique Buffer<ArrayBufferLike> ne permet pas à TypeScript de savoir
@@ -118,28 +139,12 @@ export class FitImportService {
       throw new BadRequestException('Fichier FIT invalide ou corrompu')
     }
 
-    const session = fitData.sessions?.[0] ?? fitData.activity?.sessions?.[0]
+    const session = fitData.activity?.sessions?.[0] ?? fitData.sessions?.[0]
     if (!session) {
       throw new BadRequestException('Aucune session trouvée dans le fichier FIT')
     }
 
-    let hr_zones: HrZoneData[] | null = null
-
-    if (session.time_in_hr_zone?.length) {
-      hr_zones = session.time_in_hr_zone.map((seconds, i) => ({
-        zone: i + 1,
-        label: ZONE_LABELS[i] ?? `Zone ${i + 1}`,
-        seconds,
-        high_bpm: Math.round((session.max_heart_rate ?? 200) * ZONE_THRESHOLDS[i]),
-      }))
-    } else if (fitData.records?.length && session.max_heart_rate) {
-      hr_zones = computeHrZones(fitData.records, session.max_heart_rate)
-    }
-
-    if (hr_zones && hr_zones.every(z => z.seconds === 0)) {
-      hr_zones = null
-    }
-
+    const timeInZone: unknown = session.time_in_hr_zone
     return {
       duration_seconds: session.total_elapsed_time ?? null,
       calories: session.total_calories ?? null,
@@ -152,16 +157,27 @@ export class FitImportService {
       avg_cadence: session.avg_cadence ?? null,
       avg_power: session.avg_power ?? null,
       max_power: session.max_power ?? null,
-      hr_zones,
+      hr_samples: extractHrSamples(fitData, session),
+      device_time_in_hr_zone: Array.isArray(timeInZone) && timeInZone.length ? (timeInZone as number[]) : null,
     }
   }
 
-  async parseMultipleFitFiles(buffers: Buffer[]): Promise<MultiActivityFitData> {
+  async parseMultipleFitFiles(buffers: Buffer[], userId: string): Promise<MultiActivityFitData> {
     // L'un après l'autre plutôt qu'avec Promise.all : limite le pic de mémoire (offre gratuite Render)
     const parsed: ParsedFitData[] = []
     for (const buffer of buffers) {
       parsed.push(await this.parseFitFile(buffer))
     }
+
+    // Une seule FC max de référence pour toutes les activités, sinon les zones cumulées n'auraient pas de sens
+    const profile: UserHrProfile | undefined = await this.knex('users')
+      .where({ id: userId })
+      .first(['max_heart_rate', 'dateOfBirth'])
+    const hrMaxReference = resolveMaxHr({
+      profileMaxHr: profile?.max_heart_rate,
+      dateOfBirth: profile?.dateOfBirth,
+      sessionMaxHr: highestSessionHr(parsed),
+    })
 
     const activities: FitActivity[] = parsed.map(d => ({
       sport: d.sport,
@@ -178,7 +194,7 @@ export class FitImportService {
       avg_pace_min_km: d.sport?.toLowerCase().includes('run')
         ? toPaceMinKm(d.duration_seconds, d.distance_meters)
         : null,
-      hr_zones: d.hr_zones,
+      hr_zones: computeActivityZones(d, hrMaxReference),
     }))
 
     const totalDuration = activities.reduce((s, a) => s + (a.duration_seconds ?? 0), 0)
@@ -192,6 +208,7 @@ export class FitImportService {
       (s, a) => s + (a.avg_power && a.duration_seconds ? a.duration_seconds : 0),
       0
     )
+    const hrZones = mergeHrZones(activities.map(a => a.hr_zones))
 
     return {
       activities,
@@ -200,7 +217,8 @@ export class FitImportService {
         calories: totalCalories || null,
         distance_meters: totalDistance || null,
         avg_power: powerWeightedDuration > 0 ? Math.round(powerWeightedSum / powerWeightedDuration) : null,
-        hr_zones: mergeHrZones(activities.map(a => a.hr_zones)),
+        hr_zones: hrZones,
+        hr_max_reference: hrZones ? hrMaxReference : null,
       },
     }
   }

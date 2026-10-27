@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common'
+import { Knex } from 'knex'
 import { assertValidFitHeader } from './fit-header'
 import { FitImportService } from './fit-import.service'
 
@@ -54,7 +55,12 @@ describe('assertValidFitHeader', () => {
 })
 
 describe('FitImportService.parseFitFile', () => {
-  const service = new FitImportService()
+  // Profil sans FC max ni date de naissance : seule la lecture du fichier est testée ici
+  const knexMock = jest.fn(() => ({
+    where: jest.fn().mockReturnThis(),
+    first: jest.fn().mockResolvedValue({ max_heart_rate: null, dateOfBirth: null }),
+  }))
+  const service = new FitImportService(knexMock as unknown as Knex)
 
   it("extrait la durée d'un fichier FIT valide", async () => {
     await expect(service.parseFitFile(buildFitFile(3600))).resolves.toEqual(
@@ -82,12 +88,12 @@ describe('FitImportService.parseFitFile', () => {
 
   it("rejette tout l'envoi multiple si l'un des fichiers est corrompu", async () => {
     await expect(
-      service.parseMultipleFitFiles([buildFitFile(3600), Buffer.from('pas un fichier fit')])
+      service.parseMultipleFitFiles([buildFitFile(3600), Buffer.from('pas un fichier fit')], 'user-1')
     ).rejects.toThrow(BadRequestException)
   })
 
   it("additionne les durées d'un envoi multiple", async () => {
-    const result = await service.parseMultipleFitFiles([buildFitFile(1800), buildFitFile(600)])
+    const result = await service.parseMultipleFitFiles([buildFitFile(1800), buildFitFile(600)], 'user-1')
 
     expect(result.activities).toHaveLength(2)
     expect(result.totals.duration_seconds).toBe(2400)
