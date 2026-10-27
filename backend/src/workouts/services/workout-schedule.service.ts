@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { toDateOnly } from 'src/common/utils/date-only'
 import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 
@@ -379,8 +380,7 @@ export class WorkoutScheduleService {
     }
 
     // pg peut renvoyer les colonnes date en objets Date ou en chaînes 'YYYY-MM-DD'
-    const toDateStr = (value: string | Date) =>
-      typeof value === 'string' ? value.slice(0, 10) : new Date(value).toISOString().slice(0, 10)
+    const toDateStr = toDateOnly
     const dowOf = (dateStr: string) => (new Date(dateStr + 'T00:00:00Z').getUTCDay() + 6) % 7 // 0=Monday
     const mondayOf = (dateStr: string) => {
       const d = new Date(dateStr + 'T00:00:00Z')
