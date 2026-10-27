@@ -1,5 +1,6 @@
 'use client'
 
+import { toLocalDateString } from '@/lib/date-only'
 import { activitiesApi, UnifiedActivity, UnifiedActivityQueryParams } from '@/services/activities'
 import { scheduleApi, CreateScheduleDto, UpdateScheduleDto } from '@/services/schedule'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -118,7 +119,7 @@ export function useWorkoutSchedule(params?: UnifiedActivityQueryParams) {
   }
 
   const getScheduleForDate = (date: Date): UnifiedActivity | null => {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = toLocalDateString(date)
     return schedules.find((s) => s.scheduled_date === dateStr) || null
   }
 

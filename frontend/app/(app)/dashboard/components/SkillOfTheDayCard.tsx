@@ -1,6 +1,7 @@
 'use client'
 
 import type { SkillProgram, SkillStep } from '@/domain/entities/skill'
+import { toLocalDateString } from '@/lib/date-only'
 import { skillsService } from '@/services/skills'
 import { ArrowUpRight, Check } from 'lucide-react'
 import Link from 'next/link'
@@ -64,7 +65,7 @@ export function SkillOfTheDayCard({ index }: { index?: string } = {}) {
       }
       await skillsService.logProgress({
         step_id: step.id,
-        session_date: new Date().toISOString().split('T')[0],
+        session_date: toLocalDateString(),
         performance_data,
       })
       toast.success('Séance skill enregistrée')
