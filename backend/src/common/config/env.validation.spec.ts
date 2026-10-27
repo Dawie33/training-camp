@@ -56,4 +56,29 @@ describe('envValidationSchema', () => {
       expect(value.FRONTEND_URL).toBe('https://training-camp.vercel.app')
     })
   })
+
+  describe('TOKEN_ENCRYPTION_KEY', () => {
+    // Clé de test générée pour l'exemple, jamais utilisée ailleurs
+    const validKey = 'ab'.repeat(32)
+    const googleEnv = { ...minimalEnv, GOOGLE_CLIENT_ID: 'client-id' }
+
+    it('est facultative si Google Agenda n’est pas configuré', () => {
+      expect(envValidationSchema.validate(minimalEnv).error).toBeUndefined()
+    })
+
+    it('est obligatoire dès que GOOGLE_CLIENT_ID est défini', () => {
+      expect(envValidationSchema.validate(googleEnv).error).toBeDefined()
+    })
+
+    it('accepte 64 caractères hexadécimaux', () => {
+      expect(envValidationSchema.validate({ ...googleEnv, TOKEN_ENCRYPTION_KEY: validKey }).error).toBeUndefined()
+    })
+
+    it.each([
+      ['trop courte', 'ab'.repeat(16)],
+      ['non hexadécimale', 'z'.repeat(64)],
+    ])('refuse une clé %s', (_case, value) => {
+      expect(envValidationSchema.validate({ ...minimalEnv, TOKEN_ENCRYPTION_KEY: value }).error).toBeDefined()
+    })
+  })
 })

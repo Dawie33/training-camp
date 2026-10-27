@@ -2,6 +2,7 @@ import { Global, Module, UnauthorizedException } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { Test } from '@nestjs/testing'
+import { randomBytes } from 'crypto'
 import { getConnectionToken } from 'nest-knexjs'
 import { GoogleCalendarModule } from './google-calendar.module'
 import { GoogleCalendarService } from './google-calendar.service'
@@ -38,6 +39,7 @@ describe('GoogleOAuthStateService', () => {
               GOOGLE_CLIENT_ID: 'client-id',
               GOOGLE_CLIENT_SECRET: 'client-secret',
               GOOGLE_REDIRECT_URI: 'https://app.example.com/api/calendar/google/callback',
+              TOKEN_ENCRYPTION_KEY: randomBytes(32).toString('hex'),
             }),
           ],
         }),

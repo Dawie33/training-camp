@@ -32,6 +32,13 @@ export const envValidationSchema = Joi.object({
   GOOGLE_CLIENT_ID: Joi.string().optional(),
   GOOGLE_CLIENT_SECRET: Joi.string().optional(),
   GOOGLE_REDIRECT_URI: Joi.string().optional(),
+  // Clé AES-256 (32 octets = 64 caractères hex) qui chiffre les refresh_token Google en base.
+  // Générer : node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  // Obligatoire dès que Google Agenda est configuré : sans elle, les tokens ne peuvent pas être chiffrés.
+  TOKEN_ENCRYPTION_KEY: Joi.string()
+    .hex()
+    .length(64)
+    .when('GOOGLE_CLIENT_ID', { is: Joi.exist(), then: Joi.required(), otherwise: Joi.optional() }),
   // Origine CORS et redirection après la connexion Google. Obligatoire en production pour qu'un
   // oubli de configuration empêche le démarrage au lieu de pointer silencieusement vers localhost.
   FRONTEND_URL: Joi.string().when('NODE_ENV', {
