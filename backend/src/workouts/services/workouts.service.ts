@@ -8,7 +8,6 @@ import { calculateLevelFromBenchmarks } from '../workout.utils'
 import { UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
 
-
 /**
  * Gère le CRUD des workouts (référentiel commun et personnalisés), les benchmarks
  * et leur historique de progression.
@@ -19,22 +18,39 @@ export class WorkoutsService {
     @InjectModel() private readonly knex: Knex,
     private readonly userContextService: UserContextService,
     private readonly scheduleService: WorkoutScheduleService
-  ) { }
+  ) {}
 
   /**
    * Recherche tous les workouts.
    * @returns Tous les workouts.
    */
-  async findAll({ limit = '20', offset = '0', orderBy = 'created_at', orderDir = 'desc', search, status = '', scheduled_date, difficulty, workout_type, is_benchmark }: WorkoutQueryDto, userId?: string) {
-
+  async findAll(
+    {
+      limit = '20',
+      offset = '0',
+      orderBy = 'created_at',
+      orderDir = 'desc',
+      search,
+      status = '',
+      scheduled_date,
+      difficulty,
+      workout_type,
+      is_benchmark,
+    }: WorkoutQueryDto,
+    userId?: string
+  ) {
     const applyFilters = (q: Knex.QueryBuilder) => {
       // Visibilité : public OU publié OU appartient à l'utilisateur connecté
       if (userId) {
-        q = q.where((builder) => {
-          builder.where('isPublic', true).orWhereNull('isPublic').orWhere('workouts.status', 'published').orWhere('created_by_user_id', userId)
+        q = q.where(builder => {
+          builder
+            .where('isPublic', true)
+            .orWhereNull('isPublic')
+            .orWhere('workouts.status', 'published')
+            .orWhere('created_by_user_id', userId)
         })
       } else {
-        q = q.where((builder) => {
+        q = q.where(builder => {
           builder.where('isPublic', true).orWhereNull('isPublic').orWhere('workouts.status', 'published')
         })
       }
@@ -66,10 +82,7 @@ export class WorkoutsService {
    * @returns Le workout avec ses exercices associés
    */
   async findOne(id: string) {
-    const workout = await this.knex('workouts')
-      .select('workouts.*')
-      .where('workouts.id', id)
-      .first()
+    const workout = await this.knex('workouts').select('workouts.*').where('workouts.id', id).first()
 
     if (!workout) return null
 
@@ -124,15 +137,14 @@ export class WorkoutsService {
     minDuration?: string,
     maxDuration?: string
   ) {
-    let query = this.knex('personalized_workouts')
-      .select('*')
-      .where({ user_id: userId })
+    let query = this.knex('personalized_workouts').select('*').where({ user_id: userId })
 
     // Filtre de recherche dans le plan_json (name ou description)
     if (search) {
       query = query.where(function () {
-        this.whereRaw(`plan_json->>'name' ILIKE ?`, [`%${search}%`])
-          .orWhereRaw(`plan_json->>'description' ILIKE ?`, [`%${search}%`])
+        this.whereRaw(`plan_json->>'name' ILIKE ?`, [`%${search}%`]).orWhereRaw(`plan_json->>'description' ILIKE ?`, [
+          `%${search}%`,
+        ])
       })
     }
 
@@ -156,20 +168,16 @@ export class WorkoutsService {
       query = query.whereRaw(`plan_json->>'duration' <= ?`, [maxDuration])
     }
 
-    const rows = await query
-      .limit(Number(limit))
-      .offset(Number(offset))
-      .orderBy('created_at', 'desc')
+    const rows = await query.limit(Number(limit)).offset(Number(offset)).orderBy('created_at', 'desc')
 
     // Count avec les mêmes filtres
-    let countQuery = this.knex('personalized_workouts')
-      .count({ count: '*' })
-      .where({ user_id: userId })
+    let countQuery = this.knex('personalized_workouts').count({ count: '*' }).where({ user_id: userId })
 
     if (search) {
       countQuery = countQuery.where(function () {
-        this.whereRaw(`plan_json->>'name' ILIKE ?`, [`%${search}%`])
-          .orWhereRaw(`plan_json->>'description' ILIKE ?`, [`%${search}%`])
+        this.whereRaw(`plan_json->>'name' ILIKE ?`, [`%${search}%`]).orWhereRaw(`plan_json->>'description' ILIKE ?`, [
+          `%${search}%`,
+        ])
       })
     }
 
@@ -195,7 +203,6 @@ export class WorkoutsService {
     return { rows, count }
   }
 
-
   /**
    * Met à jour un workout.
    * @param id ID du workout à mettre à jour.
@@ -203,7 +210,6 @@ export class WorkoutsService {
    * @returns Le workout mis à jour.
    */
   async update(id: string, data: UpdateWorkoutDto) {
-
     const updateData: Partial<{
       name: string
       slug: string
@@ -223,7 +229,6 @@ export class WorkoutsService {
       image_url: string
     }> = {}
 
-
     if (data.name !== undefined) updateData.name = data.name
     if (data.description !== undefined) updateData.description = data.description
     if (data.workout_type !== undefined) updateData.workout_type = data.workout_type
@@ -238,25 +243,20 @@ export class WorkoutsService {
     if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags)
     if (data.scheduled_date !== undefined) updateData.scheduled_date = data.scheduled_date
     if (data.image_url !== undefined) updateData.image_url = data.image_url
-    const [row] = await this.knex('workouts')
-      .where({ id })
-      .update(updateData)
-      .returning('*')
+    const [row] = await this.knex('workouts').where({ id }).update(updateData).returning('*')
 
     return row
   }
 
   /**
-  * Récupère un workout personnalisé par son ID et l'ID de l'utilisateur
-  * @param id ID du workout personnalisé
-  * @param userId ID de l'utilisateur
-  * @returns Le workout personnalisé associé
-  * @throws {Error} Si le workout n'est pas trouvé ou que l'utilisateur n'a pas les permissions nécessaires
-  */
+   * Récupère un workout personnalisé par son ID et l'ID de l'utilisateur
+   * @param id ID du workout personnalisé
+   * @param userId ID de l'utilisateur
+   * @returns Le workout personnalisé associé
+   * @throws {Error} Si le workout n'est pas trouvé ou que l'utilisateur n'a pas les permissions nécessaires
+   */
   async getPersonalizedWorkout(id: string, userId: string) {
-    const workout = await this.knex('personalized_workouts')
-      .where({ id, user_id: userId })
-      .first()
+    const workout = await this.knex('personalized_workouts').where({ id, user_id: userId }).first()
 
     if (!workout) {
       throw new NotFoundException('Personalized workout not found or you do not have permission to access it')
@@ -272,17 +272,13 @@ export class WorkoutsService {
    * @param userId ID de l'utilisateur
    */
   async deletePersonalizedWorkout(id: string, userId: string) {
-    const workout = await this.knex('personalized_workouts')
-      .where({ id, user_id: userId })
-      .first()
+    const workout = await this.knex('personalized_workouts').where({ id, user_id: userId }).first()
 
     if (!workout) {
       throw new NotFoundException('Personalized workout not found or you do not have permission to delete it')
     }
 
-    await this.knex('personalized_workouts')
-      .where({ id, user_id: userId })
-      .delete()
+    await this.knex('personalized_workouts').where({ id, user_id: userId }).delete()
 
     return { success: true }
   }
@@ -298,7 +294,6 @@ export class WorkoutsService {
    * @throws {Error} Si le workout de base n'existe pas ou si une erreur se produit lors de la création.
    */
   async createPersonalizedWorkout(workout: WorkoutDto, userId: string) {
-
     let baseId: string | null = null
 
     // Si un ID est fourni, vérifier si le workout existe
@@ -392,9 +387,7 @@ export class WorkoutsService {
     }
 
     // Insert the workout
-    const [row] = await this.knex('workouts')
-      .insert(record)
-      .returning('*')
+    const [row] = await this.knex('workouts').insert(record).returning('*')
 
     return row
   }
@@ -410,23 +403,21 @@ export class WorkoutsService {
   }
 
   /**
-     * Enregistre le résultat d'un benchmark et calcule/met à jour le niveau de l'utilisateur
-     * @param user_id ID de l'utilisateur
-     * @param data Données du benchmark (workoutId, workoutName, result)
-     */
+   * Enregistre le résultat d'un benchmark et calcule/met à jour le niveau de l'utilisateur
+   * @param user_id ID de l'utilisateur
+   * @param data Données du benchmark (workoutId, workoutName, result)
+   */
   async saveBenchmarkResult(user_id: string, data: SaveBenchmarkResultDto) {
     const { workoutId, workoutName, result } = data
 
     // Vérifier que le workout ciblé est bien un benchmark
-    const workout = await this.knex('workouts')
-      .where({ id: workoutId })
-      .first()
+    const workout = await this.knex('workouts').where({ id: workoutId }).first()
 
     if (!workout) {
       throw new NotFoundException('Workout introuvable')
     }
     if (!workout.is_benchmark) {
-      throw new BadRequestException('Ce workout n\'est pas un benchmark')
+      throw new BadRequestException("Ce workout n'est pas un benchmark")
     }
 
     const { level, benchmark_results } = await this.recordBenchmarkResult(
@@ -440,7 +431,7 @@ export class WorkoutsService {
     return {
       success: true,
       level,
-      benchmark_results
+      benchmark_results,
     }
   }
 
@@ -462,9 +453,7 @@ export class WorkoutsService {
     source: 'manual' | 'scheduled_test'
   ) {
     // Récupérer le profil utilisateur
-    const user = await this.knex('users')
-      .where({ id: userId })
-      .first()
+    const user = await this.knex('users').where({ id: userId }).first()
 
     const existingResults = user?.benchmark_results || {}
 
@@ -473,16 +462,12 @@ export class WorkoutsService {
       [workoutName]: {
         workout_id: workoutId,
         result,
-        date: new Date().toISOString()
-      }
+        date: new Date().toISOString(),
+      },
     }
 
     // Calculer le niveau basé sur les résultats
-    const calculatedLevel = calculateLevelFromBenchmarks(
-      workoutName,
-      result,
-      user?.sport_level || 'beginner'
-    )
+    const calculatedLevel = calculateLevelFromBenchmarks(workoutName, result, user?.sport_level || 'beginner')
 
     // Mettre à jour directement dans la table users
     await this.knex('users')
@@ -490,7 +475,7 @@ export class WorkoutsService {
       .update({
         benchmark_results: JSON.stringify(updatedResults),
         sport_level: calculatedLevel,
-        updated_at: new Date()
+        updated_at: new Date(),
       })
 
     // Historiser le résultat pour pouvoir suivre la progression dans le temps
@@ -527,7 +512,7 @@ export class WorkoutsService {
 
     return {
       level: calculatedLevel,
-      benchmark_results: updatedResults
+      benchmark_results: updatedResults,
     }
   }
 
@@ -543,7 +528,13 @@ export class WorkoutsService {
 
     const grouped: Record<
       string,
-      { score_type: string; score_value: number; extra_reps: number | null; calculated_level: string; measured_at: string }[]
+      {
+        score_type: string
+        score_value: number
+        extra_reps: number | null
+        calculated_level: string
+        measured_at: string
+      }[]
     > = {}
 
     for (const row of rows) {
@@ -629,5 +620,4 @@ export class WorkoutsService {
     await this.knex('workouts').where({ id }).delete()
     return { success: true }
   }
-
 }

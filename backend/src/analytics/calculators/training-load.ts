@@ -46,9 +46,8 @@ export function computeTrainingLoad(sessions: RpeSession[], now: Date = new Date
       if (!Number.isFinite(timestamp)) return null
 
       const durationSeconds = session.duration_seconds
-      const minutes = typeof durationSeconds === 'number' && durationSeconds > 0
-        ? durationSeconds / 60
-        : DEFAULT_SESSION_MINUTES
+      const minutes =
+        typeof durationSeconds === 'number' && durationSeconds > 0 ? durationSeconds / 60 : DEFAULT_SESSION_MINUTES
 
       return { timestamp, srpe: Math.round(rpe * minutes) }
     })

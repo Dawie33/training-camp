@@ -2,11 +2,8 @@ import type { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
   // Ajouter les colonnes programme dans user_workout_schedule
-  await knex.schema.alterTable('user_workout_schedule', (table) => {
-    table
-      .enum('session_type', ['workout', 'box_session', 'program_session'])
-      .notNullable()
-      .defaultTo('workout')
+  await knex.schema.alterTable('user_workout_schedule', table => {
+    table.enum('session_type', ['workout', 'box_session', 'program_session']).notNullable().defaultTo('workout')
 
     table
       .uuid('program_enrollment_id')
@@ -33,7 +30,7 @@ export async function up(knex: Knex): Promise<void> {
 export async function down(knex: Knex): Promise<void> {
   await knex.raw('DROP INDEX IF EXISTS uq_user_active_enrollment')
 
-  await knex.schema.alterTable('user_workout_schedule', (table) => {
+  await knex.schema.alterTable('user_workout_schedule', table => {
     table.dropIndex([], 'idx_schedule_enrollment')
     table.dropIndex([], 'idx_schedule_session_type')
     table.dropColumn('session_type')

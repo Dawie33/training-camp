@@ -19,4 +19,4 @@ import { WorkoutsService } from './services/workouts.service'
   providers: [WorkoutsService, AIWorkoutGeneratorService, WorkoutScheduleService, UserContextService],
   exports: [WorkoutsService, WorkoutScheduleService, UserContextService, AIWorkoutGeneratorService],
 })
-export class WorkoutsModule { }
+export class WorkoutsModule {}

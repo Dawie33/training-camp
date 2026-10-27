@@ -68,15 +68,14 @@ export function computeMovementExposure(
   }
 
   const movements: MovementExposure[] = [...byMovement.entries()].map(([key, acc]) => {
-    const avgLoad = acc.loads.length > 0
-      ? Math.round((acc.loads.reduce((sum, load) => sum + load, 0) / acc.loads.length) * 10) / 10
-      : null
+    const avgLoad =
+      acc.loads.length > 0
+        ? Math.round((acc.loads.reduce((sum, load) => sum + load, 0) / acc.loads.length) * 10) / 10
+        : null
     const maxLoad = acc.loads.length > 0 ? Math.max(...acc.loads) : null
 
     const oneRepMax = oneRepMaxes[key]
-    const pctOf1rm = avgLoad !== null && oneRepMax > 0
-      ? Math.round((avgLoad / oneRepMax) * 100)
-      : null
+    const pctOf1rm = avgLoad !== null && oneRepMax > 0 ? Math.round((avgLoad / oneRepMax) * 100) : null
 
     return {
       name: acc.name,

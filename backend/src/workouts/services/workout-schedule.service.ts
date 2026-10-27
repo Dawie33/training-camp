@@ -12,8 +12,8 @@ import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/s
 export class WorkoutScheduleService {
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private readonly googleCalendarService: GoogleCalendarService,
-  ) { }
+    private readonly googleCalendarService: GoogleCalendarService
+  ) {}
 
   /**
    * Récupère toutes les planifications d'un utilisateur
@@ -28,10 +28,14 @@ export class WorkoutScheduleService {
       .select(
         'user_workout_schedule.*',
         this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
-        this.knex.raw(`COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`),
+        this.knex.raw(
+          `COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`
+        ),
         this.knex.raw(`COALESCE(workouts.difficulty, personalized_workouts.plan_json->>'difficulty') as difficulty`),
         this.knex.raw(`COALESCE(workouts.intensity, personalized_workouts.plan_json->>'intensity') as intensity`),
-        this.knex.raw(`COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`),
+        this.knex.raw(
+          `COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`
+        )
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
       .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
@@ -59,9 +63,7 @@ export class WorkoutScheduleService {
       .orderBy('user_workout_schedule.scheduled_date', 'asc')
 
     // Count query
-    let countQuery = this.knex('user_workout_schedule')
-      .count('* as count')
-      .where('user_id', userId)
+    let countQuery = this.knex('user_workout_schedule').count('* as count').where('user_id', userId)
 
     if (start_date) {
       countQuery = countQuery.where('scheduled_date', '>=', start_date)
@@ -98,10 +100,14 @@ export class WorkoutScheduleService {
       .select(
         'user_workout_schedule.*',
         this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
-        this.knex.raw(`COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`),
+        this.knex.raw(
+          `COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`
+        ),
         this.knex.raw(`COALESCE(workouts.difficulty, personalized_workouts.plan_json->>'difficulty') as difficulty`),
         this.knex.raw(`COALESCE(workouts.intensity, personalized_workouts.plan_json->>'intensity') as intensity`),
-        this.knex.raw(`COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`),
+        this.knex.raw(
+          `COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`
+        )
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
       .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
@@ -127,10 +133,14 @@ export class WorkoutScheduleService {
       .select(
         'user_workout_schedule.*',
         this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
-        this.knex.raw(`COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`),
+        this.knex.raw(
+          `COALESCE(workouts.workout_type, personalized_workouts.plan_json->>'workout_type') as workout_type`
+        ),
         this.knex.raw(`COALESCE(workouts.difficulty, personalized_workouts.plan_json->>'difficulty') as difficulty`),
         this.knex.raw(`COALESCE(workouts.intensity, personalized_workouts.plan_json->>'intensity') as intensity`),
-        this.knex.raw(`COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`),
+        this.knex.raw(
+          `COALESCE(workouts.estimated_duration, CAST(NULLIF(personalized_workouts.plan_json->>'estimated_duration', '') AS INTEGER)) as estimated_duration`
+        )
       )
       .leftJoin('workouts', 'user_workout_schedule.workout_id', 'workouts.id')
       .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
@@ -253,10 +263,7 @@ export class WorkoutScheduleService {
    */
   async update(id: string, userId: string, data: UpdateScheduleDto) {
     // Vérifier que la planification existe et appartient à l'utilisateur
-    const existing = await this.knex('user_workout_schedule')
-      .where('id', id)
-      .where('user_id', userId)
-      .first()
+    const existing = await this.knex('user_workout_schedule').where('id', id).where('user_id', userId).first()
 
     if (!existing) {
       throw new NotFoundException('Planification non trouvée')
@@ -297,10 +304,7 @@ export class WorkoutScheduleService {
    * @param userId ID de l'utilisateur
    */
   async delete(id: string, userId: string) {
-    const deleted = await this.knex('user_workout_schedule')
-      .where('id', id)
-      .where('user_id', userId)
-      .delete()
+    const deleted = await this.knex('user_workout_schedule').where('id', id).where('user_id', userId).delete()
 
     if (deleted === 0) {
       throw new NotFoundException('Planification non trouvée')
@@ -375,7 +379,8 @@ export class WorkoutScheduleService {
     }
 
     // pg peut renvoyer les colonnes date en objets Date ou en chaînes 'YYYY-MM-DD'
-    const toDateStr = (value: string | Date) => (typeof value === 'string' ? value.slice(0, 10) : new Date(value).toISOString().slice(0, 10))
+    const toDateStr = (value: string | Date) =>
+      typeof value === 'string' ? value.slice(0, 10) : new Date(value).toISOString().slice(0, 10)
     const dowOf = (dateStr: string) => (new Date(dateStr + 'T00:00:00Z').getUTCDay() + 6) % 7 // 0=Monday
     const mondayOf = (dateStr: string) => {
       const d = new Date(dateStr + 'T00:00:00Z')
@@ -418,7 +423,7 @@ export class WorkoutScheduleService {
     const activityTypeToDayType: Record<string, string> = { wod: 'wod', conditioning: 'conditioning' }
 
     return {
-      days: makeDays((i) => {
+      days: makeDays(i => {
         const isBox = boxWeeksByWeekday[i].size >= majorityThreshold
         if (isBox) return { isBox: true, isRest: false, types: [] }
 

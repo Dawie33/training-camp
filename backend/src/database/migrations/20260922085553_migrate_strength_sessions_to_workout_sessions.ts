@@ -144,9 +144,7 @@ export async function up(knex: Knex): Promise<void> {
     // Une séance de force n'a pas de chrono : on reconstitue un créneau à partir de sa durée.
     const startedAt = new Date(`${row.session_date}T12:00:00.000Z`)
     const durationSeconds = (row.duration_minutes ?? 0) * 60
-    const completedAt = row.status === 'completed'
-      ? new Date(startedAt.getTime() + durationSeconds * 1000)
-      : null
+    const completedAt = row.status === 'completed' ? new Date(startedAt.getTime() + durationSeconds * 1000) : null
 
     const results: Record<string, unknown> = {
       session_title: buildPlanJson(row, exerciseResults).name,
@@ -183,7 +181,7 @@ export async function down(knex: Knex): Promise<void> {
   const hasTable = await knex.schema.hasTable('strength_sessions')
   if (hasTable) return
 
-  await knex.schema.createTable('strength_sessions', (table) => {
+  await knex.schema.createTable('strength_sessions', table => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
     table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
     table.date('session_date').notNullable()

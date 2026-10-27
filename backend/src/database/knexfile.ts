@@ -43,6 +43,6 @@ const config: { [key: string]: Knex.Config } = {
     },
     pool: { min: 2, max: 10 },
   },
-};
+}
 
-export default config;
+export default config

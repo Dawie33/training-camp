@@ -1,4 +1,8 @@
-import { buildAthleteContextSection, buildCrossFitSystemPrompt, buildCrossFitWorkoutPrompt } from './crossfit-generator.prompt'
+import {
+  buildAthleteContextSection,
+  buildCrossFitSystemPrompt,
+  buildCrossFitWorkoutPrompt,
+} from './crossfit-generator.prompt'
 import { UserAIContext } from '../services/user-context.service'
 
 /**
@@ -49,7 +53,7 @@ describe('buildAthleteContextSection', () => {
           { lift: 'snatch', value: 70 },
           { lift: 'clean_and_jerk', value: 100 },
         ],
-      }),
+      })
     )
 
     expect(section).toContain('- snatch : 70kg')
@@ -68,11 +72,11 @@ describe('buildAthleteContextSection', () => {
               value_pct: 90,
               target: '70-75 %',
               direction: 'above',
-              reading: 'C&J proche du back squat : c\'est la force maximale qu\'il faut monter.',
+              reading: "C&J proche du back squat : c'est la force maximale qu'il faut monter.",
             },
           ],
         },
-      }),
+      })
     )
 
     expect(section).toContain('Déséquilibres de force mesurés')
@@ -91,7 +95,7 @@ describe('buildAthleteContextSection', () => {
     const section = buildAthleteContextSection(
       buildContext({
         recentSessions: [{ date: '2026-08-30', sport: 'crossfit', workout_type: 'strength_max', duration_minutes: 60 }],
-      }),
+      })
     )
 
     expect(section).toContain('Règle du microcycle')
@@ -107,7 +111,7 @@ describe('buildCrossFitSystemPrompt', () => {
     expect(prompt).toContain('strict avant kipping')
   })
 
-  it('réserve le gainage isolé au type core : pas d\'abdos en finisher ni en accessoire de force', () => {
+  it("réserve le gainage isolé au type core : pas d'abdos en finisher ni en accessoire de force", () => {
     const prompt = buildCrossFitSystemPrompt()
 
     expect(prompt).toContain('### core')
@@ -116,15 +120,15 @@ describe('buildCrossFitSystemPrompt', () => {
     expect(prompt).toContain('PAS de gainage isolé')
   })
 
-  it('fait primer les contraintes de l\'athlète sur le travail technique, y compris dans le scaling', () => {
+  it("fait primer les contraintes de l'athlète sur le travail technique, y compris dans le scaling", () => {
     const prompt = buildCrossFitSystemPrompt()
 
     expect(prompt).toContain('Hiérarchie des consignes')
-    expect(prompt).toContain('supprime le travail technique plutôt que d\'enfreindre la contrainte')
+    expect(prompt).toContain("supprime le travail technique plutôt que d'enfreindre la contrainte")
     expect(prompt).toContain('Les options de scaling respectent aussi les contraintes')
   })
 
-  it('calcule le cap des For Time / Chipper depuis le volume plutôt qu\'une fourchette fixe', () => {
+  it("calcule le cap des For Time / Chipper depuis le volume plutôt qu'une fourchette fixe", () => {
     const prompt = buildCrossFitSystemPrompt()
 
     expect(prompt).toContain('cap = ce total + 10-20 %')
@@ -139,7 +143,7 @@ describe('buildCrossFitSystemPrompt', () => {
     expect(prompt).toContain('ÉQUIPEMENT DISPONIBLE')
   })
 
-  it('avec équipement fourni → l\'injecte dans la liste équipement disponible', () => {
+  it("avec équipement fourni → l'injecte dans la liste équipement disponible", () => {
     const prompt = buildCrossFitSystemPrompt(['barbell', 'rower'])
 
     expect(prompt).toContain('barbell')
@@ -149,13 +153,13 @@ describe('buildCrossFitSystemPrompt', () => {
   it('avec contexte athlète → inclut le profil dans le prompt', () => {
     const prompt = buildCrossFitSystemPrompt(undefined, buildContext({ sport_level: 'advanced' }))
 
-    expect(prompt).toContain('PROFIL DE L\'ATHLÈTE')
+    expect(prompt).toContain("PROFIL DE L'ATHLÈTE")
     expect(prompt).toContain('Avancé')
   })
 
-  it('les blocs JSON d\'exemple embarqués dans le prompt restent syntaxiquement valides', () => {
+  it("les blocs JSON d'exemple embarqués dans le prompt restent syntaxiquement valides", () => {
     const prompt = buildCrossFitSystemPrompt()
-    const jsonBlocks = [...prompt.matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => m[1])
+    const jsonBlocks = [...prompt.matchAll(/```json\n([\s\S]*?)\n```/g)].map(m => m[1])
 
     expect(jsonBlocks.length).toBeGreaterThan(0)
     for (const block of jsonBlocks) {
@@ -202,7 +206,7 @@ describe('buildCrossFitWorkoutPrompt', () => {
     expect(prompt).toContain('workout_type = "core"')
   })
 
-  it('contraintes de l\'athlète → en tête du prompt, rappelées à la fin pour la vérification finale', () => {
+  it("contraintes de l'athlète → en tête du prompt, rappelées à la fin pour la vérification finale", () => {
     const prompt = buildCrossFitWorkoutPrompt({
       workoutType: 'conditioning',
       duration: 45,
@@ -210,15 +214,17 @@ describe('buildCrossFitWorkoutPrompt', () => {
       athleteConstraints: 'pas de saut',
     })
 
-    expect(prompt).toContain('CONTRAINTES DE L\'ATHLÈTE (PRIORITAIRES)')
+    expect(prompt).toContain("CONTRAINTES DE L'ATHLÈTE (PRIORITAIRES)")
     expect(prompt.indexOf('pas de saut')).toBeLessThan(prompt.indexOf('**Type de workout**'))
-    expect(prompt).toContain('vérifie chaque exercice ET chaque option de scaling contre les contraintes de l\'athlète : "pas de saut"')
+    expect(prompt).toContain(
+      'vérifie chaque exercice ET chaque option de scaling contre les contraintes de l\'athlète : "pas de saut"'
+    )
   })
 
   it('sans contraintes → ni bloc prioritaire ni vérification finale', () => {
     const prompt = buildCrossFitWorkoutPrompt({ workoutType: 'conditioning', duration: 45, difficulty: 'intermediate' })
 
-    expect(prompt).not.toContain('CONTRAINTES DE L\'ATHLÈTE')
+    expect(prompt).not.toContain("CONTRAINTES DE L'ATHLÈTE")
     expect(prompt).not.toContain('vérifie chaque exercice')
   })
 })

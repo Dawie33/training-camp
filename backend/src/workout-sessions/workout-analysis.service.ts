@@ -11,30 +11,27 @@ export class WorkoutAnalysisService {
     @InjectConnection() private readonly knex: Knex,
     private readonly openaiClientService: OpenAIClientService,
     private readonly userContextService: UserContextService
-  ) { }
+  ) {}
 
   async analyzeSession(sessionId: string, userId: string, force = false): Promise<WodAnalysis> {
     // 1. Récupérer la session
-    const session = await this.knex('workout_sessions')
-      .where({ id: sessionId, user_id: userId })
-      .first()
+    const session = await this.knex('workout_sessions').where({ id: sessionId, user_id: userId }).first()
 
     if (!session) throw new NotFoundException('Session not found')
 
     // Retourner l'analyse déjà stockée en DB si elle existe et qu'on ne force pas la régénération
     if (!force && session.ai_analysis) {
-      const stored = typeof session.ai_analysis === 'string'
-        ? JSON.parse(session.ai_analysis)
-        : session.ai_analysis
+      const stored = typeof session.ai_analysis === 'string' ? JSON.parse(session.ai_analysis) : session.ai_analysis
       return stored as WodAnalysis
     }
 
     // 2. Récupérer le workout associé
     let workout: Record<string, unknown> | null = null
     if (session.workout_id) {
-      workout = await this.knex('workouts').where({ id: session.workout_id }).first() ?? null
+      workout = (await this.knex('workouts').where({ id: session.workout_id }).first()) ?? null
     } else if (session.personalized_workout_id) {
-      workout = await this.knex('personalized_workouts').where({ id: session.personalized_workout_id }).first() ?? null
+      workout =
+        (await this.knex('personalized_workouts').where({ id: session.personalized_workout_id }).first()) ?? null
     }
 
     // 3. Récupérer les sessions passées pour le même workout (pour comparaison)
@@ -50,7 +47,7 @@ export class WorkoutAnalysisService {
     }
 
     // 4. Construire le prompt
-    const results = session.results as Record<string, unknown> ?? {}
+    const results = (session.results as Record<string, unknown>) ?? {}
     const workoutName = (workout?.name as string) ?? 'Workout inconnu'
     const workoutType = (workout?.workout_type as string) ?? 'conditioning'
 
@@ -123,9 +120,7 @@ Réponds en JSON avec exactement cette structure :
     const lines = sessions.map((s, i) => {
       const r = (s.results as Record<string, unknown>) ?? {}
       const date = new Date(s.started_at as string).toLocaleDateString('fr-FR')
-      const score = this.buildScoreDescription(r, workoutType)
-        .replace(/\n/g, ', ')
-        .replace(/- /g, '')
+      const score = this.buildScoreDescription(r, workoutType).replace(/\n/g, ', ').replace(/- /g, '')
       const rx = r.rx ? 'RX' : 'Scaled'
       return `${i + 1}. ${date} — ${score} (${rx})`
     })

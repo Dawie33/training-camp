@@ -23,12 +23,11 @@ export interface WorkoutBlock {
   }>
 }
 
-
 export type WithEquipment = { equipment?: string[] }
 
 export type StrengthBlock = {
   name: string
-  scheme: string              // ex: "5x5", "4x8@RIR2", "3x10 tempo 31X1"
+  scheme: string // ex: "5x5", "4x8@RIR2", "3x10 tempo 31X1"
   percent_1rm?: number
   rest_sec?: number
   notes?: string
@@ -41,9 +40,9 @@ export type MetconPart = {
   distance_m?: number
   duration_min?: number
   load_pct_1rm_bs?: number
-  target_zone?: string        // Running (E|M|T|I|R)
-  target_pct_ftp?: number     // Cycling (0.85..1.05)
-  r_rest_sec?: number         // rest
+  target_zone?: string // Running (E|M|T|I|R)
+  target_pct_ftp?: number // Cycling (0.85..1.05)
+  r_rest_sec?: number // rest
 } & WithEquipment
 
 export type MetconBlock = {
@@ -73,17 +72,16 @@ export type WorkoutBlocks = {
  * Plan d'entraînement pour un jour donné (date, tags, blocs, métadonnées du workout).
  */
 export type DailyPlan = {
-  date: string                  // ISO yyyy-mm-dd
+  date: string // ISO yyyy-mm-dd
   tags: string[]
   blocks: WorkoutBlocks
-  description?: string          // Description du workout
-  coach_notes?: string          // Notes du coach
+  description?: string // Description du workout
+  coach_notes?: string // Notes du coach
   name?: string
-  workout_type?: string         // Type: amrap, for_time, intervals, strength, etc.
-  difficulty?: string           // Difficulté
+  workout_type?: string // Type: amrap, for_time, intervals, strength, etc.
+  difficulty?: string // Difficulté
   intensity?: string
-  estimated_duration?: number           // Intensité
+  estimated_duration?: number // Intensité
 }
-
 
 export type TargetZone = 'E' | 'M' | 'T' | 'I' | 'R'

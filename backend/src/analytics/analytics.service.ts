@@ -63,63 +63,56 @@ export class AnalyticsService {
     since.setMonth(since.getMonth() - months)
     const sinceISO = since.toISOString()
 
-    const [
-      sessions,
-      oneRepMaxRows,
-      benchmarkRows,
-      oneRepMaxHistoryRows,
-      skillPrograms,
-      skillSteps,
-      latestSessionRow,
-    ] = await Promise.all([
-      this.knex('workout_sessions')
-        .select('started_at', 'completed_at', 'results')
-        .where('user_id', userId)
-        .whereNotNull('completed_at')
-        .where('started_at', '>=', sinceISO)
-        .orderBy('started_at', 'asc') as Promise<SessionRow[]>,
+    const [sessions, oneRepMaxRows, benchmarkRows, oneRepMaxHistoryRows, skillPrograms, skillSteps, latestSessionRow] =
+      await Promise.all([
+        this.knex('workout_sessions')
+          .select('started_at', 'completed_at', 'results')
+          .where('user_id', userId)
+          .whereNotNull('completed_at')
+          .where('started_at', '>=', sinceISO)
+          .orderBy('started_at', 'asc') as Promise<SessionRow[]>,
 
-      this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId),
+        this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId),
 
-      this.knex('benchmark_history')
-        .select('workout_name', 'score_type', 'score_value', 'extra_reps', 'calculated_level', 'measured_at')
-        .where('user_id', userId)
-        .orderBy('measured_at', 'asc'),
+        this.knex('benchmark_history')
+          .select('workout_name', 'score_type', 'score_value', 'extra_reps', 'calculated_level', 'measured_at')
+          .where('user_id', userId)
+          .orderBy('measured_at', 'asc'),
 
-      // Historique de force non borné à la période : une courbe de 1RM n'a de sens
-      // que sur la durée, et les mesures sont trop espacées pour une fenêtre courte.
-      this.knex('one_rep_max_history')
-        .select('lift', 'value', 'measured_at')
-        .where('user_id', userId)
-        .orderBy('measured_at', 'asc'),
+        // Historique de force non borné à la période : une courbe de 1RM n'a de sens
+        // que sur la durée, et les mesures sont trop espacées pour une fenêtre courte.
+        this.knex('one_rep_max_history')
+          .select('lift', 'value', 'measured_at')
+          .where('user_id', userId)
+          .orderBy('measured_at', 'asc'),
 
-      this.knex('skill_programs')
-        .select('id as program_id', 'skill_name', 'skill_category')
-        .where('user_id', userId)
-        .where('status', 'active') as Promise<SkillProgramRow[]>,
+        this.knex('skill_programs')
+          .select('id as program_id', 'skill_name', 'skill_category')
+          .where('user_id', userId)
+          .where('status', 'active') as Promise<SkillProgramRow[]>,
 
-      this.knex('skill_program_steps as sps')
-        .join('skill_programs as sp', 'sps.program_id', 'sp.id')
-        .select('sps.program_id', 'sps.title', 'sps.status')
-        .where('sp.user_id', userId)
-        .where('sp.status', 'active') as Promise<SkillStepRow[]>,
+        this.knex('skill_program_steps as sps')
+          .join('skill_programs as sp', 'sps.program_id', 'sp.id')
+          .select('sps.program_id', 'sps.title', 'sps.status')
+          .where('sp.user_id', userId)
+          .where('sp.status', 'active') as Promise<SkillStepRow[]>,
 
-      this.knex('workout_sessions as ws')
-        .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
-        .leftJoin('personalized_workouts as pw', 'ws.personalized_workout_id', 'pw.id')
-        .select(
-          'ws.id',
-          'ws.started_at',
-          'ws.ai_analysis',
-          this.knex.raw("COALESCE(w.name, pw.plan_json->>'name') as workout_name"),
-        )
-        .where('ws.user_id', userId)
-        // La vraie dernière séance, analysée ou non : filtrer sur ai_analysis afficherait
-        // une vieille séance dès que l'athlète ne lance pas l'analyse.
-        .whereNotNull('ws.completed_at')
-        .orderBy('ws.started_at', 'desc')
-        .first(),
-    ])
+        this.knex('workout_sessions as ws')
+          .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
+          .leftJoin('personalized_workouts as pw', 'ws.personalized_workout_id', 'pw.id')
+          .select(
+            'ws.id',
+            'ws.started_at',
+            'ws.ai_analysis',
+            this.knex.raw("COALESCE(w.name, pw.plan_json->>'name') as workout_name")
+          )
+          .where('ws.user_id', userId)
+          // La vraie dernière séance, analysée ou non : filtrer sur ai_analysis afficherait
+          // une vieille séance dès que l'athlète ne lance pas l'analyse.
+          .whereNotNull('ws.completed_at')
+          .orderBy('ws.started_at', 'desc')
+          .first(),
+      ])
 
     const oneRepMaxes: Record<string, number> = {}
     for (const row of oneRepMaxRows) {
@@ -198,7 +191,9 @@ export class AnalyticsService {
       performance_level: analysis.performance_level as SessionAnalysis['performance_level'],
       comparison: typeof analysis.comparison === 'string' ? analysis.comparison : null,
       strengths: Array.isArray(analysis.strengths) ? analysis.strengths.filter(s => typeof s === 'string') : [],
-      improvements: Array.isArray(analysis.improvements) ? analysis.improvements.filter(s => typeof s === 'string') : [],
+      improvements: Array.isArray(analysis.improvements)
+        ? analysis.improvements.filter(s => typeof s === 'string')
+        : [],
       next_steps: typeof analysis.next_steps === 'string' ? analysis.next_steps : '',
     }
   }
@@ -236,12 +231,14 @@ export class AnalyticsService {
       const entry = item as Record<string, unknown>
       if (typeof entry.name !== 'string' || !entry.name.trim()) return []
 
-      return [{
-        name: entry.name,
-        load_kg: typeof entry.load_kg === 'number' ? entry.load_kg : undefined,
-        reps_completed: typeof entry.reps_completed === 'number' ? entry.reps_completed : undefined,
-        scaled: entry.scaled === true,
-      }]
+      return [
+        {
+          name: entry.name,
+          load_kg: typeof entry.load_kg === 'number' ? entry.load_kg : undefined,
+          reps_completed: typeof entry.reps_completed === 'number' ? entry.reps_completed : undefined,
+          scaled: entry.scaled === true,
+        },
+      ]
     })
   }
 }

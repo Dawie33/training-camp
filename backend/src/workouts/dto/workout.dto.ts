@@ -1,5 +1,19 @@
-import { Transform, Type } from "class-transformer"
-import { IsArray, IsBoolean, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, MinLength, ValidateNested } from "class-validator"
+import { Transform, Type } from 'class-transformer'
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator'
 
 /**
  * Données de création d'un workout dans le référentiel commun.
@@ -20,7 +34,6 @@ export class CreateWorkoutDto {
   @IsString()
   @IsOptional()
   workout_type?: string
-
 
   @IsOptional()
   blocks?: Record<string, unknown>
@@ -131,7 +144,6 @@ export class UpdateWorkoutDto {
   @IsString()
   @IsOptional()
   workout_type?: string
-
 
   @IsInt()
   @IsOptional()
@@ -289,7 +301,7 @@ export class WorkoutQueryDto {
   workout_type?: string
 
   @IsOptional()
-  @Transform(({ obj, key }) => obj[key] === 'true' ? true : obj[key] === 'false' ? false : undefined)
+  @Transform(({ obj, key }) => (obj[key] === 'true' ? true : obj[key] === 'false' ? false : undefined))
   @IsBoolean()
   is_benchmark?: boolean
 }
@@ -298,7 +310,6 @@ export class WorkoutQueryDto {
  * Données d'un workout personnalisé (création ou représentation complète).
  */
 export class WorkoutDto {
-
   @IsUUID()
   @IsOptional()
   id: string
@@ -416,7 +427,6 @@ export class WorkoutDto {
   @IsOptional()
   image_url?: string
 }
-
 
 /**
  * Texte libre décrivant un WOD à parser via l'IA.

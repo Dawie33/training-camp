@@ -32,13 +32,11 @@ function buildBands(workoutName: string, scoreType: string): BenchmarkBand[] | n
   const standard = BENCHMARK_STANDARDS[workoutName]
   if (!standard) return null
   // Le barème « beginner » est une borne ouverte (999999) : elle n'a pas de sens à l'affichage.
-  return LEVEL_ORDER
-    .filter(level => level !== 'beginner')
-    .map(level => ({
-      level,
-      threshold: standard[level],
-      display: formatScore(scoreType, standard[level]),
-    }))
+  return LEVEL_ORDER.filter(level => level !== 'beginner').map(level => ({
+    level,
+    threshold: standard[level],
+    display: formatScore(scoreType, standard[level]),
+  }))
 }
 
 /**
@@ -61,9 +59,7 @@ export function computeBenchmarkProgress(entries: BenchmarkEntry[]): BenchmarkPr
   const progressions: BenchmarkProgress[] = []
 
   for (const [name, rows] of byWorkout) {
-    const sorted = [...rows].sort(
-      (a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime()
-    )
+    const sorted = [...rows].sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime())
 
     const scoreType = sorted[0].score_type
     const lowerIsBetter = scoreType === 'time_seconds'

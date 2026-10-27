@@ -28,7 +28,14 @@ export interface ActiveSkillContext {
   step_id: string
   step_title: string
   step_description?: string
-  recommended_exercises: Array<{ name: string; sets?: number; reps?: string | number; rest?: string; intensity?: string; notes?: string }>
+  recommended_exercises: Array<{
+    name: string
+    sets?: number
+    reps?: string | number
+    rest?: string
+    intensity?: string
+    notes?: string
+  }>
   coaching_tips?: string
   last_trained: string | null // ISO date ou null si jamais travaillé
 }
@@ -131,7 +138,7 @@ export class UserContextService {
 
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private readonly analyticsService: AnalyticsService,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   /**
@@ -153,7 +160,15 @@ export class UserContextService {
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data
     }
-    const [profile, oneRepMaxes, cfSessions, recentAnalysesRaw, activeSkillsRaw, completedSkillNames, progressionReportsRaw] = await Promise.all([
+    const [
+      profile,
+      oneRepMaxes,
+      cfSessions,
+      recentAnalysesRaw,
+      activeSkillsRaw,
+      completedSkillNames,
+      progressionReportsRaw,
+    ] = await Promise.all([
       this.knex('users')
         .select(
           'sport_level',
@@ -165,7 +180,7 @@ export class UserContextService {
           'physical_limitations',
           'global_goals',
           'equipment_available',
-          'training_preferences',
+          'training_preferences'
         )
         .where('id', userId)
         .first(),
@@ -179,7 +194,7 @@ export class UserContextService {
           'ws.started_at',
           'ws.completed_at',
           this.knex.raw("COALESCE(ws.results->>'rpe', ws.results->>'perceived_effort') as perceived_effort"),
-          this.knex.raw("COALESCE(w.workout_type, pw.plan_json->>'workout_type') as workout_type"),
+          this.knex.raw("COALESCE(w.workout_type, pw.plan_json->>'workout_type') as workout_type")
         )
         .where('ws.user_id', userId)
         .whereNotNull('ws.completed_at')
@@ -211,13 +226,22 @@ export class UserContextService {
           'sps.description as step_description',
           'sps.recommended_exercises',
           'sps.coaching_tips',
-          this.knex.raw('MAX(spl.session_date) as last_trained'),
+          this.knex.raw('MAX(spl.session_date) as last_trained')
         )
-        .groupBy('sp.id', 'sp.skill_name', 'sp.skill_category', 'sps.id', 'sps.title', 'sps.description', 'sps.recommended_exercises', 'sps.coaching_tips'),
+        .groupBy(
+          'sp.id',
+          'sp.skill_name',
+          'sp.skill_category',
+          'sps.id',
+          'sps.title',
+          'sps.description',
+          'sps.recommended_exercises',
+          'sps.coaching_tips'
+        ),
 
-      this.knex('skill_programs')
-        .where({ user_id: userId, status: 'completed' })
-        .pluck('skill_name') as Promise<string[]>,
+      this.knex('skill_programs').where({ user_id: userId, status: 'completed' }).pluck('skill_name') as Promise<
+        string[]
+      >,
 
       this.knex('tracking_reports')
         .where('user_id', userId)
@@ -225,21 +249,21 @@ export class UserContextService {
         .orderBy('generated_at', 'desc'),
     ])
 
-    const cfMapped: RecentSession[] = (cfSessions ?? []).map((s: { started_at: string; completed_at: string; workout_type?: string; perceived_effort?: string }) => {
-      const start = new Date(s.started_at)
-      const end = new Date(s.completed_at)
-      return {
-        date: start.toISOString().split('T')[0],
-        sport: 'crossfit' as const,
-        workout_type: s.workout_type ?? undefined,
-        duration_minutes: Math.round((end.getTime() - start.getTime()) / 60000),
-        perceived_effort: s.perceived_effort ? Number(s.perceived_effort) : undefined,
+    const cfMapped: RecentSession[] = (cfSessions ?? []).map(
+      (s: { started_at: string; completed_at: string; workout_type?: string; perceived_effort?: string }) => {
+        const start = new Date(s.started_at)
+        const end = new Date(s.completed_at)
+        return {
+          date: start.toISOString().split('T')[0],
+          sport: 'crossfit' as const,
+          workout_type: s.workout_type ?? undefined,
+          duration_minutes: Math.round((end.getTime() - start.getTime()) / 60000),
+          perceived_effort: s.perceived_effort ? Number(s.perceived_effort) : undefined,
+        }
       }
-    })
+    )
 
-    const recentSessionsMapped = [...cfMapped]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 20)
+    const recentSessionsMapped = [...cfMapped].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20)
 
     const recentAnalyses: RecentAnalysis[] = (recentAnalysesRaw ?? [])
       .map((row: { started_at: string; ai_analysis: unknown; workout_name?: string }) => {
@@ -281,12 +305,12 @@ export class UserContextService {
             : [],
         coaching_tips: row.coaching_tips ?? undefined,
         last_trained: row.last_trained ?? null,
-      }),
+      })
     )
 
     const progressionReports: ProgressionReportSummary[] = (progressionReportsRaw ?? []).map(
       (row: { sport: string; period_months: number; report: unknown; generated_at: string }) => {
-        const r = typeof row.report === 'string' ? JSON.parse(row.report) : row.report as Record<string, unknown>
+        const r = typeof row.report === 'string' ? JSON.parse(row.report) : (row.report as Record<string, unknown>)
         return {
           sport: row.sport,
           period_months: row.period_months,
@@ -298,7 +322,7 @@ export class UserContextService {
           overall_fitness_level: r.overall_fitness_level as string | undefined,
           generated_at: row.generated_at,
         }
-      },
+      }
     )
 
     const result: UserAIContext = {

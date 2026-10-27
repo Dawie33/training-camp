@@ -2,17 +2,14 @@ import { Injectable } from '@nestjs/common'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
 import { GenerateSkillProgramDto } from '../dto/skill.dto'
-import {
-  buildSkillProgressionSystemPrompt,
-  buildSkillProgressionUserPrompt,
-} from '../prompts/skill-progression.prompt'
+import { buildSkillProgressionSystemPrompt, buildSkillProgressionUserPrompt } from '../prompts/skill-progression.prompt'
 import { GeneratedSkillProgramSchema, GeneratedSkillProgramValidated } from '../schemas/skill-program.schema'
 
 @Injectable()
 export class AISkillGeneratorService {
   constructor(
     private readonly openaiClientService: OpenAIClientService,
-    private readonly userContextService: UserContextService,
+    private readonly userContextService: UserContextService
   ) {}
 
   async generateSkillProgram(userId: string, params: GenerateSkillProgramDto): Promise<GeneratedSkillProgramValidated> {

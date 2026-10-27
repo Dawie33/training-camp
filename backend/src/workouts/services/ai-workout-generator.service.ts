@@ -2,10 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { z } from 'zod'
 import { AIInvalidResponseException } from '../../common/ai/ai-invalid-response.exception'
 import { OpenAIClientService } from '../../common/ai/openai-client.service'
-import {
-  buildCrossFitSystemPrompt,
-  buildCrossFitWorkoutPrompt
-} from '../prompts/crossfit-generator.prompt'
+import { buildCrossFitSystemPrompt, buildCrossFitWorkoutPrompt } from '../prompts/crossfit-generator.prompt'
 import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../schemas/workout.schema'
 import { ActiveSkillContext, UserContextService } from './user-context.service'
 
@@ -42,7 +39,7 @@ export interface WorkoutGenerationParams {
 export class AIWorkoutGeneratorService {
   constructor(
     private readonly openaiClientService: OpenAIClientService,
-    private readonly userContextService: UserContextService,
+    private readonly userContextService: UserContextService
   ) {}
 
   /**
@@ -72,17 +69,22 @@ export class AIWorkoutGeneratorService {
   async generatePersonalizedWorkout(userId: string, params: WorkoutGenerationParams): Promise<GeneratedWorkout> {
     const context = await this.userContextService.getUserAIContext(userId)
 
-    const difficulty = params.difficulty ?? (context.sport_level as WorkoutGenerationParams['difficulty']) ?? 'intermediate'
-    const equipment = params.equipment && params.equipment.length > 0
-      ? params.equipment
-      : context.equipment_available.length > 0 ? context.equipment_available : undefined
+    const difficulty =
+      params.difficulty ?? (context.sport_level as WorkoutGenerationParams['difficulty']) ?? 'intermediate'
+    const equipment =
+      params.equipment && params.equipment.length > 0
+        ? params.equipment
+        : context.equipment_available.length > 0
+          ? context.equipment_available
+          : undefined
 
     const workoutType = params.workoutType || 'conditioning'
 
     // core, conditioning et vo2max n'ont pas de bloc skill : le travail de compétence n'y a pas sa place
-    const skillInstruction = params.skipSkillBlock || SKILL_FREE_WORKOUT_TYPES.includes(workoutType)
-      ? null
-      : this.buildSkillInstruction(context.activeSkills)
+    const skillInstruction =
+      params.skipSkillBlock || SKILL_FREE_WORKOUT_TYPES.includes(workoutType)
+        ? null
+        : this.buildSkillInstruction(context.activeSkills)
 
     const systemPrompt = buildCrossFitSystemPrompt(equipment, context)
     const userPrompt = buildCrossFitWorkoutPrompt({
@@ -105,15 +107,15 @@ export class AIWorkoutGeneratorService {
    */
   async suggestNextWorkoutType(userId: string): Promise<{ workoutType: string; reason: string }> {
     const context = await this.userContextService.getUserAIContext(userId)
-    const recentCrossfit = context.recentSessions.filter((s) => s.sport === 'crossfit' && s.workout_type)
+    const recentCrossfit = context.recentSessions.filter(s => s.sport === 'crossfit' && s.workout_type)
 
     if (recentCrossfit.length === 0) {
-      return { workoutType: 'technique_metcon', reason: 'Première séance générée — pas d\'historique récent.' }
+      return { workoutType: 'technique_metcon', reason: "Première séance générée — pas d'historique récent." }
     }
 
     const rotationPool = ['technique_metcon', 'strength_max', 'conditioning', 'vo2max']
     const lastType = recentCrossfit[0].workout_type
-    const last3Types = recentCrossfit.slice(0, 3).map((s) => s.workout_type)
+    const last3Types = recentCrossfit.slice(0, 3).map(s => s.workout_type)
 
     if (!last3Types.includes('strength_max')) {
       return {
@@ -128,9 +130,7 @@ export class AIWorkoutGeneratorService {
       if (s.workout_type && occurrences[s.workout_type] !== undefined) occurrences[s.workout_type]++
     }
 
-    const candidates = rotationPool
-      .filter((type) => type !== lastType)
-      .sort((a, b) => occurrences[a] - occurrences[b])
+    const candidates = rotationPool.filter(type => type !== lastType).sort((a, b) => occurrences[a] - occurrences[b])
 
     return {
       workoutType: candidates[0],
@@ -156,7 +156,7 @@ export class AIWorkoutGeneratorService {
     const skill = sorted[0]
 
     const exercisesText = (skill.recommended_exercises ?? [])
-      .map((ex) => {
+      .map(ex => {
         const parts = [ex.name]
         if (ex.sets) parts.push(`${ex.sets} séries`)
         if (ex.reps) parts.push(`${ex.reps} reps`)
@@ -214,7 +214,12 @@ Si le workout comporte plusieurs groupes de rounds avec des charges différentes
 Exemple : "3 rounds de 50 DU + 10 Deadlifts (100kg), 2 rounds de 50 DU + 10 Deadlifts (120kg), 1 round de 50 DU + 10 Deadlifts (140kg)" → 3 sections distinctes avec rounds: 3, rounds: 2, rounds: 1`
 
     try {
-      return await this.callOpenAI('extraction de workout depuis un texte', systemPrompt, userPrompt, GeneratedWorkoutSchema)
+      return await this.callOpenAI(
+        'extraction de workout depuis un texte',
+        systemPrompt,
+        userPrompt,
+        GeneratedWorkoutSchema
+      )
     } catch (error) {
       // Réponse inexploitable : le texte ne décrit sans doute pas un workout, réessayer n'y changerait rien
       if (error instanceof AIInvalidResponseException) {
@@ -271,7 +276,9 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
     )
 
     if ('error' in result) {
-      throw new BadRequestException(`Impossible de trouver le WOD "${name}". S'il s'agit d'un WOD récent, colle ses détails dans le champ prévu.`)
+      throw new BadRequestException(
+        `Impossible de trouver le WOD "${name}". S'il s'agit d'un WOD récent, colle ses détails dans le champ prévu.`
+      )
     }
 
     return result
@@ -287,11 +294,11 @@ IMPORTANT : Retourne UNIQUEMENT le JSON structuré, sans texte avant ou après`
       purpose,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+        { role: 'user', content: userPrompt },
       ],
       temperature: 0.8,
       maxOutputTokens: 4096,
-      schema
+      schema,
     })
   }
 }

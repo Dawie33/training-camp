@@ -4,4 +4,4 @@ import { AuthGuard } from '@nestjs/passport'
  * Controller l'accès aux routes protégées par JWT
  */
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') { }
+export class JwtAuthGuard extends AuthGuard('jwt') {}

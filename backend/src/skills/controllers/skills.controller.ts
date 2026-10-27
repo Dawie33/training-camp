@@ -15,62 +15,44 @@ import { SkillsService } from '../services/skills.service'
 export class SkillsController {
   constructor(
     private readonly service: SkillsService,
-    private readonly aiGenerator: AISkillGeneratorService,
+    private readonly aiGenerator: AISkillGeneratorService
   ) {}
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(
-    @Request() req: { user: { id: string } },
-    @Query('status') status?: string,
-  ) {
+  async findAll(@Request() req: { user: { id: string } }, @Query('status') status?: string) {
     return this.service.findAll(req.user.id, status)
   }
 
   // Static routes MUST come before :id parameterized routes
   @Get('progress/step/:stepId')
   @UseGuards(JwtAuthGuard)
-  async getStepLogs(
-    @Param('stepId') stepId: string,
-    @Request() req: { user: { id: string } },
-  ) {
+  async getStepLogs(@Param('stepId') stepId: string, @Request() req: { user: { id: string } }) {
     return this.service.getStepLogs(stepId, req.user.id)
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(
-    @Param('id') id: string,
-    @Request() req: { user: { id: string } },
-  ) {
+  async findOne(@Param('id') id: string, @Request() req: { user: { id: string } }) {
     return this.service.findOne(id, req.user.id)
   }
 
   @Post('generate-ai')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async generateWithAI(
-    @Body() dto: GenerateSkillProgramDto,
-    @Request() req: { user: { id: string } },
-  ) {
+  async generateWithAI(@Body() dto: GenerateSkillProgramDto, @Request() req: { user: { id: string } }) {
     return this.aiGenerator.generateSkillProgram(req.user.id, dto)
   }
 
   @Post('progress')
   @UseGuards(JwtAuthGuard)
-  async logProgress(
-    @Body() dto: CreateSkillProgressLogDto,
-    @Request() req: { user: { id: string } },
-  ) {
+  async logProgress(@Body() dto: CreateSkillProgressLogDto, @Request() req: { user: { id: string } }) {
     return this.service.logProgress(req.user.id, dto)
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(
-    @Body() dto: CreateSkillProgramDto,
-    @Request() req: { user: { id: string } },
-  ) {
+  async create(@Body() dto: CreateSkillProgramDto, @Request() req: { user: { id: string } }) {
     return this.service.create(req.user.id, dto)
   }
 
@@ -80,7 +62,7 @@ export class SkillsController {
     @Param('id') id: string,
     @Param('stepId') stepId: string,
     @Body() dto: UpdateSkillStepDto,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.service.updateStep(id, stepId, req.user.id, dto)
   }
@@ -90,26 +72,20 @@ export class SkillsController {
   async updateProgram(
     @Param('id') id: string,
     @Body() dto: UpdateSkillProgramDto,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.service.updateProgram(id, req.user.id, dto)
   }
 
   @Delete('progress/:logId')
   @UseGuards(JwtAuthGuard)
-  async deleteLog(
-    @Param('logId') logId: string,
-    @Request() req: { user: { id: string } },
-  ) {
+  async deleteLog(@Param('logId') logId: string, @Request() req: { user: { id: string } }) {
     return this.service.deleteLog(logId, req.user.id)
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async deleteProgram(
-    @Param('id') id: string,
-    @Request() req: { user: { id: string } },
-  ) {
+  async deleteProgram(@Param('id') id: string, @Request() req: { user: { id: string } }) {
     return this.service.deleteProgram(id, req.user.id)
   }
 }

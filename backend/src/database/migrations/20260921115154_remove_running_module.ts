@@ -15,14 +15,14 @@ export async function up(knex: Knex): Promise<void> {
       CHECK (activity_type IN ('strength', 'biking', 'skill', 'mobility', 'wod', 'conditioning'))
   `)
 
-  await knex.schema.alterTable('users', (table) => {
+  await knex.schema.alterTable('users', table => {
     table.dropColumn('strava_refresh_token')
     table.dropColumn('strava_athlete_id')
   })
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.alterTable('users', (table) => {
+  await knex.schema.alterTable('users', table => {
     table.text('strava_refresh_token').nullable()
     table.bigInteger('strava_athlete_id').nullable()
   })
@@ -34,7 +34,7 @@ export async function down(knex: Knex): Promise<void> {
       CHECK (activity_type IN ('running', 'strength', 'biking', 'skill', 'mobility', 'wod', 'conditioning'))
   `)
 
-  await knex.schema.createTable('running_sessions', (table) => {
+  await knex.schema.createTable('running_sessions', table => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
     table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
     table.uuid('scheduled_activity_id').nullable().references('id').inTable('scheduled_activities').onDelete('SET NULL')

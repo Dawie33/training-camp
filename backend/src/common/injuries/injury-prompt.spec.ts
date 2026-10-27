@@ -14,7 +14,7 @@ const activeShoulder: Injury = {
 const pastKnee: Injury = { zone: 'knee', side: 'left', status: 'past', severity: 'mild', painful_patterns: [] }
 
 describe('formatInjuriesForPrompt', () => {
-  it("renvoie une chaîne vide sans blessure, pour ne rien ajouter au prompt", () => {
+  it('renvoie une chaîne vide sans blessure, pour ne rien ajouter au prompt', () => {
     expect(formatInjuriesForPrompt([])).toBe('')
   })
 
@@ -35,14 +35,14 @@ describe('formatInjuriesForPrompt', () => {
     expect(block).not.toContain('- EN REPRISE :')
   })
 
-  it("rappelle de ne jamais diagnostiquer ni travailler à travers la douleur", () => {
+  it('rappelle de ne jamais diagnostiquer ni travailler à travers la douleur', () => {
     const block = formatInjuriesForPrompt([pastKnee])
 
     expect(block).toContain('ne pose jamais de diagnostic')
     expect(block).toContain("Ne fais jamais travailler l'athlète à travers la douleur")
   })
 
-  it("oriente vers un professionnel de santé quand une blessure est active", () => {
+  it('oriente vers un professionnel de santé quand une blessure est active', () => {
     expect(formatInjuriesForPrompt([activeShoulder])).toContain('consulter un professionnel de santé')
   })
 

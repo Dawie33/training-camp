@@ -13,8 +13,8 @@ export const BCRYPT_COST = 12
 export class AuthService {
   constructor(
     @InjectModel() private readonly knex: Knex,
-    private jwtService: JwtService,
-  ) { }
+    private jwtService: JwtService
+  ) {}
 
   /**
    * Inscrire un nouvel utilisateur.
@@ -78,9 +78,7 @@ export class AuthService {
     const { email, password } = loginDto
 
     // Trouver l'utilisateur
-    const user = await this.knex('users')
-      .where({ email })
-      .first()
+    const user = await this.knex('users').where({ email }).first()
 
     if (!user) {
       throw new UnauthorizedException('Les données de connexion sont invalides')
@@ -93,9 +91,7 @@ export class AuthService {
     }
 
     // Mettre à jour lastLoginAt
-    await this.knex('users')
-      .where({ id: user.id })
-      .update({ lastLoginAt: this.knex.fn.now() })
+    await this.knex('users').where({ id: user.id }).update({ lastLoginAt: this.knex.fn.now() })
 
     // Générer le token JWT
     const payload = { sub: user.id, email: user.email }

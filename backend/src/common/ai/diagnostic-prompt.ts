@@ -74,16 +74,13 @@ export function buildDiagnosticPromptLines(diagnostic?: PerformanceDiagnosticSum
   if (diagnostic.benchmark_trends.length > 0) {
     lines.push('### Benchmarks (chacun comparé à lui-même)')
     for (const benchmark of diagnostic.benchmark_trends) {
-      const delta = benchmark.delta_pct !== null ? ` (${benchmark.delta_pct > 0 ? '+' : ''}${benchmark.delta_pct} %)` : ''
+      const delta =
+        benchmark.delta_pct !== null ? ` (${benchmark.delta_pct > 0 ? '+' : ''}${benchmark.delta_pct} %)` : ''
       lines.push(`- ${benchmark.name} : ${TREND_LABELS[benchmark.trend] ?? benchmark.trend}${delta}`)
     }
   }
 
   if (lines.length === 0) return []
 
-  return [
-    '',
-    '## DIAGNOSTIC CALCULÉ (chiffres mesurés — ne pas les recalculer ni les contredire)',
-    ...lines,
-  ]
+  return ['', '## DIAGNOSTIC CALCULÉ (chiffres mesurés — ne pas les recalculer ni les contredire)', ...lines]
 }

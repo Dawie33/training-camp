@@ -7,13 +7,13 @@ import type { Knex } from 'knex'
  * affichée au dashboard pouvait être régénérée et ne plus correspondre à la séance planifiée.
  */
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.alterTable('user_workout_schedule', (table) => {
+  await knex.schema.alterTable('user_workout_schedule', table => {
     table.jsonb('coach_recommendation').nullable()
   })
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.alterTable('user_workout_schedule', (table) => {
+  await knex.schema.alterTable('user_workout_schedule', table => {
     table.dropColumn('coach_recommendation')
   })
 }

@@ -1,14 +1,12 @@
 import { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable('workout_sessions', (table) => {
+  await knex.schema.createTable('workout_sessions', table => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
 
     // Relations
-    table.uuid('workout_id').notNullable()
-      .references('id').inTable('workouts').onDelete('CASCADE')
-    table.uuid('user_id').notNullable()
-      .references('id').inTable('users').onDelete('CASCADE')
+    table.uuid('workout_id').notNullable().references('id').inTable('workouts').onDelete('CASCADE')
+    table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
 
     // Timestamps de session
     table.timestamp('started_at').notNullable()

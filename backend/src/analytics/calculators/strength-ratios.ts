@@ -25,8 +25,10 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
     denominator: 'clean_and_jerk',
     targetMinPct: 78,
     targetMaxPct: 82,
-    whenBelow: 'Snatch bas par rapport au C&J : la limite est technique ou vient de la mobilité overhead, pas de la force. Travaille les positions et les complexes légers (60-75 %) plutôt que les charges.',
-    whenAbove: 'Snatch élevé par rapport au C&J : ton snatch est bien maîtrisé, c\'est le clean & jerk qui a de la marge — probablement le jerk. Vérifie la réception et le drive.',
+    whenBelow:
+      'Snatch bas par rapport au C&J : la limite est technique ou vient de la mobilité overhead, pas de la force. Travaille les positions et les complexes légers (60-75 %) plutôt que les charges.',
+    whenAbove:
+      "Snatch élevé par rapport au C&J : ton snatch est bien maîtrisé, c'est le clean & jerk qui a de la marge — probablement le jerk. Vérifie la réception et le drive.",
     whenInRange: 'Équilibre sain entre les deux mouvements olympiques.',
   },
   {
@@ -36,8 +38,10 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
     denominator: 'back_squat',
     targetMinPct: 82,
     targetMaxPct: 88,
-    whenBelow: 'Front squat bas : position de réception et gainage antérieur en cause. C\'est le plafond direct de ton clean — travaille le front rack, les pauses en bas et le gainage anti-flexion.',
-    whenAbove: 'Front squat très proche du back squat : c\'est ta force maximale en back squat qui devient le facteur limitant.',
+    whenBelow:
+      "Front squat bas : position de réception et gainage antérieur en cause. C'est le plafond direct de ton clean — travaille le front rack, les pauses en bas et le gainage anti-flexion.",
+    whenAbove:
+      "Front squat très proche du back squat : c'est ta force maximale en back squat qui devient le facteur limitant.",
     whenInRange: 'Rapport classique entre les deux squats.',
   },
   {
@@ -47,8 +51,10 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
     denominator: 'back_squat',
     targetMinPct: 70,
     targetMaxPct: 75,
-    whenBelow: 'C&J bas par rapport au squat : tu as la force, il te manque la technique et la vitesse pour l\'exprimer. Priorité au volume technique, pas à plus de squat.',
-    whenAbove: 'C&J proche du back squat : ta technique exploite déjà tout ce que tu as. C\'est la force maximale qu\'il faut monter pour débloquer le reste.',
+    whenBelow:
+      "C&J bas par rapport au squat : tu as la force, il te manque la technique et la vitesse pour l'exprimer. Priorité au volume technique, pas à plus de squat.",
+    whenAbove:
+      "C&J proche du back squat : ta technique exploite déjà tout ce que tu as. C'est la force maximale qu'il faut monter pour débloquer le reste.",
     whenInRange: 'Force et technique progressent au même rythme.',
   },
   {
@@ -58,7 +64,8 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
     denominator: 'back_squat',
     targetMinPct: 120,
     targetMaxPct: 130,
-    whenBelow: 'Deadlift bas par rapport au squat : chaîne postérieure en retard. RDL, good mornings, hip hinge à tempo — en gardant le deadlift lourd à toutes les 2-3 semaines seulement.',
+    whenBelow:
+      'Deadlift bas par rapport au squat : chaîne postérieure en retard. RDL, good mornings, hip hinge à tempo — en gardant le deadlift lourd à toutes les 2-3 semaines seulement.',
     whenAbove: 'Deadlift très supérieur au squat : bonne chaîne postérieure, mais ton squat mérite un bloc dédié.',
     whenInRange: 'Rapport attendu entre tirage au sol et squat.',
   },
@@ -69,7 +76,8 @@ const RATIO_DEFINITIONS: RatioDefinition[] = [
     denominator: 'back_squat',
     targetMinPct: 60,
     targetMaxPct: 70,
-    whenBelow: 'Overhead squat bas : mobilité thoracique et d\'épaule, ou stabilité overhead. C\'est le verrou qui bloque aussi ton snatch.',
+    whenBelow:
+      "Overhead squat bas : mobilité thoracique et d'épaule, ou stabilité overhead. C'est le verrou qui bloque aussi ton snatch.",
     whenAbove: 'Overhead squat élevé : excellente position overhead, ton back squat a de la marge.',
     whenInRange: 'Position overhead cohérente avec ta force de squat.',
   },

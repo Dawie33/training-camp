@@ -1,10 +1,9 @@
 import { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable('skill_program_steps', (table) => {
+  await knex.schema.createTable('skill_program_steps', table => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
-    table.uuid('program_id').notNullable()
-      .references('id').inTable('skill_programs').onDelete('CASCADE')
+    table.uuid('program_id').notNullable().references('id').inTable('skill_programs').onDelete('CASCADE')
     table.integer('step_number').notNullable()
     table.string('title').notNullable()
     table.text('description')

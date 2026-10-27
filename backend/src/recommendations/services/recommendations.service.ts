@@ -11,7 +11,7 @@ export class RecommendationsService {
 
   constructor(
     private readonly openaiClientService: OpenAIClientService,
-    private readonly userContextService: UserContextService,
+    private readonly userContextService: UserContextService
   ) {}
 
   async getNextSessionRecommendation(userId: string): Promise<NextSessionRecommendation> {
