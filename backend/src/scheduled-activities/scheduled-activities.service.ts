@@ -276,15 +276,31 @@ export class ScheduledActivitiesService {
         .returning('*')
     )
 
-    // Sync Google Calendar en arrière-plan (silencieux si non connecté)
-    this.googleCalendarService
-      .syncWorkout(userId, {
-        name: ACTIVITY_LABELS[data.activity_type] || data.activity_type,
-        scheduledDate: data.scheduled_date,
-      })
-      .catch(() => undefined)
+    const activity = await this.enrichOne(row)
 
-    return this.enrichOne(row)
+    // Sync Google Calendar en arrière-plan (silencieux si non connecté) : la réponse n'attend pas Google
+    void this.syncToGoogle(userId, row.id, activity)
+
+    return activity
+  }
+
+  /**
+   * Crée l'événement Google de l'activité et garde son id pour pouvoir le déplacer ou le supprimer.
+   * Le titre est celui de l'activité : nom du programme pour une skill, libellé du type sinon.
+   * Ne lève jamais d'erreur.
+   */
+  private async syncToGoogle(userId: string, id: string, activity: UnifiedActivity): Promise<void> {
+    try {
+      const eventId = await this.googleCalendarService.syncWorkout(userId, {
+        name: activity.title,
+        scheduledDate: activity.scheduled_date,
+      })
+      if (eventId) {
+        await this.knex('scheduled_activities').where('id', id).update({ google_event_id: eventId })
+      }
+    } catch {
+      // Google Calendar non connecté ou erreur silencieuse
+    }
   }
 
   /**
@@ -303,7 +319,10 @@ export class ScheduledActivitiesService {
     }
 
     // existing.scheduled_date est un objet Date (colonne date) : on compare les jours, pas les types
-    if (data.scheduled_date && toDateOnly(data.scheduled_date) !== toDateOnly(existing.scheduled_date)) {
+    const dateChanged = !!data.scheduled_date && toDateOnly(data.scheduled_date) !== toDateOnly(existing.scheduled_date)
+    const programChanged = !!data.activity_id && data.activity_id !== existing.activity_id
+
+    if (dateChanged) {
       const conflict = await this.knex('scheduled_activities')
         .where('user_id', userId)
         .where('scheduled_date', data.scheduled_date)
@@ -331,17 +350,35 @@ export class ScheduledActivitiesService {
         .returning('*')
     )
 
-    return this.enrichOne(row)
+    const activity = await this.enrichOne(row)
+
+    // Date ou programme de skill changé : l'événement Google suit (silencieux en cas d'erreur Google)
+    if ((dateChanged || programChanged) && existing.google_event_id) {
+      await this.googleCalendarService
+        .updateEvent(userId, existing.google_event_id, { name: activity.title, scheduledDate: activity.scheduled_date })
+        .catch(() => undefined)
+    }
+
+    return activity
   }
 
   /**
    * Supprime une activité planifiée (nouveaux modules uniquement)
    */
   async delete(id: string, userId: string): Promise<{ success: boolean }> {
-    const deleted = await this.knex('scheduled_activities').where('id', id).where('user_id', userId).delete()
+    const deleted: { google_event_id: string | null }[] = await this.knex('scheduled_activities')
+      .where('id', id)
+      .where('user_id', userId)
+      .delete(['google_event_id'])
 
-    if (deleted === 0) {
+    if (deleted.length === 0) {
       throw new NotFoundException('Activité non trouvée')
+    }
+
+    const googleEventId = deleted[0].google_event_id
+    if (googleEventId) {
+      // Silencieux : une erreur Google ne doit pas faire échouer la suppression
+      await this.googleCalendarService.deleteEvent(userId, googleEventId).catch(() => undefined)
     }
 
     return { success: true }

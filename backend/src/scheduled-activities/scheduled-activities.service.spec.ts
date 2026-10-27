@@ -23,6 +23,7 @@ function builderResolving(rows: unknown) {
     'insert',
     'update',
     'returning',
+    'delete',
   ]) {
     builder[method] = jest.fn(() => builder)
   }
@@ -40,16 +41,26 @@ async function buildService(tables: Record<string, unknown[]>) {
   })
   knexMock.raw = jest.fn()
 
+  // Client Google simulé : aucun appel réseau, comportement « non connecté » par défaut
+  const google = {
+    syncWorkout: jest.fn().mockResolvedValue(null),
+    updateEvent: jest.fn().mockResolvedValue(false),
+    deleteEvent: jest.fn().mockResolvedValue(false),
+  }
+
   const moduleRef = await Test.createTestingModule({
     providers: [
       ScheduledActivitiesService,
       { provide: getConnectionToken(), useValue: knexMock },
-      { provide: GoogleCalendarService, useValue: { syncWorkout: jest.fn().mockResolvedValue(null) } },
+      { provide: GoogleCalendarService, useValue: google },
     ],
   }).compile()
 
-  return { service: moduleRef.get(ScheduledActivitiesService), knexMock, builders }
+  return { service: moduleRef.get(ScheduledActivitiesService), knexMock, builders, google }
 }
+
+/** Laisse s'exécuter la synchronisation Google lancée en arrière-plan par create(). */
+const flushBackgroundSync = () => new Promise(resolve => setImmediate(resolve))
 
 const activityRow = {
   id: 'a1',
@@ -217,5 +228,130 @@ describe('ScheduledActivitiesService — index unique par jour (requêtes simult
     await expect(service.create('user-1', { activity_type: 'wod', scheduled_date: '2026-10-06' })).rejects.toThrow(
       'connexion perdue'
     )
+  })
+})
+
+describe('ScheduledActivitiesService — synchronisation Google Agenda', () => {
+  const syncedRow = { ...activityRow, google_event_id: 'evt-1' }
+
+  describe('create', () => {
+    it("titre l'événement d'une skill avec le nom du programme et enregistre son id", async () => {
+      const skillRow = { ...activityRow, activity_type: 'skill', activity_id: 'p1' }
+      const { service, knexMock, builders, google } = await buildService({
+        scheduled_activities: [skillRow],
+        skill_programs: [{ id: 'p1', skill_name: 'Muscle-up', skill_category: 'gymnastics' }],
+      })
+      // 1re requête : aucune activité déjà planifiée ce jour-là
+      knexMock.mockImplementationOnce(() => builderResolving([]))
+      google.syncWorkout.mockResolvedValue('evt-1')
+
+      await service.create('user-1', { activity_type: 'skill', scheduled_date: '2026-10-06', activity_id: 'p1' })
+      await flushBackgroundSync()
+
+      expect(google.syncWorkout).toHaveBeenCalledWith('user-1', { name: 'Muscle-up', scheduledDate: '2026-10-06' })
+      expect(builders.scheduled_activities.update).toHaveBeenCalledWith({ google_event_id: 'evt-1' })
+    })
+
+    it("n'enregistre rien quand l'agenda n'est pas connecté", async () => {
+      const { service, knexMock } = await buildService({ scheduled_activities: [activityRow] })
+      knexMock.mockImplementationOnce(() => builderResolving([]))
+
+      await service.create('user-1', { activity_type: 'wod', scheduled_date: '2026-10-06' })
+      await flushBackgroundSync()
+
+      // 1 contrôle de doublon + 1 insertion : aucune écriture de google_event_id
+      expect(knexMock).toHaveBeenCalledTimes(2)
+    })
+
+    it("crée l'activité même si Google échoue", async () => {
+      const { service, knexMock, google } = await buildService({ scheduled_activities: [activityRow] })
+      knexMock.mockImplementationOnce(() => builderResolving([]))
+      google.syncWorkout.mockRejectedValue(new Error('Service Unavailable'))
+
+      await expect(service.create('user-1', { activity_type: 'wod', scheduled_date: '2026-10-06' })).resolves.toEqual(
+        expect.objectContaining({ id: 'a1', title: 'WOD' })
+      )
+      await flushBackgroundSync()
+    })
+  })
+
+  describe('update', () => {
+    /** Lecture de l'activité, puis contrôle de conflit vide, puis mise à jour qui renvoie `updated`. */
+    async function buildMove(updated: Record<string, unknown>) {
+      const built = await buildService({ scheduled_activities: [updated] })
+      built.knexMock
+        .mockImplementationOnce(() => builderResolving([syncedRow]))
+        .mockImplementationOnce(() => builderResolving([]))
+      return built
+    }
+
+    it("déplace l'événement Google quand la date change", async () => {
+      const { service, google } = await buildMove({ ...syncedRow, scheduled_date: pgDate(2026, 10, 8) })
+
+      await service.update('a1', 'user-1', { scheduled_date: '2026-10-08' })
+
+      expect(google.updateEvent).toHaveBeenCalledWith('user-1', 'evt-1', { name: 'WOD', scheduledDate: '2026-10-08' })
+    })
+
+    it('ne touche pas Google quand la date ne change pas', async () => {
+      const { service, google } = await buildService({ scheduled_activities: [syncedRow] })
+
+      await service.update('a1', 'user-1', { notes: 'Au box' })
+
+      expect(google.updateEvent).not.toHaveBeenCalled()
+    })
+
+    it("ne touche pas Google quand l'activité n'a pas d'événement (agenda non connecté)", async () => {
+      const { service, knexMock, google } = await buildService({ scheduled_activities: [activityRow] })
+      knexMock
+        .mockImplementationOnce(() => builderResolving([activityRow]))
+        .mockImplementationOnce(() => builderResolving([]))
+
+      await service.update('a1', 'user-1', { scheduled_date: '2026-10-08' })
+
+      expect(google.updateEvent).not.toHaveBeenCalled()
+    })
+
+    it("déplace l'activité même si Google échoue", async () => {
+      const { service, google } = await buildMove({ ...syncedRow, scheduled_date: pgDate(2026, 10, 8) })
+      google.updateEvent.mockRejectedValue(new Error('Service Unavailable'))
+
+      await expect(service.update('a1', 'user-1', { scheduled_date: '2026-10-08' })).resolves.toEqual(
+        expect.objectContaining({ scheduled_date: '2026-10-08' })
+      )
+    })
+  })
+
+  describe('delete', () => {
+    it("supprime l'événement Google de l'activité supprimée", async () => {
+      const { service, builders, google } = await buildService({ scheduled_activities: [{ google_event_id: 'evt-1' }] })
+
+      await expect(service.delete('a1', 'user-1')).resolves.toEqual({ success: true })
+
+      expect(builders.scheduled_activities.delete).toHaveBeenCalledWith(['google_event_id'])
+      expect(google.deleteEvent).toHaveBeenCalledWith('user-1', 'evt-1')
+    })
+
+    it("ne contacte pas Google quand l'activité n'avait pas d'événement", async () => {
+      const { service, google } = await buildService({ scheduled_activities: [{ google_event_id: null }] })
+
+      await service.delete('a1', 'user-1')
+
+      expect(google.deleteEvent).not.toHaveBeenCalled()
+    })
+
+    it("supprime l'activité même si Google échoue", async () => {
+      const { service, google } = await buildService({ scheduled_activities: [{ google_event_id: 'evt-1' }] })
+      google.deleteEvent.mockRejectedValue(new Error('Service Unavailable'))
+
+      await expect(service.delete('a1', 'user-1')).resolves.toEqual({ success: true })
+    })
+
+    it("renvoie 404 sans contacter Google quand l'activité n'existe pas", async () => {
+      const { service, google } = await buildService({ scheduled_activities: [] })
+
+      await expect(service.delete('a1', 'user-1')).rejects.toThrow(NotFoundException)
+      expect(google.deleteEvent).not.toHaveBeenCalled()
+    })
   })
 })
