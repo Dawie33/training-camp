@@ -73,11 +73,11 @@ Deux réglages en découlent :
 | Import d'un WOD (`POST /workouts/parse-text`, `/lookup`) | 10 |
 | Génération de programme de compétence (`POST /skills/generate-ai`) | 10 |
 | Analyse post-séance (`POST /workout-sessions/:id/analyze`) | 10 |
-| Séance du jour (`GET /recommendations/daily-session/check`) | 10 |
+| Séance du jour (`POST /recommendations/daily-session/check`) | 10 |
 | Bilan de progression à la demande (`POST /tracking/report`) | 10 |
 | Recommandation du coach — lecture / régénération | 60 / 5 |
 
-> **Exception assumée** : `POST /tracking/report/check-monthly` garde la limite par défaut. Il est appelé à chaque connexion et ne génère qu'un bilan par mois.
+> **Exception assumée** : `POST /tracking/report/check-monthly` garde la limite par défaut. Il est appelé à chaque connexion et ne génère qu'un bilan par mois. Même chose pour `POST /workouts/check-monthly-benchmark`, qui planifie au plus un benchmark par mois sans appeler l'IA.
 
 > **Détail technique**
 >
