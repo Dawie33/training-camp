@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { UserContextService } from 'src/workouts/services/user-context.service'
-import type { OneRepMaxLift } from './one-rep-max.constants'
+import type { OneRepMaxLift, OneRepMaxSource } from './one-rep-max.constants'
 
 @Injectable()
 export class OneRepMaxesService {
@@ -20,7 +20,7 @@ export class OneRepMaxesService {
    * Les deux écritures sont dans une transaction : sinon, un échec de la seconde laisserait
    * un 1RM à jour sans point correspondant sur la courbe de progression.
    */
-  async upsert(userId: string, lift: OneRepMaxLift, value: number, source: 'real' | 'estimated') {
+  async upsert(userId: string, lift: OneRepMaxLift, value: number, source: OneRepMaxSource) {
     const row = await this.knex.transaction(async trx => {
       const [current] = await trx('one_rep_maxes')
         .insert({ user_id: userId, lift, value, source, measured_at: trx.fn.now() })
@@ -52,7 +52,7 @@ export class OneRepMaxesService {
       .select('lift', 'value', 'source', 'measured_at')
 
     // Grouper par lift : { back_squat: [{ value, measured_at }, ...], ... }
-    const grouped: Record<string, { value: number; source: string; measured_at: string }[]> = {}
+    const grouped: Record<string, { value: number; source: OneRepMaxSource; measured_at: string }[]> = {}
     for (const row of rows) {
       if (!grouped[row.lift]) grouped[row.lift] = []
       grouped[row.lift].push({ value: Number(row.value), source: row.source, measured_at: row.measured_at })

@@ -1,6 +1,6 @@
 import { IsIn, IsNumber, IsPositive, Max } from 'class-validator'
-import { ONE_REP_MAX_LIFTS, ONE_REP_MAX_MAX_KG } from '../one-rep-max.constants'
-import type { OneRepMaxLift } from '../one-rep-max.constants'
+import { ONE_REP_MAX_LIFTS, ONE_REP_MAX_MAX_KG, ONE_REP_MAX_SOURCES } from '../one-rep-max.constants'
+import type { OneRepMaxLift, OneRepMaxSource } from '../one-rep-max.constants'
 
 /** Paramètre `:lift` de PUT /one-rep-maxes/:lift */
 export class OneRepMaxLiftParamDto {
@@ -15,6 +15,6 @@ export class UpsertOneRepMaxDto {
   @Max(ONE_REP_MAX_MAX_KG)
   value!: number
 
-  @IsIn(['real', 'estimated'])
-  source!: 'real' | 'estimated'
+  @IsIn(ONE_REP_MAX_SOURCES)
+  source!: OneRepMaxSource
 }

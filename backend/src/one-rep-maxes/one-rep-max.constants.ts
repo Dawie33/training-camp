@@ -21,5 +21,13 @@ export const ONE_REP_MAX_LIFTS = [
 
 export type OneRepMaxLift = (typeof ONE_REP_MAX_LIFTS)[number]
 
+/**
+ * Origine d'un 1RM : mesuré ou estimé. Garder synchronisé avec l'enum `one_rm_source`
+ * (one_rep_maxes.source) et la contrainte `one_rep_max_history_source_check`.
+ */
+export const ONE_REP_MAX_SOURCES = ['real', 'estimated'] as const
+
+export type OneRepMaxSource = (typeof ONE_REP_MAX_SOURCES)[number]
+
 /** Bien au-delà des records du monde : au-dessus, c'est une erreur de saisie (1 500 au lieu de 150). */
 export const ONE_REP_MAX_MAX_KG = 500
