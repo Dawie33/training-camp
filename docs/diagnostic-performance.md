@@ -87,6 +87,7 @@ La durée utilisée est celle du **metcon** (le chrono saisi), pas celle de la s
 - La fenêtre commence au début de la période choisie, ou à la première séance enregistrée si elle est plus récente : un athlète qui débute dans l'app n'est pas pénalisé pour les semaines d'avant.
 - Elle se termine à la semaine en cours, comptée seulement si elle porte déjà une séance. Un lundi matin, rien n'a encore été manqué.
 - Les semaines sans séance apparaissent à zéro sur le graphe : une coupure doit se voir.
+- Les semaines vont du lundi au dimanche, **à l'heure de Paris**, quel que soit le fuseau du serveur : une séance le lundi à 0 h 30 compte dans la nouvelle semaine.
 
 ## Charge d'entraînement (sRPE et ACWR)
 

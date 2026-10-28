@@ -6,7 +6,7 @@ Périmètre : `backend/src/analytics/` (contrôleur, service, 8 calculateurs, ty
 
 Aucune ligne de code n'a été modifiée. Les chiffres cités dans les exemples ont été obtenus en appelant les calculateurs réels avec les données indiquées.
 
-> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 par #75 (fusionnée), I6, I7 et A5 par #77 (fusionnée), I5 (lecture) et A6 par #78 (fusionnée), A4 sur la branche `fix/1rm-estimes`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
+> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 par #75 (fusionnée), I6, I7 et A5 par #77 (fusionnée), I5 (lecture) et A6 par #78 (fusionnée), A4 par #79 (fusionnée), A2 sur la branche `fix/semaines-heure-paris`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
 
 ## 1. Rôle du module
 
@@ -137,6 +137,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : `weekStart` utilise le fuseau du processus Node, probablement UTC sur Render. Une séance le lundi à 0 h 30 à Paris (dimanche 22 h 30 UTC) tombe dans la semaine précédente. C'est le même type de problème que #40, mais une autre fonction.
 - **Piste** : calculer la semaine dans le fuseau de l'athlète (`Europe/Paris` par défaut, ou un fuseau de profil), avec une fonction partagée par les calculateurs.
 - **Terminé quand** : un test avec `TZ=UTC` place une séance du lundi 0 h 30 heure de Paris dans la bonne semaine.
+- **Statut** : ✅ corrigé sur la branche `fix/semaines-heure-paris`. `weekStart` délègue à `toParisWeekStart` (`common/utils/date-only.ts`, écrit pour #40) ; le passage d'une semaine à l'autre (`addWeeks`) se fait sur la date seule, en UTC. Paris reste en dur, comme dans `toParisWeekStart` : pas de fuseau de profil pour l'instant. Le test « lundi 0 h 30 » ne dépend plus du fuseau de la machine, et la suite analytics passe en UTC, Los Angeles, Auckland et Paris.
 
 #### A3. ACWR : nuancer le message
 
@@ -152,7 +153,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : la colonne `source` (`real` / `estimated`) n'est pas lue. Un 1RM estimé peut produire un « gain » dans l'historique, ou fausser un ratio de force. Voir aussi #45 (contrainte sur `source`) et #43 (corriger un 1RM erroné).
 - **Piste** : sélectionner `source`, marquer les points estimés dans `computeStrengthHistory` (et dans le graphe), et signaler un ratio calculé sur une estimation.
 - **Terminé quand** : la réponse indique, pour chaque point et chaque ratio, s'il repose sur une estimation.
-- **Statut** : ✅ corrigé sur la branche `fix/1rm-estimes`. Chaque point d'historique porte `estimated`, chaque ratio `based_on_estimate`. Le gain et la tendance ne comparent que des relevés de même nature que le 1RM actuel. Le coach IA reçoit « (1RM estimé — à confirmer par un test) » sur un déséquilibre concerné, et l'écran affiche la mention « estimé ». Reste ouvert : le % du 1RM de l'exposition par mouvement peut reposer sur un 1RM estimé sans le signaler.
+- **Statut** : ✅ corrigé par #79. Chaque point d'historique porte `estimated`, chaque ratio `based_on_estimate`. Le gain et la tendance ne comparent que des relevés de même nature que le 1RM actuel. Le coach IA reçoit « (1RM estimé — à confirmer par un test) » sur un déséquilibre concerné, et l'écran affiche la mention « estimé ». Reste ouvert : le % du 1RM de l'exposition par mouvement peut reposer sur un 1RM estimé sans le signaler.
 
 #### A5. Correspondance mouvement → 1RM fragile
 
@@ -230,8 +231,8 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 5. ~~**[Analytics] Exposition par mouvement : une exposition par séance, charges de force séparées** (I6, avec la table d'alias de A5).~~ Fait dans #77.
 6. ~~**[Analytics] Tests unitaires du service** (I7). Prérequis de l'issue 5. L'issue 1 s'en est passée : la logique a été extraite dans une fonction pure testée (`resolveSessionMinutes`).~~ Fait dans #77.
 7. **[Analytics] Valider `months` avec un DTO** (A1).
-8. **[Analytics] Semaines calculées dans le fuseau de l'athlète** (A2).
-9. ~~**[Analytics] Distinguer les 1RM estimés dans l'historique et les ratios** (A4, après #45).~~ Fait sur `fix/1rm-estimes`.
+8. ~~**[Analytics] Semaines calculées dans le fuseau de l'athlète** (A2).~~ Fait sur `fix/semaines-heure-paris`.
+9. ~~**[Analytics] Distinguer les 1RM estimés dans l'historique et les ratios** (A4, après #45).~~ Fait dans #79.
 10. ~~**[Analytics] Benchmarks à l'écran : barème Cindy et courbes au temps inversées** (A6).~~ Fait dans #78.
 11. **[Analytics] Frontend : ignorer les réponses obsolètes du diagnostic** (A8).
 12. **[Analytics] Documenter les blocs non bornés par la période** (A9, avec la nuance du message ACWR de A3).

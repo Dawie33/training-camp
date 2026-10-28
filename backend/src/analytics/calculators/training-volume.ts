@@ -1,3 +1,4 @@
+import { toParisWeekStart } from 'src/common/utils/date-only'
 import { TrainingVolumeResult, WeeklyVolumePoint } from '../types/analytics.types'
 
 export interface DatedSession {
@@ -5,17 +6,24 @@ export interface DatedSession {
 }
 
 /**
- * Date du lundi de la semaine contenant `date`, au format YYYY-MM-DD.
+ * Date du lundi de la semaine contenant `date`, à l'heure de Paris, au format YYYY-MM-DD.
  * Sert de clé de regroupement hebdomadaire pour tout le module analytics.
+ *
+ * Jamais l'heure du serveur : sur Render (UTC), une séance le lundi à 0 h 30 à Paris
+ * tomberait dans la semaine précédente.
  */
 export function weekStart(date: Date): string {
-  const monday = new Date(date)
-  const dayOfWeek = monday.getDay()
-  monday.setDate(monday.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
-  monday.setHours(0, 0, 0, 0)
-  const month = String(monday.getMonth() + 1).padStart(2, '0')
-  const day = String(monday.getDate()).padStart(2, '0')
-  return `${monday.getFullYear()}-${month}-${day}`
+  return toParisWeekStart(date)
+}
+
+/**
+ * Lundi décalé de `count` semaines (négatif pour reculer), à partir d'une clé de `weekStart`.
+ * Le calcul se fait sur la date seule, en UTC : il ne dépend ni du fuseau ni de l'heure d'été.
+ */
+export function addWeeks(week: string, count: number): string {
+  const monday = new Date(`${week}T00:00:00.000Z`)
+  monday.setUTCDate(monday.getUTCDate() + count * 7)
+  return monday.toISOString().slice(0, 10)
 }
 
 /**
@@ -25,11 +33,8 @@ export function weekStart(date: Date): string {
 export function enumerateWeeks(from: Date, to: Date): string[] {
   const last = weekStart(to)
   const weeks: string[] = []
-  // Minuit local, comme `weekStart`, pour ne pas glisser d'un jour selon le fuseau
-  const cursor = new Date(`${weekStart(from)}T00:00:00`)
-  while (weekStart(cursor) <= last) {
-    weeks.push(weekStart(cursor))
-    cursor.setDate(cursor.getDate() + 7)
+  for (let week = weekStart(from); week <= last; week = addWeeks(week, 1)) {
+    weeks.push(week)
   }
   return weeks
 }
