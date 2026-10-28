@@ -7,12 +7,12 @@
 
 `backend/src/workouts/` est le plus gros module du backend (environ 4 600 lignes). Il a quatre responsabilités :
 
-| Responsabilité                                                                   | Fichiers                                                                                                        | Routes                                                                                         |
-| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| CRUD du **référentiel de workouts** (table `workouts`), benchmarks               | `controllers/workouts.controller.ts`, `services/workouts.service.ts`, `dto/workout.dto.ts`, `workout.utils.ts`  | `GET/POST/PATCH/DELETE /workouts`, `/workouts/benchmark*`, `/workouts/check-monthly-benchmark` |
-| **Génération IA** (WOD généré, WOD retrouvé par son nom, WOD extrait d'un texte) | `services/ai-workout-generator.service.ts`, `prompts/crossfit-generator.prompt.ts`, `schemas/workout.schema.ts` | `POST /workouts/generate-ai*`, `/parse-text`, `/lookup`, `GET /workouts/suggest-type`          |
-| **Planification** au calendrier (table `user_workout_schedule`)                  | `controllers/workout-schedule.controller.ts`, `services/workout-schedule.service.ts`, `dto/schedule.dto.ts`     | `/workout-schedule/*`                                                                          |
-| **Contexte IA** de l'utilisateur, avec un cache                                  | `services/user-context.service.ts`                                                                              | aucune (service exporté)                                                                       |
+| Responsabilité                                                                   | Fichiers                                                                                                                               | Routes                                                                                         |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| CRUD du **référentiel de workouts** (table `workouts`), benchmarks               | `controllers/workouts.controller.ts`, `services/workouts.service.ts`, `dto/workout.dto.ts`, `common/benchmarks/benchmark-standards.ts` | `GET/POST/PATCH/DELETE /workouts`, `/workouts/benchmark*`, `/workouts/check-monthly-benchmark` |
+| **Génération IA** (WOD généré, WOD retrouvé par son nom, WOD extrait d'un texte) | `services/ai-workout-generator.service.ts`, `prompts/crossfit-generator.prompt.ts`, `schemas/workout.schema.ts`                        | `POST /workouts/generate-ai*`, `/parse-text`, `/lookup`, `GET /workouts/suggest-type`          |
+| **Planification** au calendrier (table `user_workout_schedule`)                  | `controllers/workout-schedule.controller.ts`, `services/workout-schedule.service.ts`, `dto/schedule.dto.ts`                            | `/workout-schedule/*`                                                                          |
+| **Contexte IA** de l'utilisateur, avec un cache                                  | `services/user-context.service.ts`                                                                                                     | aucune (service exporté)                                                                       |
 
 Il reste aussi le circuit « workout personnalisé » (`/workouts/personalized*`, table `personalized_workouts`). Il est abandonné, et sa suppression est déjà prévue par l'issue #48 : cette revue ne le traite pas.
 
@@ -351,7 +351,7 @@ Autre effet, plus discutable : un seul résultat de benchmark **écrase** `users
 
 **Explication** : la logique la plus risquée n'a aucun test : droits (S1, S2), `update` (B1), `recordBenchmarkResult` (B2), `checkAndScheduleMonthlyBenchmark` (B3), `suggestWeek` et `create` de la planification (B5). `suggestWeek` et `calculateLevelFromBenchmarks` sont presque des fonctions pures, faciles à tester sans base. Les autres se testent avec le mock Knex décrit dans le skill `testing-knex-nestjs`.
 
-**Piste** : ajouter `workouts.service.spec.ts`, `workout-schedule.service.spec.ts` et `workout.utils.spec.ts` au fil des corrections ci-dessus, en commençant par les cas d'erreur.
+**Piste** : ajouter `workouts.service.spec.ts`, `workout-schedule.service.spec.ts` et `common/benchmarks/benchmark-standards.spec.ts` au fil des corrections ci-dessus, en commençant par les cas d'erreur.
 
 **Terminé quand** :
 

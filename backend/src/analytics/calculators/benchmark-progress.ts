@@ -1,4 +1,4 @@
-import { BENCHMARK_STANDARDS, BenchmarkStandard } from '../../workouts/workout.utils'
+import { BENCHMARK_STANDARDS, BenchmarkStandard } from '../../common/benchmarks/benchmark-standards'
 import { BenchmarkBand, BenchmarkPoint, BenchmarkProgress } from '../types/analytics.types'
 
 export interface BenchmarkEntry {

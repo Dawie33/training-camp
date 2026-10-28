@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { calculateLevelFromBenchmarks } from 'src/common/benchmarks/benchmark-standards'
 import { toDateOnly, toParisDate } from 'src/common/utils/date-only'
 import { safeJsonStringify } from 'src/common/utils/utils'
 import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/workout.dto'
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
-import { calculateLevelFromBenchmarks } from '../workout.utils'
 import { UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
 
