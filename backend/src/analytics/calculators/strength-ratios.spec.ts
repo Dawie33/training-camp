@@ -69,4 +69,14 @@ describe('computeStrengthRatios', () => {
     expect(result.ratios).toHaveLength(5)
     expect(result.ratios.every(r => r.verdict === 'unavailable')).toBe(true)
   })
+
+  it('signale un ratio qui repose sur un 1RM estimé, et seulement celui-là', () => {
+    const result = computeStrengthRatios(
+      { snatch: 70, clean_and_jerk: 100, front_squat: 85, back_squat: 100 },
+      new Set(['clean_and_jerk'])
+    )
+
+    expect(ratioOf(result, 'snatch_to_clean_and_jerk').based_on_estimate).toBe(true)
+    expect(ratioOf(result, 'front_squat_to_back_squat').based_on_estimate).toBe(false)
+  })
 })

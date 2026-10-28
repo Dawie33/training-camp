@@ -73,6 +73,7 @@ describe('buildAthleteContextSection', () => {
               target: '70-75 %',
               direction: 'above',
               reading: "C&J proche du back squat : c'est la force maximale qu'il faut monter.",
+              estimated: false,
             },
           ],
         },
@@ -82,6 +83,29 @@ describe('buildAthleteContextSection', () => {
     expect(section).toContain('Déséquilibres de force mesurés')
     expect(section).toContain('Clean & Jerk / Back Squat : 90 %, trop haut (cible 70-75 %)')
     expect(section).toContain('force maximale')
+    expect(section).not.toContain('1RM estimé')
+  })
+
+  it('déséquilibre calculé sur un 1RM estimé → signalé à confirmer par un test', () => {
+    const section = buildAthleteContextSection(
+      buildContext({
+        diagnostic: {
+          ...buildContext().diagnostic,
+          ratio_imbalances: [
+            {
+              label: 'Snatch / Clean & Jerk',
+              value_pct: 70,
+              target: '78-82 %',
+              direction: 'below',
+              reading: 'Snatch bas par rapport au C&J.',
+              estimated: true,
+            },
+          ],
+        },
+      })
+    )
+
+    expect(section).toContain('Snatch bas par rapport au C&J. (1RM estimé — à confirmer par un test)')
   })
 
   it('consigne : les déséquilibres de force se travaillent dans le bloc force, un seul par séance', () => {

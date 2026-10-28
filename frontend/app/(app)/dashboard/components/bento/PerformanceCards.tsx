@@ -91,6 +91,11 @@ function WeakPointCard({ data }: { data: StrengthRatiosResult }) {
         </span>
       </div>
       <p className="text-sm text-foreground leading-relaxed">{weakest.interpretation}</p>
+      {weakest.based_on_estimate && (
+        <p className="text-xs text-muted-foreground mt-2">
+          Repose sur un 1RM estimé : teste-le pour confirmer ce point faible.
+        </p>
+      )}
     </BentoCard>
   )
 }
@@ -110,12 +115,21 @@ function StrengthHistoryCard({ data }: { data: StrengthHistoryResult }) {
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-xs text-muted-foreground truncate">{liftLabel(lift.lift)}</span>
               <div className="flex items-baseline gap-2 shrink-0">
-                <span className="text-sm font-semibold text-foreground tabular-nums">{lift.current} kg</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">
+                  {lift.current} kg
+                  {lift.current_estimated && (
+                    <span className="ml-1 text-[10px] font-normal text-muted-foreground">estimé</span>
+                  )}
+                </span>
                 {lift.gain_kg !== null && lift.gain_kg !== 0 && <Delta value={lift.gain_kg} unit="kg" />}
               </div>
             </div>
             <Sparkline
-              points={lift.points.map(p => ({ label: formatAxisDate(p.measured_at), value: p.value }))}
+              points={lift.points.map(p => ({
+                label: formatAxisDate(p.measured_at),
+                value: p.value,
+                display: p.estimated ? `${p.value} kg (estimé)` : `${p.value} kg`,
+              }))}
               height={40}
             />
           </div>
@@ -259,7 +273,10 @@ function StrengthBalanceCard({ data }: { data: StrengthRatiosResult }) {
 
           return (
             <div key={ratio.key} className="flex items-center gap-3">
-              <span className="w-36 shrink-0 text-xs text-muted-foreground truncate">{ratio.label}</span>
+              <span className="w-36 shrink-0 text-xs text-muted-foreground truncate">
+                {ratio.label}
+                {ratio.based_on_estimate && ' (estimé)'}
+              </span>
               <div className="relative flex-1 h-1.5 bg-secondary rounded-full">
                 <div
                   className="absolute inset-y-0 bg-emerald-500/30 rounded-full"

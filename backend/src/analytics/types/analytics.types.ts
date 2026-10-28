@@ -11,6 +11,8 @@ export interface StrengthRatio {
   verdict: RatioVerdict
   /** Lecture coach du verdict : ce que l'écart révèle et sur quoi travailler. */
   interpretation: string
+  /** Au moins un des deux 1RM est estimé : le verdict est à confirmer par un test. */
+  based_on_estimate: boolean
 }
 
 export interface StrengthRatiosResult {
@@ -135,13 +137,17 @@ export interface MovementExposureResult {
 export interface StrengthHistoryPoint {
   value: number
   measured_at: string
+  /** 1RM estimé depuis une série de plusieurs reps, et non testé. */
+  estimated: boolean
 }
 
 export interface StrengthLiftHistory {
   lift: string
   points: StrengthHistoryPoint[]
   current: number
+  current_estimated: boolean
   best: number
+  /** Gain entre relevés de même nature que le 1RM actuel (estimés entre eux, réels entre eux). */
   gain_kg: number | null
   gain_pct: number | null
   trend: 'improving' | 'stable' | 'declining'

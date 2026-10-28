@@ -402,6 +402,8 @@ describe('UserContextService.getUserAIContext', () => {
       target_max_pct: 75,
       verdict,
       interpretation: `lecture ${key}`,
+      // Le ratio trop haut repose sur un 1RM estimé : la nuance doit suivre jusqu'au prompt
+      based_on_estimate: key === 'trop_haut',
     })
     analyticsMock.getOverview.mockResolvedValueOnce({
       ...emptyOverview,
@@ -422,8 +424,22 @@ describe('UserContextService.getUserAIContext', () => {
 
     // Assert
     expect(result.diagnostic.ratio_imbalances).toEqual([
-      { label: 'trop_bas', value_pct: 60, target: '70-75 %', direction: 'below', reading: 'lecture trop_bas' },
-      { label: 'trop_haut', value_pct: 90, target: '70-75 %', direction: 'above', reading: 'lecture trop_haut' },
+      {
+        label: 'trop_bas',
+        value_pct: 60,
+        target: '70-75 %',
+        direction: 'below',
+        reading: 'lecture trop_bas',
+        estimated: false,
+      },
+      {
+        label: 'trop_haut',
+        value_pct: 90,
+        target: '70-75 %',
+        direction: 'above',
+        reading: 'lecture trop_haut',
+        estimated: true,
+      },
     ])
   })
 })

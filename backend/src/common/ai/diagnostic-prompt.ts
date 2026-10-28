@@ -28,7 +28,8 @@ const LOAD_ZONE_LABELS: Record<string, string> = {
 export function formatRatioImbalances(imbalances: RatioImbalance[]): string[] {
   return imbalances.map(
     ratio =>
-      `- ${ratio.label} : ${ratio.value_pct} %, ${DIRECTION_LABELS[ratio.direction]} (cible ${ratio.target}) — ${ratio.reading}`
+      `- ${ratio.label} : ${ratio.value_pct} %, ${DIRECTION_LABELS[ratio.direction]} (cible ${ratio.target}) — ${ratio.reading}` +
+      (ratio.estimated ? ' (1RM estimé — à confirmer par un test)' : '')
   )
 }
 

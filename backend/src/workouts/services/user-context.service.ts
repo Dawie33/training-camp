@@ -77,6 +77,8 @@ export interface RatioImbalance {
   target: string
   direction: 'below' | 'above'
   reading: string
+  /** Ratio calculé sur au moins un 1RM estimé : à confirmer par un test avant d'en faire un axe de travail. */
+  estimated: boolean
 }
 
 /**
@@ -372,6 +374,7 @@ export class UserContextService {
                 target: `${ratio.target_min_pct}-${ratio.target_max_pct} %`,
                 direction: ratio.verdict,
                 reading: ratio.interpretation,
+                estimated: ratio.based_on_estimate,
               },
             ]
           : []

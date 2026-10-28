@@ -53,6 +53,13 @@ Fourchettes cibles indicatives. Elles varient selon le gabarit, l'âge et l'anci
 
 Chaque écart est accompagné d'une interprétation de coach : cause probable et piste de travail.
 
+### 1RM estimés
+
+Un 1RM est **réel** (testé) ou **estimé** (calculé depuis une série de plusieurs reps), au choix de l'athlète sur la page des 1RM. Une estimation peut se tromper d'environ 5 %.
+
+- Un ratio qui repose sur au moins un 1RM estimé est signalé « estimé », à l'écran comme pour le coach IA : le déséquilibre est à confirmer par un test.
+- Dans l'historique, le gain et la tendance ne comparent que des relevés de **même nature que le 1RM actuel** : un vrai test avec le vrai test précédent, une estimation avec les estimations. Un 1RM estimé à 100 kg suivi d'un test à 97 kg n'est donc pas une perte de 3 kg.
+
 ## Progression par benchmark
 
 - Une série = **un workout** (`workout_id`), comparé à lui-même. Deux workouts homonymes restent deux séries, et un même workout saisi « Fran » puis « fran » reste une seule série, affichée sous son nom le plus récent.

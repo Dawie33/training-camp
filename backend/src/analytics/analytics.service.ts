@@ -80,7 +80,7 @@ export class AnalyticsService {
         .where('started_at', '>=', sinceISO)
         .orderBy('started_at', 'asc') as Promise<SessionRow[]>,
 
-      this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId),
+      this.knex('one_rep_maxes').select('lift', 'value', 'source').where('user_id', userId),
 
       this.knex('benchmark_history')
         .select(
@@ -98,7 +98,7 @@ export class AnalyticsService {
       // Historique de force non borné à la période : une courbe de 1RM n'a de sens
       // que sur la durée, et les mesures sont trop espacées pour une fenêtre courte.
       this.knex('one_rep_max_history')
-        .select('lift', 'value', 'measured_at')
+        .select('lift', 'value', 'source', 'measured_at')
         .where('user_id', userId)
         .orderBy('measured_at', 'asc'),
 
@@ -139,9 +139,12 @@ export class AnalyticsService {
     ])
 
     const oneRepMaxes: Record<string, number> = {}
+    const estimatedLifts = new Set<string>()
     for (const row of oneRepMaxRows) {
       const value = Number(row.value)
-      if (Number.isFinite(value) && value > 0) oneRepMaxes[row.lift] = value
+      if (!Number.isFinite(value) || value <= 0) continue
+      oneRepMaxes[row.lift] = value
+      if (row.source === 'estimated') estimatedLifts.add(row.lift)
     }
 
     const benchmarkEntries: BenchmarkEntry[] = benchmarkRows.map(row => ({
@@ -168,11 +171,12 @@ export class AnalyticsService {
       lift: row.lift,
       value: Number(row.value),
       measured_at: new Date(row.measured_at).toISOString(),
+      source: row.source,
     }))
 
     return {
       period_months: months,
-      strength_ratios: computeStrengthRatios(oneRepMaxes),
+      strength_ratios: computeStrengthRatios(oneRepMaxes, estimatedLifts),
       strength_history: computeStrengthHistory(strengthEntries),
       benchmarks: computeBenchmarkProgress(benchmarkEntries),
       energy_systems: computeEnergySystems(durations),

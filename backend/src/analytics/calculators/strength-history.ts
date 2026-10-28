@@ -4,6 +4,8 @@ export interface OneRepMaxEntry {
   lift: string
   value: number
   measured_at: string
+  /** `real` (testé) ou `estimated` (calculé depuis une série de plusieurs reps). */
+  source?: string | null
 }
 
 /** Variation en deçà de laquelle on ne parle ni de gain ni de perte. */
@@ -34,14 +36,19 @@ export function computeStrengthHistory(entries: OneRepMaxEntry[]): StrengthHisto
     const points = sorted.map(row => ({
       value: row.value,
       measured_at: new Date(row.measured_at).toISOString(),
+      estimated: row.source === 'estimated',
     }))
 
-    const first = points[0].value
-    const last = points[points.length - 1].value
-    const gainKg = Math.round((last - first) * 10) / 10
+    const current = points[points.length - 1]
+    // Gain mesuré entre relevés de même nature que le 1RM actuel : une estimation depuis un 5RM
+    // se trompe facilement de 5 %, l'écart avec un vrai test ne dirait rien de la progression.
+    const comparable = points.filter(point => point.estimated === current.estimated)
+    const first = comparable[0].value
+    const hasGain = comparable.length >= 2
+    const gainKg = Math.round((current.value - first) * 10) / 10
 
     let trend: StrengthLiftHistory['trend'] = 'stable'
-    if (points.length >= 2) {
+    if (hasGain) {
       if (gainKg > TREND_THRESHOLD_KG) trend = 'improving'
       else if (gainKg < -TREND_THRESHOLD_KG) trend = 'declining'
     }
@@ -49,10 +56,11 @@ export function computeStrengthHistory(entries: OneRepMaxEntry[]): StrengthHisto
     return {
       lift,
       points,
-      current: last,
+      current: current.value,
+      current_estimated: current.estimated,
       best: Math.max(...points.map(p => p.value)),
-      gain_kg: points.length >= 2 ? gainKg : null,
-      gain_pct: points.length >= 2 && first > 0 ? Math.round(((last - first) / first) * 1000) / 10 : null,
+      gain_kg: hasGain ? gainKg : null,
+      gain_pct: hasGain && first > 0 ? Math.round(((current.value - first) / first) * 1000) / 10 : null,
       trend,
     }
   })
