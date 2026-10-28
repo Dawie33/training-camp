@@ -1,4 +1,20 @@
-import { classifyAcwr, computeTrainingLoad } from './training-load'
+import { classifyAcwr, computeTrainingLoad, resolveSessionMinutes } from './training-load'
+
+describe('resolveSessionMinutes', () => {
+  it('retient la durée totale saisie plutôt que le chrono du metcon', () => {
+    // Séance de 70 min dont le metcon n'a duré que 12 min
+    expect(resolveSessionMinutes({ session_duration_minutes: 70, elapsed_time_seconds: 720 })).toBe(70)
+  })
+
+  it('se rabat sur la durée de l’activité .fit', () => {
+    expect(resolveSessionMinutes({ coros: { totals: { duration_seconds: 2730 } } })).toBe(46)
+  })
+
+  it('ignore le chrono du metcon quand rien d’autre n’est disponible', () => {
+    expect(resolveSessionMinutes({ elapsed_time_seconds: 720 })).toBeNull()
+    expect(resolveSessionMinutes(null)).toBeNull()
+  })
+})
 
 describe('classifyAcwr', () => {
   it('situe le ratio dans sa zone de risque', () => {
@@ -15,7 +31,7 @@ describe('computeTrainingLoad', () => {
 
   it('calcule la charge de séance en RPE × minutes', () => {
     const result = computeTrainingLoad(
-      [{ started_at: '2026-09-21T09:00:00.000Z', rpe: 8, duration_seconds: 3600 }],
+      [{ started_at: '2026-09-21T09:00:00.000Z', rpe: 8, session_minutes: 60 }],
       now
     )
 
@@ -30,7 +46,7 @@ describe('computeTrainingLoad', () => {
   })
 
   it('signale l’indisponibilité tant qu’aucune séance ne porte de RPE', () => {
-    const result = computeTrainingLoad([{ started_at: '2026-09-21T09:00:00.000Z', duration_seconds: 3600 }], now)
+    const result = computeTrainingLoad([{ started_at: '2026-09-21T09:00:00.000Z', session_minutes: 60 }], now)
 
     expect(result.available).toBe(false)
     expect(result.sessions_with_rpe).toBe(0)
@@ -43,7 +59,7 @@ describe('computeTrainingLoad', () => {
     const sessions = Array.from({ length: 15 }, (_, i) => ({
       started_at: new Date(now.getTime() - i * 2 * 24 * 3600 * 1000).toISOString(),
       rpe: 7,
-      duration_seconds: 3600,
+      session_minutes: 60,
     }))
 
     const result = computeTrainingLoad(sessions, now)
@@ -55,7 +71,7 @@ describe('computeTrainingLoad', () => {
     const sessions = Array.from({ length: 6 }, (_, i) => ({
       started_at: new Date(now.getTime() - i * 2 * 24 * 3600 * 1000).toISOString(),
       rpe: 8,
-      duration_seconds: 3600,
+      session_minutes: 60,
     }))
 
     const result = computeTrainingLoad(sessions, now)
@@ -73,13 +89,13 @@ describe('computeTrainingLoad', () => {
       ...Array.from({ length: 6 }, (_, i) => ({
         started_at: new Date(now.getTime() - (28 - i * 4) * 24 * 3600 * 1000).toISOString(),
         rpe: 5,
-        duration_seconds: 1800,
+        session_minutes: 30,
       })),
       // Semaine récente très chargée
       ...Array.from({ length: 5 }, (_, i) => ({
         started_at: new Date(now.getTime() - i * 24 * 3600 * 1000).toISOString(),
         rpe: 9,
-        duration_seconds: 4800,
+        session_minutes: 80,
       })),
     ]
 
@@ -92,8 +108,8 @@ describe('computeTrainingLoad', () => {
   it('exprime la variation de la dernière semaine en pourcentage', () => {
     const result = computeTrainingLoad(
       [
-        { started_at: '2026-09-08T09:00:00.000Z', rpe: 5, duration_seconds: 3600 },
-        { started_at: '2026-09-15T09:00:00.000Z', rpe: 10, duration_seconds: 3600 },
+        { started_at: '2026-09-08T09:00:00.000Z', rpe: 5, session_minutes: 60 },
+        { started_at: '2026-09-15T09:00:00.000Z', rpe: 10, session_minutes: 60 },
       ],
       now
     )
@@ -104,9 +120,9 @@ describe('computeTrainingLoad', () => {
   it('ignore les RPE hors échelle ou absents', () => {
     const result = computeTrainingLoad(
       [
-        { started_at: '2026-09-21T09:00:00.000Z', rpe: 8, duration_seconds: 3600 },
-        { started_at: '2026-09-21T11:00:00.000Z', rpe: 0, duration_seconds: 3600 },
-        { started_at: '2026-09-21T13:00:00.000Z', rpe: null, duration_seconds: 3600 },
+        { started_at: '2026-09-21T09:00:00.000Z', rpe: 8, session_minutes: 60 },
+        { started_at: '2026-09-21T11:00:00.000Z', rpe: 0, session_minutes: 60 },
+        { started_at: '2026-09-21T13:00:00.000Z', rpe: null, session_minutes: 60 },
       ],
       now
     )

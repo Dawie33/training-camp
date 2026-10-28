@@ -63,7 +63,8 @@ Le travail technique suit un circuit à part :
 > | `elapsed_time_seconds`, `rounds`, `reps` | entier | Score du conditionnement |
 > | `cap_reached`, `rounds_completed`, `partial_note` | divers | Cas du time cap atteint |
 > | `rating` | 1 à 5 | Appréciation |
-> | `rpe` | 1 à 10 | Échelle CR-10 |
+> | `rpe` | 1 à 10 | Échelle CR-10, sur toute la séance |
+> | `session_duration_minutes` | 1 à 300 | Durée de la séance entière, échauffement compris. Pondère le RPE (sRPE) — à ne pas confondre avec `elapsed_time_seconds`, le chrono du metcon |
 > | `exercise_results` | tableau | Une entrée **par exercice**, pas par série |
 >
 > Dans `exercise_results`, `load_kg` porte la charge la plus lourde travaillée.

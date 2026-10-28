@@ -5,7 +5,8 @@ export interface RpeSession {
   started_at: string
   /** Effort perçu sur l'échelle CR-10. Les séances sans RPE sont écartées du calcul. */
   rpe?: number | null
-  duration_seconds?: number | null
+  /** Durée de la séance entière, en minutes (voir `resolveSessionMinutes`). */
+  session_minutes?: number | null
 }
 
 const MS_PER_DAY = 24 * 3600 * 1000
@@ -17,6 +18,29 @@ const CHRONIC_WINDOW_DAYS = 28
  * Évite de perdre l'information d'effort ; valeur conservatrice d'une séance type.
  */
 const DEFAULT_SESSION_MINUTES = 60
+
+/**
+ * Durée de la séance entière à croiser avec le RPE, en minutes.
+ *
+ * Jamais le chrono du metcon (`elapsed_time_seconds`) : un metcon de 12 min dans une séance
+ * de 70 min diviserait la charge par six, alors que le RPE note toute la séance.
+ * Ordre de préférence : durée saisie, puis durée de l'activité .fit, qui couvre tout
+ * l'enregistrement de la montre. Null quand aucune n'est exploitable.
+ *
+ * @param results Champ `results` de la séance
+ */
+export function resolveSessionMinutes(results: Record<string, unknown> | null): number | null {
+  const declared = results?.session_duration_minutes
+  if (typeof declared === 'number' && Number.isFinite(declared) && declared > 0) return declared
+
+  const coros = results?.coros as { totals?: { duration_seconds?: unknown } } | undefined
+  const fitSeconds = coros?.totals?.duration_seconds
+  if (typeof fitSeconds === 'number' && Number.isFinite(fitSeconds) && fitSeconds > 0) {
+    return Math.round(fitSeconds / 60)
+  }
+
+  return null
+}
 
 /** Zone de risque associée au ratio charge aiguë / charge chronique. */
 export function classifyAcwr(acwr: number): AcwrZone {
@@ -45,9 +69,8 @@ export function computeTrainingLoad(sessions: RpeSession[], now: Date = new Date
       const timestamp = new Date(session.started_at).getTime()
       if (!Number.isFinite(timestamp)) return null
 
-      const durationSeconds = session.duration_seconds
-      const minutes =
-        typeof durationSeconds === 'number' && durationSeconds > 0 ? durationSeconds / 60 : DEFAULT_SESSION_MINUTES
+      const sessionMinutes = session.session_minutes
+      const minutes = typeof sessionMinutes === 'number' && sessionMinutes > 0 ? sessionMinutes : DEFAULT_SESSION_MINUTES
 
       return { timestamp, srpe: Math.round(rpe * minutes) }
     })

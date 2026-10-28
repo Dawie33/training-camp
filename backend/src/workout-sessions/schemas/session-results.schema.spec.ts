@@ -38,6 +38,12 @@ describe('SessionResultsSchema', () => {
     expect(SessionResultsSchema.safeParse({ rpe: 0 }).success).toBe(false)
   })
 
+  it('borne la durée totale de séance entre 1 et 300 minutes', () => {
+    expect(SessionResultsSchema.safeParse({ session_duration_minutes: 75 }).success).toBe(true)
+    expect(SessionResultsSchema.safeParse({ session_duration_minutes: 0 }).success).toBe(false)
+    expect(SessionResultsSchema.safeParse({ session_duration_minutes: 301 }).success).toBe(false)
+  })
+
   it('rejette une charge négative', () => {
     const parsed = SessionResultsSchema.safeParse({
       exercise_results: [{ name: 'Snatch', section_type: 'strength', load_kg: -10, scaled: false }],

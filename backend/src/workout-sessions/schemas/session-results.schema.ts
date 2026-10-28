@@ -43,6 +43,11 @@ export const SessionResultsSchema = z
     rating: z.number().int().min(1).max(5).optional(),
     /** Effort perçu sur l'ensemble de la séance (échelle CR-10). Croisé avec la durée, il donne la charge de séance (sRPE). */
     rpe: z.number().int().min(1).max(10).optional(),
+    /**
+     * Durée de la séance entière, échauffement et retour au calme compris, en minutes.
+     * Distincte de `elapsed_time_seconds` (chrono du seul metcon) : c'est elle qui pondère le RPE dans le sRPE.
+     */
+    session_duration_minutes: z.number().int().min(1).max(300).optional(),
 
     // Détail par exercice
     exercise_results: z.array(ExerciseResultSchema).max(60).optional(),
