@@ -103,6 +103,9 @@ export interface TrainingLoadResult {
   last_week_change_pct: number | null
 }
 
+/** Origine des charges d'un mouvement : jamais un mélange des deux. */
+export type LoadSource = 'strength' | 'metcon'
+
 export interface MovementExposure {
   name: string
   exposures: number
@@ -113,6 +116,8 @@ export interface MovementExposure {
   max_load_kg: number | null
   /** Charge moyenne rapportée au 1RM du mouvement, quand le lift correspondant est renseigné. */
   pct_of_1rm: number | null
+  /** Sections d'où viennent les charges : la force quand le mouvement y figure, sinon le metcon. */
+  load_source: LoadSource | null
 }
 
 export interface MovementExposureResult {

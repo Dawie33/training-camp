@@ -153,7 +153,7 @@ export class AnalyticsService {
       rpe: this.readNumber(session.results, 'rpe'),
     }))
 
-    const loggedExercises = sessions.flatMap(session => this.readExerciseResults(session.results))
+    const loggedExercises = sessions.flatMap((session, index) => this.readExerciseResults(session.results, index))
 
     const strengthEntries: OneRepMaxEntry[] = oneRepMaxHistoryRows.map(row => ({
       lift: row.lift,
@@ -246,8 +246,11 @@ export class AnalyticsService {
     return typeof value === 'number' && Number.isFinite(value) ? value : null
   }
 
-  /** Extrait les exercices structurés d'une séance, en ignorant l'ancien format texte libre. */
-  private readExerciseResults(results: Record<string, unknown> | null): LoggedExercise[] {
+  /**
+   * Extrait les exercices structurés d'une séance, en ignorant l'ancien format texte libre.
+   * @param sessionIndex Rang de la séance : regroupe les sections d'une même séance en une exposition
+   */
+  private readExerciseResults(results: Record<string, unknown> | null, sessionIndex: number): LoggedExercise[] {
     const raw = results?.exercise_results
     if (!Array.isArray(raw)) return []
 
@@ -259,6 +262,8 @@ export class AnalyticsService {
       return [
         {
           name: entry.name,
+          section_type: typeof entry.section_type === 'string' ? entry.section_type : undefined,
+          session_index: sessionIndex,
           load_kg: typeof entry.load_kg === 'number' ? entry.load_kg : undefined,
           reps_completed: typeof entry.reps_completed === 'number' ? entry.reps_completed : undefined,
           scaled: entry.scaled === true,

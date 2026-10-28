@@ -94,13 +94,20 @@ La durée utilisée est celle du **metcon** (le chrono saisi), pas celle de la s
 
 Un ratio élevé signale une hausse de charge plus rapide que l'habitude. Ce n'est pas un diagnostic de blessure.
 
+## Exposition par mouvement
+
+- **Une exposition = une séance** où le mouvement apparaît. Un Thruster travaillé en force puis repris dans le metcon de la même séance compte une fois.
+- Une séance compte comme **scalée** si le mouvement l'a été dans au moins une de ses sections.
+- **Charges** : la charge moyenne, la charge max et le % du 1RM viennent des sections de **force** quand le mouvement y figure, sinon de ses sections de **metcon**. Les deux ne se mélangent jamais, et l'écran indique l'origine. Les charges d'échauffement, d'accessoires et de skill ne comptent pas.
+- **Rapprochement avec les 1RM** : les noms courants et français sont reliés au lift (Clean & Jerk, C&J, Épaulé-jeté → Clean & Jerk ; Squat Clean → Clean ; Arraché → Snatch…), et regroupés en un seul mouvement. Les Power Clean et Power Snatch ne sont **pas** rapportés au 1RM de la version complète : ils en valent environ 80 à 85 %.
+
 ## Autres seuils
 
 | Règle | Valeur |
 |---|---|
 | Tendance d'un benchmark | stable si la variation reste sous 3 % |
 | Tendance d'un 1RM | stable si la variation reste sous 0,5 kg |
-| Mouvement « souvent scalé » | au moins 3 expositions et au moins 50 % scalées |
+| Mouvement « souvent scalé » | au moins 3 séances et au moins 50 % d'entre elles scalées |
 | Étape de compétence franchie | statut `completed` ou `skipped` |
 
 > **Détail technique**
@@ -108,5 +115,7 @@ Un ratio élevé signale une hausse de charge plus rapide que l'habitude. Ce n'e
 > - Endpoint : `GET /api/analytics/overview?months=3`, protégé par `JwtAuthGuard`.
 > - `analytics.service.ts` fait les requêtes Knex. Les calculateurs de `analytics/calculators/` font les maths.
 > - Les calculateurs sont des **fonctions pures** : testez-les directement, sans mock de Knex.
+> - Le service est couvert par `analytics.service.spec.ts` (filtre `user_id` de chaque requête, lecture des séances), avec un faux query builder.
+> - Table d'alias mouvement → lift : `calculators/lift-aliases.ts`, typée sur `ONE_REP_MAX_LIFTS`.
 > - La date de référence (`now`) est injectable, pour des tests déterministes.
 > - La synthèse transmise à l'IA est construite par `UserContextService`, puis formatée par `common/ai/diagnostic-prompt.ts`.

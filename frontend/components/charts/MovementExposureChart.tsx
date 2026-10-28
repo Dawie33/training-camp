@@ -74,13 +74,16 @@ export function MovementExposureChart({ movements, limit = 8 }: {
                 { label: 'reps cumulées', value: String(point.total_reps) },
               ]
               if (point.avg_load_kg !== null) {
-                rows.push({ label: 'charge moyenne', value: `${point.avg_load_kg} kg` })
+                rows.push({
+                  label: point.load_source === 'strength' ? 'charge moyenne en force' : 'charge moyenne en metcon',
+                  value: `${point.avg_load_kg} kg`,
+                })
               }
               if (point.pct_of_1rm !== null) {
                 rows.push({ label: 'du 1RM', value: `${point.pct_of_1rm} %` })
               }
               if (point.scaled_pct > 0) {
-                rows.push({ label: 'des passages scalés', value: `${point.scaled_pct} %` })
+                rows.push({ label: 'des séances scalées', value: `${point.scaled_pct} %` })
               }
               return <ChartTooltip title={point.name} rows={rows} />
             }}
