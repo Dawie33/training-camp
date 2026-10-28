@@ -253,7 +253,7 @@ function VolumeAndLoadPanel({ volume, load }: { volume: TrainingVolumeResult; lo
     undertrained: { label: 'Charge basse', className: 'text-blue-600' },
     optimal: { label: 'Zone optimale', className: 'text-emerald-600' },
     caution: { label: 'Vigilance', className: 'text-orange-600' },
-    high_risk: { label: 'Risque élevé', className: 'text-destructive' },
+    high_risk: { label: 'Hausse rapide', className: 'text-destructive' },
   }
   const zone = load.acwr_zone ? zoneLabels[load.acwr_zone] : null
 
@@ -300,7 +300,7 @@ function VolumeAndLoadPanel({ volume, load }: { volume: TrainingVolumeResult; lo
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Le ratio de charge demande 4 semaines d&apos;historique avec RPE pour être fiable.
+              Le ratio de charge demande un RPE sur tes séances d&apos;au moins 3 des 4 dernières semaines.
             </p>
           )}
           {load.last_week_change_pct !== null && (

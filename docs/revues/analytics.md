@@ -6,7 +6,7 @@ Périmètre : `backend/src/analytics/` (contrôleur, service, 8 calculateurs, ty
 
 Aucune ligne de code n'a été modifiée. Les chiffres cités dans les exemples ont été obtenus en appelant les calculateurs réels avec les données indiquées.
 
-> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (en relecture). Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
+> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 sur la branche `fix/acwr-historique`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
 
 ## 1. Rôle du module
 
@@ -67,6 +67,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : le garde-fou vérifie seulement que la séance avec RPE **la plus ancienne** date d'au moins 28 jours. Il ne vérifie pas que la fenêtre chronique est remplie. Exemple réel : une séance à RPE 5 le 3 août, puis une le 21 septembre (calcul le 23). Résultat : `acute = 300`, `chronic = 75`, **`acwr = 4`, zone `high_risk`**. Cela arrive dès qu'un athlète a saisi un RPE une fois, puis s'y remet régulièrement. Avec un ACWR « couplé » (la semaine aiguë est incluse dans les 28 jours), 4,0 est le maximum mathématique : toute la charge est dans les 7 derniers jours. Le coach IA reçoit alors « RISQUE ÉLEVÉ — réduire le volume ».
 - **Piste** : exiger des données dans la fenêtre chronique elle-même, par exemple au moins une séance avec RPE dans 3 des 4 semaines des 28 derniers jours. Sinon `acwr = null`.
 - **Terminé quand** : le cas ci-dessus renvoie `acwr: null` ; un test couvre « un point ancien isolé + reprise » ; le test existant « charge stable → zone optimale » passe toujours.
+- **Statut** : ✅ corrigé sur la branche `fix/acwr-historique`. En plus de l'ancienneté, l'ACWR exige une séance avec RPE dans 3 des 4 tranches de 7 jours et un RPE sur 75 % des séances de la fenêtre. La zone `high_risk` est renommée « hausse rapide de charge — stabiliser, ne plus augmenter » (prompt) et « Hausse rapide » (écrans). La formule (ACWR couplé, moyennes glissantes) est inchangée.
 
 #### I3. « Variation vs semaine passée » compare des semaines qui ne se suivent pas
 
@@ -216,7 +217,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 ## 6. Propositions d'issues (non créées)
 
 1. ~~**[Analytics] sRPE : utiliser la durée de la séance, pas le chrono du WOD** (I1). Ajouter une durée de séance saisie sur la page de log, et la séparer de la durée d'effort utilisée pour les filières.~~ Fait dans #73.
-2. **[Analytics] ACWR : exiger un historique chronique réel avant de conclure** (I2). Remplacer le test « séance la plus ancienne ≥ 28 jours » par une couverture minimale des 4 semaines.
+2. ~~**[Analytics] ACWR : exiger un historique chronique réel avant de conclure** (I2). Remplacer le test « séance la plus ancienne ≥ 28 jours » par une couverture minimale des 4 semaines.~~ Fait sur `fix/acwr-historique` (ancienneté conservée, couverture ajoutée).
 3. ~~**[Analytics] Semaines continues : variation hebdomadaire et régularité justes** (I3 + I4). Suite de semaines sans trou sur la période, variation sur la dernière semaine complète, `week_span` calendaire, tests à valeurs exactes.~~ Fait dans #74.
 4. **[Analytics] Benchmarks : regrouper par workout_id, contrôler le type de score, compter les reps d'AMRAP** (I5, partie lecture). La partie écriture reste dans #51 et #53.
 5. **[Analytics] Exposition par mouvement : une exposition par séance, charges de force séparées** (I6, avec la table d'alias de A5).

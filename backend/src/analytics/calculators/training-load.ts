@@ -12,6 +12,10 @@ export interface RpeSession {
 const MS_PER_DAY = 24 * 3600 * 1000
 const ACUTE_WINDOW_DAYS = 7
 const CHRONIC_WINDOW_DAYS = 28
+/** Tranches de 7 jours de la fenêtre chronique qui doivent porter au moins une séance avec RPE. */
+const MIN_COVERED_CHRONIC_WEEKS = 3
+/** Part minimale des séances de la fenêtre chronique qui portent un RPE. */
+const MIN_RPE_COVERAGE = 0.75
 
 /**
  * Durée retenue quand une séance porte un RPE sans durée exploitable.
@@ -47,6 +51,41 @@ export function resolveSessionMinutes(results: Record<string, unknown> | null): 
   }
 
   return null
+}
+
+/**
+ * La fenêtre chronique est-elle assez remplie pour que l'ACWR veuille dire quelque chose ?
+ *
+ * Une séance ancienne isolée suivie d'une reprise laisse les 28 jours presque vides : la charge
+ * chronique s'effondre et le ratio grimpe jusqu'à 4, son maximum, sans hausse de charge réelle.
+ * De même, des séances sans RPE sous-estiment la charge et faussent le ratio.
+ *
+ * @param sessions Toutes les séances, avec ou sans RPE
+ * @param scored Séances avec RPE, horodatées
+ * @param reference Date de référence, en millisecondes
+ * @returns Vrai si 3 des 4 tranches de 7 jours portent un RPE et si 75 % des séances en ont un
+ */
+function isChronicWindowCovered(sessions: RpeSession[], scored: { timestamp: number }[], reference: number): boolean {
+  const ageInDays = (timestamp: number) => (reference - timestamp) / MS_PER_DAY
+  const inWindow = (timestamp: number) => {
+    const age = ageInDays(timestamp)
+    return age >= 0 && age <= CHRONIC_WINDOW_DAYS
+  }
+
+  const scoredInWindow = scored.filter(entry => inWindow(entry.timestamp))
+  const lastWeekIndex = CHRONIC_WINDOW_DAYS / ACUTE_WINDOW_DAYS - 1
+  // Tranches comptées depuis la date de référence ; une séance à 28 jours pile rejoint la dernière
+  const coveredWeeks = new Set(
+    scoredInWindow.map(entry => Math.min(Math.floor(ageInDays(entry.timestamp) / ACUTE_WINDOW_DAYS), lastWeekIndex))
+  )
+
+  const sessionsInWindow = sessions.filter(session => inWindow(new Date(session.started_at).getTime())).length
+
+  return (
+    coveredWeeks.size >= MIN_COVERED_CHRONIC_WEEKS &&
+    sessionsInWindow > 0 &&
+    scoredInWindow.length / sessionsInWindow >= MIN_RPE_COVERAGE
+  )
 }
 
 /** Zone de risque associée au ratio charge aiguë / charge chronique. */
@@ -118,12 +157,16 @@ export function computeTrainingLoad(sessions: RpeSession[], now: Date = new Date
 
   // La charge chronique se dilue sur 28 jours pleins. Tant que l'historique est plus court,
   // le dénominateur est artificiellement bas et le ratio alarmerait à tort un athlète
-  // qui commence simplement à enregistrer ses séances.
+  // qui commence simplement à enregistrer ses séances. L'ancienneté ne suffit pas : la fenêtre
+  // elle-même doit être remplie (voir isChronicWindowCovered).
   const oldest = Math.min(...scored.map(entry => entry.timestamp))
   const historyDays = (reference - oldest) / MS_PER_DAY
   const hasEnoughHistory = historyDays >= CHRONIC_WINDOW_DAYS
 
-  const acwr = hasEnoughHistory && chronic > 0 ? Math.round((acute / chronic) * 100) / 100 : null
+  const acwr =
+    hasEnoughHistory && chronic > 0 && isChronicWindowCovered(sessions, scored, reference)
+      ? Math.round((acute / chronic) * 100) / 100
+      : null
 
   // Semaines vides comprises : une coupure fait chuter la charge, le graphe doit le montrer.
   // La semaine en cours n'apparaît qu'une fois entamée.

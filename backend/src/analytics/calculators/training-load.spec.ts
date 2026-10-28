@@ -80,6 +80,47 @@ describe('computeTrainingLoad', () => {
     expect(result.acwr_zone).toBeNull()
   })
 
+  it('retient l’ACWR quand une séance ancienne isolée précède une reprise', () => {
+    // Une séance le 3 août, puis la reprise : les 28 derniers jours n'ont qu'une tranche remplie
+    const sessions = [
+      { started_at: '2026-08-03T09:00:00.000Z', rpe: 5, session_minutes: 60 },
+      { started_at: '2026-09-20T09:00:00.000Z', rpe: 5, session_minutes: 60 },
+    ]
+
+    const result = computeTrainingLoad(sessions, now)
+
+    expect(result.acute).toBe(300)
+    expect(result.acwr).toBeNull()
+    expect(result.acwr_zone).toBeNull()
+  })
+
+  it('retient l’ACWR quand trop peu de séances de la fenêtre portent un RPE', () => {
+    // Une séance tous les 2 jours sur 28 jours, mais le RPE n'est noté qu'une fois sur deux
+    const sessions = Array.from({ length: 15 }, (_, i) => ({
+      started_at: new Date(now.getTime() - i * 2 * 24 * 3600 * 1000).toISOString(),
+      rpe: i % 2 === 0 ? 7 : null,
+      session_minutes: 60,
+    }))
+
+    const result = computeTrainingLoad(sessions, now)
+
+    expect(result.available).toBe(true)
+    expect(result.acwr).toBeNull()
+  })
+
+  it('calcule l’ACWR quand une tranche de la fenêtre chronique est vide', () => {
+    // Séances régulières, sauf une semaine de coupure entre J-14 et J-20
+    const sessions = [0, 2, 4, 7, 9, 11, 21, 23, 25, 28].map(days => ({
+      started_at: new Date(now.getTime() - days * 24 * 3600 * 1000).toISOString(),
+      rpe: 7,
+      session_minutes: 60,
+    }))
+
+    const result = computeTrainingLoad(sessions, now)
+
+    expect(result.acwr).not.toBeNull()
+  })
+
   it('détecte une montée brutale de charge sur la semaine écoulée', () => {
     const sessions = [
       // Fond de charge léger étalé sur toute la fenêtre chronique
