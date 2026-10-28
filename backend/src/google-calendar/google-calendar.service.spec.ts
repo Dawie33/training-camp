@@ -1,21 +1,32 @@
 import { BadRequestException, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Test } from '@nestjs/testing'
+import { randomBytes } from 'crypto'
 import { google } from 'googleapis'
 import { getConnectionToken } from 'nest-knexjs'
+import { decryptToken, encryptToken } from '../common/crypto/token-cipher'
 import { GOOGLE_CALENDAR_ENV_VARS, GoogleCalendarService, isRevokedTokenError } from './google-calendar.service'
 import { GoogleOAuthStateService } from './google-oauth-state.service'
+
+// Clé générée à chaque exécution : aucune clé réelle dans les tests
+const ENCRYPTION_KEY = randomBytes(32)
 
 const FULL_CONFIG: Record<string, string> = {
   GOOGLE_CLIENT_ID: 'client-id',
   GOOGLE_CLIENT_SECRET: 'client-secret',
   GOOGLE_REDIRECT_URI: 'https://app.example.com/api/calendar/google/callback',
+  TOKEN_ENCRYPTION_KEY: ENCRYPTION_KEY.toString('hex'),
 }
+
+// Valeur telle qu'elle est stockée en base depuis le chiffrement
+const STORED_TOKEN = encryptToken('refresh-token', ENCRYPTION_KEY)
 
 describe('GoogleCalendarService', () => {
   let builder: { where: jest.Mock; update: jest.Mock; first: jest.Mock }
   let knexMock: jest.Mock
   let getToken: jest.Mock
+  let setCredentials: jest.Mock
+  let revokeToken: jest.Mock
 
   async function buildService(config: Record<string, string> = FULL_CONFIG): Promise<GoogleCalendarService> {
     builder = {
@@ -31,18 +42,29 @@ describe('GoogleCalendarService', () => {
         GoogleCalendarService,
         { provide: getConnectionToken(), useValue: knexMock },
         { provide: GoogleOAuthStateService, useValue: { verify: () => 'user-1', create: () => 'signed-state' } },
-        { provide: ConfigService, useValue: { get: (name: string) => config[name] } },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (name: string) => config[name],
+            getOrThrow: (name: string) => {
+              if (!config[name]) throw new Error(`${name} manquante`)
+              return config[name]
+            },
+          },
+        },
       ],
     }).compile()
 
     const service = moduleRef.get(GoogleCalendarService)
     // Aucun appel réseau vers Google pendant les tests
-    jest.spyOn(service as any, 'getOAuth2Client').mockReturnValue({ getToken, setCredentials: jest.fn() })
+    setCredentials = jest.fn()
+    revokeToken = jest.fn().mockResolvedValue(undefined)
+    jest.spyOn(service as any, 'getOAuth2Client').mockReturnValue({ getToken, setCredentials, revokeToken })
     return service
   }
 
   describe('handleCallback', () => {
-    it("enregistre le refresh_token sur l'utilisateur du state", async () => {
+    it("enregistre le refresh_token chiffré sur l'utilisateur du state", async () => {
       const service = await buildService()
       getToken.mockResolvedValue({ tokens: { refresh_token: 'refresh-token' } })
 
@@ -50,7 +72,9 @@ describe('GoogleCalendarService', () => {
 
       expect(getToken).toHaveBeenCalledWith('code')
       expect(builder.where).toHaveBeenCalledWith({ id: 'user-1' })
-      expect(builder.update).toHaveBeenCalledWith({ google_refresh_token: 'refresh-token' })
+      const saved: string = builder.update.mock.calls[0][0].google_refresh_token
+      expect(saved).not.toContain('refresh-token')
+      expect(decryptToken(saved, ENCRYPTION_KEY)).toBe('refresh-token')
     })
 
     it("n'enregistre rien et lève une erreur si Google ne renvoie pas de refresh_token", async () => {
@@ -103,11 +127,13 @@ describe('GoogleCalendarService', () => {
 
     it("crée l'événement à 7 h, heure de Paris, et renvoie son id", async () => {
       const service = await buildService()
-      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      builder.first.mockResolvedValue({ google_refresh_token: STORED_TOKEN })
       insert.mockResolvedValue({ data: { id: 'event-1' } })
 
       await expect(service.syncWorkout('user-1', workout)).resolves.toBe('event-1')
       expect(builder.first).toHaveBeenCalledWith('google_refresh_token')
+      // Google reçoit le token déchiffré, jamais la valeur stockée
+      expect(setCredentials).toHaveBeenCalledWith({ refresh_token: 'refresh-token' })
       expect(insert.mock.calls[0][0].requestBody.start).toEqual({
         dateTime: '2026-10-05T07:00:00',
         timeZone: 'Europe/Paris',
@@ -124,7 +150,7 @@ describe('GoogleCalendarService', () => {
 
     it('efface le token et renvoie null quand Google signale un accès révoqué', async () => {
       const service = await buildService()
-      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      builder.first.mockResolvedValue({ google_refresh_token: STORED_TOKEN })
       insert.mockRejectedValue(
         Object.assign(new Error('invalid_grant'), { response: { data: { error: 'invalid_grant' } } })
       )
@@ -135,11 +161,41 @@ describe('GoogleCalendarService', () => {
 
     it('garde le token et renvoie null sur une panne temporaire de Google', async () => {
       const service = await buildService()
-      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      builder.first.mockResolvedValue({ google_refresh_token: STORED_TOKEN })
       insert.mockRejectedValue(new Error('Service Unavailable'))
 
       await expect(service.syncWorkout('user-1', workout)).resolves.toBeNull()
       expect(builder.update).not.toHaveBeenCalled()
+    })
+
+    it('accepte encore un ancien token stocké en clair (avant la migration)', async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: '1//ancien-token-en-clair' })
+      insert.mockResolvedValue({ data: { id: 'event-1' } })
+
+      await expect(service.syncWorkout('user-1', workout)).resolves.toBe('event-1')
+      expect(setCredentials).toHaveBeenCalledWith({ refresh_token: '1//ancien-token-en-clair' })
+    })
+
+    it("ne contacte pas Google et garde le token s'il est chiffré avec une autre clé", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: encryptToken('refresh-token', randomBytes(32)) })
+
+      await expect(service.syncWorkout('user-1', workout)).resolves.toBeNull()
+      expect(insert).not.toHaveBeenCalled()
+      expect(builder.update).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('disconnect', () => {
+    it('révoque le token déchiffré auprès de Google puis l’efface', async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: STORED_TOKEN })
+
+      await service.disconnect('user-1')
+
+      expect(revokeToken).toHaveBeenCalledWith('refresh-token')
+      expect(builder.update).toHaveBeenCalledWith({ google_refresh_token: null })
     })
   })
 

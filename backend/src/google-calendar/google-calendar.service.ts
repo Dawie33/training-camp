@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { calendar_v3, google } from 'googleapis'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { decryptToken, encryptToken, isEncryptedToken, parseEncryptionKey } from '../common/crypto/token-cipher'
 import { buildEventTimes } from './calendar-event-time'
 import { GoogleOAuthStateService } from './google-oauth-state.service'
 
@@ -39,8 +40,16 @@ const eventSummary = (name: string) => `🏋️ ${name}`
  */
 export const GOOGLE_CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar.events']
 
-/** Sans l'une de ces variables, Google rejette la demande d'autorisation : la fonctionnalité est désactivée. */
-export const GOOGLE_CALENDAR_ENV_VARS = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI'] as const
+/**
+ * Sans l'une de ces variables, la fonctionnalité est désactivée : Google rejette la demande d'autorisation
+ * (identifiants OAuth), ou le refresh_token ne peut pas être chiffré en base (TOKEN_ENCRYPTION_KEY).
+ */
+export const GOOGLE_CALENDAR_ENV_VARS = [
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'GOOGLE_REDIRECT_URI',
+  'TOKEN_ENCRYPTION_KEY',
+] as const
 
 @Injectable()
 export class GoogleCalendarService implements OnModuleInit {
@@ -72,6 +81,10 @@ export class GoogleCalendarService implements OnModuleInit {
     if (!this.isAvailable()) {
       throw new ServiceUnavailableException("La synchronisation Google Agenda n'est pas configurée")
     }
+  }
+
+  private getEncryptionKey(): Buffer {
+    return parseEncryptionKey(this.config.getOrThrow<string>('TOKEN_ENCRYPTION_KEY'))
   }
 
   /**
@@ -125,7 +138,9 @@ export class GoogleCalendarService implements OnModuleInit {
       throw new BadRequestException("Google n'a pas renvoyé de refresh_token")
     }
 
-    await this.knex('users').where({ id: userId }).update({ google_refresh_token: tokens.refresh_token })
+    // Jamais en clair en base : une fuite de la base seule ne donne pas accès aux agendas
+    const encrypted = encryptToken(tokens.refresh_token, this.getEncryptionKey())
+    await this.knex('users').where({ id: userId }).update({ google_refresh_token: encrypted })
   }
 
   /**
@@ -233,10 +248,32 @@ export class GoogleCalendarService implements OnModuleInit {
     }
   }
 
-  /** Ne lit que la colonne utile : inutile de charger le reste de la ligne users (hash du mot de passe compris). */
+  /**
+   * Renvoie le refresh_token déchiffré, ou null si l'utilisateur n'est pas connecté.
+   * Ne lit que la colonne utile : inutile de charger le reste de la ligne users (hash du mot de passe compris).
+   */
   private async findRefreshToken(userId: string): Promise<string | null> {
     const row = await this.knex('users').where({ id: userId }).first('google_refresh_token')
-    return row?.google_refresh_token ?? null
+    const stored: string | null = row?.google_refresh_token ?? null
+    if (!stored) return null
+
+    // Lecture tolérante : un token enregistré avant le chiffrement (migration pas encore passée) reste utilisable
+    if (!isEncryptedToken(stored)) {
+      this.logger.warn(
+        `Refresh_token Google en clair pour l'utilisateur ${userId} : lancer la migration de chiffrement`
+      )
+      return stored
+    }
+
+    try {
+      return decryptToken(stored, this.getEncryptionKey())
+    } catch {
+      // Mauvaise clé ou valeur altérée. On n'efface pas le token : corriger la clé suffit à tout rétablir.
+      this.logger.error(
+        `Refresh_token Google indéchiffrable pour l'utilisateur ${userId} : vérifier TOKEN_ENCRYPTION_KEY`
+      )
+      return null
+    }
   }
 
   private async clearRefreshToken(userId: string): Promise<void> {

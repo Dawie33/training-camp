@@ -71,6 +71,6 @@ La force n'a pas d'étiquette propre : c'est une section de type `strength` à l
 > | `/scheduled-activities/*` | CRUD, `complete`, `skip` |
 > | `/calendar/google/*` | `auth-url`, `callback`, `status`, `disconnect` |
 >
-> - Le refresh token Google est stocké dans `users.google_refresh_token`.
+> - Le refresh token Google est stocké **chiffré** (AES-256-GCM, clé `TOKEN_ENCRYPTION_KEY`) dans `users.google_refresh_token`.
 > - Un doublon (même type, même date) lève une `ConflictException` (HTTP 409).
 > - `scheduled_activities.activity_id` est polymorphe, sans clé étrangère. Pour `skill`, il pointe vers `skill_programs`.
