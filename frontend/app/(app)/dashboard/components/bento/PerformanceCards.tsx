@@ -150,7 +150,7 @@ function LoadCard({ load }: { load: TrainingLoadResult }) {
       {load.last_week_change_pct !== null && load.last_week_change_pct > 10 && (
         <p className="flex items-center gap-1.5 text-xs text-orange-600 mt-1.5">
           <AlertTriangle className="w-3 h-3 shrink-0" aria-hidden />
-          +{load.last_week_change_pct} % vs semaine passée — au-delà de +10 %, le risque de blessure monte.
+          +{load.last_week_change_pct} % semaine dernière vs la précédente — au-delà de +10 %, le risque de blessure monte.
         </p>
       )}
     </BentoCard>
