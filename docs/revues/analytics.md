@@ -6,6 +6,8 @@ Périmètre : `backend/src/analytics/` (contrôleur, service, 8 calculateurs, ty
 
 Aucune ligne de code n'a été modifiée. Les chiffres cités dans les exemples ont été obtenus en appelant les calculateurs réels avec les données indiquées.
 
+> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (en relecture). Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
+
 ## 1. Rôle du module
 
 Le module calcule le **diagnostic de performance** d'un athlète, **sans IA** : ratios de force, historique des 1RM, progression par benchmark, filières énergétiques, volume et régularité, charge d'entraînement (sRPE et ACWR), exposition par mouvement et avancement des compétences.
@@ -57,6 +59,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 
 - **Piste** : séparer les deux notions. La _durée d'effort_ (chrono du WOD) sert aux filières énergétiques. La _durée de séance_ sert au sRPE : la saisir sur la page de log (champ « durée de la séance », prérempli à 60 min), la stocker dans `results.session_duration_minutes` (à ajouter à `SessionResultsSchema`), et la passer à `computeTrainingLoad` à la place de `duration_seconds`.
 - **Terminé quand** : `computeTrainingLoad` reçoit une durée de séance distincte de la durée d'effort ; un test montre qu'un Fran de 4 min dans une séance de 60 min à RPE 9 vaut 540 UA ; `docs/diagnostic-performance.md` est à jour.
+- **Statut** : ✅ corrigé par #73. Champ `session_duration_minutes` saisi sur la page de log (prérempli : durée du .fit, sinon `estimated_duration` du workout, sinon 60 min) et fonction `resolveSessionMinutes`, qui n'utilise jamais le chrono du WOD. Écart avec le critère : le test porte sur une séance de 70 min avec un metcon de 12 min, pas sur le cas Fran à 540 UA. `docs/diagnostic-performance.md` est mis à jour dans #74.
 
 #### I2. L'ACWR peut annoncer « risque élevé » avec un seul point d'historique ancien
 
@@ -71,6 +74,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : `weeks` ne contient que les semaines **qui ont des séances**. `weeks[length - 2]` n'est donc pas forcément la semaine précédente. Dans l'exemple de I2, la variation compare la semaine du 21 septembre à celle du 3 août et affiche **0 %**, alors que 6 semaines sans séance les séparent. De plus, la dernière semaine est souvent la semaine en cours, incomplète : le lundi, la variation est presque toujours très négative. Cette valeur est envoyée au coach IA (« variation −80 % vs semaine passée », `diagnostic-prompt.ts:65-71`).
 - **Piste** : construire une suite de semaines continue (semaines vides à 0) entre le début de la période et aujourd'hui. Comparer la **dernière semaine complète** à celle d'avant.
 - **Terminé quand** : la variation vaut `null` ou −100 % quand la semaine précédente est vide, selon le choix documenté ; elle ne compare jamais une semaine partielle ; tests avec `now` injecté.
+- **Statut** : ✅ corrigé par #74. Comparaison de la dernière semaine complète à la précédente. Choix documenté : la variation vaut −100 % si la dernière semaine complète est vide, et `null` si c'est la semaine de référence qui l'est.
 
 #### I4. Volume et régularité mal mesurés
 
@@ -83,6 +87,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 
 - **Piste** : passer la date de début de période et `now` au calculateur. Compter les semaines calendaires (lundi → dimanche) de la période. Remplir les semaines vides à 0 (même suite que I3). Écrire des tests avec des valeurs exactes.
 - **Terminé quand** : 4 séances sur 4 semaines consécutives donnent `week_span = 4`, `avg_per_week = 1`, `consistency_pct = 100` ; une seule séance sur une période de 3 mois donne une régularité d'environ 8 % ; le graphe montre les semaines à zéro.
+- **Statut** : ✅ corrigé par #74. Fenêtre du début de période (ou de la première séance, si elle est plus récente) jusqu'à la semaine en cours, comptée seulement si elle est entamée ; semaines vides à 0 dans `weeks` ; tests à valeurs exactes. Une seule séance il y a 3 mois donne 1/13 ≈ 8 %.
 
 #### I5. La règle « un benchmark ne se compare qu'à lui-même » n'est pas garantie
 
@@ -210,12 +215,12 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 
 ## 6. Propositions d'issues (non créées)
 
-1. **[Analytics] sRPE : utiliser la durée de la séance, pas le chrono du WOD** (I1). Ajouter une durée de séance saisie sur la page de log, et la séparer de la durée d'effort utilisée pour les filières.
+1. ~~**[Analytics] sRPE : utiliser la durée de la séance, pas le chrono du WOD** (I1). Ajouter une durée de séance saisie sur la page de log, et la séparer de la durée d'effort utilisée pour les filières.~~ Fait dans #73.
 2. **[Analytics] ACWR : exiger un historique chronique réel avant de conclure** (I2). Remplacer le test « séance la plus ancienne ≥ 28 jours » par une couverture minimale des 4 semaines.
-3. **[Analytics] Semaines continues : variation hebdomadaire et régularité justes** (I3 + I4). Suite de semaines sans trou sur la période, variation sur la dernière semaine complète, `week_span` calendaire, tests à valeurs exactes.
+3. ~~**[Analytics] Semaines continues : variation hebdomadaire et régularité justes** (I3 + I4). Suite de semaines sans trou sur la période, variation sur la dernière semaine complète, `week_span` calendaire, tests à valeurs exactes.~~ Fait dans #74.
 4. **[Analytics] Benchmarks : regrouper par workout_id, contrôler le type de score, compter les reps d'AMRAP** (I5, partie lecture). La partie écriture reste dans #51 et #53.
 5. **[Analytics] Exposition par mouvement : une exposition par séance, charges de force séparées** (I6, avec la table d'alias de A5).
-6. **[Analytics] Tests unitaires du service** (I7). Prérequis des issues 1 et 5.
+6. **[Analytics] Tests unitaires du service** (I7). Prérequis de l'issue 5. L'issue 1 s'en est passée : la logique a été extraite dans une fonction pure testée (`resolveSessionMinutes`).
 7. **[Analytics] Valider `months` avec un DTO** (A1).
 8. **[Analytics] Semaines calculées dans le fuseau de l'athlète** (A2).
 9. **[Analytics] Distinguer les 1RM estimés dans l'historique et les ratios** (A4, après #45).
