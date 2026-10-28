@@ -11,8 +11,7 @@ describe('AppModule', () => {
   beforeAll(() => {
     process.env = {
       ...originalEnv,
-      // 'development' : le knexfile ne définit pas d'environnement 'test'
-      NODE_ENV: 'development',
+      NODE_ENV: 'test',
       DATABASE_HOST: 'localhost',
       OPENAI_API_KEY: 'sk-test',
       JWT_SECRET: 'x'.repeat(64),

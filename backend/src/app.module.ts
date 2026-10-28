@@ -7,7 +7,7 @@ import { AuthModule } from './auth/auth.module'
 import { AiModule } from './common/ai/ai.module'
 import { envValidationSchema } from './common/config/env.validation'
 import { OriginSecretModule } from './common/origin-secret/origin-secret.module'
-import knexConfig from './database/knexfile'
+import { getKnexConfig } from './database/knexfile'
 import { EquipmentsModule } from './equipments/equipments.module'
 import { ExercisesModule } from './exercises/exercises.module'
 import { FitImportModule } from './fit-import/fit-import.module'
@@ -38,7 +38,7 @@ import { WorkoutsModule } from './workouts/workouts.module'
         limit: 60, // 60 requêtes par minute par IP (routes normales)
       },
     ]),
-    KnexModule.forRoot({ config: knexConfig[process.env.NODE_ENV || 'development'] }),
+    KnexModule.forRoot({ config: getKnexConfig() }),
     AuthModule,
     WorkoutsModule,
     WorkoutSessionsModule,
