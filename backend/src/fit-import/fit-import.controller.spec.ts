@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common'
+import { ExecutionContext, INestApplication } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import request from 'supertest'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
@@ -16,7 +16,12 @@ describe('FitImportController — POST /fit-import/parse-multiple', () => {
     })
       // Utilisateur connecté : on teste la réception des fichiers, pas l'authentification
       .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: () => true })
+      .useValue({
+        canActivate: (context: ExecutionContext) => {
+          context.switchToHttp().getRequest().user = { id: 'user-1' }
+          return true
+        },
+      })
       .compile()
 
     app = moduleRef.createNestApplication()
@@ -31,10 +36,10 @@ describe('FitImportController — POST /fit-import/parse-multiple', () => {
 
   const upload = () => request(app.getHttpServer()).post('/fit-import/parse-multiple')
 
-  it('transmet les fichiers .fit au service', async () => {
+  it("transmet les fichiers .fit au service, avec l'utilisateur connecté (pour sa FC max)", async () => {
     await upload().attach('files', Buffer.from('contenu'), 'seance.fit').expect(201)
 
-    expect(parseMultipleFitFiles).toHaveBeenCalledWith([Buffer.from('contenu')])
+    expect(parseMultipleFitFiles).toHaveBeenCalledWith([Buffer.from('contenu')], 'user-1')
   })
 
   it('refuse un fichier de plus de 5 Mo (413), sans le transmettre au service', async () => {

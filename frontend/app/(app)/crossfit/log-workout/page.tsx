@@ -6,7 +6,14 @@ import { TimeInput } from '@/components/ui/time-input'
 import { ExerciseResult, PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout-structure'
 import { scheduleApi, sessionService, workoutsService } from '@/services'
-import { FitFileTooLargeError, HrZoneData, MultiActivityFitData, getSportLabel, parseFitFiles } from '@/services/fit-import'
+import {
+  FitFileTooLargeError,
+  HrZoneData,
+  MultiActivityFitData,
+  describeHrMaxReference,
+  getSportLabel,
+  parseFitFiles,
+} from '@/services/fit-import'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -41,7 +48,7 @@ function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSecon
   return (
     <div className="space-y-2 pt-1">
       <p className="text-xs text-muted-foreground font-medium">Zones de fréquence cardiaque</p>
-      {zones.map((z, i) => {
+      {zones.map(z => {
         const pct = total > 0 ? Math.round((z.seconds / total) * 100) : 0
         const mm = Math.floor(z.seconds / 60)
         const ss = String(Math.floor(z.seconds % 60)).padStart(2, '0')
@@ -51,7 +58,8 @@ function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSecon
             <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${pct}%`, backgroundColor: ZONE_COLORS[i] }}
+                // Couleur selon le numéro de zone : les zones vides sont retirées, l'index de la liste ne suffit pas
+                style={{ width: `${pct}%`, backgroundColor: ZONE_COLORS[z.zone - 1] }}
               />
             </div>
             <span className="text-xs text-muted-foreground w-16 text-right shrink-0">{mm}:{ss} ({pct}%)</span>
@@ -849,7 +857,14 @@ function LogWorkoutContent() {
 
               {/* Zones HR cumulées */}
               {fitData.totals.hr_zones && fitData.totals.hr_zones.length > 0 && (
-                <HrZonesChart zones={fitData.totals.hr_zones} totalSeconds={fitData.totals.duration_seconds} />
+                <>
+                  <HrZonesChart zones={fitData.totals.hr_zones} totalSeconds={fitData.totals.duration_seconds} />
+                  {describeHrMaxReference(fitData.totals.hr_max_reference) && (
+                    <p className="text-xs text-muted-foreground">
+                      {describeHrMaxReference(fitData.totals.hr_max_reference)}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           )}
