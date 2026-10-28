@@ -169,7 +169,7 @@ Pas de modale de log : le log se fait sur `/crossfit/log-workout`, qui écrit da
 
 ### Contrat du champ `results` (workout_sessions)
 
-`results` est un `jsonb` validé par `SessionResultsSchema` (Zod, `.passthrough()` pour ne pas invalider l'historique). Champs structurés à privilégier : `exercise_results` (une entrée par exercice, pas par série — `load_kg` porte la charge la plus lourde) et `rpe` (échelle CR-10). Le format historique `exercise_details` (texte libre) est conservé en lecture seule.
+`results` est un `jsonb` validé par `SessionResultsSchema` (Zod, `.passthrough()` pour ne pas invalider l'historique). Champs structurés à privilégier : `exercise_results` (une entrée par exercice, pas par série — `load_kg` porte la charge la plus lourde) et `rpe` (échelle CR-10, sur toute la séance). La charge sRPE multiplie le RPE par `session_duration_minutes` (séance entière), jamais par `elapsed_time_seconds` (chrono du metcon, réservé au classement par filière). Le format historique `exercise_details` (texte libre) est conservé en lecture seule.
 
 ### Analyse de performance
 

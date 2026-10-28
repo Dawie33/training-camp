@@ -7,7 +7,7 @@ import { computeMovementExposure, LoggedExercise } from './calculators/movement-
 import { computeSkillProgress, SkillProgramRow, SkillStepRow } from './calculators/skill-progress'
 import { computeStrengthHistory, OneRepMaxEntry } from './calculators/strength-history'
 import { computeStrengthRatios } from './calculators/strength-ratios'
-import { computeTrainingLoad } from './calculators/training-load'
+import { computeTrainingLoad, resolveSessionMinutes } from './calculators/training-load'
 import { computeTrainingVolume } from './calculators/training-volume'
 import {
   BenchmarkProgress,
@@ -129,9 +129,11 @@ export class AnalyticsService {
       measured_at: new Date(row.measured_at).toISOString(),
     }))
 
+    // Deux durées distinctes : le chrono du metcon classe la filière, la séance entière pondère le RPE.
     const durations = sessions.map(session => ({
       started_at: new Date(session.started_at).toISOString(),
       duration_seconds: this.resolveDurationSeconds(session),
+      session_minutes: resolveSessionMinutes(session.results),
       rpe: this.readNumber(session.results, 'rpe'),
     }))
 

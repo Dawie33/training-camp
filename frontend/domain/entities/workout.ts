@@ -136,6 +136,8 @@ export interface WorkoutSessionResults {
     rating?: number
     /** Effort perçu sur l'ensemble de la séance (échelle CR-10). Croisé avec la durée, il donne la charge de séance (sRPE). */
     rpe?: number
+    /** Durée de la séance entière en minutes, échauffement compris. Distincte du chrono du metcon (`elapsed_time_seconds`). */
+    session_duration_minutes?: number
     metrics?: WorkoutSessionMetrics
     block_progress?: Record<string, boolean>
     elapsed_time_seconds?: number
