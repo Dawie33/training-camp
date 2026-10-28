@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common'
+import { Controller, Post, Request, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { DailySessionService } from './services/daily-session.service'
@@ -10,9 +10,10 @@ export class RecommendationsController {
 
   /**
    * Génère et planifie la séance du jour si elle n'existe pas encore.
-   * Appelé silencieusement à la connexion (voir AuthContext frontend).
+   * Appelé par la carte « Séance du jour » du dashboard (TodaySessionCard).
+   * En POST car la route génère une séance par IA (un GET peut être rejoué ou déclenché par un lien externe).
    */
-  @Get('daily-session/check')
+  @Post('daily-session/check')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async checkDailySession(@Request() req: { user: { id: string } }) {
     return this.dailySessionService.checkAndGenerateDailySession(req.user.id)

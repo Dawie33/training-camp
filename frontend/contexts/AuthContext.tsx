@@ -19,7 +19,7 @@ function checkMonthlyReport() {
  * et sinon planifie automatiquement le moins testé récemment. Même pattern fire-and-forget.
  */
 function checkMonthlyBenchmark() {
-  apiClient.get('/workouts/check-monthly-benchmark').catch(() => {})
+  apiClient.post('/workouts/check-monthly-benchmark').catch(() => {})
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

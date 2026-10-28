@@ -3,8 +3,10 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -71,10 +73,11 @@ export class WorkoutsController {
 
   /**
    * Vérifie si un benchmark mensuel doit être planifié pour l'utilisateur et le planifie le cas échéant.
+   * En POST car la route écrit dans `user_workout_schedule` (un GET peut être rejoué ou déclenché par un lien externe).
    * @param req Requête authentifiée contenant l'utilisateur courant
    * @returns Le résultat de la vérification/planification
    */
-  @Get('check-monthly-benchmark')
+  @Post('check-monthly-benchmark')
   @UseGuards(JwtAuthGuard)
   async checkMonthlyBenchmark(@Request() req: { user: { id: string } }) {
     return await this.service.checkAndScheduleMonthlyBenchmark(req.user.id)
@@ -140,11 +143,11 @@ export class WorkoutsController {
    * Récupère un workout du référentiel par son identifiant.
    * @param id Identifiant du workout
    * @returns Le workout demandé
-   * @throws NotFoundException si le workout n'existe pas
+   * @throws NotFoundException si le workout n'existe pas ou si l'id n'est pas un UUID
    */
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async getWorkoutById(@Param('id') id: string) {
+  async getWorkoutById(@Param('id', new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND })) id: string) {
     const workout = await this.service.findOne(id)
     if (!workout) {
       throw new NotFoundException('Workout non trouvé')
