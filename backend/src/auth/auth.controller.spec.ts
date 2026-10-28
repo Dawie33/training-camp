@@ -16,9 +16,9 @@ const user = { id: 'user-1', email: 'dawie@mail.com', firstName: 'Dawie', lastNa
 const signupBody = { email: 'dawie@mail.com', password: 'secret123', firstName: 'Dawie', lastName: 'Sy' }
 const loginBody = { email: 'dawie@mail.com', password: 'secret123' }
 
-const authService = { signup: jest.fn(), login: jest.fn(), validateUser: jest.fn() }
+const authService = { signup: jest.fn(), login: jest.fn(), validateUser: jest.fn(), revokeTokens: jest.fn() }
 const jwtService = new JwtService({ secret: JWT_SECRET })
-const validToken = () => jwtService.sign({ sub: 'user-1', email: 'dawie@mail.com' }, { expiresIn: '7d' })
+const validToken = () => jwtService.sign({ sub: 'user-1', email: 'dawie@mail.com', ver: 0 }, { expiresIn: '7d' })
 
 /** ConfigService réduit aux deux variables lues par le module auth. */
 function fakeConfig(nodeEnv: string): Partial<ConfigService> {
@@ -68,6 +68,7 @@ beforeEach(() => {
   authService.signup.mockResolvedValue({ access_token: 'signed-token', user })
   authService.login.mockResolvedValue({ access_token: 'signed-token', user })
   authService.validateUser.mockResolvedValue({ ...user, isActive: true })
+  authService.revokeTokens.mockResolvedValue(undefined)
 })
 
 describe('AuthController', () => {
@@ -159,8 +160,33 @@ describe('AuthController', () => {
       expect(cookie).toContain('Path=/')
     })
 
+    it("révoque les jetons de l'utilisateur connecté", async () => {
+      await request(app.getHttpServer()).post('/auth/logout').set('Cookie', `access_token=${validToken()}`).expect(200)
+
+      expect(authService.revokeTokens).toHaveBeenCalledWith('user-1')
+    })
+
     it('exige une session (401)', async () => {
       await request(app.getHttpServer()).post('/auth/logout').expect(401)
+
+      expect(authService.revokeTokens).not.toHaveBeenCalled()
+    })
+
+    it('refuse après la déconnexion un jeton émis avant, même copié ailleurs (401)', async () => {
+      // Version des jetons simulée en mémoire, comme la colonne users.token_version
+      let tokenVersion = 0
+      authService.validateUser.mockImplementation(async (_userId: string, ver: unknown) =>
+        ver === tokenVersion ? { ...user, isActive: true } : null
+      )
+      authService.revokeTokens.mockImplementation(async () => {
+        tokenVersion += 1
+      })
+      const stolenToken = validToken()
+
+      await request(app.getHttpServer()).get('/auth/me').set('Cookie', `access_token=${stolenToken}`).expect(200)
+      await request(app.getHttpServer()).post('/auth/logout').set('Cookie', `access_token=${stolenToken}`).expect(200)
+      await request(app.getHttpServer()).get('/auth/me').set('Cookie', `access_token=${stolenToken}`).expect(401)
+      await request(app.getHttpServer()).get('/auth/me').set('Authorization', `Bearer ${stolenToken}`).expect(401)
     })
   })
 
@@ -170,7 +196,7 @@ describe('AuthController', () => {
     it("accepte le token du cookie et renvoie l'utilisateur validé", async () => {
       const res = await me().set('Cookie', `access_token=${validToken()}`).expect(200)
 
-      expect(authService.validateUser).toHaveBeenCalledWith('user-1')
+      expect(authService.validateUser).toHaveBeenCalledWith('user-1', 0)
       expect(res.body).toEqual({ ...user, isActive: true })
     })
 

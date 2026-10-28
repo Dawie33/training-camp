@@ -13,6 +13,8 @@ const storedUser = {
   role: 'user',
   isActive: true,
 }
+// Ligne lue en base par validateUser : la version des jetons en plus
+const storedRow = { ...storedUser, token_version: 3 }
 
 describe('AuthService', () => {
   let builder: Record<string, jest.Mock>
@@ -26,6 +28,7 @@ describe('AuthService', () => {
       first: jest.fn().mockResolvedValue(undefined),
       returning: jest.fn().mockResolvedValue([storedUser]),
       update: jest.fn().mockResolvedValue(1),
+      increment: jest.fn().mockResolvedValue(1),
     }
     // knex('users') renvoie toujours le même builder : chaque méthode terminale ne sert qu'une fois par scénario
     const knexMock: any = jest.fn(() => builder)
@@ -73,10 +76,13 @@ describe('AuthService', () => {
       expect(bcrypt.getRounds(password)).toBe(BCRYPT_COST)
     })
 
-    it("renvoie un token signé avec l'id et l'email, et l'utilisateur créé", async () => {
+    it("renvoie un token signé avec l'id, l'email et la version des jetons, et l'utilisateur créé", async () => {
+      builder.returning.mockResolvedValue([{ ...storedUser, token_version: 0 }])
+
       const result = await service.signup(signupDto)
 
-      expect(sign).toHaveBeenCalledWith({ sub: 'user-1', email: 'dawie@mail.com' })
+      expect(builder.returning).toHaveBeenCalledWith(['id', 'email', 'firstName', 'lastName', 'role', 'token_version'])
+      expect(sign).toHaveBeenCalledWith({ sub: 'user-1', email: 'dawie@mail.com', ver: 0 })
       expect(result).toEqual({
         access_token: 'signed-token',
         user: { id: 'user-1', email: 'dawie@mail.com', firstName: 'Dawie', lastName: 'Sy', role: 'user' },
@@ -109,16 +115,42 @@ describe('AuthService', () => {
       expect(sign).not.toHaveBeenCalled()
     })
 
-    it('met à jour lastLoginAt et renvoie un token, sans le hash du mot de passe', async () => {
-      builder.first.mockResolvedValue({ ...storedUser, password: passwordHash })
+    it("refuse un compte désactivé avec le même message qu'un mauvais mot de passe, sans token", async () => {
+      builder.first.mockResolvedValue({ ...storedRow, password: passwordHash })
+      const wrongPasswordError = await service
+        .login({ email: 'dawie@mail.com', password: 'mauvais-mdp' })
+        .catch((error: unknown) => error)
+
+      builder.first.mockResolvedValue({ ...storedRow, isActive: false, password: passwordHash })
+      const inactiveError = await service
+        .login({ email: 'dawie@mail.com', password: 'secret123' })
+        .catch((error: unknown) => error)
+
+      expect(inactiveError).toBeInstanceOf(UnauthorizedException)
+      expect(inactiveError).toEqual(wrongPasswordError)
+      expect(builder.update).not.toHaveBeenCalled()
+      expect(sign).not.toHaveBeenCalled()
+    })
+
+    it('met à jour lastLoginAt et renvoie un token à la version courante, sans le hash du mot de passe', async () => {
+      builder.first.mockResolvedValue({ ...storedRow, password: passwordHash })
 
       const result = await service.login({ email: 'dawie@mail.com', password: 'secret123' })
 
       expect(builder.where).toHaveBeenCalledWith({ id: 'user-1' })
       expect(builder.update).toHaveBeenCalledWith({ lastLoginAt: 'NOW()' })
-      expect(sign).toHaveBeenCalledWith({ sub: 'user-1', email: 'dawie@mail.com' })
+      expect(sign).toHaveBeenCalledWith({ sub: 'user-1', email: 'dawie@mail.com', ver: 3 })
       expect(result.access_token).toBe('signed-token')
       expect(result.user).not.toHaveProperty('password')
+    })
+  })
+
+  describe('revokeTokens', () => {
+    it("incrémente la version des jetons de l'utilisateur", async () => {
+      await service.revokeTokens('user-1')
+
+      expect(builder.where).toHaveBeenCalledWith({ id: 'user-1' })
+      expect(builder.increment).toHaveBeenCalledWith('token_version', 1)
     })
   })
 
@@ -126,20 +158,40 @@ describe('AuthService', () => {
     it('renvoie null pour un utilisateur inexistant', async () => {
       builder.first.mockResolvedValue(undefined)
 
-      expect(await service.validateUser('user-1')).toBeNull()
+      expect(await service.validateUser('user-1', 3)).toBeNull()
     })
 
     it('renvoie null pour un compte désactivé', async () => {
-      builder.first.mockResolvedValue({ ...storedUser, isActive: false })
+      builder.first.mockResolvedValue({ ...storedRow, isActive: false })
 
-      expect(await service.validateUser('user-1')).toBeNull()
+      expect(await service.validateUser('user-1', 3)).toBeNull()
     })
 
-    it("renvoie l'utilisateur actif, sans lire le mot de passe", async () => {
-      builder.first.mockResolvedValue(storedUser)
+    it('renvoie null pour un jeton émis avant une révocation (version plus ancienne)', async () => {
+      builder.first.mockResolvedValue(storedRow)
 
-      expect(await service.validateUser('user-1')).toEqual(storedUser)
-      expect(builder.first).toHaveBeenCalledWith(['id', 'email', 'firstName', 'lastName', 'role', 'isActive'])
+      expect(await service.validateUser('user-1', 2)).toBeNull()
+    })
+
+    it('renvoie null pour un jeton sans version (émis avant la mise en place de la révocation)', async () => {
+      builder.first.mockResolvedValue({ ...storedRow, token_version: 0 })
+
+      expect(await service.validateUser('user-1', undefined)).toBeNull()
+    })
+
+    it("renvoie l'utilisateur actif à la bonne version, sans le mot de passe ni la version", async () => {
+      builder.first.mockResolvedValue(storedRow)
+
+      expect(await service.validateUser('user-1', 3)).toEqual(storedUser)
+      expect(builder.first).toHaveBeenCalledWith([
+        'id',
+        'email',
+        'firstName',
+        'lastName',
+        'role',
+        'isActive',
+        'token_version',
+      ])
     })
   })
 })

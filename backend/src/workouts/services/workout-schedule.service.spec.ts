@@ -13,7 +13,17 @@ const pgDate = (year: number, month: number, day: number) => new Date(year, mont
  */
 function builderResolving(rows: unknown[]) {
   const builder: any = {}
-  for (const method of ['select', 'leftJoin', 'where', 'whereNot', 'insert', 'update', 'returning', 'delete']) {
+  for (const method of [
+    'select',
+    'leftJoin',
+    'where',
+    'whereNot',
+    'whereIn',
+    'insert',
+    'update',
+    'returning',
+    'delete',
+  ]) {
     builder[method] = jest.fn(() => builder)
   }
   builder.first = jest.fn(() => Promise.resolve(rows[0]))
@@ -178,6 +188,32 @@ describe('WorkoutScheduleService — synchronisation Google Agenda', () => {
 
       await expect(service.delete('s1', 'user-1')).rejects.toThrow(NotFoundException)
       expect(google.deleteEvent).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('suggestWeek', () => {
+    it('rattache un jour Box au bon jour de la semaine quand pg renvoie la colonne date en objet Date', async () => {
+      // Arrange — pg construit une colonne `date` à minuit heure locale : new Date(2026, 9, 6) = mardi 6 octobre.
+      // Avec toISOString(), à Paris, ce mardi devenait le lundi 5 (22 h UTC la veille).
+      const boxRows = [{ scheduled_date: new Date(2026, 9, 6) }]
+      const { service } = await buildService([boxRows, []])
+
+      // Act
+      const result = await service.suggestWeek('user-1', '2026-10-19')
+
+      // Assert
+      expect(result.weeks_analyzed).toBe(1)
+      expect(result.days.map(d => d.date)).toEqual([
+        '2026-10-19',
+        '2026-10-20',
+        '2026-10-21',
+        '2026-10-22',
+        '2026-10-23',
+        '2026-10-24',
+        '2026-10-25',
+      ])
+      expect(result.days[0].isBox).toBe(false)
+      expect(result.days[1]).toEqual({ date: '2026-10-20', isBox: true, isRest: false, types: [] })
     })
   })
 })

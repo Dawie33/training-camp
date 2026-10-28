@@ -45,6 +45,22 @@ describe('DailySessionService', () => {
     service = moduleRef.get(DailySessionService)
   })
 
+  describe("jour d'aujourd'hui", () => {
+    afterEach(() => jest.useRealTimers())
+
+    it('cherche le créneau du jour parisien entre minuit et 2 h (encore la veille en UTC)', async () => {
+      // 22 h 30 UTC le 5 octobre = 0 h 30 le 6 octobre à Paris
+      jest.useFakeTimers({ now: new Date('2026-10-05T22:30:00Z'), doNotFake: ['nextTick', 'setImmediate'] })
+      scheduleService.findByDate.mockResolvedValue({ ...todaySchedule, coach_proposal: { workout_id: null } })
+
+      await service.checkAndGenerateDailySession('user-1')
+      await service.generateProposal('user-1')
+
+      expect(scheduleService.findByDate).toHaveBeenNthCalledWith(1, 'user-1', '2026-10-06')
+      expect(scheduleService.findByDate).toHaveBeenNthCalledWith(2, 'user-1', '2026-10-06')
+    })
+  })
+
   it('renvoie la séance déjà planifiée sans rien générer', async () => {
     scheduleService.findByDate.mockResolvedValue(todaySchedule)
 

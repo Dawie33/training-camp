@@ -18,17 +18,24 @@ export const slugify = (s: string) =>
 /**
  * Convertit de manière sécurisée une valeur en string JSON pour PostgreSQL.
  * Gère les cas undefined, null, string, objets et arrays.
+ * Une chaîne n'est renvoyée telle quelle que si c'est déjà du JSON valide ; sinon elle est
+ * encodée en chaîne JSON (« abc » → « "abc" ») pour que PostgreSQL accepte toujours l'écriture.
  *
  * @param value - Valeur à convertir en JSON
  * @param defaultValue - Valeur par défaut si value est undefined/null/empty (par défaut: null)
- * @returns String JSON ou null
+ * @returns String JSON valide ou null
  */
 export const safeJsonStringify = (value: unknown, defaultValue: unknown = null): string | null => {
   if (value === undefined || value === null || value === '') {
     return defaultValue === null ? null : JSON.stringify(defaultValue)
   }
   if (typeof value === 'string') {
-    return value
+    try {
+      JSON.parse(value)
+      return value
+    } catch {
+      return JSON.stringify(value)
+    }
   }
   if (typeof value === 'object') {
     if (Array.isArray(value)) {

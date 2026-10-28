@@ -224,6 +224,8 @@ function LogWorkoutContent() {
   const [repsAfterSplit, setRepsAfterSplit] = useState('')
   const [rating, setRating] = useState<number>(0)
   const [rpe, setRpe] = useState<number>(0)
+  // null tant que l'athlète n'a pas touché au champ : la durée affichée est alors déduite du contexte
+  const [sessionMinutesInput, setSessionMinutesInput] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [wodDate, setWodDate] = useState(() => new Date().toISOString().slice(0, 16))
 
@@ -358,6 +360,12 @@ function LogWorkoutContent() {
       )
   }, [selectedWorkout])
 
+  // Durée de toute la séance, pas du metcon : enregistrement .fit, sinon durée prévue du workout, sinon une séance type
+  const defaultSessionMinutes = fitData?.totals.duration_seconds
+    ? Math.round(fitData.totals.duration_seconds / 60)
+    : selectedWorkout?.estimated_duration || 60
+  const sessionMinutesValue = sessionMinutesInput ?? String(defaultSessionMinutes)
+
   const handleSelectWorkout = useCallback((workout: Workouts) => {
     setSelectedWorkout(workout)
     setSearch(workout.name || '')
@@ -428,6 +436,11 @@ function LogWorkoutContent() {
       toast.error('Saisis un temps ou coche "Cap atteint"')
       return
     }
+    const sessionMinutes = Number(sessionMinutesValue)
+    if (!Number.isInteger(sessionMinutes) || sessionMinutes < 1 || sessionMinutes > 300) {
+      toast.error('Saisis la durée totale de la séance, entre 1 et 300 min')
+      return
+    }
     if (hasConditioning && isAmrap) {
       if (amrapScoreMode === 'split' && (!hasValidSplitTime || !hasValidSplitReps)) {
         toast.error('Saisis le temps du split et les reps après le split')
@@ -481,6 +494,7 @@ function LogWorkoutContent() {
       const resultPayload: Record<string, unknown> = {
         rating: rating > 0 ? rating : undefined,
         rpe: rpe > 0 ? rpe : undefined,
+        session_duration_minutes: sessionMinutes,
         exercise_results: exerciseResults.length > 0 ? exerciseResults : undefined,
         ...(fitData && {
           coros: {
@@ -1003,9 +1017,34 @@ function LogWorkoutContent() {
 
           <div>
             <label className="block text-sm text-muted-foreground mb-2">
-              Difficulté de la séance <span className="text-xs">(RPE)</span>
+              Difficulté de toute la séance <span className="text-xs">(RPE)</span>
             </label>
             <RpeSelector value={rpe} onChange={setRpe} />
+          </div>
+
+          <div>
+            <label htmlFor="session-duration" className="block text-sm text-muted-foreground mb-2">
+              Durée totale de la séance
+            </label>
+            <div className="relative w-36">
+              <input
+                id="session-duration"
+                type="number"
+                inputMode="numeric"
+                step="1"
+                min="1"
+                max="300"
+                value={sessionMinutesValue}
+                onChange={(e) => setSessionMinutesInput(e.target.value)}
+                className="w-full px-4 py-3 pr-12 bg-background border border-border rounded-lg text-foreground text-center text-xl font-mono focus:outline-none focus:border-primary/50 transition-all"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                min
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Échauffement compris. Avec le RPE, elle mesure la charge de la séance.
+            </p>
           </div>
 
           <div>

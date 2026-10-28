@@ -72,8 +72,12 @@ export interface TrainingVolumeResult {
   total_sessions: number
   week_span: number
   avg_per_week: number
-  /** Part des semaines de la période où au moins une séance a été enregistrée. */
+  /**
+   * Part des semaines entraînées, du début de la fenêtre (période ou première séance) à la
+   * semaine en cours, celle-ci n'étant comptée qu'une fois entamée.
+   */
   consistency_pct: number
+  /** Toutes les semaines de la fenêtre, semaines sans séance comprises (à 0). */
   weeks: WeeklyVolumePoint[]
 }
 
@@ -89,11 +93,13 @@ export interface TrainingLoadResult {
   /** false tant qu'aucune séance ne porte de RPE — l'écran affiche alors une invitation, pas un zéro. */
   available: boolean
   sessions_with_rpe: number
+  /** Toutes les semaines depuis la première séance notée, semaines sans séance comprises (à 0). */
   weeks: WeeklyLoadPoint[]
   acute: number | null
   chronic: number | null
   acwr: number | null
   acwr_zone: AcwrZone | null
+  /** Dernière semaine complète contre la précédente. Null quand la précédente n'a aucune charge. */
   last_week_change_pct: number | null
 }
 
