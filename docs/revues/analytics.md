@@ -206,6 +206,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : la valeur est seulement testée comme `string`, puis convertie en `PerformanceLevel`. Une ancienne analyse avec une autre valeur passe telle quelle au frontend.
 - **Piste** : vérifier la valeur contre la liste des niveaux (ou un `z.enum`), sinon renvoyer `null`.
 - **Terminé quand** : test avec `performance_level: 'excellent'` → `analysis: null`.
+- **Statut** : ✅ corrigé sur la branche `fix/analytics-performance-level`. `readAnalysis` valide le niveau avec le `z.enum` de `WodAnalysisSchema` (dont `PerformanceLevel` est désormais dérivé) et renvoie `null` hors liste, test `'excellent'` à l'appui.
 
 ## 5. Issues existantes concernées
 
