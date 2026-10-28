@@ -115,6 +115,23 @@ describe('AuthService', () => {
       expect(sign).not.toHaveBeenCalled()
     })
 
+    it("refuse un compte désactivé avec le même message qu'un mauvais mot de passe, sans token", async () => {
+      builder.first.mockResolvedValue({ ...storedRow, password: passwordHash })
+      const wrongPasswordError = await service
+        .login({ email: 'dawie@mail.com', password: 'mauvais-mdp' })
+        .catch((error: unknown) => error)
+
+      builder.first.mockResolvedValue({ ...storedRow, isActive: false, password: passwordHash })
+      const inactiveError = await service
+        .login({ email: 'dawie@mail.com', password: 'secret123' })
+        .catch((error: unknown) => error)
+
+      expect(inactiveError).toBeInstanceOf(UnauthorizedException)
+      expect(inactiveError).toEqual(wrongPasswordError)
+      expect(builder.update).not.toHaveBeenCalled()
+      expect(sign).not.toHaveBeenCalled()
+    })
+
     it('met à jour lastLoginAt et renvoie un token à la version courante, sans le hash du mot de passe', async () => {
       builder.first.mockResolvedValue({ ...storedRow, password: passwordHash })
 
