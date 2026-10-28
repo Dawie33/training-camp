@@ -1,4 +1,13 @@
-import { BenchmarkResultDto } from './dto/workout.dto'
+/**
+ * Résultat de benchmark minimal lu par `calculateLevelFromBenchmarks`.
+ * `BenchmarkResultDto` (workouts) le satisfait sans import, ce qui évite une dépendance common → workouts.
+ */
+export interface BenchmarkResultInput {
+  time_seconds?: number
+  rounds?: number
+  reps?: number
+  weight?: number
+}
 
 /**
  * Valide et retourne un niveau utilisateur valide
@@ -56,7 +65,7 @@ export const BENCHMARK_STANDARDS: Record<string, BenchmarkStandard> = {
  */
 export function calculateLevelFromBenchmarks(
   workoutName: string,
-  result: BenchmarkResultDto,
+  result: BenchmarkResultInput,
   currentLevel: string
 ): 'beginner' | 'intermediate' | 'advanced' | 'elite' {
   const standard = BENCHMARK_STANDARDS[workoutName]

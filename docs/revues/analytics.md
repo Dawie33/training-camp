@@ -178,6 +178,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : la dépendance va dans les deux sens au niveau des fichiers. Ce n'est pas un cycle de modules Nest, mais une constante métier rangée dans le mauvais module. Même famille que #35 et #32.
 - **Piste** : déplacer `BENCHMARK_STANDARDS` (et `calculateLevelFromBenchmarks`) dans `common/benchmarks/`. À faire avec #32.
 - **Terminé quand** : `analytics/` n'importe plus rien de `workouts/` ; `src/app.module.spec.ts` passe.
+- **Statut** : ✅ corrigé sur la branche `refactor/benchmarks-common`. `BENCHMARK_STANDARDS`, `calculateLevelFromBenchmarks` et `validateLevel` sont dans `common/benchmarks/benchmark-standards.ts` (`workout.utils.ts` supprimé) ; la fonction prend une interface locale `BenchmarkResultInput` que `BenchmarkResultDto` satisfait, et `analytics/` n'importe plus rien de `workouts/`.
 
 #### A8. Frontend : types copiés à la main et requêtes concurrentes
 
