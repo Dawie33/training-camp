@@ -194,7 +194,7 @@ function BenchmarksCard({ benchmarks }: { benchmarks: BenchmarkProgress[] }) {
         {benchmarks.slice(0, 4).map(benchmark => {
           const last = benchmark.points[benchmark.points.length - 1]
           return (
-            <div key={benchmark.name}>
+            <div key={benchmark.workout_id}>
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-xs text-muted-foreground truncate">{benchmark.name}</span>
                 <div className="flex items-baseline gap-2 shrink-0">
@@ -206,9 +206,13 @@ function BenchmarksCard({ benchmarks }: { benchmarks: BenchmarkProgress[] }) {
               </div>
               {benchmark.points.length > 1 ? (
                 <Sparkline
-                  points={benchmark.points.map(p => ({ label: formatAxisDate(p.measured_at), value: p.score_value }))}
+                  points={benchmark.points.map(p => ({
+                    label: formatAxisDate(p.measured_at),
+                    value: p.comparable_value,
+                    display: p.display,
+                  }))}
                   height={40}
-                  formatValue={() => last.display}
+                  invert={benchmark.lower_is_better}
                 />
               ) : (
                 <p className="text-[11px] text-muted-foreground py-3">

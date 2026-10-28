@@ -83,7 +83,15 @@ export class AnalyticsService {
       this.knex('one_rep_maxes').select('lift', 'value').where('user_id', userId),
 
       this.knex('benchmark_history')
-        .select('workout_name', 'score_type', 'score_value', 'extra_reps', 'calculated_level', 'measured_at')
+        .select(
+          'workout_id',
+          'workout_name',
+          'score_type',
+          'score_value',
+          'extra_reps',
+          'calculated_level',
+          'measured_at'
+        )
         .where('user_id', userId)
         .orderBy('measured_at', 'asc'),
 
@@ -137,6 +145,7 @@ export class AnalyticsService {
     }
 
     const benchmarkEntries: BenchmarkEntry[] = benchmarkRows.map(row => ({
+      workout_id: row.workout_id,
       workout_name: row.workout_name,
       score_type: row.score_type,
       score_value: Number(row.score_value),
