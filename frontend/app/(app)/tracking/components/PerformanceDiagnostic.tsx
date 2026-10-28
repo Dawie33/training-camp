@@ -194,7 +194,7 @@ function BenchmarksPanel({ data }: { data: BenchmarkProgress[] }) {
   return (
     <Section
       title="Benchmarks"
-      subtitle="Chaque workout comparé à lui-même, jamais à un autre"
+      subtitle="Chaque workout comparé à lui-même, jamais à un autre · tout l'historique"
       icon={<Target className="w-4.5 h-4.5" />}
     >
       <div className="space-y-3">

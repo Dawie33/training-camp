@@ -1,5 +1,9 @@
 import { apiClient } from './apiClient'
 
+// Types recopiés à la main : à garder synchronisés avec backend/src/analytics/types/analytics.types.ts.
+// Toute évolution de la réponse de GET /analytics/overview doit être reportée ici,
+// aucun contrôle automatique ne détecte un écart entre les deux fichiers.
+
 export type RatioVerdict = 'below' | 'in_range' | 'above' | 'unavailable'
 
 export interface StrengthRatio {
