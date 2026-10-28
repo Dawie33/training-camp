@@ -6,7 +6,7 @@ Périmètre : `backend/src/analytics/` (contrôleur, service, 8 calculateurs, ty
 
 Aucune ligne de code n'a été modifiée. Les chiffres cités dans les exemples ont été obtenus en appelant les calculateurs réels avec les données indiquées.
 
-> **Suivi au 2026-10-28** : tous les points sont traités, sauf A10 (reporté), la partie écriture de I5 (revues #51 et #53) et la version EWMA de l'ACWR (A3, non retenue). PR : I1 #73, I3 et I4 #74, I2 et A3 (libellés) #75, I6, I7 et A5 #77, I5 (lecture) et A6 #78, A4 #79, A2 #80, A1 #81, A7 #82, A8 et A9 #83, A11 #84. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
+> **Suivi au 2026-10-28** : tous les points sont traités, sauf A10 (reporté, #86), la partie écriture de I5 (revues #51 et #53) et la version EWMA de l'ACWR (A3, non retenue). PR : I1 #73, I3 et I4 #74, I2 et A3 (libellés) #75, I6, I7 et A5 #77, I5 (lecture) et A6 #78, A4 #79, A2 #80, A1 #81, A7 #82, A8 et A9 #83, A11 #84. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
 
 ## 1. Rôle du module
 
@@ -204,7 +204,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
   - `results` (jsonb) est chargé en entier, y compris les données Coros, alors que seuls `rpe`, `elapsed_time_seconds` et `exercise_results` servent.
 - **Piste** : ne sélectionner que les clés utiles (`results->'rpe'`, etc.) ; regrouper les deux requêtes de compétences en une seule. Ajouter un cache seulement si la mesure le justifie.
 - **Terminé quand** : mesure avant/après sur un compte avec 12 mois de données (`EXPLAIN ANALYZE`), décision notée dans la revue.
-- **Statut** : ⏸️ reporté. Aucun problème mesuré aujourd'hui, et la mesure demandée exige une base remplie sur 12 mois. À reprendre si le tableau de bord ralentit ou si le pool de connexions sature.
+- **Statut** : ⏸️ reporté, suivi dans #86. Aucun problème mesuré aujourd'hui, et la mesure demandée exige une base remplie sur 12 mois. À reprendre si le tableau de bord ralentit ou si le pool de connexions sature.
 
 #### A11. `performance_level` relu sans vérification
 
