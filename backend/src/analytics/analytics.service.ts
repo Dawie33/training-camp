@@ -82,6 +82,8 @@ export class AnalyticsService {
 
       this.knex('one_rep_maxes').select('lift', 'value', 'source').where('user_id', userId),
 
+      // Benchmarks non bornés à la période : un même benchmark se reteste rarement,
+      // une fenêtre de quelques mois n'aurait souvent qu'un point à comparer.
       this.knex('benchmark_history')
         .select(
           'workout_id',

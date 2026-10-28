@@ -22,7 +22,15 @@ graph LR
     E --> G[Contexte du coach IA]
 ```
 
-Le service lit les données de l'athlète sur la période choisie (3 mois par défaut, de 1 à 12). Il les confie à des calculateurs indépendants. Le résultat alimente l'écran et le contexte de l'IA.
+Le service lit les données de l'athlète, puis les confie à des calculateurs indépendants. Le résultat alimente l'écran et le contexte de l'IA.
+
+Tous les blocs ne suivent pas la période choisie (3 mois par défaut, de 1 à 12) :
+
+- **Sur la période** : les séances terminées depuis le début de la période. Elles alimentent les filières énergétiques, le volume et la régularité, la charge d'entraînement et l'exposition par mouvement.
+- **Sur tout l'historique** : la progression par benchmark (un benchmark se reteste rarement, quelques mois n'en montreraient souvent qu'un point) et l'historique des 1RM (une courbe de charge n'a de sens que sur la durée). L'écran l'indique par la mention « tout l'historique ».
+- **État actuel** : les 1RM actuels (ratios de force et % de 1RM par mouvement), les compétences actives et la dernière séance terminée ne dépendent pas de la période.
+
+La régularité ne compte pas les semaines antérieures à la toute première séance de l'athlète, même si elles tombent dans la période.
 
 ## Les indicateurs
 

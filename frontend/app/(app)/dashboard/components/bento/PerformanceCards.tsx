@@ -105,7 +105,7 @@ function StrengthHistoryCard({ data }: { data: StrengthHistoryResult }) {
 
   return (
     <BentoCard
-      eyebrow="Évolution des charges"
+      eyebrow="Évolution des charges · tout l'historique"
       href="/crossfit/rm"
       hrefLabel="Gérer mes 1RM"
     >
@@ -203,7 +203,7 @@ function BenchmarksCard({ benchmarks }: { benchmarks: BenchmarkProgress[] }) {
   if (benchmarks.length === 0) return null
 
   return (
-    <BentoCard eyebrow="Benchmarks" href="/tracking">
+    <BentoCard eyebrow="Benchmarks · tout l'historique" href="/tracking">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3">
         {benchmarks.slice(0, 4).map(benchmark => {
           const last = benchmark.points[benchmark.points.length - 1]

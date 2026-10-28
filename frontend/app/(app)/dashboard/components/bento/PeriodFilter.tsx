@@ -10,9 +10,10 @@ export const PERIOD_OPTIONS = [
 /**
  * Filtre de période unique du dashboard.
  *
- * Il se place en une seule ligne au-dessus de tout ce qu'il cadre : chaque carte
- * et chaque graphe se recalcule sur la même tranche, pour que les chiffres
- * concordent toujours entre eux.
+ * Il se place en une seule ligne au-dessus de tout ce qu'il cadre : les cartes
+ * calculées sur les séances se recalculent sur la même tranche, pour que les
+ * chiffres concordent entre eux. Benchmarks et évolution des 1RM couvrent tout
+ * l'historique (mention « tout l'historique » sur leur carte).
  */
 export function PeriodFilter({
   months,

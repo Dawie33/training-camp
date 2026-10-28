@@ -183,6 +183,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : les types sont dupliqués sans contrôle, et toute évolution (I1, I4, A4) doit être faite deux fois. Par ailleurs, si l'utilisateur change vite de période, une réponse plus lente pour l'ancienne période peut arriver en dernier et écraser la bonne.
 - **Piste** : ignorer les réponses obsolètes (drapeau `cancelled` dans l'effet, ou `AbortController`). Pour les types, un commentaire « à synchroniser avec … » au minimum.
 - **Terminé quand** : changer de période deux fois de suite affiche toujours la dernière période demandée.
+- **Statut** : ✅ corrigé sur la branche `fix/analytics-periode-frontend`. `usePerformanceOverview` numérote chaque requête et n'écrit l'état que pour la plus récente : une réponse plus lente pour une ancienne période est ignorée. `services/analytics.ts` porte en tête un commentaire « à garder synchronisés avec `backend/src/analytics/types/analytics.types.ts` ».
 
 #### A9. La période ne s'applique pas à tous les blocs
 
@@ -190,6 +191,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : les benchmarks et l'historique des 1RM ne sont pas bornés par `months`. C'est un choix voulu pour les 1RM (commentaire ligne 82), mais il n'est pas commenté pour les benchmarks. La documentation dit au contraire que « le service lit les données de l'athlète sur la période choisie ». Changer la période ne modifie donc pas ces blocs, sans que l'écran le dise.
 - **Piste** : documenter le choix dans le code et dans la doc, et l'indiquer à l'écran (« tout l'historique »).
 - **Terminé quand** : doc, commentaire et libellé à l'écran sont cohérents.
+- **Statut** : ✅ corrigé sur la branche `fix/analytics-periode-frontend`. La requête `benchmark_history` est commentée, `docs/diagnostic-performance.md` distingue les blocs sur la période, sur tout l'historique et à l'état actuel, et les cartes Benchmarks et Évolution des charges affichent « tout l'historique ».
 
 #### A10. Performance des agrégations
 
