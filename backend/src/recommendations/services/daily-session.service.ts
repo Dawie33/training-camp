@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { toParisDate } from 'src/common/utils/date-only'
 import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
 import { WorkoutScheduleService } from 'src/workouts/services/workout-schedule.service'
 import { WorkoutsService } from 'src/workouts/services/workouts.service'
@@ -70,7 +71,7 @@ export class DailySessionService {
    * @param userId ID de l'utilisateur
    */
   async checkAndGenerateDailySession(userId: string): Promise<DailySessionResult> {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = toParisDate(new Date())
 
     const existing = await this.scheduleService.findByDate(userId, today)
     if (existing) {
@@ -129,7 +130,7 @@ export class DailySessionService {
    * @throws NotFoundException si aucun créneau n'existe aujourd'hui
    */
   async generateProposal(userId: string): Promise<CoachProposal> {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = toParisDate(new Date())
 
     const schedule = await this.scheduleService.findByDate(userId, today)
     if (!schedule) throw new NotFoundException("Aucune séance planifiée aujourd'hui")

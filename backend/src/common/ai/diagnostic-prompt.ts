@@ -65,7 +65,7 @@ export function buildDiagnosticPromptLines(diagnostic?: PerformanceDiagnosticSum
   if (diagnostic.load_zone) {
     const change =
       diagnostic.load_change_pct !== null
-        ? `, variation ${diagnostic.load_change_pct > 0 ? '+' : ''}${diagnostic.load_change_pct} % vs semaine passée`
+        ? `, variation ${diagnostic.load_change_pct > 0 ? '+' : ''}${diagnostic.load_change_pct} % (dernière semaine complète vs la précédente)`
         : ''
     lines.push('### Charge d’entraînement')
     lines.push(`- ${LOAD_ZONE_LABELS[diagnostic.load_zone] ?? diagnostic.load_zone}${change}`)

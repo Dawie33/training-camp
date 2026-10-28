@@ -31,9 +31,9 @@ Le service lit les données de l'athlète sur la période choisie (3 mois par d�
 | **Ratios de force** | Mes lifts sont-ils équilibrés entre eux ? | 1RM |
 | **Historique de force** | Mes 1RM progressent-ils ? | Historique des 1RM |
 | **Progression par benchmark** | Suis-je meilleur sur Fran qu'avant ? | Scores de benchmarks |
-| **Filières énergétiques** | Est-ce que je travaille toutes les durées d'effort ? | Durée des séances |
+| **Filières énergétiques** | Est-ce que je travaille toutes les durées d'effort ? | Chrono du metcon |
 | **Volume et régularité** | Combien de séances par semaine, et avec quelle constance ? | Dates des séances |
-| **Charge d'entraînement** | Est-ce que j'augmente la charge trop vite ? | RPE et durée |
+| **Charge d'entraînement** | Est-ce que j'augmente la charge trop vite ? | RPE et durée totale de la séance |
 | **Exposition par mouvement** | Quels mouvements je vois peu ou scale souvent ? | Résultats par exercice |
 | **Avancement des compétences** | Où en suis-je dans mes programmes de skills ? | Étapes des programmes |
 
@@ -65,9 +65,19 @@ Chaque écart est accompagné d'une interprétation de coach : cause probable et
 
 Un domaine sous 10 % des séances est signalé comme délaissé. Ce signal n'apparaît qu'à partir de 8 séances chronométrées.
 
+La durée utilisée est celle du **metcon** (le chrono saisi), pas celle de la séance : un WOD de 12 min dans une séance d'une heure reste un effort mixte.
+
+## Volume et régularité
+
+- **Régularité** = semaines avec au moins une séance / toutes les semaines de la fenêtre.
+- La fenêtre commence au début de la période choisie, ou à la première séance enregistrée si elle est plus récente : un athlète qui débute dans l'app n'est pas pénalisé pour les semaines d'avant.
+- Elle se termine à la semaine en cours, comptée seulement si elle porte déjà une séance. Un lundi matin, rien n'a encore été manqué.
+- Les semaines sans séance apparaissent à zéro sur le graphe : une coupure doit se voir.
+
 ## Charge d'entraînement (sRPE et ACWR)
 
-- **sRPE** (session RPE) = effort ressenti × durée en minutes. Sans durée, 60 minutes sont retenues.
+- **sRPE** (session RPE) = effort ressenti sur toute la séance × **durée totale de la séance** en minutes, échauffement compris. La durée est saisie à l'enregistrement de la séance. À défaut, l'app prend la durée de l'activité .fit, puis 60 minutes. Le chrono du metcon n'est jamais utilisé : il diviserait la charge d'une séance complète.
+- **Variation hebdomadaire** = dernière semaine complète comparée à celle d'avant. La semaine en cours, inachevée, n'est pas comparée. Une semaine sans séance compte zéro ; si la semaine de référence est vide, aucune variation n'est affichée. Au-delà de +10 %, l'écran signale une hausse rapide.
 - **ACWR** (Acute:Chronic Workload Ratio) = charge des 7 derniers jours / moyenne hebdomadaire des 28 derniers jours.
 - L'ACWR n'est calculé qu'après 28 jours d'historique, pour éviter une fausse alerte en début d'utilisation.
 

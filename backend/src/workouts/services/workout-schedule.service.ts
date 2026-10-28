@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { toDateOnly } from 'src/common/utils/date-only'
 import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 
@@ -215,8 +216,9 @@ export class WorkoutScheduleService {
       .returning('*')
 
     // Sync vers Google Calendar (sans bloquer si non connecté ou en cas d'erreur)
+    let googleEventId: string | null = null
     try {
-      await this.googleCalendarService.syncWorkout(userId, {
+      googleEventId = await this.googleCalendarService.syncWorkout(userId, {
         name: workoutName,
         scheduledDate: data.scheduled_date,
         duration: workoutDuration,
@@ -224,6 +226,12 @@ export class WorkoutScheduleService {
       })
     } catch {
       // Google Calendar non connecté ou erreur silencieuse
+    }
+
+    // L'id est gardé pour pouvoir déplacer ou supprimer l'événement plus tard (sinon il reste orphelin)
+    if (googleEventId) {
+      await this.knex('user_workout_schedule').where('id', schedule.id).update({ google_event_id: googleEventId })
+      return { ...schedule, google_event_id: googleEventId }
     }
 
     return schedule
@@ -269,8 +277,11 @@ export class WorkoutScheduleService {
       throw new NotFoundException('Planification non trouvée')
     }
 
+    // existing.scheduled_date est un objet Date (colonne date) : on compare les jours, pas les types
+    const dateChanged = !!data.scheduled_date && toDateOnly(data.scheduled_date) !== toDateOnly(existing.scheduled_date)
+
     // Si on change la date, vérifier qu'il n'y a pas de conflit
-    if (data.scheduled_date && data.scheduled_date !== existing.scheduled_date) {
+    if (dateChanged) {
       const conflict = await this.knex('user_workout_schedule')
         .where('user_id', userId)
         .where('scheduled_date', data.scheduled_date)
@@ -295,7 +306,27 @@ export class WorkoutScheduleService {
       })
       .returning('*')
 
+    if (dateChanged && existing.google_event_id) {
+      await this.moveGoogleEvent(id, userId, existing.google_event_id, data.scheduled_date as string)
+    }
+
     return schedule
+  }
+
+  /**
+   * Déplace l'événement Google d'une séance. Ne fait jamais échouer le déplacement côté app.
+   * La durée est relue pour que l'événement garde sa longueur (sinon Google repasserait à 1 h).
+   */
+  private async moveGoogleEvent(id: string, userId: string, eventId: string, scheduledDate: string): Promise<void> {
+    try {
+      const { estimated_duration } = await this.findOne(id, userId)
+      await this.googleCalendarService.updateEvent(userId, eventId, {
+        scheduledDate,
+        duration: estimated_duration ?? undefined,
+      })
+    } catch {
+      // Erreur silencieuse : la séance est déjà déplacée dans l'app
+    }
   }
 
   /**
@@ -304,10 +335,19 @@ export class WorkoutScheduleService {
    * @param userId ID de l'utilisateur
    */
   async delete(id: string, userId: string) {
-    const deleted = await this.knex('user_workout_schedule').where('id', id).where('user_id', userId).delete()
+    const deleted: { google_event_id: string | null }[] = await this.knex('user_workout_schedule')
+      .where('id', id)
+      .where('user_id', userId)
+      .delete(['google_event_id'])
 
-    if (deleted === 0) {
+    if (deleted.length === 0) {
       throw new NotFoundException('Planification non trouvée')
+    }
+
+    const googleEventId = deleted[0].google_event_id
+    if (googleEventId) {
+      // Silencieux : une erreur Google ne doit pas faire échouer la suppression
+      await this.googleCalendarService.deleteEvent(userId, googleEventId).catch(() => undefined)
     }
 
     return { success: true }
@@ -379,8 +419,7 @@ export class WorkoutScheduleService {
     }
 
     // pg peut renvoyer les colonnes date en objets Date ou en chaînes 'YYYY-MM-DD'
-    const toDateStr = (value: string | Date) =>
-      typeof value === 'string' ? value.slice(0, 10) : new Date(value).toISOString().slice(0, 10)
+    const toDateStr = toDateOnly
     const dowOf = (dateStr: string) => (new Date(dateStr + 'T00:00:00Z').getUTCDay() + 6) % 7 // 0=Monday
     const mondayOf = (dateStr: string) => {
       const d = new Date(dateStr + 'T00:00:00Z')

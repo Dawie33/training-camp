@@ -199,6 +199,113 @@ describe('GoogleCalendarService', () => {
     })
   })
 
+  describe('updateEvent', () => {
+    let patch: jest.Mock
+
+    beforeEach(() => {
+      patch = jest.fn().mockResolvedValue({ data: {} })
+      jest.spyOn(google, 'calendar').mockReturnValue({ events: { patch } } as any)
+    })
+
+    afterEach(() => jest.restoreAllMocks())
+
+    it("déplace l'événement à la nouvelle date, à 7 h heure de Paris, en gardant la durée", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+
+      await expect(
+        service.updateEvent('user-1', 'event-1', { scheduledDate: '2026-10-08', duration: 30 })
+      ).resolves.toBe(true)
+
+      const params = patch.mock.calls[0][0]
+      expect(params).toEqual(expect.objectContaining({ calendarId: 'primary', eventId: 'event-1' }))
+      expect(params.requestBody.start).toEqual({ dateTime: '2026-10-08T07:00:00', timeZone: 'Europe/Paris' })
+      expect(params.requestBody.end).toEqual({ dateTime: '2026-10-08T07:30:00', timeZone: 'Europe/Paris' })
+      // Sans nom fourni, le titre de l'événement n'est pas touché
+      expect(params.requestBody.summary).toBeUndefined()
+    })
+
+    it("renomme aussi l'événement quand un nom est fourni", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+
+      await service.updateEvent('user-1', 'event-1', { name: 'Muscle-up', scheduledDate: '2026-10-08' })
+
+      expect(patch.mock.calls[0][0].requestBody.summary).toBe('🏋️ Muscle-up')
+    })
+
+    it("ne contacte pas Google si l'utilisateur n'est pas connecté", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: null })
+
+      await expect(service.updateEvent('user-1', 'event-1', { scheduledDate: '2026-10-08' })).resolves.toBe(false)
+      expect(patch).not.toHaveBeenCalled()
+    })
+
+    it("renvoie false sans lever d'erreur sur une panne de Google", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      patch.mockRejectedValue(new Error('Service Unavailable'))
+
+      await expect(service.updateEvent('user-1', 'event-1', { scheduledDate: '2026-10-08' })).resolves.toBe(false)
+      expect(builder.update).not.toHaveBeenCalled()
+    })
+
+    it('efface le token quand Google signale un accès révoqué', async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      patch.mockRejectedValue(
+        Object.assign(new Error('invalid_grant'), { response: { data: { error: 'invalid_grant' } } })
+      )
+
+      await expect(service.updateEvent('user-1', 'event-1', { scheduledDate: '2026-10-08' })).resolves.toBe(false)
+      expect(builder.update).toHaveBeenCalledWith({ google_refresh_token: null })
+    })
+  })
+
+  describe('deleteEvent', () => {
+    let deleteMock: jest.Mock
+
+    beforeEach(() => {
+      deleteMock = jest.fn().mockResolvedValue({ data: '' })
+      jest.spyOn(google, 'calendar').mockReturnValue({ events: { delete: deleteMock } } as any)
+    })
+
+    afterEach(() => jest.restoreAllMocks())
+
+    it("supprime l'événement de l'agenda principal", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+
+      await expect(service.deleteEvent('user-1', 'event-1')).resolves.toBe(true)
+      expect(deleteMock).toHaveBeenCalledWith({ calendarId: 'primary', eventId: 'event-1' })
+    })
+
+    it("ne contacte pas Google si l'utilisateur n'est pas connecté", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: null })
+
+      await expect(service.deleteEvent('user-1', 'event-1')).resolves.toBe(false)
+      expect(deleteMock).not.toHaveBeenCalled()
+    })
+
+    it.each([404, 410])('considère comme réussi un événement déjà supprimé dans Google (%i)', async status => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      deleteMock.mockRejectedValue(Object.assign(new Error('Not Found'), { code: status, response: { status } }))
+
+      await expect(service.deleteEvent('user-1', 'event-1')).resolves.toBe(true)
+    })
+
+    it("renvoie false sans lever d'erreur sur une panne de Google", async () => {
+      const service = await buildService()
+      builder.first.mockResolvedValue({ google_refresh_token: 'refresh-token' })
+      deleteMock.mockRejectedValue(new Error('Service Unavailable'))
+
+      await expect(service.deleteEvent('user-1', 'event-1')).resolves.toBe(false)
+    })
+  })
+
   describe('isRevokedTokenError', () => {
     it.each([
       ['le corps de réponse invalid_grant', { response: { data: { error: 'invalid_grant' } } }],

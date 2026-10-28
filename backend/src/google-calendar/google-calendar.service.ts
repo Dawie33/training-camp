@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { google } from 'googleapis'
+import { calendar_v3, google } from 'googleapis'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { decryptToken, encryptToken, isEncryptedToken, parseEncryptionKey } from '../common/crypto/token-cipher'
@@ -15,6 +15,23 @@ export function isRevokedTokenError(error: unknown): boolean {
   const body = (error as { response?: { data?: { error?: unknown } } } | null)?.response?.data
   return body?.error === 'invalid_grant' || (error instanceof Error && error.message.includes('invalid_grant'))
 }
+
+/** 404 / 410 : l'événement n'existe plus côté Google (supprimé à la main dans l'agenda, par exemple). */
+export function isEventGoneError(error: unknown): boolean {
+  const err = error as { code?: unknown; response?: { status?: unknown } } | null
+  return [404, 410].includes(Number(err?.response?.status ?? err?.code))
+}
+
+/** Séance telle que l'agenda Google a besoin de la connaître. */
+export interface CalendarWorkout {
+  name: string
+  scheduledDate: string
+  duration?: number
+  type?: string
+}
+
+/** Titre de l'événement Google d'une séance. */
+const eventSummary = (name: string) => `🏋️ ${name}`
 
 /**
  * Seul droit demandé : gérer les événements. Le scope `auth/calendar` donnerait aussi la lecture,
@@ -127,20 +144,10 @@ export class GoogleCalendarService implements OnModuleInit {
   }
 
   /**
-   * Synchronise une séance d'entraînement avec Google Agenda.
-   * @param userId L'identifiant de l'utilisateur.
-   * @param workout La séance d'entraînement à synchroniser.
-   * @returns L'identifiant de l'événement créé en cas de succès, null sinon.
+   * Client Google Agenda de l'utilisateur, ou null si la fonctionnalité n'est pas configurée
+   * ou si l'utilisateur n'a pas connecté son agenda (aucun appel à Google dans ces deux cas).
    */
-  async syncWorkout(
-    userId: string,
-    workout: {
-      name: string
-      scheduledDate: string
-      duration?: number
-      type?: string
-    }
-  ): Promise<string | null> {
+  private async getCalendarClient(userId: string): Promise<calendar_v3.Calendar | null> {
     if (!this.isAvailable()) return null
 
     const refreshToken = await this.findRefreshToken(userId)
@@ -148,14 +155,37 @@ export class GoogleCalendarService implements OnModuleInit {
 
     const oauth2Client = this.getOAuth2Client()
     oauth2Client.setCredentials({ refresh_token: refreshToken })
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
+    return google.calendar({ version: 'v3', auth: oauth2Client })
+  }
+
+  /** Erreur Google commune aux trois opérations : on journalise, on ne relance jamais. */
+  private async handleGoogleError(userId: string, action: string, error: unknown): Promise<void> {
+    if (isRevokedTokenError(error)) {
+      // Token définitivement inutilisable : on déconnecte pour que l'utilisateur puisse se reconnecter
+      this.logger.warn(`Accès Google révoqué pour l'utilisateur ${userId} : token effacé`)
+      await this.clearRefreshToken(userId)
+    } else {
+      // Panne ou quota Google, sans doute temporaire : on garde la connexion
+      this.logger.error(`Échec de ${action} Google pour l'utilisateur ${userId} : ${(error as Error).message}`)
+    }
+  }
+
+  /**
+   * Synchronise une séance d'entraînement avec Google Agenda.
+   * @param userId L'identifiant de l'utilisateur.
+   * @param workout La séance d'entraînement à synchroniser.
+   * @returns L'identifiant de l'événement créé en cas de succès, null sinon.
+   */
+  async syncWorkout(userId: string, workout: CalendarWorkout): Promise<string | null> {
+    const calendar = await this.getCalendarClient(userId)
+    if (!calendar) return null
 
     // La planification ne doit jamais échouer à cause de Google : on gère l'erreur ici et on renvoie null
     try {
       const response = await calendar.events.insert({
         calendarId: 'primary',
         requestBody: {
-          summary: `🏋️ ${workout.name}`,
+          summary: eventSummary(workout.name),
           description: workout.type ? `Type: ${workout.type.replace(/_/g, ' ')}` : undefined,
           ...buildEventTimes(workout.scheduledDate, workout.duration),
           colorId: '11',
@@ -163,17 +193,58 @@ export class GoogleCalendarService implements OnModuleInit {
       })
       return response.data.id ?? null
     } catch (error) {
-      if (isRevokedTokenError(error)) {
-        // Token définitivement inutilisable : on déconnecte pour que l'utilisateur puisse se reconnecter
-        this.logger.warn(`Accès Google révoqué pour l'utilisateur ${userId} : token effacé`)
-        await this.clearRefreshToken(userId)
-      } else {
-        // Panne ou quota Google, sans doute temporaire : on garde la connexion
-        this.logger.error(
-          `Échec de la synchronisation Google pour l'utilisateur ${userId} : ${(error as Error).message}`
-        )
-      }
+      await this.handleGoogleError(userId, 'la synchronisation', error)
       return null
+    }
+  }
+
+  /**
+   * Déplace l'événement Google d'une séance (et le renomme si `name` est fourni).
+   * Silencieux comme syncWorkout : une erreur Google ne fait jamais échouer le déplacement côté app.
+   * @param eventId L'identifiant de l'événement renvoyé par syncWorkout.
+   * @returns true si l'événement a été mis à jour, false sinon.
+   */
+  async updateEvent(
+    userId: string,
+    eventId: string,
+    workout: Pick<CalendarWorkout, 'scheduledDate' | 'duration'> & { name?: string }
+  ): Promise<boolean> {
+    const calendar = await this.getCalendarClient(userId)
+    if (!calendar) return false
+
+    try {
+      // patch et non update : seuls les champs envoyés changent (description, couleur, rappels conservés)
+      await calendar.events.patch({
+        calendarId: 'primary',
+        eventId,
+        requestBody: {
+          ...(workout.name && { summary: eventSummary(workout.name) }),
+          ...buildEventTimes(workout.scheduledDate, workout.duration),
+        },
+      })
+      return true
+    } catch (error) {
+      await this.handleGoogleError(userId, 'la mise à jour', error)
+      return false
+    }
+  }
+
+  /**
+   * Supprime l'événement Google d'une séance supprimée. Silencieux comme syncWorkout.
+   * Un événement déjà supprimé à la main dans Google Agenda (404 / 410) n'est pas une erreur.
+   * @returns true si l'événement n'existe plus dans l'agenda, false sinon.
+   */
+  async deleteEvent(userId: string, eventId: string): Promise<boolean> {
+    const calendar = await this.getCalendarClient(userId)
+    if (!calendar) return false
+
+    try {
+      await calendar.events.delete({ calendarId: 'primary', eventId })
+      return true
+    } catch (error) {
+      if (isEventGoneError(error)) return true
+      await this.handleGoogleError(userId, 'la suppression', error)
+      return false
     }
   }
 

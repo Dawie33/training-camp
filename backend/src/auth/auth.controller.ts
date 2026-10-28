@@ -53,7 +53,9 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  logout(@Res({ passthrough: true }) res: Response) {
+  async logout(@Request() req: RequestWithUser, @Res({ passthrough: true }) res: Response) {
+    // Effacer le cookie ne suffit pas : une copie du jeton resterait valide jusqu'à son expiration
+    await this.authService.revokeTokens(req.user.id)
     res.clearCookie('access_token', this.cookieOptions)
     return { message: 'Logged out' }
   }

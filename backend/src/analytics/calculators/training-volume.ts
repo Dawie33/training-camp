@@ -4,8 +4,6 @@ export interface DatedSession {
   started_at: string
 }
 
-const MS_PER_WEEK = 7 * 24 * 3600 * 1000
-
 /**
  * Date du lundi de la semaine contenant `date`, au format YYYY-MM-DD.
  * Sert de clé de regroupement hebdomadaire pour tout le module analytics.
@@ -21,28 +19,50 @@ export function weekStart(date: Date): string {
 }
 
 /**
+ * Lundis de toutes les semaines de `from` à `to` inclus, au format de `weekStart`.
+ * Sert à faire apparaître les semaines sans séance : un trou dans l'entraînement doit se voir.
+ */
+export function enumerateWeeks(from: Date, to: Date): string[] {
+  const last = weekStart(to)
+  const weeks: string[] = []
+  // Minuit local, comme `weekStart`, pour ne pas glisser d'un jour selon le fuseau
+  const cursor = new Date(`${weekStart(from)}T00:00:00`)
+  while (weekStart(cursor) <= last) {
+    weeks.push(weekStart(cursor))
+    cursor.setDate(cursor.getDate() + 7)
+  }
+  return weeks
+}
+
+const EMPTY_VOLUME: TrainingVolumeResult = {
+  total_sessions: 0,
+  week_span: 0,
+  avg_per_week: 0,
+  consistency_pct: 0,
+  weeks: [],
+}
+
+/**
  * Volume et régularité d'entraînement sur la période observée.
  *
- * La régularité compte les semaines où au moins une séance a eu lieu, rapportées au
- * nombre de semaines couvertes : c'est la constance qui construit la progression,
- * davantage qu'un pic de volume isolé.
+ * La régularité compte les semaines où au moins une séance a eu lieu, rapportées à toutes
+ * les semaines de la fenêtre, de `windowStart` à la semaine en cours : c'est la constance
+ * qui construit la progression, et un arrêt de deux mois doit faire baisser le chiffre.
+ * La semaine en cours n'entre au dénominateur que si elle porte déjà une séance — un lundi
+ * matin, l'athlète n'a encore rien manqué.
  *
  * @param sessions Séances de la période, avec leur date de début
- * @returns Totaux, moyenne hebdomadaire, régularité et détail par semaine
+ * @param windowStart Début de la fenêtre : début de la période, ou première séance enregistrée si elle est plus récente
+ * @param now Date de référence (injectée pour rester testable)
+ * @returns Totaux, moyenne hebdomadaire, régularité et détail par semaine, semaines vides comprises
  */
-export function computeTrainingVolume(sessions: DatedSession[]): TrainingVolumeResult {
-  if (sessions.length === 0) {
-    return { total_sessions: 0, week_span: 0, avg_per_week: 0, consistency_pct: 0, weeks: [] }
-  }
-
+export function computeTrainingVolume(
+  sessions: DatedSession[],
+  windowStart: Date,
+  now: Date = new Date()
+): TrainingVolumeResult {
   const timestamps = sessions.map(s => new Date(s.started_at).getTime()).filter(Number.isFinite)
-  if (timestamps.length === 0) {
-    return { total_sessions: 0, week_span: 0, avg_per_week: 0, consistency_pct: 0, weeks: [] }
-  }
-
-  const first = Math.min(...timestamps)
-  const last = Math.max(...timestamps)
-  const weekSpan = Math.max(1, Math.ceil((last - first) / MS_PER_WEEK))
+  if (timestamps.length === 0) return EMPTY_VOLUME
 
   const perWeek = new Map<string, number>()
   for (const timestamp of timestamps) {
@@ -50,15 +70,23 @@ export function computeTrainingVolume(sessions: DatedSession[]): TrainingVolumeR
     perWeek.set(key, (perWeek.get(key) ?? 0) + 1)
   }
 
-  const weeks: WeeklyVolumePoint[] = [...perWeek.entries()]
-    .map(([week_start, session_count]) => ({ week_start, session_count }))
-    .sort((a, b) => a.week_start.localeCompare(b.week_start))
+  // Une séance antérieure à la fenêtre l'élargit plutôt que d'être ignorée
+  const from = new Date(Math.min(windowStart.getTime(), ...timestamps))
+  const weekKeys = enumerateWeeks(from, now)
+  if (!perWeek.has(weekStart(now))) weekKeys.pop()
+  if (weekKeys.length === 0) return EMPTY_VOLUME
+
+  const weeks: WeeklyVolumePoint[] = weekKeys.map(week_start => ({
+    week_start,
+    session_count: perWeek.get(week_start) ?? 0,
+  }))
+  const activeWeeks = weeks.filter(week => week.session_count > 0).length
 
   return {
     total_sessions: timestamps.length,
-    week_span: weekSpan,
-    avg_per_week: Math.round((timestamps.length / weekSpan) * 10) / 10,
-    consistency_pct: Math.min(100, Math.round((weeks.length / weekSpan) * 100)),
+    week_span: weekKeys.length,
+    avg_per_week: Math.round((timestamps.length / weekKeys.length) * 10) / 10,
+    consistency_pct: Math.round((activeWeeks / weekKeys.length) * 100),
     weeks,
   }
 }

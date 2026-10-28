@@ -4,6 +4,7 @@ import { InjectModel } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
 import type { Injury } from 'src/common/injuries/injury.constants'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
+import { toParisDate } from 'src/common/utils/date-only'
 
 /**
  * Résumé d'une analyse IA post-workout récente, utilisé comme contexte pour la génération.
@@ -254,7 +255,7 @@ export class UserContextService {
         const start = new Date(s.started_at)
         const end = new Date(s.completed_at)
         return {
-          date: start.toISOString().split('T')[0],
+          date: toParisDate(start),
           sport: 'crossfit' as const,
           workout_type: s.workout_type ?? undefined,
           duration_minutes: Math.round((end.getTime() - start.getTime()) / 60000),
@@ -270,7 +271,7 @@ export class UserContextService {
         const a = typeof row.ai_analysis === 'string' ? JSON.parse(row.ai_analysis) : row.ai_analysis
         if (!a) return null
         return {
-          date: new Date(row.started_at).toISOString().split('T')[0],
+          date: toParisDate(row.started_at),
           workout_name: row.workout_name ?? 'Workout inconnu',
           performance_level: a.performance_level,
           strengths: a.strengths ?? [],

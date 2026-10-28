@@ -186,6 +186,26 @@ describe('UserContextService.getUserAIContext', () => {
     ])
   })
 
+  it('date une séance faite à 0 h 30 à Paris du jour parisien, pas de la veille UTC', async () => {
+    // Arrange — 22 h 30 UTC le 5 octobre = 0 h 30 le 6 octobre à Paris (heure d'été)
+    const knexMock = createKnexMock({
+      cfSessions: [
+        { started_at: '2026-10-05T22:30:00Z', completed_at: '2026-10-05T23:20:00Z', workout_type: 'metcon' },
+      ],
+      recentAnalyses: [
+        { started_at: '2026-10-05T22:30:00Z', workout_name: 'Fran', ai_analysis: { performance_level: 'pr' } },
+      ],
+    })
+    const service = await buildService(knexMock)
+
+    // Act
+    const result = await service.getUserAIContext('user-1')
+
+    // Assert
+    expect(result.recentSessions[0].date).toBe('2026-10-06')
+    expect(result.recentAnalyses[0].date).toBe('2026-10-06')
+  })
+
   it('limite les séances récentes à 20, en gardant les plus récentes', async () => {
     // Arrange
     const cfSessions = Array.from({ length: 25 }, (_, i) => {
