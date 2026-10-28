@@ -21,6 +21,8 @@ export interface BenchmarkStandard {
   intermediate: number
   beginner: number
   metric: 'rounds' | 'time' | 'distance' | 'weight' | 'power'
+  /** Reps d'un round complet (AMRAP) : convertit les reps supplémentaires en fraction de round. */
+  repsPerRound?: number
 }
 
 /**
@@ -31,7 +33,8 @@ export interface BenchmarkStandard {
  */
 export const BENCHMARK_STANDARDS: Record<string, BenchmarkStandard> = {
   // ===== CROSSFIT =====
-  Cindy: { elite: 25, advanced: 20, intermediate: 15, beginner: 8, metric: 'rounds' },
+  // Un round de Cindy : 5 pull-ups, 10 push-ups, 15 air squats
+  Cindy: { elite: 25, advanced: 20, intermediate: 15, beginner: 8, metric: 'rounds', repsPerRound: 30 },
   Fran: { elite: 150, advanced: 240, intermediate: 360, beginner: 999999, metric: 'time' },
   Helen: { elite: 480, advanced: 600, intermediate: 720, beginner: 999999, metric: 'time' },
   Grace: { elite: 90, advanced: 180, intermediate: 300, beginner: 999999, metric: 'time' },

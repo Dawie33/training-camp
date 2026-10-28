@@ -53,6 +53,13 @@ Fourchettes cibles indicatives. Elles varient selon le gabarit, l'âge et l'anci
 
 Chaque écart est accompagné d'une interprétation de coach : cause probable et piste de travail.
 
+## Progression par benchmark
+
+- Une série = **un workout** (`workout_id`), comparé à lui-même. Deux workouts homonymes restent deux séries, et un même workout saisi « Fran » puis « fran » reste une seule série, affichée sous son nom le plus récent.
+- Chaque série a un **type de score** : celui du barème quand le benchmark en a un (Fran au temps, Cindy aux rounds), sinon le plus fréquent. Un score d'un autre type en est exclu : on ne compare pas des secondes à des rounds.
+- Pour un **AMRAP**, les reps supplémentaires comptent en fraction de round : « 15 rounds + 14 » sur Cindy (30 reps par round) vaut 15,47. Sans barème, la taille d'un round est inconnue et l'app retient 100 reps par round, comme pour le calcul du niveau.
+- **Variation** = premier test contre le dernier. Sous 3 %, la tendance reste stable : c'est la variation normale d'un test à l'autre (sommeil, fatigue, échauffement).
+
 ## Filières énergétiques
 
 | Domaine | Durée d'effort |

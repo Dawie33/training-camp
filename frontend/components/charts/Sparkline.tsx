@@ -7,6 +7,8 @@ import { ChartTooltip } from './ChartTooltip'
 export interface SparkPoint {
   label: string
   value: number
+  /** Valeur déjà formatée pour l'infobulle (score de benchmark), prioritaire sur `formatValue`. */
+  display?: string
 }
 
 interface SparklineProps {
@@ -16,6 +18,8 @@ interface SparklineProps {
   height?: number
   /** Format personnalisé de la valeur (score de benchmark, par exemple). */
   formatValue?: (value: number) => string
+  /** Axe inversé quand une valeur basse est meilleure (WOD au temps) : la courbe monte quand on progresse. */
+  invert?: boolean
 }
 
 /**
@@ -25,7 +29,7 @@ interface SparklineProps {
  * (un back squat et un strict press n'ont pas le même ordre de grandeur), chacun
  * garde donc son échelle propre.
  */
-export function Sparkline({ points, unit = 'kg', height = 48, formatValue }: SparklineProps) {
+export function Sparkline({ points, unit = 'kg', height = 48, formatValue, invert = false }: SparklineProps) {
   if (points.length === 0) return null
 
   const format = formatValue ?? ((v: number) => `${v} ${unit}`)
@@ -42,13 +46,13 @@ export function Sparkline({ points, unit = 'kg', height = 48, formatValue }: Spa
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 2, left: 4 }}>
-          <YAxis hide domain={[min - pad, max + pad]} />
+          <YAxis hide domain={[min - pad, max + pad]} reversed={invert} />
           <Tooltip
             cursor={{ stroke: CHROME.axis, strokeWidth: 1 }}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null
               const point = payload[0].payload as SparkPoint
-              return <ChartTooltip title={point.label} rows={[{ label: '', value: format(point.value), color: SERIES }]} />
+              return <ChartTooltip title={point.label} rows={[{ label: '', value: point.display ?? format(point.value), color: SERIES }]} />
             }}
           />
           <Area

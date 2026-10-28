@@ -41,6 +41,8 @@ export interface EnergySystemsResult {
 export interface BenchmarkPoint {
   score_value: number
   extra_reps: number | null
+  /** Valeur comparée d'un test à l'autre : les reps d'un AMRAP y comptent en fraction de round. */
+  comparable_value: number
   level: string
   measured_at: string
   display: string
@@ -53,6 +55,9 @@ export interface BenchmarkBand {
 }
 
 export interface BenchmarkProgress {
+  /** Clé de la série : deux workouts homonymes restent deux séries. */
+  workout_id: string
+  /** Nom du résultat le plus récent, pour l'affichage. */
   name: string
   score_type: string
   lower_is_better: boolean

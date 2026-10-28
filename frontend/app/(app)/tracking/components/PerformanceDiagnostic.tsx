@@ -202,7 +202,7 @@ function BenchmarksPanel({ data }: { data: BenchmarkProgress[] }) {
           const improving = benchmark.trend === 'improving'
           const declining = benchmark.trend === 'declining'
           return (
-            <div key={benchmark.name} className="border border-border rounded-lg p-3.5 space-y-2">
+            <div key={benchmark.workout_id} className="border border-border rounded-lg p-3.5 space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium text-foreground truncate">{benchmark.name}</p>
