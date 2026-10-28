@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
+import { toParisDate } from 'src/common/utils/date-only'
 import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
 import { buildRecommendationSystemPrompt, buildRecommendationUserPrompt } from '../prompts/recommendation.prompt'
 import { AIRecommendationSchema, NextSessionRecommendation, SessionStats } from '../schemas/recommendation.schema'
@@ -62,7 +63,7 @@ export class RecommendationsService {
       }
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = toParisDate(new Date())
     const daysSinceLast: Record<string, number | null> = {}
     for (const sport of ALL_SPORTS) {
       const last = lastDateBySport[sport]

@@ -1,4 +1,5 @@
 import { WorkoutStats } from '@/domain/entities/workout-history'
+import { toLocalDateString } from '@/lib/date-only'
 import { workoutsService } from '@/services'
 import { useEffect, useState } from 'react'
 import { useWorkoutSession } from './useWorkoutSession'
@@ -60,14 +61,14 @@ export function useWorkoutStats() {
       }, 0)
 
       workoutsByDay.push({
-        date: date.toISOString().split('T')[0],
+        date: toLocalDateString(date),
         count,
         duration
       })
     }
 
     // Calculer le streak (série de jours consécutifs)
-    const sortedDates = [...new Set(completedSessions.map(s => new Date(s.started_at).toISOString().split('T')[0]))].sort().reverse()
+    const sortedDates = [...new Set(completedSessions.map(s => toLocalDateString(s.started_at)))].sort().reverse()
 
     let currentStreak = 0
     const today = new Date()
@@ -76,7 +77,7 @@ export function useWorkoutStats() {
     for (let i = 0; i <= 365; i++) {
       const checkDate = new Date(today)
       checkDate.setDate(checkDate.getDate() - i)
-      const dateStr = checkDate.toISOString().split('T')[0]
+      const dateStr = toLocalDateString(checkDate)
 
       if (sortedDates.includes(dateStr)) {
         currentStreak++

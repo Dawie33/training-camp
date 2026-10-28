@@ -1,6 +1,7 @@
 'use client'
 
 import type { SkillProgram, SkillProgressLog } from '@/domain/entities/skill'
+import { toLocalDateString } from '@/lib/date-only'
 import { skillsService } from '@/services/skills'
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
@@ -143,7 +144,7 @@ export function useSkillDetail() {
   }
 
   const openLogModal = (stepId: string) => {
-    setLogModal({ isOpen: true, stepId, data: { value: '', notes: '', date: new Date().toISOString().split('T')[0] }, saving: false })
+    setLogModal({ isOpen: true, stepId, data: { value: '', notes: '', date: toLocalDateString() }, saving: false })
   }
 
   const handleSaveLog = async () => {

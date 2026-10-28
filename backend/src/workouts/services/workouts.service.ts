@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { toDateOnly, toParisDate } from 'src/common/utils/date-only'
 import { safeJsonStringify } from 'src/common/utils/utils'
 import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/workout.dto'
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
@@ -307,7 +308,7 @@ export class WorkoutsService {
       baseId = workout.id
     }
 
-    const wodDate = new Date().toISOString().split('T')[0]
+    const wodDate = toParisDate(new Date())
     const workoutWithDate = {
       ...workout,
       name: workout.name ? `${workout.name} — ${wodDate}` : wodDate,
@@ -558,9 +559,10 @@ export class WorkoutsService {
    * que `TrackingService.checkAndGenerateMonthlyReport`.
    */
   async checkAndScheduleMonthlyBenchmark(userId: string): Promise<{ scheduled: boolean; workoutName?: string }> {
-    const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+    // Jour courant à Paris, puis dates construites en heure locale et relues par toDateOnly (sans passer par UTC)
+    const [year, month, day] = toParisDate(new Date()).split('-').map(Number)
+    const monthStart = toDateOnly(new Date(year, month - 1, 1))
+    const monthEnd = toDateOnly(new Date(year, month, 0))
 
     const benchmarks = await this.knex('workouts').where({ is_benchmark: true }).select('id', 'name')
     const benchmarkIds = benchmarks.map(b => b.id)
@@ -592,10 +594,9 @@ export class WorkoutsService {
     })[0]
 
     // Cherche un jour libre à partir de J+3 (laisse le temps de voir la planif avant le jour J)
-    const candidate = new Date(now)
-    candidate.setDate(candidate.getDate() + 3)
+    const candidate = new Date(year, month - 1, day + 3)
     for (let i = 0; i < 14; i++) {
-      const dateStr = candidate.toISOString().slice(0, 10)
+      const dateStr = toDateOnly(candidate)
       try {
         await this.scheduleService.create(userId, {
           workout_id: target.id,
