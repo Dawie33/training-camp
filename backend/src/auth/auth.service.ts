@@ -42,7 +42,7 @@ export class AuthService {
         firstName,
         lastName,
       })
-      .returning(['id', 'email', 'firstName', 'lastName', 'role'])
+      .returning(['id', 'email', 'firstName', 'lastName', 'role', 'token_version'])
       .catch((error: unknown) => {
         // Deux inscriptions simultanées passent toutes deux la vérification ci-dessus :
         // la contrainte unique sur l'email tranche, on la traduit en 409 au lieu d'une 500
@@ -52,9 +52,7 @@ export class AuthService {
         throw error
       })
 
-    // Générer le token JWT
-    const payload = { sub: user.id, email: user.email }
-    const access_token = this.jwtService.sign(payload)
+    const access_token = this.signToken(user)
 
     return {
       access_token,
@@ -99,9 +97,7 @@ export class AuthService {
     // Mettre à jour lastLoginAt
     await this.knex('users').where({ id: user.id }).update({ lastLoginAt: this.knex.fn.now() })
 
-    // Générer le token JWT
-    const payload = { sub: user.id, email: user.email }
-    const access_token = this.jwtService.sign(payload)
+    const access_token = this.signToken(user)
 
     return {
       access_token,
@@ -116,20 +112,37 @@ export class AuthService {
   }
 
   /**
-   * Validation de l'utilisateur en fonction de son identifiant.
-   * Si l'utilisateur n'est pas trouvé ou n'est pas actif on leve une exception.
+   * Révoquer tous les jetons de l'utilisateur.
+   * La version stockée change : les jetons émis avant portent l'ancienne et sont refusés par validateUser.
    * @param {string} userId - Identifiant de l'utilisateur.
-   * @returns {Promise<User>} - utilisateur si existant.
    */
-  async validateUser(userId: string) {
+  async revokeTokens(userId: string): Promise<void> {
+    await this.knex('users').where({ id: userId }).increment('token_version', 1)
+  }
+
+  /**
+   * Validation de l'utilisateur en fonction de son identifiant et de la version de son jeton.
+   * Renvoie null si l'utilisateur n'existe pas, n'est pas actif, ou si le jeton a été révoqué.
+   * @param {string} userId - Identifiant de l'utilisateur.
+   * @param {unknown} tokenVersion - Version lue dans le jeton (`ver`). Un jeton sans version est refusé.
+   * @returns {Promise<User | null>} - utilisateur si valide, sans sa version de jeton.
+   */
+  async validateUser(userId: string, tokenVersion: unknown) {
     const user = await this.knex('users')
       .where({ id: userId })
-      .first(['id', 'email', 'firstName', 'lastName', 'role', 'isActive'])
+      .first(['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'token_version'])
 
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || user.token_version !== tokenVersion) {
       return null
     }
 
-    return user
+    // La version ne sert qu'à la vérification : elle n'a pas à apparaître dans req.user
+    const { id, email, firstName, lastName, role, isActive } = user
+    return { id, email, firstName, lastName, role, isActive }
+  }
+
+  /** Le jeton porte la version courante : une révocation ultérieure le rendra invalide. */
+  private signToken(user: { id: string; email: string; token_version: number }): string {
+    return this.jwtService.sign({ sub: user.id, email: user.email, ver: user.token_version })
   }
 }

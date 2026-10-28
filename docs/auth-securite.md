@@ -29,6 +29,7 @@ Le frontend appelle toujours l'API via une réécriture d'URL Next.js (`/api` �
 |---|---|
 | **Authentification obligatoire** | Toutes les routes protégées exigent un jeton valide (`JwtAuthGuard`), y compris les routes IA. |
 | **Cookie httpOnly** | Le jeton est inaccessible en JavaScript. Cela limite le vol par faille XSS (injection de script). |
+| **Révocation à la déconnexion** | La déconnexion incrémente `users.token_version`. Chaque jeton porte la version de sa création (`ver`) : un jeton émis avant la déconnexion est refusé (HTTP 401), même s'il n'a pas expiré. |
 | **CORS restreint** | Seule l'URL du frontend (`FRONTEND_URL`) peut appeler l'API, cookies inclus. CORS : partage de ressources entre origines. |
 | **Limitation de débit** | Un nombre maximal de requêtes par minute limite les abus et les coûts d'IA. |
 | **Validation stricte** | Tout champ non prévu dans une requête est rejeté (HTTP 400). |
@@ -82,6 +83,8 @@ Deux réglages en découlent :
 > **Détail technique**
 >
 > `JwtStrategy` lit le jeton d'abord dans le cookie `access_token`. À défaut, il lit l'en-tête `Authorization: Bearer` (appels hors navigateur).
+>
+> `AuthService.validateUser` compare la version du jeton (`ver`) à `users.token_version` à chaque requête. La déconnexion révoque **tous** les jetons de l'utilisateur, donc toutes ses sessions (autres navigateurs, téléphone). Un jeton émis avant la mise en place de la révocation n'a pas de `ver` : il est refusé, l'utilisateur doit se reconnecter une fois.
 >
 > Le cookie est posé avec `sameSite: 'lax'`, et `secure: true` en production. Comme le frontend passe par le rewrite Next.js, le cookie est « même origine » : `'lax'` suffit et empêche qu'un autre site déclenche une requête POST authentifiée (attaque CSRF). Ne pas repasser en `'none'` tant que le navigateur n'appelle pas le backend en direct.
 >

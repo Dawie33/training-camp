@@ -8,6 +8,8 @@ import { AuthService } from '../auth.service'
 interface JwtPayload {
   sub: string
   email: string
+  /** Version des jetons de l'utilisateur au moment de la signature (colonne users.token_version). */
+  ver?: number
   iat?: number
   exp?: number
 }
@@ -34,7 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.authService.validateUser(payload.sub)
+    const user = await this.authService.validateUser(payload.sub, payload.ver)
     if (!user) {
       throw new UnauthorizedException()
     }
