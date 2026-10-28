@@ -130,6 +130,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : `?months=1.5` est accepté. La réponse annonce `period_months: 1.5`, mais `setMonth` (`analytics.service.ts:63`) tronque le résultat : sur un mois de septembre, `9 − 1,5 = 7,5` devient 7, donc la requête remonte **2 mois**. Le reste de l'API utilise des DTO `class-validator`.
 - **Piste** : `OverviewQueryDto` avec `@Type(() => Number) @IsInt() @Min(1) @Max(12) @IsOptional()`. Pour `@Req()`, voir #31.
 - **Terminé quand** : `months=1.5` ou `months=20` renvoie 400 ; test e2e ou unitaire du DTO.
+- **Statut** : ✅ corrigé sur la branche `fix/analytics-months-dto`. `dto/overview-query.dto.ts` (`OverviewQueryDto`, 3 mois par défaut) remplace le bornage manuel ; `months=1.5`, `0`, `20` ou un paramètre inconnu renvoient 400, et un test unitaire du DTO passe par les options du `ValidationPipe` global. `@Req()` reste en l'état (#31).
 
 #### A2. Semaines calculées à l'heure du serveur
 
