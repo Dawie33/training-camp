@@ -9,6 +9,7 @@ import { computeStrengthHistory, OneRepMaxEntry } from './calculators/strength-h
 import { computeStrengthRatios } from './calculators/strength-ratios'
 import { computeTrainingLoad, resolveSessionMinutes } from './calculators/training-load'
 import { computeTrainingVolume } from './calculators/training-volume'
+import { WodAnalysisSchema } from '../workout-sessions/schemas/wod-analysis.schema'
 import {
   BenchmarkProgress,
   EnergySystemsResult,
@@ -212,7 +213,8 @@ export class AnalyticsService {
 
   /**
    * Relit une analyse stockée.
-   * Renvoie null dès qu'un champ attendu manque, plutôt qu'un objet à moitié vide.
+   * Renvoie null dès qu'un champ attendu manque, plutôt qu'un objet à moitié vide,
+   * ou quand le niveau ne fait pas partie de la liste actuelle (ancienne analyse).
    */
   private readAnalysis(raw: unknown): SessionAnalysis | null {
     if (!raw) return null
@@ -224,11 +226,12 @@ export class AnalyticsService {
       return null
     }
 
-    if (typeof analysis?.performance_level !== 'string') return null
+    const level = WodAnalysisSchema.shape.performance_level.safeParse(analysis?.performance_level)
+    if (!level.success) return null
 
     return {
       summary: typeof analysis.summary === 'string' ? analysis.summary : '',
-      performance_level: analysis.performance_level as SessionAnalysis['performance_level'],
+      performance_level: level.data,
       comparison: typeof analysis.comparison === 'string' ? analysis.comparison : null,
       strengths: Array.isArray(analysis.strengths) ? analysis.strengths.filter(s => typeof s === 'string') : [],
       improvements: Array.isArray(analysis.improvements)

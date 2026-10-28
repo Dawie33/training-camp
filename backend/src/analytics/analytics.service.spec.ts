@@ -161,11 +161,22 @@ describe('AnalyticsService', () => {
 
     it('relit une analyse stockée en texte JSON', async () => {
       const overview = await getOverview({
-        latestSession: latestRow(JSON.stringify({ summary: 'Bon pacing', performance_level: 'good' })),
+        latestSession: latestRow(JSON.stringify({ summary: 'Bon pacing', performance_level: 'above_average' })),
       })
 
       expect(overview.latest_session).toMatchObject({ session_id: 'session-9', workout_name: 'Fran' })
-      expect(overview.latest_session?.analysis).toMatchObject({ summary: 'Bon pacing', performance_level: 'good' })
+      expect(overview.latest_session?.analysis).toMatchObject({
+        summary: 'Bon pacing',
+        performance_level: 'above_average',
+      })
+    })
+
+    it('renvoie une analyse nulle quand le niveau ne fait pas partie de la liste', async () => {
+      const overview = await getOverview({
+        latestSession: latestRow({ summary: 'Ancienne analyse', performance_level: 'excellent' }),
+      })
+
+      expect(overview.latest_session?.analysis).toBeNull()
     })
 
     it('renvoie une analyse nulle quand elle est incomplète ou illisible', async () => {

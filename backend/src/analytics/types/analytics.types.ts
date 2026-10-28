@@ -1,3 +1,5 @@
+import type { WodAnalysis } from '../../workout-sessions/schemas/wod-analysis.schema'
+
 /** Verdict d'un ratio diagnostique par rapport à sa fourchette de référence. */
 export type RatioVerdict = 'below' | 'in_range' | 'above' | 'unavailable'
 
@@ -158,7 +160,8 @@ export interface StrengthHistoryResult {
   lifts: StrengthLiftHistory[]
 }
 
-export type PerformanceLevel = 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
+/** Niveaux définis par le schéma de l'analyse post-séance, seule source de la liste. */
+export type PerformanceLevel = WodAnalysis['performance_level']
 
 /** Analyse IA d'une séance, telle que stockée par `WorkoutAnalysisService`. */
 export interface SessionAnalysis {
