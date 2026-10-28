@@ -89,6 +89,9 @@ export interface TrainingLoadResult {
   last_week_change_pct: number | null
 }
 
+/** Origine des charges d'un mouvement : les sections de force si le mouvement y figure, sinon le metcon. */
+export type LoadSource = 'strength' | 'metcon'
+
 export interface MovementExposure {
   name: string
   exposures: number
@@ -98,6 +101,7 @@ export interface MovementExposure {
   avg_load_kg: number | null
   max_load_kg: number | null
   pct_of_1rm: number | null
+  load_source: LoadSource | null
 }
 
 export interface MovementExposureResult {

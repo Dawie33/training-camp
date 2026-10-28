@@ -6,7 +6,7 @@ Périmètre : `backend/src/analytics/` (contrôleur, service, 8 calculateurs, ty
 
 Aucune ligne de code n'a été modifiée. Les chiffres cités dans les exemples ont été obtenus en appelant les calculateurs réels avec les données indiquées.
 
-> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 sur la branche `fix/acwr-historique`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
+> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 par #75 (fusionnée), I6, I7 et A5 sur la branche `fix/exposition-mouvements`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
 
 ## 1. Rôle du module
 
@@ -67,7 +67,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : le garde-fou vérifie seulement que la séance avec RPE **la plus ancienne** date d'au moins 28 jours. Il ne vérifie pas que la fenêtre chronique est remplie. Exemple réel : une séance à RPE 5 le 3 août, puis une le 21 septembre (calcul le 23). Résultat : `acute = 300`, `chronic = 75`, **`acwr = 4`, zone `high_risk`**. Cela arrive dès qu'un athlète a saisi un RPE une fois, puis s'y remet régulièrement. Avec un ACWR « couplé » (la semaine aiguë est incluse dans les 28 jours), 4,0 est le maximum mathématique : toute la charge est dans les 7 derniers jours. Le coach IA reçoit alors « RISQUE ÉLEVÉ — réduire le volume ».
 - **Piste** : exiger des données dans la fenêtre chronique elle-même, par exemple au moins une séance avec RPE dans 3 des 4 semaines des 28 derniers jours. Sinon `acwr = null`.
 - **Terminé quand** : le cas ci-dessus renvoie `acwr: null` ; un test couvre « un point ancien isolé + reprise » ; le test existant « charge stable → zone optimale » passe toujours.
-- **Statut** : ✅ corrigé sur la branche `fix/acwr-historique`. En plus de l'ancienneté, l'ACWR exige une séance avec RPE dans 3 des 4 tranches de 7 jours et un RPE sur 75 % des séances de la fenêtre. La zone `high_risk` est renommée « hausse rapide de charge — stabiliser, ne plus augmenter » (prompt) et « Hausse rapide » (écrans). La formule (ACWR couplé, moyennes glissantes) est inchangée.
+- **Statut** : ✅ corrigé par #75. En plus de l'ancienneté, l'ACWR exige une séance avec RPE dans 3 des 4 tranches de 7 jours et un RPE sur 75 % des séances de la fenêtre. La zone `high_risk` est renommée « hausse rapide de charge — stabiliser, ne plus augmenter » (prompt) et « Hausse rapide » (écrans). La formule (ACWR couplé, moyennes glissantes) est inchangée.
 
 #### I3. « Variation vs semaine passée » compare des semaines qui ne se suivent pas
 
@@ -111,6 +111,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : `exercise_results` contient une entrée **par exercice et par section**. C'est le contrat validé par `session-results.schema.spec.ts:60-61` : un Thruster en `strength` à 70 kg et un Thruster en `metcon` à 42,5 kg dans la même séance. Le calculateur compte alors **2 expositions** pour une seule séance. Il fait aussi la moyenne des deux charges : 56,3 kg, soit « 70 % du 1RM » si le 1RM vaut 80 kg. Ce chiffre ne correspond à aucun travail réel. Le taux de scaling (`most_scaled`, envoyé à l'IA) est faussé de la même façon.
 - **Piste** : transmettre `section_type` dans `LoggedExercise` et le numéro de séance. Compter une exposition par séance et par mouvement. Calculer `avg_load_kg` et `pct_of_1rm` à partir des sections `strength` uniquement, ou afficher les deux séparément.
 - **Terminé quand** : le cas Thruster force + metcon donne 1 exposition et un % du 1RM calculé sur 70 kg ; un test le prouve.
+- **Statut** : ✅ corrigé sur la branche `fix/exposition-mouvements`. Une exposition par séance (`session_index`), séance scalée si une section l'est. Charges et % du 1RM calculés sur la force si le mouvement y figure, sinon sur le metcon, jamais mélangés ; nouveau champ `load_source` affiché à l'écran. Échauffement, accessoires et skill exclus des charges.
 
 #### I7. Le service n'a aucun test
 
@@ -118,6 +119,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : seuls les calculateurs sont testés. `resolveDurationSeconds` (chrono prioritaire, plafond de 4 h), `readExerciseResults` (filtrage de l'ancien format), `readAnalysis` (analyse partielle → `null`) et la conversion des `decimal` Knex n'ont aucun test. Or les corrections I1 et I6 passent par ces méthodes.
 - **Piste** : écrire `analytics.service.spec.ts` avec le skill `testing-knex-nestjs` (mock du query builder chaîné), avant de corriger I1 et I6.
 - **Terminé quand** : le spec couvre les trois méthodes privées via `getOverview` et vérifie que chaque requête filtre par `user_id`.
+- **Statut** : ✅ corrigé sur la branche `fix/exposition-mouvements`. `analytics.service.spec.ts` : filtre `user_id` vérifié sur les 8 requêtes (un builder par appel), durée d'effort, conversion des `decimal`, filtrage des exercices, relecture de l'analyse.
 
 ### Amélioration
 
@@ -141,6 +143,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : l'ACWR calculé est la version « couplée » (la semaine aiguë fait partie des 28 jours) en moyennes glissantes. La littérature récente discute la validité de ce modèle et de ses seuils comme prédicteurs de blessure. Les seuils sont corrects pour la méthode choisie, mais « RISQUE ÉLEVÉ — réduire le volume » est une consigne forte pour l'IA.
 - **Piste** : formuler l'alerte comme un signal (« hausse rapide de charge ») plutôt qu'un risque. Éventuellement, passer en version découplée ou en moyennes exponentielles (EWMA), à valider avec le skill `coach-crossfit`.
 - **Terminé quand** : choix documenté dans `docs/diagnostic-performance.md`, libellés frontend et prompt alignés.
+- **Statut** : 🟡 en partie traité par #75. Libellés alignés (« hausse rapide de charge — stabiliser, ne plus augmenter » dans le prompt, « Hausse rapide » à l'écran) et choix documenté. La version découplée ou EWMA n'est pas retenue pour l'instant.
 
 #### A4. 1RM estimés et réels mélangés
 
@@ -155,6 +158,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : « Clean & Jerk » devient `clean_jerk`, pas `clean_and_jerk`, donc `pct_of_1rm` est toujours `null` pour ce mouvement. Il en va de même pour les noms en français (« Épaulé-jeté ») et les variantes (« Squat Clean »).
 - **Piste** : une table d'alias explicite (`clean & jerk`, `c&j`, `épaulé-jeté` → `clean_and_jerk`), partagée avec `ONE_REP_MAX_LIFTS`.
 - **Terminé quand** : test sur « Clean & Jerk » et « Épaulé-jeté ».
+- **Statut** : ✅ corrigé sur la branche `fix/exposition-mouvements`. `calculators/lift-aliases.ts`, typée sur `ONE_REP_MAX_LIFTS` ; Power Clean et Power Snatch volontairement non reliés.
 
 #### A6. Benchmarks : barème Cindy et sens des courbes
 
@@ -217,11 +221,11 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 ## 6. Propositions d'issues (non créées)
 
 1. ~~**[Analytics] sRPE : utiliser la durée de la séance, pas le chrono du WOD** (I1). Ajouter une durée de séance saisie sur la page de log, et la séparer de la durée d'effort utilisée pour les filières.~~ Fait dans #73.
-2. ~~**[Analytics] ACWR : exiger un historique chronique réel avant de conclure** (I2). Remplacer le test « séance la plus ancienne ≥ 28 jours » par une couverture minimale des 4 semaines.~~ Fait sur `fix/acwr-historique` (ancienneté conservée, couverture ajoutée).
+2. ~~**[Analytics] ACWR : exiger un historique chronique réel avant de conclure** (I2). Remplacer le test « séance la plus ancienne ≥ 28 jours » par une couverture minimale des 4 semaines.~~ Fait dans #75 (ancienneté conservée, couverture ajoutée).
 3. ~~**[Analytics] Semaines continues : variation hebdomadaire et régularité justes** (I3 + I4). Suite de semaines sans trou sur la période, variation sur la dernière semaine complète, `week_span` calendaire, tests à valeurs exactes.~~ Fait dans #74.
 4. **[Analytics] Benchmarks : regrouper par workout_id, contrôler le type de score, compter les reps d'AMRAP** (I5, partie lecture). La partie écriture reste dans #51 et #53.
-5. **[Analytics] Exposition par mouvement : une exposition par séance, charges de force séparées** (I6, avec la table d'alias de A5).
-6. **[Analytics] Tests unitaires du service** (I7). Prérequis de l'issue 5. L'issue 1 s'en est passée : la logique a été extraite dans une fonction pure testée (`resolveSessionMinutes`).
+5. ~~**[Analytics] Exposition par mouvement : une exposition par séance, charges de force séparées** (I6, avec la table d'alias de A5).~~ Fait sur `fix/exposition-mouvements`.
+6. ~~**[Analytics] Tests unitaires du service** (I7). Prérequis de l'issue 5. L'issue 1 s'en est passée : la logique a été extraite dans une fonction pure testée (`resolveSessionMinutes`).~~ Fait sur `fix/exposition-mouvements`.
 7. **[Analytics] Valider `months` avec un DTO** (A1).
 8. **[Analytics] Semaines calculées dans le fuseau de l'athlète** (A2).
 9. **[Analytics] Distinguer les 1RM estimés dans l'historique et les ratios** (A4, après #45).

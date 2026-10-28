@@ -346,7 +346,11 @@ function MovementsPanel({ data }: { data: MovementExposureResult }) {
             <span className="text-foreground truncate">{movement.name}</span>
             <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground font-mono">
               <span>{movement.exposures}×</span>
-              {movement.avg_load_kg !== null && <span>{movement.avg_load_kg} kg</span>}
+              {movement.avg_load_kg !== null && (
+                <span>
+                  {movement.avg_load_kg} kg ({movement.load_source === 'strength' ? 'force' : 'metcon'})
+                </span>
+              )}
               {movement.pct_of_1rm !== null && <span>{movement.pct_of_1rm} % 1RM</span>}
               {movement.scaled_pct > 0 && <span className="text-orange-600">{movement.scaled_pct} % scaled</span>}
             </div>
