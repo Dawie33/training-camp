@@ -113,6 +113,7 @@ function StrengthRatiosPanel({ data }: { data: StrengthRatiosResult }) {
               <RatioGauge ratio={ratio} />
               <p className="text-xs text-muted-foreground">
                 Cible {ratio.target_min_pct}-{ratio.target_max_pct} %
+                {ratio.based_on_estimate && ' · repose sur un 1RM estimé, à confirmer par un test'}
               </p>
             </div>
           )

@@ -6,7 +6,7 @@ Périmètre : `backend/src/analytics/` (contrôleur, service, 8 calculateurs, ty
 
 Aucune ligne de code n'a été modifiée. Les chiffres cités dans les exemples ont été obtenus en appelant les calculateurs réels avec les données indiquées.
 
-> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 par #75 (fusionnée), I6, I7 et A5 par #77 (fusionnée), I5 (lecture) et A6 sur la branche `fix/benchmarks-progression`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
+> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 par #75 (fusionnée), I6, I7 et A5 par #77 (fusionnée), I5 (lecture) et A6 par #78 (fusionnée), A4 sur la branche `fix/1rm-estimes`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
 
 ## 1. Rôle du module
 
@@ -104,7 +104,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
   - côté analytics : regrouper par `workout_id` (le sélectionner dans la requête, garder `workout_name` pour l'affichage) ; ne comparer que les points du type majoritaire, ou du type attendu par `BENCHMARK_STANDARDS[nom].metric` ; pour `rounds`, comparer un total de reps (rounds × reps par round + reps supplémentaires) ou, à défaut, `rounds + extra_reps / 100` comme `calculateLevelFromBenchmarks` ;
   - côté écriture (à traiter dans les revues #53 et #51) : relire le nom en base au lieu de `workoutName`, dater le point avec `completed_at`, et ne pas créer de doublon lors d'une modification.
 - **Terminé quand** : deux workouts homonymes donnent deux séries ; un point d'un autre type est exclu de la variation ; le cas Cindy ci-dessus donne une tendance positive ; tests pour chacun des trois cas.
-- **Statut** : ✅ partie lecture corrigée sur la branche `fix/benchmarks-progression`. Séries regroupées par `workout_id` (nom le plus récent affiché) ; type de référence = celui du barème, sinon le majoritaire, les autres points sont exclus ; reps d'AMRAP comptées en fraction de round (`repsPerRound: 30` pour Cindy, 100 par défaut comme `calculateLevelFromBenchmarks`). Écart avec le critère : le cas Cindy donne **+2,7 %, `stable`** et non une tendance positive. 12 reps sur ~450 restent sous le seuil de bruit de 3 %, qui est conservé ; un test montre qu'un gain plus net passe en `improving`. La partie écriture reste dans #51 et #53.
+- **Statut** : ✅ partie lecture corrigée par #78. Séries regroupées par `workout_id` (nom le plus récent affiché) ; type de référence = celui du barème, sinon le majoritaire, les autres points sont exclus ; reps d'AMRAP comptées en fraction de round (`repsPerRound: 30` pour Cindy, 100 par défaut comme `calculateLevelFromBenchmarks`). Écart avec le critère : le cas Cindy donne **+2,7 %, `stable`** et non une tendance positive. 12 reps sur ~450 restent sous le seuil de bruit de 3 %, qui est conservé ; un test montre qu'un gain plus net passe en `improving`. La partie écriture reste dans #51 et #53.
 
 #### I6. Exposition par mouvement : force et metcon mélangés
 
@@ -152,6 +152,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : la colonne `source` (`real` / `estimated`) n'est pas lue. Un 1RM estimé peut produire un « gain » dans l'historique, ou fausser un ratio de force. Voir aussi #45 (contrainte sur `source`) et #43 (corriger un 1RM erroné).
 - **Piste** : sélectionner `source`, marquer les points estimés dans `computeStrengthHistory` (et dans le graphe), et signaler un ratio calculé sur une estimation.
 - **Terminé quand** : la réponse indique, pour chaque point et chaque ratio, s'il repose sur une estimation.
+- **Statut** : ✅ corrigé sur la branche `fix/1rm-estimes`. Chaque point d'historique porte `estimated`, chaque ratio `based_on_estimate`. Le gain et la tendance ne comparent que des relevés de même nature que le 1RM actuel. Le coach IA reçoit « (1RM estimé — à confirmer par un test) » sur un déséquilibre concerné, et l'écran affiche la mention « estimé ». Reste ouvert : le % du 1RM de l'exposition par mouvement peut reposer sur un 1RM estimé sans le signaler.
 
 #### A5. Correspondance mouvement → 1RM fragile
 
@@ -167,7 +168,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : le commentaire dit que le seuil « beginner » est une borne ouverte (999999). C'est vrai pour les WOD au temps, mais pas pour Cindy (`beginner: 8`), dont la bande est donc retirée sans raison. Côté tableau de bord, la mini-courbe d'un benchmark au temps **monte quand l'athlète régresse**, puisqu'elle trace `score_value` brut sans tenir compte de `lower_is_better`.
 - **Piste** : ne retirer le seuil que s'il vaut 999999 ; inverser l'axe (ou tracer `−score`) quand `lower_is_better` est vrai.
 - **Terminé quand** : Cindy affiche 4 bandes, et la courbe de Fran monte quand le temps baisse.
-- **Statut** : ✅ corrigé sur la branche `fix/benchmarks-progression`. Seule la borne 999999 est retirée ; la mini-courbe du tableau de bord inverse son axe quand `lower_is_better` est vrai et trace `comparable_value`. Son infobulle affiche aussi le score de chaque point (elle répétait le dernier).
+- **Statut** : ✅ corrigé par #78. Seule la borne 999999 est retirée ; la mini-courbe du tableau de bord inverse son axe quand `lower_is_better` est vrai et trace `comparable_value`. Son infobulle affiche aussi le score de chaque point (elle répétait le dernier).
 
 #### A7. Dépendance analytics → workouts
 
@@ -225,12 +226,12 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 1. ~~**[Analytics] sRPE : utiliser la durée de la séance, pas le chrono du WOD** (I1). Ajouter une durée de séance saisie sur la page de log, et la séparer de la durée d'effort utilisée pour les filières.~~ Fait dans #73.
 2. ~~**[Analytics] ACWR : exiger un historique chronique réel avant de conclure** (I2). Remplacer le test « séance la plus ancienne ≥ 28 jours » par une couverture minimale des 4 semaines.~~ Fait dans #75 (ancienneté conservée, couverture ajoutée).
 3. ~~**[Analytics] Semaines continues : variation hebdomadaire et régularité justes** (I3 + I4). Suite de semaines sans trou sur la période, variation sur la dernière semaine complète, `week_span` calendaire, tests à valeurs exactes.~~ Fait dans #74.
-4. ~~**[Analytics] Benchmarks : regrouper par workout_id, contrôler le type de score, compter les reps d'AMRAP** (I5, partie lecture). La partie écriture reste dans #51 et #53.~~ Fait sur `fix/benchmarks-progression`.
+4. ~~**[Analytics] Benchmarks : regrouper par workout_id, contrôler le type de score, compter les reps d'AMRAP** (I5, partie lecture). La partie écriture reste dans #51 et #53.~~ Fait dans #78.
 5. ~~**[Analytics] Exposition par mouvement : une exposition par séance, charges de force séparées** (I6, avec la table d'alias de A5).~~ Fait dans #77.
 6. ~~**[Analytics] Tests unitaires du service** (I7). Prérequis de l'issue 5. L'issue 1 s'en est passée : la logique a été extraite dans une fonction pure testée (`resolveSessionMinutes`).~~ Fait dans #77.
 7. **[Analytics] Valider `months` avec un DTO** (A1).
 8. **[Analytics] Semaines calculées dans le fuseau de l'athlète** (A2).
-9. **[Analytics] Distinguer les 1RM estimés dans l'historique et les ratios** (A4, après #45).
-10. ~~**[Analytics] Benchmarks à l'écran : barème Cindy et courbes au temps inversées** (A6).~~ Fait sur `fix/benchmarks-progression`.
+9. ~~**[Analytics] Distinguer les 1RM estimés dans l'historique et les ratios** (A4, après #45).~~ Fait sur `fix/1rm-estimes`.
+10. ~~**[Analytics] Benchmarks à l'écran : barème Cindy et courbes au temps inversées** (A6).~~ Fait dans #78.
 11. **[Analytics] Frontend : ignorer les réponses obsolètes du diagnostic** (A8).
 12. **[Analytics] Documenter les blocs non bornés par la période** (A9, avec la nuance du message ACWR de A3).

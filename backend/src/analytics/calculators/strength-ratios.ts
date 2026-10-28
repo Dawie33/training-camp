@@ -92,9 +92,13 @@ function roundTo1(value: number): number {
  * Calcule les ratios diagnostiques entre 1RM et l'interprétation coach de chaque écart.
  *
  * @param oneRepMaxes Charges maximales par lift, en kg (clé = identifiant du lift)
+ * @param estimatedLifts Lifts dont le 1RM est estimé : le ratio qui en dépend est à confirmer par un test
  * @returns Les ratios calculables et la liste des lifts manquants
  */
-export function computeStrengthRatios(oneRepMaxes: Record<string, number>): StrengthRatiosResult {
+export function computeStrengthRatios(
+  oneRepMaxes: Record<string, number>,
+  estimatedLifts: ReadonlySet<string> = new Set()
+): StrengthRatiosResult {
   const missing = new Set<string>()
 
   const ratios: StrengthRatio[] = RATIO_DEFINITIONS.map(def => {
@@ -112,6 +116,7 @@ export function computeStrengthRatios(oneRepMaxes: Record<string, number>): Stre
         target_max_pct: def.targetMaxPct,
         verdict: 'unavailable' as RatioVerdict,
         interpretation: 'Renseigne les deux 1RM pour débloquer ce diagnostic.',
+        based_on_estimate: false,
       }
     }
 
@@ -134,6 +139,7 @@ export function computeStrengthRatios(oneRepMaxes: Record<string, number>): Stre
       target_max_pct: def.targetMaxPct,
       verdict,
       interpretation,
+      based_on_estimate: estimatedLifts.has(def.numerator) || estimatedLifts.has(def.denominator),
     }
   })
 

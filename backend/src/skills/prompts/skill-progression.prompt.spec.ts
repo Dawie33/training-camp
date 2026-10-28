@@ -7,6 +7,7 @@ const SNATCH_TOO_LOW: RatioImbalance = {
   target: '78-82 %',
   direction: 'below',
   reading: 'Snatch bas par rapport au C&J : la limite est technique.',
+  estimated: false,
 }
 
 /**

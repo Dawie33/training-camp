@@ -112,6 +112,18 @@ describe('AnalyticsService', () => {
     expect(overview.movements.movements[0].pct_of_1rm).toBe(60)
   })
 
+  it('transmet la source des 1RM : un ratio sur un 1RM estimé est signalé', async () => {
+    const overview = await getOverview({
+      oneRepMaxes: [
+        { lift: 'back_squat', value: '150.00', source: 'estimated' },
+        { lift: 'front_squat', value: '127.50', source: 'real' },
+      ],
+    })
+
+    const ratio = overview.strength_ratios.ratios.find(r => r.key === 'front_squat_to_back_squat')
+    expect(ratio?.based_on_estimate).toBe(true)
+  })
+
   it('ne retient que les exercices structurés et nommés', async () => {
     const overview = await getOverview({
       sessions: [
