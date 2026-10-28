@@ -30,10 +30,7 @@ describe('computeTrainingLoad', () => {
   const now = new Date('2026-09-21T12:00:00.000Z')
 
   it('calcule la charge de séance en RPE × minutes', () => {
-    const result = computeTrainingLoad(
-      [{ started_at: '2026-09-21T09:00:00.000Z', rpe: 8, session_minutes: 60 }],
-      now
-    )
+    const result = computeTrainingLoad([{ started_at: '2026-09-21T09:00:00.000Z', rpe: 8, session_minutes: 60 }], now)
 
     expect(result.available).toBe(true)
     expect(result.weeks[0].srpe).toBe(480)
@@ -115,6 +112,56 @@ describe('computeTrainingLoad', () => {
     )
 
     expect(result.last_week_change_pct).toBe(100)
+  })
+
+  describe('variation hebdomadaire', () => {
+    // Un mercredi : la semaine du 21 est entamée, la dernière semaine complète est celle du 14
+    const wednesday = new Date('2026-09-23T12:00:00.000Z')
+    const session = (startedAt: string) => ({ started_at: startedAt, rpe: 5, session_minutes: 60 })
+
+    it('compare la dernière semaine complète à la précédente, sans la semaine en cours', () => {
+      const result = computeTrainingLoad(
+        [
+          session('2026-09-08T09:00:00.000Z'),
+          session('2026-09-10T09:00:00.000Z'),
+          session('2026-09-15T09:00:00.000Z'),
+          session('2026-09-17T09:00:00.000Z'),
+          // Semaine en cours, inachevée : elle ne doit pas afficher une baisse
+          session('2026-09-22T09:00:00.000Z'),
+        ],
+        wednesday
+      )
+
+      expect(result.last_week_change_pct).toBe(0)
+    })
+
+    it('compte une semaine sans séance comme une charge nulle', () => {
+      const result = computeTrainingLoad([session('2026-09-08T09:00:00.000Z')], wednesday)
+
+      expect(result.last_week_change_pct).toBe(-100)
+    })
+
+    it('ne compare pas à une semaine plus ancienne quand la précédente est vide', () => {
+      const result = computeTrainingLoad(
+        [session('2026-09-01T09:00:00.000Z'), session('2026-09-15T09:00:00.000Z')],
+        wednesday
+      )
+
+      expect(result.last_week_change_pct).toBeNull()
+    })
+
+    it('fait apparaître les semaines vides sur le graphe', () => {
+      const result = computeTrainingLoad(
+        [session('2026-09-01T09:00:00.000Z'), session('2026-09-15T09:00:00.000Z')],
+        wednesday
+      )
+
+      expect(result.weeks.map(week => [week.week_start, week.srpe])).toEqual([
+        ['2026-08-31', 300],
+        ['2026-09-07', 0],
+        ['2026-09-14', 300],
+      ])
+    })
   })
 
   it('ignore les RPE hors échelle ou absents', () => {

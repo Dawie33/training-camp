@@ -305,7 +305,7 @@ function VolumeAndLoadPanel({ volume, load }: { volume: TrainingVolumeResult; lo
           )}
           {load.last_week_change_pct !== null && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Variation depuis la semaine passée</span>
+              <span className="text-muted-foreground">Semaine dernière vs la précédente</span>
               <span className={`font-mono ${load.last_week_change_pct > 10 ? 'text-orange-600' : 'text-foreground'}`}>
                 {load.last_week_change_pct > 0 ? '+' : ''}{load.last_week_change_pct} %
               </span>
