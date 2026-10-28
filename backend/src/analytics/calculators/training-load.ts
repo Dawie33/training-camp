@@ -1,5 +1,5 @@
 import { AcwrZone, TrainingLoadResult, WeeklyLoadPoint } from '../types/analytics.types'
-import { enumerateWeeks, weekStart } from './training-volume'
+import { addWeeks, enumerateWeeks, weekStart } from './training-volume'
 
 export interface RpeSession {
   started_at: string
@@ -22,13 +22,6 @@ const MIN_RPE_COVERAGE = 0.75
  * Évite de perdre l'information d'effort ; valeur conservatrice d'une séance type.
  */
 const DEFAULT_SESSION_MINUTES = 60
-
-/** Lundi de la semaine qui précède `week` (clé produite par `weekStart`). */
-function previousWeek(week: string): string {
-  const monday = new Date(`${week}T00:00:00`)
-  monday.setDate(monday.getDate() - 7)
-  return weekStart(monday)
-}
 
 /**
  * Durée de la séance entière à croiser avec le RPE, en minutes.
@@ -180,8 +173,8 @@ export function computeTrainingLoad(sessions: RpeSession[], now: Date = new Date
 
   // Dernière semaine complète contre celle d'avant : comparer la semaine en cours, inachevée,
   // afficherait une baisse à chaque début de semaine.
-  const lastCompleteWeek = previousWeek(currentWeek)
-  const previous = perWeek.get(previousWeek(lastCompleteWeek))?.srpe ?? 0
+  const lastCompleteWeek = addWeeks(currentWeek, -1)
+  const previous = perWeek.get(addWeeks(lastCompleteWeek, -1))?.srpe ?? 0
   const last = perWeek.get(lastCompleteWeek)?.srpe ?? 0
   const lastWeekChangePct = previous > 0 ? Math.round(((last - previous) / previous) * 100) : null
 
