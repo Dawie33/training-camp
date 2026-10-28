@@ -6,7 +6,7 @@ Périmètre : `backend/src/analytics/` (contrôleur, service, 8 calculateurs, ty
 
 Aucune ligne de code n'a été modifiée. Les chiffres cités dans les exemples ont été obtenus en appelant les calculateurs réels avec les données indiquées.
 
-> **Suivi au 2026-10-28** : I1 est corrigé par #73 (fusionnée), I3 et I4 par #74 (fusionnée), I2 par #75 (fusionnée), I6, I7 et A5 par #77 (fusionnée), I5 (lecture) et A6 par #78 (fusionnée), A4 par #79 (fusionnée), A2 sur la branche `fix/semaines-heure-paris`. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
+> **Suivi au 2026-10-28** : tous les points sont traités, sauf A10 (reporté), la partie écriture de I5 (revues #51 et #53) et la version EWMA de l'ACWR (A3, non retenue). PR : I1 #73, I3 et I4 #74, I2 et A3 (libellés) #75, I6, I7 et A5 #77, I5 (lecture) et A6 #78, A4 #79, A2 #80, A1 #81, A7 #82, A8 et A9 #83, A11 #84. Chaque point porte une ligne **Statut**. Les numéros de ligne cités renvoient au commit analysé (`9ed999d`) et ont bougé depuis.
 
 ## 1. Rôle du module
 
@@ -130,7 +130,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : `?months=1.5` est accepté. La réponse annonce `period_months: 1.5`, mais `setMonth` (`analytics.service.ts:63`) tronque le résultat : sur un mois de septembre, `9 − 1,5 = 7,5` devient 7, donc la requête remonte **2 mois**. Le reste de l'API utilise des DTO `class-validator`.
 - **Piste** : `OverviewQueryDto` avec `@Type(() => Number) @IsInt() @Min(1) @Max(12) @IsOptional()`. Pour `@Req()`, voir #31.
 - **Terminé quand** : `months=1.5` ou `months=20` renvoie 400 ; test e2e ou unitaire du DTO.
-- **Statut** : ✅ corrigé sur la branche `fix/analytics-months-dto`. `dto/overview-query.dto.ts` (`OverviewQueryDto`, 3 mois par défaut) remplace le bornage manuel ; `months=1.5`, `0`, `20` ou un paramètre inconnu renvoient 400, et un test unitaire du DTO passe par les options du `ValidationPipe` global. `@Req()` reste en l'état (#31).
+- **Statut** : ✅ corrigé par #81. `dto/overview-query.dto.ts` (`OverviewQueryDto`, 3 mois par défaut) remplace le bornage manuel ; `months=1.5`, `0`, `20` ou un paramètre inconnu renvoient 400, et un test unitaire du DTO passe par les options du `ValidationPipe` global. `@Req()` reste en l'état (#31).
 
 #### A2. Semaines calculées à l'heure du serveur
 
@@ -138,7 +138,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : `weekStart` utilise le fuseau du processus Node, probablement UTC sur Render. Une séance le lundi à 0 h 30 à Paris (dimanche 22 h 30 UTC) tombe dans la semaine précédente. C'est le même type de problème que #40, mais une autre fonction.
 - **Piste** : calculer la semaine dans le fuseau de l'athlète (`Europe/Paris` par défaut, ou un fuseau de profil), avec une fonction partagée par les calculateurs.
 - **Terminé quand** : un test avec `TZ=UTC` place une séance du lundi 0 h 30 heure de Paris dans la bonne semaine.
-- **Statut** : ✅ corrigé sur la branche `fix/semaines-heure-paris`. `weekStart` délègue à `toParisWeekStart` (`common/utils/date-only.ts`, écrit pour #40) ; le passage d'une semaine à l'autre (`addWeeks`) se fait sur la date seule, en UTC. Paris reste en dur, comme dans `toParisWeekStart` : pas de fuseau de profil pour l'instant. Le test « lundi 0 h 30 » ne dépend plus du fuseau de la machine, et la suite analytics passe en UTC, Los Angeles, Auckland et Paris.
+- **Statut** : ✅ corrigé par #80. `weekStart` délègue à `toParisWeekStart` (`common/utils/date-only.ts`, écrit pour #40) ; le passage d'une semaine à l'autre (`addWeeks`) se fait sur la date seule, en UTC. Paris reste en dur, comme dans `toParisWeekStart` : pas de fuseau de profil pour l'instant. Le test « lundi 0 h 30 » ne dépend plus du fuseau de la machine, et la suite analytics passe en UTC, Los Angeles, Auckland et Paris.
 
 #### A3. ACWR : nuancer le message
 
@@ -178,7 +178,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : la dépendance va dans les deux sens au niveau des fichiers. Ce n'est pas un cycle de modules Nest, mais une constante métier rangée dans le mauvais module. Même famille que #35 et #32.
 - **Piste** : déplacer `BENCHMARK_STANDARDS` (et `calculateLevelFromBenchmarks`) dans `common/benchmarks/`. À faire avec #32.
 - **Terminé quand** : `analytics/` n'importe plus rien de `workouts/` ; `src/app.module.spec.ts` passe.
-- **Statut** : ✅ corrigé sur la branche `refactor/benchmarks-common`. `BENCHMARK_STANDARDS`, `calculateLevelFromBenchmarks` et `validateLevel` sont dans `common/benchmarks/benchmark-standards.ts` (`workout.utils.ts` supprimé) ; la fonction prend une interface locale `BenchmarkResultInput` que `BenchmarkResultDto` satisfait, et `analytics/` n'importe plus rien de `workouts/`.
+- **Statut** : ✅ corrigé par #82. `BENCHMARK_STANDARDS`, `calculateLevelFromBenchmarks` et `validateLevel` sont dans `common/benchmarks/benchmark-standards.ts` (`workout.utils.ts` supprimé) ; la fonction prend une interface locale `BenchmarkResultInput` que `BenchmarkResultDto` satisfait, et `analytics/` n'importe plus rien de `workouts/`.
 
 #### A8. Frontend : types copiés à la main et requêtes concurrentes
 
@@ -186,7 +186,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : les types sont dupliqués sans contrôle, et toute évolution (I1, I4, A4) doit être faite deux fois. Par ailleurs, si l'utilisateur change vite de période, une réponse plus lente pour l'ancienne période peut arriver en dernier et écraser la bonne.
 - **Piste** : ignorer les réponses obsolètes (drapeau `cancelled` dans l'effet, ou `AbortController`). Pour les types, un commentaire « à synchroniser avec … » au minimum.
 - **Terminé quand** : changer de période deux fois de suite affiche toujours la dernière période demandée.
-- **Statut** : ✅ corrigé sur la branche `fix/analytics-periode-frontend`. `usePerformanceOverview` numérote chaque requête et n'écrit l'état que pour la plus récente : une réponse plus lente pour une ancienne période est ignorée. `services/analytics.ts` porte en tête un commentaire « à garder synchronisés avec `backend/src/analytics/types/analytics.types.ts` ».
+- **Statut** : ✅ corrigé par #83. `usePerformanceOverview` numérote chaque requête et n'écrit l'état que pour la plus récente : une réponse plus lente pour une ancienne période est ignorée. `services/analytics.ts` porte en tête un commentaire « à garder synchronisés avec `backend/src/analytics/types/analytics.types.ts` ».
 
 #### A9. La période ne s'applique pas à tous les blocs
 
@@ -194,7 +194,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : les benchmarks et l'historique des 1RM ne sont pas bornés par `months`. C'est un choix voulu pour les 1RM (commentaire ligne 82), mais il n'est pas commenté pour les benchmarks. La documentation dit au contraire que « le service lit les données de l'athlète sur la période choisie ». Changer la période ne modifie donc pas ces blocs, sans que l'écran le dise.
 - **Piste** : documenter le choix dans le code et dans la doc, et l'indiquer à l'écran (« tout l'historique »).
 - **Terminé quand** : doc, commentaire et libellé à l'écran sont cohérents.
-- **Statut** : ✅ corrigé sur la branche `fix/analytics-periode-frontend`. La requête `benchmark_history` est commentée, `docs/diagnostic-performance.md` distingue les blocs sur la période, sur tout l'historique et à l'état actuel, et les cartes Benchmarks et Évolution des charges affichent « tout l'historique ».
+- **Statut** : ✅ corrigé par #83. La requête `benchmark_history` est commentée, `docs/diagnostic-performance.md` distingue les blocs sur la période, sur tout l'historique et à l'état actuel, et les cartes Benchmarks et Évolution des charges affichent « tout l'historique ».
 
 #### A10. Performance des agrégations
 
@@ -204,6 +204,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
   - `results` (jsonb) est chargé en entier, y compris les données Coros, alors que seuls `rpe`, `elapsed_time_seconds` et `exercise_results` servent.
 - **Piste** : ne sélectionner que les clés utiles (`results->'rpe'`, etc.) ; regrouper les deux requêtes de compétences en une seule. Ajouter un cache seulement si la mesure le justifie.
 - **Terminé quand** : mesure avant/après sur un compte avec 12 mois de données (`EXPLAIN ANALYZE`), décision notée dans la revue.
+- **Statut** : ⏸️ reporté. Aucun problème mesuré aujourd'hui, et la mesure demandée exige une base remplie sur 12 mois. À reprendre si le tableau de bord ralentit ou si le pool de connexions sature.
 
 #### A11. `performance_level` relu sans vérification
 
@@ -211,7 +212,7 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 - **Explication** : la valeur est seulement testée comme `string`, puis convertie en `PerformanceLevel`. Une ancienne analyse avec une autre valeur passe telle quelle au frontend.
 - **Piste** : vérifier la valeur contre la liste des niveaux (ou un `z.enum`), sinon renvoyer `null`.
 - **Terminé quand** : test avec `performance_level: 'excellent'` → `analysis: null`.
-- **Statut** : ✅ corrigé sur la branche `fix/analytics-performance-level`. `readAnalysis` valide le niveau avec le `z.enum` de `WodAnalysisSchema` (dont `PerformanceLevel` est désormais dérivé) et renvoie `null` hors liste, test `'excellent'` à l'appui.
+- **Statut** : ✅ corrigé par #84. `readAnalysis` valide le niveau avec le `z.enum` de `WodAnalysisSchema` (dont `PerformanceLevel` est désormais dérivé) et renvoie `null` hors liste, test `'excellent'` à l'appui.
 
 ## 5. Issues existantes concernées
 
@@ -235,9 +236,9 @@ Conséquence importante pour la suite : **une erreur de calcul ici ne reste pas 
 4. ~~**[Analytics] Benchmarks : regrouper par workout_id, contrôler le type de score, compter les reps d'AMRAP** (I5, partie lecture). La partie écriture reste dans #51 et #53.~~ Fait dans #78.
 5. ~~**[Analytics] Exposition par mouvement : une exposition par séance, charges de force séparées** (I6, avec la table d'alias de A5).~~ Fait dans #77.
 6. ~~**[Analytics] Tests unitaires du service** (I7). Prérequis de l'issue 5. L'issue 1 s'en est passée : la logique a été extraite dans une fonction pure testée (`resolveSessionMinutes`).~~ Fait dans #77.
-7. **[Analytics] Valider `months` avec un DTO** (A1).
-8. ~~**[Analytics] Semaines calculées dans le fuseau de l'athlète** (A2).~~ Fait sur `fix/semaines-heure-paris`.
+7. ~~**[Analytics] Valider `months` avec un DTO** (A1).~~ Fait dans #81.
+8. ~~**[Analytics] Semaines calculées dans le fuseau de l'athlète** (A2).~~ Fait dans #80.
 9. ~~**[Analytics] Distinguer les 1RM estimés dans l'historique et les ratios** (A4, après #45).~~ Fait dans #79.
 10. ~~**[Analytics] Benchmarks à l'écran : barème Cindy et courbes au temps inversées** (A6).~~ Fait dans #78.
-11. **[Analytics] Frontend : ignorer les réponses obsolètes du diagnostic** (A8).
-12. **[Analytics] Documenter les blocs non bornés par la période** (A9, avec la nuance du message ACWR de A3).
+11. ~~**[Analytics] Frontend : ignorer les réponses obsolètes du diagnostic** (A8).~~ Fait dans #83.
+12. ~~**[Analytics] Documenter les blocs non bornés par la période** (A9, avec la nuance du message ACWR de A3).~~ Fait dans #83 (A9) et #75 (nuance du message ACWR).
