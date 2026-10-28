@@ -34,7 +34,7 @@ const ACWR_ZONES: Record<AcwrZone, { label: string; className: string }> = {
   undertrained: { label: 'Charge basse', className: 'text-blue-600' },
   optimal: { label: 'Zone optimale', className: 'text-emerald-600' },
   caution: { label: 'Vigilance', className: 'text-orange-600' },
-  high_risk: { label: 'Risque élevé', className: 'text-destructive' },
+  high_risk: { label: 'Hausse rapide', className: 'text-destructive' },
 }
 
 const PERFORMANCE_LEVELS: Record<PerformanceLevel, { label: string; className: string }> = {
@@ -144,7 +144,7 @@ function LoadCard({ load }: { load: TrainingLoadResult }) {
       <WeeklyLoadChart weeks={load.weeks} chronic={load.chronic} height={140} />
       {load.acwr === null && (
         <p className="text-[11px] text-muted-foreground mt-1">
-          Le ratio de charge demande 4 semaines d&apos;historique pour être fiable.
+          Le ratio de charge demande un RPE sur tes séances d&apos;au moins 3 des 4 dernières semaines.
         </p>
       )}
       {load.last_week_change_pct !== null && load.last_week_change_pct > 10 && (

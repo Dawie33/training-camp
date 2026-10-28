@@ -15,7 +15,7 @@ const LOAD_ZONE_LABELS: Record<string, string> = {
   undertrained: 'charge basse (marge pour monter)',
   optimal: 'zone optimale',
   caution: 'vigilance — la charge monte vite',
-  high_risk: 'RISQUE ÉLEVÉ — réduire le volume',
+  high_risk: 'hausse rapide de charge — stabiliser, ne plus augmenter',
 }
 
 /**

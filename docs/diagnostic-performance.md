@@ -79,14 +79,20 @@ La durée utilisée est celle du **metcon** (le chrono saisi), pas celle de la s
 - **sRPE** (session RPE) = effort ressenti sur toute la séance × **durée totale de la séance** en minutes, échauffement compris. La durée est saisie à l'enregistrement de la séance. À défaut, l'app prend la durée de l'activité .fit, puis 60 minutes. Le chrono du metcon n'est jamais utilisé : il diviserait la charge d'une séance complète.
 - **Variation hebdomadaire** = dernière semaine complète comparée à celle d'avant. La semaine en cours, inachevée, n'est pas comparée. Une semaine sans séance compte zéro ; si la semaine de référence est vide, aucune variation n'est affichée. Au-delà de +10 %, l'écran signale une hausse rapide.
 - **ACWR** (Acute:Chronic Workload Ratio) = charge des 7 derniers jours / moyenne hebdomadaire des 28 derniers jours.
-- L'ACWR n'est calculé qu'après 28 jours d'historique, pour éviter une fausse alerte en début d'utilisation.
+- L'ACWR n'est calculé que si la fenêtre des 28 jours est réellement remplie. Sinon, il n'est pas affiché :
+  - la plus ancienne séance avec RPE date d'au moins 28 jours ;
+  - au moins 3 des 4 tranches de 7 jours (comptées depuis aujourd'hui) contiennent une séance avec RPE ;
+  - au moins 75 % des séances des 28 jours portent un RPE.
+- Sans ces conditions, une séance ancienne isolée suivie d'une reprise afficherait un ratio de 4, son maximum, sans hausse de charge réelle.
 
 | ACWR | Zone |
 |---|---|
 | moins de 0,8 | Charge basse, marge pour monter |
 | 0,8 à 1,3 | Zone optimale |
 | 1,3 à 1,5 | Vigilance |
-| plus de 1,5 | Risque élevé : réduire le volume |
+| plus de 1,5 | Hausse rapide : stabiliser, ne plus augmenter |
+
+Un ratio élevé signale une hausse de charge plus rapide que l'habitude. Ce n'est pas un diagnostic de blessure.
 
 ## Autres seuils
 
