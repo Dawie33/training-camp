@@ -18,8 +18,8 @@ export class CreateScheduleDto {
   scheduled_date!: string // Format YYYY-MM-DD
 
   @IsOptional()
-  @IsEnum(['workout', 'box_session'])
-  session_type?: 'workout' | 'box_session'
+  @IsEnum(['workout', 'box_session', 'rest'])
+  session_type?: 'workout' | 'box_session' | 'rest'
 
   @IsOptional()
   @IsEnum(['home', 'box'])
@@ -86,6 +86,6 @@ export class ScheduleQueryDto {
   workout_id?: string
 
   @IsOptional()
-  @IsEnum(['workout', 'box_session'])
-  session_type?: 'workout' | 'box_session'
+  @IsEnum(['workout', 'box_session', 'rest'])
+  session_type?: 'workout' | 'box_session' | 'rest'
 }

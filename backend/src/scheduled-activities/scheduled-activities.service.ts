@@ -185,6 +185,8 @@ export class ScheduledActivitiesService {
         let title: string
         if (row.session_type === 'box_session') {
           title = 'Jour Box'
+        } else if (row.session_type === 'rest') {
+          title = 'Repos'
         } else if (row.session_type === 'program_session') {
           title = sessionData?.title || 'Séance programme'
         } else {

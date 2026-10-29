@@ -1,7 +1,7 @@
 import { apiClient } from './index'
 import type { CoachProposal, CoachRecommendation } from './recommendations'
 
-export type SessionType = 'workout' | 'box_session' | 'program_session'
+export type SessionType = 'workout' | 'box_session' | 'program_session' | 'rest'
 
 export interface WorkoutSchedule {
   id: string
@@ -146,5 +146,15 @@ export const scheduleApi = {
       notes: notes || null,
     })
     return response
+  },
+
+  /**
+   * Crée un marqueur "Repos" pour une date : le coach ne génère pas de séance ce jour-là
+   */
+  async createRestDay(date: string) {
+    return apiClient.post<WorkoutSchedule>('/workout-schedule', {
+      scheduled_date: date,
+      session_type: 'rest',
+    })
   },
 }

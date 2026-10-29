@@ -11,6 +11,8 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const onDelete = calendarEvent._onDelete as (() => void) | undefined
   const onPrint = calendarEvent._onPrint as (() => void) | undefined
   const isSkill = module === 'skill'
+  // Un jour de repos ne se logge pas et ne se « saute » pas : on peut seulement le supprimer
+  const isRestDay = calendarEvent.session_type === 'rest'
   const skillStepTitle = calendarEvent.skill_step_title as string | undefined
   const skillProgress = calendarEvent.skill_progress as number | undefined
   const skillProgramId = calendarEvent.skill_program_id as string | undefined
@@ -83,7 +85,7 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
 
       {/* Actions */}
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
-        {status === 'scheduled' && (
+        {status === 'scheduled' && !isRestDay && (
           <>
             {onComplete && isSkill && (
               <Button

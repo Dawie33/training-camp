@@ -95,7 +95,7 @@ export function useCalendarPage() {
 
       return {
         id: schedule.id,
-        title: schedule.location === 'home' ? `🏠 ${schedule.title}` : schedule.location === 'box' ? `🥊 ${schedule.title}` : schedule.title,
+        title: schedule.title,
         start: Temporal.PlainDate.from(dateStr),
         end: Temporal.PlainDate.from(dateStr),
         status: schedule.status,
@@ -201,6 +201,16 @@ export function useCalendarPage() {
     }
   }
 
+  const handleMarkRestDay = async () => {
+    try {
+      await scheduleApi.createRestDay(format(selectedDate, 'yyyy-MM-dd'))
+      refetch()
+      toast.success(`Repos marqué pour le ${format(selectedDate, 'dd/MM/yyyy')}`)
+    } catch {
+      toast.error('Impossible de marquer ce jour de repos (déjà occupé ?)')
+    }
+  }
+
   const handleScheduleSkill = async (skillProgramId: string, notes?: string, location?: 'home' | 'box') => {
     try {
       await activitiesApi.create({
@@ -245,6 +255,7 @@ export function useCalendarPage() {
     // Actions
     handleScheduleWorkout,
     handleMarkBoxDay,
+    handleMarkRestDay,
     handleScheduleSkill,
     refetch,
   }

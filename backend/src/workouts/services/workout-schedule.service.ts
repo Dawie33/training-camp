@@ -160,8 +160,10 @@ export class WorkoutScheduleService {
    */
   async create(userId: string, data: CreateScheduleDto) {
     const isBoxSession = data.session_type === 'box_session'
+    // « Repos » : marqueur sans workout, qui empêche le coach de générer une séance ce jour-là
+    const isRestDay = data.session_type === 'rest'
 
-    if (!isBoxSession && !data.workout_id && !data.personalized_workout_id) {
+    if (!isBoxSession && !isRestDay && !data.workout_id && !data.personalized_workout_id) {
       throw new BadRequestException('workout_id ou personalized_workout_id est requis')
     }
 
@@ -214,6 +216,9 @@ export class WorkoutScheduleService {
         status: 'scheduled',
       })
       .returning('*')
+
+    // Un jour de repos n'encombre pas l'agenda Google
+    if (isRestDay) return schedule
 
     // Sync vers Google Calendar (sans bloquer si non connecté ou en cas d'erreur)
     let googleEventId: string | null = null
