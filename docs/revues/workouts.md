@@ -85,9 +85,9 @@ Le frontend propose d'ailleurs le bouton « Supprimer » à tout le monde (`Work
 
 **Terminé quand** :
 
-- [ ] Un utilisateur B reçoit 404 (ou 403) sur `PATCH` et `DELETE` d'un workout créé par A, ou d'un benchmark partagé
-- [ ] Des tests unitaires du service couvrent le cas « pas propriétaire »
-- [ ] Le bouton « Supprimer » n'apparaît plus sur les workouts des autres
+- [x] Un utilisateur B reçoit 404 (ou 403) sur `PATCH` et `DELETE` d'un workout créé par A, ou d'un benchmark partagé
+- [x] Des tests unitaires du service couvrent le cas « pas propriétaire »
+- [x] Le bouton « Supprimer » n'apparaît plus sur les workouts des autres
 
 ---
 
@@ -127,9 +127,9 @@ L'appliquer dans `findAll`, `getBenchmarkWorkouts`, `findOne` (passer `userId`) 
 
 **Terminé quand** :
 
-- [ ] Un workout `isPublic: false` créé par A n'apparaît ni dans `GET /workouts`, ni dans `GET /workouts/benchmark`, ni dans `GET /workouts/:id` pour B
-- [ ] A voit toujours ses workouts privés
-- [ ] Les tests couvrent les trois routes
+- [x] Un workout `isPublic: false` créé par A n'apparaît ni dans `GET /workouts`, ni dans `GET /workouts/benchmark`, ni dans `GET /workouts/:id` pour B
+- [x] A voit toujours ses workouts privés
+- [x] Les tests couvrent les trois routes
 
 ---
 
@@ -146,8 +146,8 @@ L'appliquer dans `findAll`, `getBenchmarkWorkouts`, `findOne` (passer `userId`) 
 
 **Terminé quand** :
 
-- [ ] `POST /workouts` avec `created_by_user_id` renvoie 400 (champ inconnu)
-- [ ] Un workout créé depuis l'interface a `created_by_user_id = <utilisateur connecté>` (test du contrôleur ou du service)
+- [x] `POST /workouts` avec `created_by_user_id` renvoie 400 (champ inconnu)
+- [x] Un workout créé depuis l'interface a `created_by_user_id = <utilisateur connecté>` (test du contrôleur ou du service)
 
 ---
 
@@ -208,8 +208,8 @@ Autre effet, plus discutable : un seul résultat de benchmark **écrase** `users
 
 **Terminé quand** :
 
-- [ ] Le benchmark planifié est toujours un benchmark visible par l'utilisateur (test)
-- [ ] Sans benchmark en base, la route renvoie `{ scheduled: false }` sans erreur
+- [x] Le benchmark planifié est toujours un benchmark visible par l'utilisateur (test)
+- [x] Sans benchmark en base, la route renvoie `{ scheduled: false }` sans erreur
 
 ---
 

@@ -8,6 +8,7 @@ import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/wor
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
+import { applyEditPermission, applyVisibility, WorkoutViewer } from './workout-visibility'
 
 /**
  * Gère le CRUD des workouts (référentiel commun et personnalisés), les benchmarks
@@ -22,8 +23,9 @@ export class WorkoutsService {
   ) {}
 
   /**
-   * Recherche tous les workouts.
-   * @returns Tous les workouts.
+   * Recherche les workouts visibles par l'utilisateur.
+   * @param viewer Utilisateur connecté (voir `applyVisibility`)
+   * @returns Les workouts correspondant aux filtres et leur nombre total.
    */
   async findAll(
     {
@@ -38,23 +40,10 @@ export class WorkoutsService {
       workout_type,
       is_benchmark,
     }: WorkoutQueryDto,
-    userId?: string
+    viewer: WorkoutViewer
   ) {
     const applyFilters = (q: Knex.QueryBuilder) => {
-      // Visibilité : public OU publié OU appartient à l'utilisateur connecté
-      if (userId) {
-        q = q.where(builder => {
-          builder
-            .where('isPublic', true)
-            .orWhereNull('isPublic')
-            .orWhere('workouts.status', 'published')
-            .orWhere('created_by_user_id', userId)
-        })
-      } else {
-        q = q.where(builder => {
-          builder.where('isPublic', true).orWhereNull('isPublic').orWhere('workouts.status', 'published')
-        })
-      }
+      q = applyVisibility(q, viewer)
       if (search) q = q.where('workouts.name', 'ilike', `%${search}%`)
       if (status) q = q.where('workouts.status', status)
       if (scheduled_date) q = q.where('workouts.scheduled_date', scheduled_date)
@@ -78,12 +67,16 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère un workout par son ID
+   * Récupère un workout par son ID, s'il est visible par l'utilisateur
    * @param id ID du workout
-   * @returns Le workout avec ses exercices associés
+   * @param viewer Utilisateur connecté (voir `applyVisibility`)
+   * @returns Le workout avec ses exercices associés, ou null s'il n'existe pas ou n'est pas visible
    */
-  async findOne(id: string) {
-    const workout = await this.knex('workouts').select('workouts.*').where('workouts.id', id).first()
+  async findOne(id: string, viewer: WorkoutViewer) {
+    const workout = await applyVisibility(
+      this.knex('workouts').select('workouts.*').where('workouts.id', id),
+      viewer
+    ).first()
 
     if (!workout) return null
 
@@ -103,12 +96,14 @@ export class WorkoutsService {
   /**
    * Récupère les workouts benchmark
    * Les benchmarks sont des workouts de référence pour évaluer le niveau
-   * @returns Liste des workouts benchmark triés par difficulté
+   * @param viewer Utilisateur connecté (voir `applyVisibility`)
+   * @returns Liste des workouts benchmark visibles, triés par difficulté
    */
-  async getBenchmarkWorkouts() {
-    const rows = await this.knex('workouts')
-      .select('workouts.*')
-      .where({ 'workouts.status': 'published', 'workouts.is_benchmark': true })
+  async getBenchmarkWorkouts(viewer: WorkoutViewer) {
+    const rows = await applyVisibility(
+      this.knex('workouts').select('workouts.*').where({ 'workouts.is_benchmark': true }),
+      viewer
+    )
       .orderBy('workouts.difficulty', 'asc')
       .orderBy('workouts.name', 'asc')
 
@@ -205,12 +200,14 @@ export class WorkoutsService {
   }
 
   /**
-   * Met à jour un workout.
+   * Met à jour un workout, si l'utilisateur a le droit de le modifier (voir `applyEditPermission`).
    * @param id ID du workout à mettre à jour.
    * @param data Informations de mise à jour du workout.
+   * @param viewer Utilisateur connecté
    * @returns Le workout mis à jour.
+   * @throws NotFoundException si le workout n'existe pas ou si l'utilisateur ne peut pas le modifier
    */
-  async update(id: string, data: UpdateWorkoutDto) {
+  async update(id: string, data: UpdateWorkoutDto, viewer: WorkoutViewer) {
     const updateData: Partial<{
       name: string
       slug: string
@@ -244,7 +241,11 @@ export class WorkoutsService {
     if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags)
     if (data.scheduled_date !== undefined) updateData.scheduled_date = data.scheduled_date
     if (data.image_url !== undefined) updateData.image_url = data.image_url
-    const [row] = await this.knex('workouts').where({ id }).update(updateData).returning('*')
+    const [row] = await applyEditPermission(this.knex('workouts').where({ id }), viewer)
+      .update(updateData)
+      .returning('*')
+    // 404 plutôt que 403 : on ne confirme pas l'existence d'un workout que l'utilisateur ne peut pas modifier
+    if (!row) throw new NotFoundException('Workout non trouvé')
 
     return row
   }
@@ -329,9 +330,10 @@ export class WorkoutsService {
   /**
    * Crée un nouveau workout
    * @param data Informations de création du workout
+   * @param createdByUserId Auteur du workout, toujours fourni par le serveur (jamais par le client)
    * @returns Le workout créé
    */
-  async create(data: CreateWorkoutDto) {
+  async create(data: CreateWorkoutDto, createdByUserId: string) {
     // Build the record with proper JSON handling
     const record: {
       name: string | null
@@ -374,7 +376,7 @@ export class WorkoutsService {
       metrics_tracked: safeJsonStringify(data.metrics_tracked, null),
       ai_generated: data.ai_generated || false,
       ai_parameters: safeJsonStringify(data.ai_parameters, null),
-      created_by_user_id: data.created_by_user_id || null,
+      created_by_user_id: createdByUserId,
       target_metrics: safeJsonStringify(data.target_metrics, null),
       isActive: data.isActive !== undefined ? data.isActive : true,
       isFeatured: data.isFeatured || false,
@@ -391,16 +393,6 @@ export class WorkoutsService {
     const [row] = await this.knex('workouts').insert(record).returning('*')
 
     return row
-  }
-
-  /**
-   * Supprime un workout du référentiel commun.
-   * @param id ID du workout
-   * @returns Le résultat de la suppression
-   */
-  async delete(id: string) {
-    await this.knex('workouts').where({ id }).delete()
-    return { success: true }
   }
 
   /**
@@ -564,7 +556,11 @@ export class WorkoutsService {
     const monthStart = toDateOnly(new Date(year, month - 1, 1))
     const monthEnd = toDateOnly(new Date(year, month, 0))
 
-    const benchmarks = await this.knex('workouts').where({ is_benchmark: true }).select('id', 'name')
+    // Seulement les benchmarks visibles par l'utilisateur : jamais le WOD privé d'un autre
+    const benchmarks = await applyVisibility(this.knex('workouts').where({ is_benchmark: true }), {
+      id: userId,
+    }).select('id', 'name')
+    if (benchmarks.length === 0) return { scheduled: false }
     const benchmarkIds = benchmarks.map(b => b.id)
 
     // Déjà un benchmark planifié ce mois-ci (auto ou manuel) → on ne double pas
@@ -613,12 +609,16 @@ export class WorkoutsService {
   }
 
   /**
-   * Supprime un workout du référentiel commun.
+   * Supprime un workout, si l'utilisateur a le droit de le modifier (voir `applyEditPermission`).
+   * Attention : les séances, planifications et l'historique de benchmark liés sont supprimés en cascade.
    * @param id ID du workout
+   * @param viewer Utilisateur connecté
    * @returns Le résultat de la suppression
+   * @throws NotFoundException si le workout n'existe pas ou si l'utilisateur ne peut pas le supprimer
    */
-  async remove(id: string) {
-    await this.knex('workouts').where({ id }).delete()
+  async remove(id: string, viewer: WorkoutViewer) {
+    const deleted = await applyEditPermission(this.knex('workouts').where({ id }), viewer).delete()
+    if (deleted === 0) throw new NotFoundException('Workout non trouvé')
     return { success: true }
   }
 }

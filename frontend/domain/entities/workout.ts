@@ -101,6 +101,21 @@ export interface Workouts {
     isFeatured: boolean
     isPublic: boolean
     ai_generated: boolean
+    created_by_user_id?: string | null
+}
+
+/**
+ * Même règle que le backend (`applyEditPermission`) : l'auteur modifie et supprime ses workouts,
+ * un admin le référentiel partagé (sans auteur, non privé). Le backend reste seul juge : ceci ne fait
+ * que masquer les boutons qui échoueraient.
+ */
+export function canEditWorkout(
+    workout: Pick<Workouts, 'created_by_user_id' | 'isPublic'>,
+    user: { id: string; role: string } | null
+): boolean {
+    if (!user) return false
+    if (workout.created_by_user_id) return workout.created_by_user_id === user.id
+    return user.role === 'admin' && workout.isPublic !== false
 }
 
 export interface WorkoutSessionCreate {

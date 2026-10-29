@@ -72,10 +72,6 @@ export class CreateWorkoutDto {
   @IsOptional()
   ai_parameters?: Record<string, unknown>
 
-  @IsUUID()
-  @IsOptional()
-  created_by_user_id?: string
-
   @IsOptional()
   target_metrics?: Record<string, unknown>
 
@@ -370,10 +366,6 @@ export class WorkoutDto {
 
   @IsOptional()
   ai_parameters: Record<string, unknown>
-
-  @IsUUID()
-  @IsOptional()
-  created_by_user_id: string
 
   @IsOptional()
   target_metrics: Record<string, unknown>
