@@ -34,6 +34,59 @@ function buildFitFileWithHr(heartRates: number[], stepSeconds: number): Buffer {
   return Buffer.concat([header, data, Buffer.alloc(2)])
 }
 
+/** Entête FIT de 14 octets + données + CRC vide, comme le produit une montre. */
+function wrapFitData(parts: number[]): Buffer {
+  const data = Buffer.from(parts)
+  const header = Buffer.alloc(14)
+  header[0] = 14
+  header[1] = 0x10
+  header.writeUInt16LE(2100, 2)
+  header.writeUInt32LE(data.length, 4)
+  header.write('.FIT', 8, 'latin1')
+  return Buffer.concat([header, data, Buffer.alloc(2)])
+}
+
+const uint32 = (value: number) => {
+  const bytes = Buffer.alloc(4)
+  bytes.writeUInt32LE(value)
+  return [...bytes]
+}
+
+/**
+ * Course découpée par la montre : une fraction de 400 m en 2:10 puis une récupération de 210 m en 1:30
+ * (messages « lap », n° 19), suivies de la session (n° 18).
+ */
+function buildFitFileWithLaps(): Buffer {
+  const start = 1_000_000_000
+  const parts: number[] = [
+    // Définition locale 0 : lap — timestamp, start_time, total_elapsed_time, total_timer_time (ms),
+    // total_distance (cm), avg_heart_rate, max_heart_rate, intensity, lap_trigger
+    0x40, 0x00, 0x00, 19, 0x00, 9, 253, 4, 0x86, 2, 4, 0x86, 7, 4, 0x86, 8, 4, 0x86, 9, 4, 0x86, 15, 1, 0x02, 16, 1,
+    0x02, 23, 1, 0x00, 24, 1, 0x00,
+  ]
+  const lap = (from: number, seconds: number, meters: number, avgHr: number, maxHr: number, intensity: number) =>
+    parts.push(
+      0x00,
+      ...uint32(from + seconds),
+      ...uint32(from),
+      ...uint32(seconds * 1000),
+      ...uint32(seconds * 1000),
+      ...uint32(meters * 100),
+      avgHr,
+      maxHr,
+      intensity,
+      0
+    )
+  lap(start, 130, 400, 168, 176, 0) // intensity 0 = active
+  lap(start + 130, 90, 210, 150, 165, 1) // intensity 1 = rest
+
+  // Définition locale 1 : session — timestamp, start_time, total_elapsed_time, total_distance, sport (1 = running)
+  parts.push(0x41, 0x00, 0x00, 18, 0x00, 5, 253, 4, 0x86, 2, 4, 0x86, 7, 4, 0x86, 9, 4, 0x86, 5, 1, 0x00)
+  parts.push(0x01, ...uint32(start + 220), ...uint32(start), ...uint32(220 * 1000), ...uint32(610 * 100), 1)
+
+  return wrapFitData(parts)
+}
+
 // Séance facile qui plafonne à 150 bpm : 10 points espacés de 5 s (enregistrement « intelligent »)
 const EASY_SESSION = buildFitFileWithHr([110, 120, 130, 140, 150, 150, 150, 150, 150, 150], 5)
 
@@ -92,5 +145,58 @@ describe('FitImportService.parseMultipleFitFiles — zones cardiaques', () => {
 
     expect(totals.hr_max_reference).toEqual({ bpm: 150, source: 'session' })
     expect(totals.hr_zones?.find(z => z.zone === 5)?.seconds).toBeGreaterThan(0)
+  })
+})
+
+describe('FitImportService.parseMultipleFitFiles — tours', () => {
+  it('enregistre chaque fraction et chaque récupération découpées par la montre', async () => {
+    // Arrange
+    const knexMock = jest.fn(() => ({
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(undefined),
+    }))
+    const moduleRef = await Test.createTestingModule({
+      providers: [FitImportService, { provide: getConnectionToken(), useValue: knexMock }],
+    }).compile()
+    const service = moduleRef.get(FitImportService)
+
+    // Act
+    const { activities } = await service.parseMultipleFitFiles([buildFitFileWithLaps()], 'user-1')
+
+    // Assert — noms de champs et unités de fit-file-parser : secondes, mètres, intensité en texte
+    expect(activities[0].laps).toEqual([
+      {
+        index: 1,
+        duration_seconds: 130,
+        distance_meters: 400,
+        avg_pace_min_km: 5.42,
+        avg_heart_rate: 168,
+        max_heart_rate: 176,
+        intensity: 'active',
+      },
+      {
+        index: 2,
+        duration_seconds: 90,
+        distance_meters: 210,
+        avg_pace_min_km: 7.14,
+        avg_heart_rate: 150,
+        max_heart_rate: 165,
+        intensity: 'rest',
+      },
+    ])
+  })
+
+  it("n'enregistre aucun tour pour une activité que la montre n'a pas découpée", async () => {
+    const knexMock = jest.fn(() => ({
+      where: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(undefined),
+    }))
+    const moduleRef = await Test.createTestingModule({
+      providers: [FitImportService, { provide: getConnectionToken(), useValue: knexMock }],
+    }).compile()
+
+    const { activities } = await moduleRef.get(FitImportService).parseMultipleFitFiles([EASY_SESSION], 'user-1')
+
+    expect(activities[0].laps).toEqual([])
   })
 })

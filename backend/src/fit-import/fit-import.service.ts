@@ -3,6 +3,7 @@ import FitParser from 'fit-file-parser'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { assertValidFitHeader } from './fit-header'
+import { extractLaps, FitLap, toPaceMinKm } from './fit-laps'
 import {
   computeHrZonesFromSamples,
   HrMaxReference,
@@ -13,6 +14,7 @@ import {
   zonesFromDeviceTimeInZone,
 } from './hr-zones'
 
+export type { FitLap } from './fit-laps'
 export type { HrMaxReference, HrMaxSource, HrZoneData } from './hr-zones'
 
 type ParsedFit = Awaited<ReturnType<FitParser['parseAsync']>>
@@ -35,6 +37,8 @@ export interface ParsedFitData {
   hr_samples: HrSample[]
   /** Temps par zone calculé par la montre (avec ses propres bornes), utilisé si le fichier n'a pas de points de FC */
   device_time_in_hr_zone: number[] | null
+  /** Tours enregistrés par la montre (fractions et récupérations), vide si l'activité n'est pas découpée */
+  laps: FitLap[]
 }
 
 // Format enrichi par activité pour /parse-multiple
@@ -52,6 +56,7 @@ export interface FitActivity {
   max_power: number | null // uniquement pour le vélo
   avg_pace_min_km: number | null // uniquement pour le running
   hr_zones: HrZoneData[] | null
+  laps: FitLap[]
 }
 
 export interface MultiActivityFitData {
@@ -67,14 +72,11 @@ export interface MultiActivityFitData {
   }
 }
 
+const isRunSport = (sport: string | null) => !!sport?.toLowerCase().includes('run')
+
 interface UserHrProfile {
   max_heart_rate: number | null
   dateOfBirth: Date | string | null
-}
-
-function toPaceMinKm(duration_seconds: number | null, distance_meters: number | null): number | null {
-  if (!duration_seconds || !distance_meters || distance_meters < 10) return null
-  return Math.round((duration_seconds / 60 / (distance_meters / 1000)) * 100) / 100
 }
 
 /**
@@ -145,6 +147,7 @@ export class FitImportService {
     }
 
     const timeInZone: unknown = session.time_in_hr_zone
+    const sport: string | null = session.sport ?? null
     return {
       duration_seconds: session.total_elapsed_time ?? null,
       calories: session.total_calories ?? null,
@@ -152,13 +155,14 @@ export class FitImportService {
       max_heart_rate: session.max_heart_rate ?? null,
       min_heart_rate: session.min_heart_rate ?? null,
       distance_meters: session.total_distance ?? null,
-      sport: session.sport ?? null,
+      sport,
       avg_temperature: session.avg_temperature ?? null,
       avg_cadence: session.avg_cadence ?? null,
       avg_power: session.avg_power ?? null,
       max_power: session.max_power ?? null,
       hr_samples: extractHrSamples(fitData, session),
       device_time_in_hr_zone: Array.isArray(timeInZone) && timeInZone.length ? (timeInZone as number[]) : null,
+      laps: extractLaps(session.laps, isRunSport(sport)),
     }
   }
 
@@ -191,10 +195,9 @@ export class FitImportService {
       avg_cadence: d.avg_cadence,
       avg_power: d.avg_power,
       max_power: d.max_power,
-      avg_pace_min_km: d.sport?.toLowerCase().includes('run')
-        ? toPaceMinKm(d.duration_seconds, d.distance_meters)
-        : null,
+      avg_pace_min_km: isRunSport(d.sport) ? toPaceMinKm(d.duration_seconds, d.distance_meters) : null,
       hr_zones: computeActivityZones(d, hrMaxReference),
+      laps: d.laps,
     }))
 
     const totalDuration = activities.reduce((s, a) => s + (a.duration_seconds ?? 0), 0)
