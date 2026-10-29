@@ -631,6 +631,8 @@ function LogWorkoutContent() {
                       if (exercise.weight) prescribed.push(exercise.weight)
                       if (exercise.distance) prescribed.push(exercise.distance)
                       if (exercise.duration) prescribed.push(exercise.duration)
+                      if (exercise.pace) prescribed.push(exercise.pace)
+                      if (exercise.rest_duration) prescribed.push(`repos ${exercise.rest_duration}`)
                       return (
                         <div key={`${exercise.name}-${idx}`} className="flex items-start gap-3">
                           <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-sm flex-shrink-0 mt-0.5">

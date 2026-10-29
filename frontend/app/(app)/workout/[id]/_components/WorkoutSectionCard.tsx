@@ -66,6 +66,12 @@ function ExerciseRow({ exercise, idx }: { exercise: Exercise; idx: number }) {
             {exercise.distance && (
               <span className="px-2 py-0.5 bg-background rounded text-xs text-muted-foreground border border-border">{exercise.distance}</span>
             )}
+            {exercise.work_duration && (
+              <span className="px-2 py-0.5 bg-background rounded text-xs text-muted-foreground border border-border">Travail : {exercise.work_duration}</span>
+            )}
+            {exercise.rest_duration && (
+              <span className="px-2 py-0.5 bg-background rounded text-xs text-muted-foreground border border-border">Repos : {exercise.rest_duration}</span>
+            )}
             {exercise.per_side && (
               <span className="px-2 py-0.5 bg-background rounded text-xs text-muted-foreground border border-border">par côté</span>
             )}

@@ -1,4 +1,4 @@
-import { describeHrMaxReference, getSportLabel, HrZoneData, MultiActivityFitData } from '@/services/fit-import'
+import { describeHrMaxReference, FitLap, getSportLabel, HrZoneData, MultiActivityFitData } from '@/services/fit-import'
 
 const ZONE_COLORS = ['#64748b', '#22c55e', '#3b82f6', '#f97316', '#ef4444']
 
@@ -25,6 +25,65 @@ function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSecon
           </div>
         )
       })}
+    </div>
+  )
+}
+
+/** Libellé d'un tour selon le type donné par la montre : une séance programmée distingue efforts et récupérations */
+const LAP_INTENSITY_LABELS: Record<string, string> = {
+  active: 'Effort',
+  interval: 'Effort',
+  rest: 'Récup',
+  recovery: 'Récup',
+  warmup: 'Échauffement',
+  cooldown: 'Retour au calme',
+}
+
+const isEffortLap = (lap: FitLap) => lap.intensity === 'active' || lap.intensity === 'interval'
+
+function formatClock(seconds: number) {
+  return `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, '0')}`
+}
+
+function formatPace(paceMinKm: number) {
+  return `${Math.floor(paceMinKm)}:${String(Math.round((paceMinKm % 1) * 60)).padStart(2, '0')}`
+}
+
+function formatDistance(meters: number) {
+  return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(2)} km`
+}
+
+/** Tours de l'activité : le temps de chaque fraction, que la moyenne de la séance ne montre pas. */
+function LapsTable({ laps, isRun }: { laps: FitLap[]; isRun: boolean }) {
+  return (
+    <div className="mt-2 overflow-x-auto bg-card rounded-lg">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-left text-muted-foreground border-b border-border">
+            <th className="hidden sm:table-cell px-2 py-1.5 font-medium">Tour</th>
+            <th className="px-2 py-1.5 font-medium">Type</th>
+            <th className="px-2 py-1.5 font-medium text-right">Durée</th>
+            <th className="px-2 py-1.5 font-medium text-right">Distance</th>
+            {isRun && <th className="px-2 py-1.5 font-medium text-right">Allure</th>}
+            <th className="px-2 py-1.5 font-medium text-right">FC moy.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {laps.map(lap => (
+            <tr
+              key={lap.index}
+              className={`border-b border-border last:border-0 tabular-nums ${isEffortLap(lap) ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+            >
+              <td className="hidden sm:table-cell px-2 py-1.5">{lap.index}</td>
+              <td className="px-2 py-1.5">{(lap.intensity && LAP_INTENSITY_LABELS[lap.intensity]) ?? '—'}</td>
+              <td className="px-2 py-1.5 text-right">{lap.duration_seconds ? formatClock(lap.duration_seconds) : '—'}</td>
+              <td className="px-2 py-1.5 text-right whitespace-nowrap">{lap.distance_meters ? formatDistance(lap.distance_meters) : '—'}</td>
+              {isRun && <td className="px-2 py-1.5 text-right">{lap.avg_pace_min_km ? formatPace(lap.avg_pace_min_km) : '—'}</td>}
+              <td className="px-2 py-1.5 text-right">{lap.avg_heart_rate ?? '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -78,6 +137,7 @@ export function FitDataSummary({ data }: { data: MultiActivityFitData }) {
                 </div>
               )}
             </div>
+            {activity.laps && activity.laps.length > 0 && <LapsTable laps={activity.laps} isRun={!!isRun} />}
           </div>
         )
       })}

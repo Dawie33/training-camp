@@ -9,6 +9,18 @@ export interface HrZoneData {
   high_bpm: number | null
 }
 
+/** Un tour enregistré par la montre : une fraction ou une récupération (voir backend fit-import/fit-laps.ts) */
+export interface FitLap {
+  index: number
+  duration_seconds: number | null
+  distance_meters: number | null
+  avg_pace_min_km: number | null
+  avg_heart_rate: number | null
+  max_heart_rate: number | null
+  /** active, rest, warmup, cooldown, recovery, interval… selon la montre */
+  intensity: string | null
+}
+
 // Format enrichi par activité pour /parse-multiple
 export interface FitActivity {
   sport: string | null
@@ -24,6 +36,8 @@ export interface FitActivity {
   max_power: number | null
   avg_pace_min_km: number | null
   hr_zones: HrZoneData[] | null
+  /** Absent des séances importées avant l'extraction des tours */
+  laps?: FitLap[]
 }
 
 export interface MultiActivityFitData {
