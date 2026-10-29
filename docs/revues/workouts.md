@@ -85,9 +85,9 @@ Le frontend propose d'ailleurs le bouton « Supprimer » à tout le monde (`Work
 
 **Terminé quand** :
 
-- [ ] Un utilisateur B reçoit 404 (ou 403) sur `PATCH` et `DELETE` d'un workout créé par A, ou d'un benchmark partagé
-- [ ] Des tests unitaires du service couvrent le cas « pas propriétaire »
-- [ ] Le bouton « Supprimer » n'apparaît plus sur les workouts des autres
+- [x] Un utilisateur B reçoit 404 (ou 403) sur `PATCH` et `DELETE` d'un workout créé par A, ou d'un benchmark partagé
+- [x] Des tests unitaires du service couvrent le cas « pas propriétaire »
+- [x] Le bouton « Supprimer » n'apparaît plus sur les workouts des autres
 
 ---
 

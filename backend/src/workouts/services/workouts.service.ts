@@ -8,7 +8,7 @@ import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/wor
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
-import { applyVisibility, WorkoutViewer } from './workout-visibility'
+import { applyEditPermission, applyVisibility, WorkoutViewer } from './workout-visibility'
 
 /**
  * Gère le CRUD des workouts (référentiel commun et personnalisés), les benchmarks
@@ -200,12 +200,14 @@ export class WorkoutsService {
   }
 
   /**
-   * Met à jour un workout.
+   * Met à jour un workout, si l'utilisateur a le droit de le modifier (voir `applyEditPermission`).
    * @param id ID du workout à mettre à jour.
    * @param data Informations de mise à jour du workout.
+   * @param viewer Utilisateur connecté
    * @returns Le workout mis à jour.
+   * @throws NotFoundException si le workout n'existe pas ou si l'utilisateur ne peut pas le modifier
    */
-  async update(id: string, data: UpdateWorkoutDto) {
+  async update(id: string, data: UpdateWorkoutDto, viewer: WorkoutViewer) {
     const updateData: Partial<{
       name: string
       slug: string
@@ -239,7 +241,11 @@ export class WorkoutsService {
     if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags)
     if (data.scheduled_date !== undefined) updateData.scheduled_date = data.scheduled_date
     if (data.image_url !== undefined) updateData.image_url = data.image_url
-    const [row] = await this.knex('workouts').where({ id }).update(updateData).returning('*')
+    const [row] = await applyEditPermission(this.knex('workouts').where({ id }), viewer)
+      .update(updateData)
+      .returning('*')
+    // 404 plutôt que 403 : on ne confirme pas l'existence d'un workout que l'utilisateur ne peut pas modifier
+    if (!row) throw new NotFoundException('Workout non trouvé')
 
     return row
   }
@@ -387,16 +393,6 @@ export class WorkoutsService {
     const [row] = await this.knex('workouts').insert(record).returning('*')
 
     return row
-  }
-
-  /**
-   * Supprime un workout du référentiel commun.
-   * @param id ID du workout
-   * @returns Le résultat de la suppression
-   */
-  async delete(id: string) {
-    await this.knex('workouts').where({ id }).delete()
-    return { success: true }
   }
 
   /**
@@ -613,12 +609,16 @@ export class WorkoutsService {
   }
 
   /**
-   * Supprime un workout du référentiel commun.
+   * Supprime un workout, si l'utilisateur a le droit de le modifier (voir `applyEditPermission`).
+   * Attention : les séances, planifications et l'historique de benchmark liés sont supprimés en cascade.
    * @param id ID du workout
+   * @param viewer Utilisateur connecté
    * @returns Le résultat de la suppression
+   * @throws NotFoundException si le workout n'existe pas ou si l'utilisateur ne peut pas le supprimer
    */
-  async remove(id: string) {
-    await this.knex('workouts').where({ id }).delete()
+  async remove(id: string, viewer: WorkoutViewer) {
+    const deleted = await applyEditPermission(this.knex('workouts').where({ id }), viewer).delete()
+    if (deleted === 0) throw new NotFoundException('Workout non trouvé')
     return { success: true }
   }
 }

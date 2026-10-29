@@ -42,7 +42,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { WorkoutQueryParams, Workouts } from '@/domain/entities/workout'
+import { canEditWorkout, type WorkoutQueryParams, type Workouts } from '@/domain/entities/workout'
+import { useAuth } from '@/hooks/useAuth'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { workoutsApi } from '@/services/workouts'
 import { toast } from 'sonner'
@@ -63,6 +64,7 @@ const STATUS_COLORS = {
 
 export function WorkoutsCatalogTable() {
   const searchParams = useSearchParams()
+  const { user } = useAuth()
   const [workouts, setWorkouts] = useState<Workouts[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -257,26 +259,30 @@ export function WorkoutsCatalogTable() {
               <DropdownMenuItem onClick={() => navigator.clipboard.writeText(workout.id)}>
                 Copy ID
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <Link href={`/workouts/${workout.id}`}>
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => handleDelete(workout.id, workout.name)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canEditWorkout(workout, user) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <Link href={`/workouts/${workout.id}`}>
+                    <DropdownMenuItem>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => handleDelete(workout.id, workout.name)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )
       },
     },
-  ], [handleDelete])
+  ], [handleDelete, user])
 
   const pageCount = Math.ceil(total / pageSize)
 
@@ -489,14 +495,16 @@ export function WorkoutsCatalogTable() {
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDelete(workout.id, workout.name)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {canEditWorkout(workout, user) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(workout.id, workout.name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
 

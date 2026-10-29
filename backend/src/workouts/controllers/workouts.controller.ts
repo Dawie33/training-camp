@@ -252,15 +252,21 @@ export class WorkoutsController {
   }
 
   /**
-   * Met à jour un workout du référentiel commun.
+   * Met à jour un workout : le sien, ou le référentiel partagé pour un admin.
    * @param id Identifiant du workout
    * @param updateWorkoutDto Champs à mettre à jour
+   * @param req Requête authentifiée contenant l'utilisateur courant
    * @returns Le workout mis à jour
+   * @throws NotFoundException si le workout n'existe pas, si l'utilisateur ne peut pas le modifier, ou si l'id n'est pas un UUID
    */
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  async update(@Param('id') id: string, @Body() updateWorkoutDto: CreateWorkoutDto) {
-    return await this.service.update(id, updateWorkoutDto)
+  async update(
+    @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND })) id: string,
+    @Body() updateWorkoutDto: CreateWorkoutDto,
+    @Request() req: { user: WorkoutViewer }
+  ) {
+    return await this.service.update(id, updateWorkoutDto, req.user)
   }
 
   /**
@@ -277,13 +283,18 @@ export class WorkoutsController {
   }
 
   /**
-   * Supprime un workout du référentiel commun.
+   * Supprime un workout : le sien, ou le référentiel partagé pour un admin.
    * @param id Identifiant du workout
+   * @param req Requête authentifiée contenant l'utilisateur courant
    * @returns Le résultat de la suppression
+   * @throws NotFoundException si le workout n'existe pas, si l'utilisateur ne peut pas le supprimer, ou si l'id n'est pas un UUID
    */
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async remove(@Param('id') id: string) {
-    return await this.service.remove(id)
+  async remove(
+    @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND })) id: string,
+    @Request() req: { user: WorkoutViewer }
+  ) {
+    return await this.service.remove(id, req.user)
   }
 }

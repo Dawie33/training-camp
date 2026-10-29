@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
 import { UserContextService } from './user-context.service'
@@ -20,6 +21,9 @@ function createChainableBuilder(resolvedValue: unknown) {
     'limit',
     'offset',
     'orderBy',
+    'update',
+    'returning',
+    'delete',
   ]) {
     builder[method] = jest.fn().mockReturnThis()
   }
@@ -147,5 +151,38 @@ describe('WorkoutsService — visibilité des workouts', () => {
     expect(result).toEqual({ scheduled: false })
     expect(visibilitySpy).toHaveBeenCalledWith(builder, { id: 'user-2' })
     expect(knexMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("refuse la modification d'un workout que l'utilisateur ne peut pas modifier (404)", async () => {
+    // Arrange — la mise à jour filtrée ne touche aucune ligne
+    const builder = createChainableBuilder([])
+    const service = await buildService(jest.fn().mockReturnValue(builder))
+    const permissionSpy = jest.spyOn(visibility, 'applyEditPermission')
+
+    // Act + Assert
+    await expect(service.update('workout-de-a', { name: 'Renommé' }, viewer)).rejects.toBeInstanceOf(NotFoundException)
+    expect(permissionSpy).toHaveBeenCalledWith(builder, viewer)
+  })
+
+  it("refuse la suppression d'un workout que l'utilisateur ne peut pas supprimer (404)", async () => {
+    // Arrange — la suppression filtrée ne touche aucune ligne
+    const builder = createChainableBuilder(0)
+    const service = await buildService(jest.fn().mockReturnValue(builder))
+    const permissionSpy = jest.spyOn(visibility, 'applyEditPermission')
+
+    // Act + Assert
+    await expect(service.remove('fran', viewer)).rejects.toBeInstanceOf(NotFoundException)
+    expect(permissionSpy).toHaveBeenCalledWith(builder, viewer)
+  })
+
+  it("supprime le workout de l'utilisateur", async () => {
+    // Arrange — une ligne supprimée
+    const service = await buildService(jest.fn().mockReturnValue(createChainableBuilder(1)))
+
+    // Act
+    const result = await service.remove('mon-workout', viewer)
+
+    // Assert
+    expect(result).toEqual({ success: true })
   })
 })

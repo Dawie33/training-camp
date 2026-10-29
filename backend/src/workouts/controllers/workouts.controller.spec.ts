@@ -15,6 +15,8 @@ describe('WorkoutsController', () => {
     create: jest.fn().mockResolvedValue({ id: 'w-2' }),
     findAll: jest.fn().mockResolvedValue({ rows: [], count: 0 }),
     getBenchmarkWorkouts: jest.fn().mockResolvedValue({ rows: [], count: 0 }),
+    update: jest.fn().mockResolvedValue({ id: 'w-1' }),
+    remove: jest.fn().mockResolvedValue({ success: true }),
   }
 
   beforeAll(async () => {
@@ -99,5 +101,23 @@ describe('WorkoutsController', () => {
     await request(app.getHttpServer()).get('/workouts/benchmark').expect(200)
     expect(workoutsService.findAll).toHaveBeenCalledWith(expect.any(Object), { id: 'user-1' })
     expect(workoutsService.getBenchmarkWorkouts).toHaveBeenCalledWith({ id: 'user-1' })
+  })
+
+  describe('PATCH et DELETE /workouts/:id', () => {
+    const id = '3f1c2a4e-8b7d-4c1e-9a2f-5d6e7f8a9b0c'
+
+    it("transmettent l'utilisateur connecté pour vérifier ses droits", async () => {
+      await request(app.getHttpServer()).patch(`/workouts/${id}`).send({ name: 'Renommé' }).expect(200)
+      await request(app.getHttpServer()).delete(`/workouts/${id}`).expect(200)
+      expect(workoutsService.update).toHaveBeenCalledWith(id, { name: 'Renommé' }, { id: 'user-1' })
+      expect(workoutsService.remove).toHaveBeenCalledWith(id, { id: 'user-1' })
+    })
+
+    it("répondent 404 sur un id qui n'est pas un UUID, sans interroger la base", async () => {
+      await request(app.getHttpServer()).patch('/workouts/pas-un-uuid').send({ name: 'x' }).expect(404)
+      await request(app.getHttpServer()).delete('/workouts/pas-un-uuid').expect(404)
+      expect(workoutsService.update).not.toHaveBeenCalled()
+      expect(workoutsService.remove).not.toHaveBeenCalled()
+    })
   })
 })
