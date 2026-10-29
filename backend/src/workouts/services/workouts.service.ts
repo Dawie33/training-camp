@@ -8,6 +8,7 @@ import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/wor
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
 import { UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
+import { applyVisibility, WorkoutViewer } from './workout-visibility'
 
 /**
  * Gère le CRUD des workouts (référentiel commun et personnalisés), les benchmarks
@@ -22,8 +23,9 @@ export class WorkoutsService {
   ) {}
 
   /**
-   * Recherche tous les workouts.
-   * @returns Tous les workouts.
+   * Recherche les workouts visibles par l'utilisateur.
+   * @param viewer Utilisateur connecté (voir `applyVisibility`)
+   * @returns Les workouts correspondant aux filtres et leur nombre total.
    */
   async findAll(
     {
@@ -38,23 +40,10 @@ export class WorkoutsService {
       workout_type,
       is_benchmark,
     }: WorkoutQueryDto,
-    userId?: string
+    viewer: WorkoutViewer
   ) {
     const applyFilters = (q: Knex.QueryBuilder) => {
-      // Visibilité : public OU publié OU appartient à l'utilisateur connecté
-      if (userId) {
-        q = q.where(builder => {
-          builder
-            .where('isPublic', true)
-            .orWhereNull('isPublic')
-            .orWhere('workouts.status', 'published')
-            .orWhere('created_by_user_id', userId)
-        })
-      } else {
-        q = q.where(builder => {
-          builder.where('isPublic', true).orWhereNull('isPublic').orWhere('workouts.status', 'published')
-        })
-      }
+      q = applyVisibility(q, viewer)
       if (search) q = q.where('workouts.name', 'ilike', `%${search}%`)
       if (status) q = q.where('workouts.status', status)
       if (scheduled_date) q = q.where('workouts.scheduled_date', scheduled_date)
@@ -78,12 +67,16 @@ export class WorkoutsService {
   }
 
   /**
-   * Récupère un workout par son ID
+   * Récupère un workout par son ID, s'il est visible par l'utilisateur
    * @param id ID du workout
-   * @returns Le workout avec ses exercices associés
+   * @param viewer Utilisateur connecté (voir `applyVisibility`)
+   * @returns Le workout avec ses exercices associés, ou null s'il n'existe pas ou n'est pas visible
    */
-  async findOne(id: string) {
-    const workout = await this.knex('workouts').select('workouts.*').where('workouts.id', id).first()
+  async findOne(id: string, viewer: WorkoutViewer) {
+    const workout = await applyVisibility(
+      this.knex('workouts').select('workouts.*').where('workouts.id', id),
+      viewer
+    ).first()
 
     if (!workout) return null
 
@@ -103,12 +96,14 @@ export class WorkoutsService {
   /**
    * Récupère les workouts benchmark
    * Les benchmarks sont des workouts de référence pour évaluer le niveau
-   * @returns Liste des workouts benchmark triés par difficulté
+   * @param viewer Utilisateur connecté (voir `applyVisibility`)
+   * @returns Liste des workouts benchmark visibles, triés par difficulté
    */
-  async getBenchmarkWorkouts() {
-    const rows = await this.knex('workouts')
-      .select('workouts.*')
-      .where({ 'workouts.status': 'published', 'workouts.is_benchmark': true })
+  async getBenchmarkWorkouts(viewer: WorkoutViewer) {
+    const rows = await applyVisibility(
+      this.knex('workouts').select('workouts.*').where({ 'workouts.is_benchmark': true }),
+      viewer
+    )
       .orderBy('workouts.difficulty', 'asc')
       .orderBy('workouts.name', 'asc')
 
@@ -565,7 +560,11 @@ export class WorkoutsService {
     const monthStart = toDateOnly(new Date(year, month - 1, 1))
     const monthEnd = toDateOnly(new Date(year, month, 0))
 
-    const benchmarks = await this.knex('workouts').where({ is_benchmark: true }).select('id', 'name')
+    // Seulement les benchmarks visibles par l'utilisateur : jamais le WOD privé d'un autre
+    const benchmarks = await applyVisibility(this.knex('workouts').where({ is_benchmark: true }), {
+      id: userId,
+    }).select('id', 'name')
+    if (benchmarks.length === 0) return { scheduled: false }
     const benchmarkIds = benchmarks.map(b => b.id)
 
     // Déjà un benchmark planifié ce mois-ci (auto ou manuel) → on ne double pas

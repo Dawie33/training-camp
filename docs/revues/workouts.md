@@ -127,9 +127,9 @@ L'appliquer dans `findAll`, `getBenchmarkWorkouts`, `findOne` (passer `userId`) 
 
 **Terminé quand** :
 
-- [ ] Un workout `isPublic: false` créé par A n'apparaît ni dans `GET /workouts`, ni dans `GET /workouts/benchmark`, ni dans `GET /workouts/:id` pour B
-- [ ] A voit toujours ses workouts privés
-- [ ] Les tests couvrent les trois routes
+- [x] Un workout `isPublic: false` créé par A n'apparaît ni dans `GET /workouts`, ni dans `GET /workouts/benchmark`, ni dans `GET /workouts/:id` pour B
+- [x] A voit toujours ses workouts privés
+- [x] Les tests couvrent les trois routes
 
 ---
 
@@ -208,8 +208,8 @@ Autre effet, plus discutable : un seul résultat de benchmark **écrase** `users
 
 **Terminé quand** :
 
-- [ ] Le benchmark planifié est toujours un benchmark visible par l'utilisateur (test)
-- [ ] Sans benchmark en base, la route renvoie `{ scheduled: false }` sans erreur
+- [x] Le benchmark planifié est toujours un benchmark visible par l'utilisateur (test)
+- [x] Sans benchmark en base, la route renvoie `{ scheduled: false }` sans erreur
 
 ---
 

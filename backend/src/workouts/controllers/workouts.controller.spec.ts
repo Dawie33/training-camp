@@ -13,6 +13,8 @@ describe('WorkoutsController', () => {
     checkAndScheduleMonthlyBenchmark: jest.fn().mockResolvedValue({ scheduled: true }),
     findOne: jest.fn().mockResolvedValue({ id: 'w-1' }),
     create: jest.fn().mockResolvedValue({ id: 'w-2' }),
+    findAll: jest.fn().mockResolvedValue({ rows: [], count: 0 }),
+    getBenchmarkWorkouts: jest.fn().mockResolvedValue({ rows: [], count: 0 }),
   }
 
   beforeAll(async () => {
@@ -84,6 +86,18 @@ describe('WorkoutsController', () => {
   it('GET /workouts/:id accepte toujours un UUID valide', async () => {
     const id = '3f1c2a4e-8b7d-4c1e-9a2f-5d6e7f8a9b0c'
     await request(app.getHttpServer()).get(`/workouts/${id}`).expect(200)
-    expect(workoutsService.findOne).toHaveBeenCalledWith(id)
+    expect(workoutsService.findOne).toHaveBeenCalledWith(id, { id: 'user-1' })
+  })
+
+  it("GET /workouts/:id répond 404 quand le workout n'est pas visible par l'utilisateur", async () => {
+    workoutsService.findOne.mockResolvedValueOnce(null)
+    await request(app.getHttpServer()).get('/workouts/3f1c2a4e-8b7d-4c1e-9a2f-5d6e7f8a9b0c').expect(404)
+  })
+
+  it("GET /workouts et GET /workouts/benchmark filtrent selon l'utilisateur connecté", async () => {
+    await request(app.getHttpServer()).get('/workouts').expect(200)
+    await request(app.getHttpServer()).get('/workouts/benchmark').expect(200)
+    expect(workoutsService.findAll).toHaveBeenCalledWith(expect.any(Object), { id: 'user-1' })
+    expect(workoutsService.getBenchmarkWorkouts).toHaveBeenCalledWith({ id: 'user-1' })
   })
 })

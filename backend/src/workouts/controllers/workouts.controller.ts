@@ -26,6 +26,7 @@ import {
   WorkoutQueryDto,
 } from '../dto/workout.dto'
 import { AIWorkoutGeneratorService, GeneratedWorkout } from '../services/ai-workout-generator.service'
+import { WorkoutViewer } from '../services/workout-visibility'
 import { WorkoutsService } from '../services/workouts.service'
 
 /**
@@ -46,18 +47,19 @@ export class WorkoutsController {
    */
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(@Query() query: WorkoutQueryDto, @Request() req: { user: { id: string } }) {
-    return await this.service.findAll(query, req.user.id)
+  async findAll(@Query() query: WorkoutQueryDto, @Request() req: { user: WorkoutViewer }) {
+    return await this.service.findAll(query, req.user)
   }
 
   /**
-   * Liste les workouts marqués comme benchmarks (Fran, Grace, Murph, etc.).
+   * Liste les workouts marqués comme benchmarks (Fran, Grace, Murph, etc.) visibles par l'utilisateur.
+   * @param req Requête authentifiée contenant l'utilisateur courant
    * @returns La liste des workouts benchmark
    */
   @Get('benchmark')
   @UseGuards(JwtAuthGuard)
-  async getBenchmarkWorkouts() {
-    return await this.service.getBenchmarkWorkouts()
+  async getBenchmarkWorkouts(@Request() req: { user: WorkoutViewer }) {
+    return await this.service.getBenchmarkWorkouts(req.user)
   }
 
   /**
@@ -142,13 +144,17 @@ export class WorkoutsController {
   /**
    * Récupère un workout du référentiel par son identifiant.
    * @param id Identifiant du workout
+   * @param req Requête authentifiée contenant l'utilisateur courant
    * @returns Le workout demandé
-   * @throws NotFoundException si le workout n'existe pas ou si l'id n'est pas un UUID
+   * @throws NotFoundException si le workout n'existe pas, n'est pas visible par l'utilisateur, ou si l'id n'est pas un UUID
    */
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async getWorkoutById(@Param('id', new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND })) id: string) {
-    const workout = await this.service.findOne(id)
+  async getWorkoutById(
+    @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND })) id: string,
+    @Request() req: { user: WorkoutViewer }
+  ) {
+    const workout = await this.service.findOne(id, req.user)
     if (!workout) {
       throw new NotFoundException('Workout non trouvé')
     }

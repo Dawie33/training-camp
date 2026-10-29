@@ -2,12 +2,25 @@ import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
 import { UserContextService } from './user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
+import * as visibility from './workout-visibility'
 import { WorkoutsService } from './workouts.service'
 
 /** Builder Knex "thenable" : chaque maillon renvoie le builder, l'await résout la valeur voulue. */
 function createChainableBuilder(resolvedValue: unknown) {
   const builder: any = {}
-  for (const method of ['select', 'where', 'whereIn', 'whereBetween', 'first', 'max', 'groupBy']) {
+  for (const method of [
+    'select',
+    'where',
+    'whereIn',
+    'whereBetween',
+    'first',
+    'max',
+    'groupBy',
+    'count',
+    'limit',
+    'offset',
+    'orderBy',
+  ]) {
     builder[method] = jest.fn().mockReturnThis()
   }
   builder.then = (resolve: (value: unknown) => void) => resolve(resolvedValue)
@@ -57,5 +70,82 @@ describe('WorkoutsService.checkAndScheduleMonthlyBenchmark', () => {
       scheduled_date: '2026-11-04',
       notes: 'Test benchmark mensuel automatique',
     })
+  })
+})
+
+describe('WorkoutsService — visibilité des workouts', () => {
+  const viewer = { id: 'user-2', role: 'user' }
+  let visibilitySpy: jest.SpyInstance
+
+  async function buildService(knexMock: jest.Mock): Promise<WorkoutsService> {
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        WorkoutsService,
+        { provide: getConnectionToken(), useValue: knexMock },
+        { provide: UserContextService, useValue: {} },
+        { provide: WorkoutScheduleService, useValue: { create: jest.fn() } },
+      ],
+    }).compile()
+    return moduleRef.get(WorkoutsService)
+  }
+
+  beforeEach(() => {
+    // Espion sur la vraie règle : on vérifie qu'elle est appliquée, son SQL est testé dans workout-visibility.spec.ts
+    visibilitySpy = jest.spyOn(visibility, 'applyVisibility')
+  })
+  afterEach(() => jest.restoreAllMocks())
+
+  it('applique la règle à la liste et à son comptage', async () => {
+    // Arrange — this.knex(...) : liste, puis comptage
+    const listBuilder = createChainableBuilder([])
+    const countBuilder = createChainableBuilder({ count: 0 })
+    const service = await buildService(jest.fn().mockReturnValueOnce(listBuilder).mockReturnValueOnce(countBuilder))
+
+    // Act
+    await service.findAll({}, viewer)
+
+    // Assert
+    expect(visibilitySpy).toHaveBeenCalledWith(listBuilder, viewer)
+    expect(visibilitySpy).toHaveBeenCalledWith(countBuilder, viewer)
+  })
+
+  it("renvoie null pour un workout qui n'est pas visible par l'utilisateur", async () => {
+    // Arrange — la requête filtrée ne trouve rien
+    const builder = createChainableBuilder(undefined)
+    const service = await buildService(jest.fn().mockReturnValue(builder))
+
+    // Act
+    const result = await service.findOne('workout-prive-de-a', viewer)
+
+    // Assert
+    expect(result).toBeNull()
+    expect(visibilitySpy).toHaveBeenCalledWith(builder, viewer)
+  })
+
+  it('applique la règle à la liste des benchmarks', async () => {
+    // Arrange
+    const builder = createChainableBuilder([])
+    const service = await buildService(jest.fn().mockReturnValue(builder))
+
+    // Act
+    await service.getBenchmarkWorkouts(viewer)
+
+    // Assert
+    expect(visibilitySpy).toHaveBeenCalledWith(builder, viewer)
+  })
+
+  it("ne planifie que parmi les benchmarks visibles, et s'arrête sans erreur s'il n'y en a aucun", async () => {
+    // Arrange — aucun benchmark visible
+    const builder = createChainableBuilder([])
+    const knexMock = jest.fn().mockReturnValue(builder)
+    const service = await buildService(knexMock)
+
+    // Act
+    const result = await service.checkAndScheduleMonthlyBenchmark('user-2')
+
+    // Assert — plus de TypeError sur target.id, et aucune autre requête
+    expect(result).toEqual({ scheduled: false })
+    expect(visibilitySpy).toHaveBeenCalledWith(builder, { id: 'user-2' })
+    expect(knexMock).toHaveBeenCalledTimes(1)
   })
 })
