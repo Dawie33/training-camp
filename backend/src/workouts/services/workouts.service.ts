@@ -329,9 +329,10 @@ export class WorkoutsService {
   /**
    * Crée un nouveau workout
    * @param data Informations de création du workout
+   * @param createdByUserId Auteur du workout, toujours fourni par le serveur (jamais par le client)
    * @returns Le workout créé
    */
-  async create(data: CreateWorkoutDto) {
+  async create(data: CreateWorkoutDto, createdByUserId: string) {
     // Build the record with proper JSON handling
     const record: {
       name: string | null
@@ -374,7 +375,7 @@ export class WorkoutsService {
       metrics_tracked: safeJsonStringify(data.metrics_tracked, null),
       ai_generated: data.ai_generated || false,
       ai_parameters: safeJsonStringify(data.ai_parameters, null),
-      created_by_user_id: data.created_by_user_id || null,
+      created_by_user_id: createdByUserId,
       target_metrics: safeJsonStringify(data.target_metrics, null),
       isActive: data.isActive !== undefined ? data.isActive : true,
       isFeatured: data.isFeatured || false,

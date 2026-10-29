@@ -146,8 +146,8 @@ L'appliquer dans `findAll`, `getBenchmarkWorkouts`, `findOne` (passer `userId`) 
 
 **Terminé quand** :
 
-- [ ] `POST /workouts` avec `created_by_user_id` renvoie 400 (champ inconnu)
-- [ ] Un workout créé depuis l'interface a `created_by_user_id = <utilisateur connecté>` (test du contrôleur ou du service)
+- [x] `POST /workouts` avec `created_by_user_id` renvoie 400 (champ inconnu)
+- [x] Un workout créé depuis l'interface a `created_by_user_id = <utilisateur connecté>` (test du contrôleur ou du service)
 
 ---
 

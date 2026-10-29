@@ -93,6 +93,11 @@ describe('DailySessionService', () => {
 
     const result = await service.checkAndGenerateDailySession('user-1')
 
+    // La séance générée appartient à l'athlète : l'auteur est passé au service, pas dans les données
+    expect(workoutsService.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({ created_by_user_id: expect.anything() }),
+      'user-1'
+    )
     expect(scheduleService.setCoachRecommendation).toHaveBeenCalledWith('schedule-1', 'user-1', {
       recommended_type: 'technique_metcon',
       urgency: 'medium',

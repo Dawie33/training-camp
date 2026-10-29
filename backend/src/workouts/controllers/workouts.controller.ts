@@ -169,14 +169,15 @@ export class WorkoutsController {
   }
 
   /**
-   * Crée un workout dans le référentiel commun.
+   * Crée un workout dans le référentiel commun. L'auteur est l'utilisateur connecté.
    * @param createWorkoutDto Données du workout à créer
+   * @param req Requête authentifiée contenant l'utilisateur courant
    * @returns Le workout créé
    */
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Body() createWorkoutDto: CreateWorkoutDto) {
-    return await this.service.create(createWorkoutDto)
+  async create(@Body() createWorkoutDto: CreateWorkoutDto, @Request() req: { user: { id: string } }) {
+    return await this.service.create(createWorkoutDto, req.user.id)
   }
 
   /**

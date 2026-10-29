@@ -164,23 +164,25 @@ export class DailySessionService {
       additionalInstructions: recommendation.suggested_instructions ?? undefined,
     })
 
-    const saved = await this.workoutsService.create({
-      name: wod.name,
-      description: wod.description,
-      workout_type: wod.workout_type,
-      estimated_duration: wod.estimated_duration,
-      difficulty: wod.difficulty,
-      intensity: wod.intensity,
-      blocks: wod.blocks as Record<string, unknown>,
-      equipment_required: wod.equipment_required || [],
-      focus_areas: wod.focus_areas || [],
-      tags: wod.tags || [],
-      coach_notes: wod.coach_notes || undefined,
-      isPublic: false,
-      status: 'published',
-      ai_generated: true,
-      created_by_user_id: userId,
-    })
+    const saved = await this.workoutsService.create(
+      {
+        name: wod.name,
+        description: wod.description,
+        workout_type: wod.workout_type,
+        estimated_duration: wod.estimated_duration,
+        difficulty: wod.difficulty,
+        intensity: wod.intensity,
+        blocks: wod.blocks as Record<string, unknown>,
+        equipment_required: wod.equipment_required || [],
+        focus_areas: wod.focus_areas || [],
+        tags: wod.tags || [],
+        coach_notes: wod.coach_notes || undefined,
+        isPublic: false,
+        status: 'published',
+        ai_generated: true,
+      },
+      userId
+    )
 
     return { id: saved.id, name: wod.name }
   }

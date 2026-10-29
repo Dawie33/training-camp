@@ -1,4 +1,4 @@
-import { ExecutionContext, INestApplication } from '@nestjs/common'
+import { ExecutionContext, INestApplication, ValidationPipe } from '@nestjs/common'
 import { GUARDS_METADATA } from '@nestjs/common/constants'
 import { Test } from '@nestjs/testing'
 import request from 'supertest'
@@ -12,6 +12,7 @@ describe('WorkoutsController', () => {
   const workoutsService = {
     checkAndScheduleMonthlyBenchmark: jest.fn().mockResolvedValue({ scheduled: true }),
     findOne: jest.fn().mockResolvedValue({ id: 'w-1' }),
+    create: jest.fn().mockResolvedValue({ id: 'w-2' }),
   }
 
   beforeAll(async () => {
@@ -33,6 +34,8 @@ describe('WorkoutsController', () => {
       .compile()
 
     app = moduleRef.createNestApplication()
+    // Mêmes options que main.ts : un champ inconnu du DTO est refusé
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
     await app.init()
   })
 
@@ -60,6 +63,21 @@ describe('WorkoutsController', () => {
     it('reste protégée par JwtAuthGuard', () => {
       const handler = WorkoutsController.prototype.checkMonthlyBenchmark
       expect(Reflect.getMetadata(GUARDS_METADATA, handler)).toContain(JwtAuthGuard)
+    })
+  })
+
+  describe('POST /workouts', () => {
+    it("enregistre l'utilisateur connecté comme auteur", async () => {
+      await request(app.getHttpServer()).post('/workouts').send({ name: 'Mon WOD' }).expect(201)
+      expect(workoutsService.create).toHaveBeenCalledWith({ name: 'Mon WOD' }, 'user-1')
+    })
+
+    it('refuse un auteur choisi par le client (400) sans rien créer', async () => {
+      await request(app.getHttpServer())
+        .post('/workouts')
+        .send({ name: 'Mon WOD', created_by_user_id: '3f1c2a4e-8b7d-4c1e-9a2f-5d6e7f8a9b0c' })
+        .expect(400)
+      expect(workoutsService.create).not.toHaveBeenCalled()
     })
   })
 
