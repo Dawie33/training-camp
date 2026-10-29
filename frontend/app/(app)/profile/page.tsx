@@ -26,6 +26,7 @@ function ProfilePage() {
     height, setHeight,
     weight, setWeight,
     bodyFat, setBodyFat,
+    maxHeartRate, setMaxHeartRate,
     savingProfile, handleSaveProfile,
     equipment, savingEquipment, toggleEquipment, setEquipment, handleSaveEquipment,
   } = useProfileForm()
@@ -71,6 +72,7 @@ function ProfilePage() {
             height={height} setHeight={setHeight}
             weight={weight} setWeight={setWeight}
             bodyFat={bodyFat} setBodyFat={setBodyFat}
+            maxHeartRate={maxHeartRate} setMaxHeartRate={setMaxHeartRate}
             saving={savingProfile}
             onSave={handleSaveProfile}
           />

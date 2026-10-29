@@ -17,6 +17,7 @@ export function useProfileForm() {
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
   const [bodyFat, setBodyFat] = useState('')
+  const [maxHeartRate, setMaxHeartRate] = useState('')
   const [savingProfile, setSavingProfile] = useState(false)
 
   // Equipment tab
@@ -32,6 +33,7 @@ export function useProfileForm() {
       setHeight(user.height != null ? String(user.height) : '')
       setWeight(user.weight != null ? String(user.weight) : '')
       setBodyFat(user.body_fat_percentage != null ? String(user.body_fat_percentage) : '')
+      setMaxHeartRate(user.max_heart_rate != null ? String(user.max_heart_rate) : '')
       setEquipment(user.equipment_available ?? [])
     }).catch(() => {
       if (authUser) {
@@ -51,6 +53,7 @@ export function useProfileForm() {
         height: height ? Number(height) : undefined,
         weight: weight ? Number(weight) : undefined,
         body_fat_percentage: bodyFat ? Number(bodyFat) : undefined,
+        max_heart_rate: maxHeartRate ? Number(maxHeartRate) : undefined,
       })
       toast.success('Profil mis à jour')
     } catch {
@@ -86,6 +89,7 @@ export function useProfileForm() {
     height, setHeight,
     weight, setWeight,
     bodyFat, setBodyFat,
+    maxHeartRate, setMaxHeartRate,
     savingProfile,
     handleSaveProfile,
     // Equipment tab

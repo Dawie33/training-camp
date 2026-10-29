@@ -25,6 +25,7 @@ describe('UpdateUserDto (PATCH /users/me)', () => {
       height: 180,
       weight: 75,
       body_fat_percentage: 14.5,
+      max_heart_rate: 192,
       equipment_available: ['barbell', 'rower'],
     }
     await expect(validate(body)).resolves.toEqual(expect.objectContaining(body))
@@ -43,6 +44,9 @@ describe('UpdateUserDto (PATCH /users/me)', () => {
     ['un poids hors bornes', { weight: 500 }],
     ['une taille hors bornes', { height: 90 }],
     ['un taux de masse grasse à 2 décimales', { body_fat_percentage: 14.25 }],
+    ['une FC max décimale (colonne entière)', { max_heart_rate: 190.5 }],
+    ['une FC max trop basse pour un adulte', { max_heart_rate: 90 }],
+    ['une FC max trop haute pour un adulte', { max_heart_rate: 240 }],
     ['un prénom vide', { firstName: '' }],
     ['un prénom de plus de 100 caractères', { firstName: 'a'.repeat(101) }],
     ["un équipement qui n'est pas une chaîne", { equipment_available: [{ slug: 'barbell' }] }],

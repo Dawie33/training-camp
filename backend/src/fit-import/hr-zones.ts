@@ -3,6 +3,8 @@
  * Fonctions pures (sans Nest ni Knex) : testables directement, voir hr-zones.spec.ts.
  */
 
+import { MAX_PLAUSIBLE_MAX_HR, MIN_PLAUSIBLE_MAX_HR } from 'src/common/heart-rate/heart-rate.constants'
+
 export interface HrZoneData {
   zone: number
   label: string
@@ -41,12 +43,10 @@ export const ZONE_THRESHOLDS = [0.6, 0.7, 0.8, 0.9, 1.0]
  */
 export const MAX_SAMPLE_GAP_SECONDS = 30
 
-/** FC max plausibles pour un adulte : en dehors, la valeur du profil est considérée comme une erreur de saisie. */
-const MIN_PLAUSIBLE_MAX_HR = 100
-const MAX_PLAUSIBLE_MAX_HR = 230
 const MIN_AGE = 10
 const MAX_AGE = 100
 
+/** En dehors des bornes communes, la valeur du profil est considérée comme une erreur de saisie. */
 function isPlausibleMaxHr(bpm: number | null | undefined): bpm is number {
   return typeof bpm === 'number' && Number.isFinite(bpm) && bpm >= MIN_PLAUSIBLE_MAX_HR && bpm <= MAX_PLAUSIBLE_MAX_HR
 }
