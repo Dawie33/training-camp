@@ -17,6 +17,8 @@ interface ProfileTabProps {
   setWeight: (v: string) => void
   bodyFat: string
   setBodyFat: (v: string) => void
+  maxHeartRate: string
+  setMaxHeartRate: (v: string) => void
   saving: boolean
   onSave: () => void
 }
@@ -29,6 +31,7 @@ export function ProfileTab({
   height, setHeight,
   weight, setWeight,
   bodyFat, setBodyFat,
+  maxHeartRate, setMaxHeartRate,
   saving, onSave,
 }: ProfileTabProps) {
   return (
@@ -80,6 +83,14 @@ export function ProfileTab({
           <label className="block text-sm font-medium text-slate-300 mb-1.5">% Graisse</label>
           <input type="number" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} placeholder="15" min="3" max="60" step="0.1" className={inputClass} />
         </div>
+      </div>
+
+      <div>
+        <label htmlFor="max-heart-rate" className="block text-sm font-medium text-slate-300 mb-1.5">FC max (bpm)</label>
+        <input id="max-heart-rate" type="number" value={maxHeartRate} onChange={(e) => setMaxHeartRate(e.target.value)} placeholder="190" min="100" max="230" step="1" aria-describedby="max-heart-rate-help" className={inputClass} />
+        <p id="max-heart-rate-help" className="text-xs text-slate-400 mt-1.5">
+          La plus haute FC atteinte sur un effort maximal, par exemple la fin d&apos;un 5 km à fond. Sert à calculer les zones cardiaques des séances que tu importes.
+        </p>
       </div>
 
       <button

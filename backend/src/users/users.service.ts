@@ -21,6 +21,7 @@ export const PUBLIC_USER_COLUMNS = [
   'height',
   'weight',
   'body_fat_percentage',
+  'max_heart_rate',
   'equipment_available',
   'injuries',
   'created_at',

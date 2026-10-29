@@ -33,6 +33,7 @@ export interface User {
   height?: number
   weight?: number
   body_fat_percentage?: number
+  max_heart_rate?: number
   equipment_available?: string[]
   injuries?: Injury[]
   stats?: {
@@ -50,6 +51,7 @@ export interface UpdateUserDTO {
   height?: number
   weight?: number
   body_fat_percentage?: number
+  max_heart_rate?: number
   equipment_available?: string[]
   injuries?: Injury[]
 }

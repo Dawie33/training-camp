@@ -13,6 +13,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator'
+import { MAX_PLAUSIBLE_MAX_HR, MIN_PLAUSIBLE_MAX_HR } from 'src/common/heart-rate/heart-rate.constants'
 import { INJURIES_MAX_COUNT } from 'src/common/injuries/injury.constants'
 import type { Injury } from 'src/common/injuries/injury.constants'
 import { InjuryDto } from './injury.dto'
@@ -78,6 +79,13 @@ export class UpdateUserDto {
   @Min(3)
   @Max(60)
   body_fat_percentage?: number
+
+  // Référence des zones cardiaques des séances importées (fit-import/hr-zones.ts)
+  @IsOptional()
+  @IsInt()
+  @Min(MIN_PLAUSIBLE_MAX_HR)
+  @Max(MAX_PLAUSIBLE_MAX_HR)
+  max_heart_rate?: number
 
   @IsOptional()
   @IsArray()
