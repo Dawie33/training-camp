@@ -112,6 +112,30 @@ describe('WorkoutScheduleService — synchronisation Google Agenda', () => {
         expect.objectContaining({ id: 's1' })
       )
     })
+
+    it('planifie un jour de repos sans workout, et sans événement Google', async () => {
+      // Arrange — pas de lecture de workout : contrôle de doublon (vide), puis insertion
+      const restRow = { ...inserted, workout_id: null, session_type: 'rest' }
+      const { service, builders, google } = await buildService([[], [restRow]])
+
+      // Act
+      const result = await service.create('user-1', { session_type: 'rest', scheduled_date: '2026-11-02' })
+
+      // Assert
+      expect(builders[1].insert).toHaveBeenCalledWith(
+        expect.objectContaining({ session_type: 'rest', workout_id: null, scheduled_date: '2026-11-02' })
+      )
+      expect(google.syncWorkout).not.toHaveBeenCalled()
+      expect(result).toEqual(restRow)
+    })
+
+    it('refuse toujours un créneau de séance sans workout', async () => {
+      const { service } = await buildService([])
+
+      await expect(service.create('user-1', { scheduled_date: '2026-11-02' })).rejects.toThrow(
+        'workout_id ou personalized_workout_id est requis'
+      )
+    })
   })
 
   describe('update', () => {

@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { format } from 'date-fns'
-import { Building2, Dumbbell, Instagram, Search, Target } from 'lucide-react'
+import { Building2, Dumbbell, Instagram, Moon, Search, Target } from 'lucide-react'
 
 interface DateActionDialogProps {
   open: boolean
@@ -10,10 +10,11 @@ interface DateActionDialogProps {
   onParseBoxWod: () => void
   onLookupWod: () => void
   onMarkBoxDay: () => void
+  onMarkRestDay: () => void
   onPlanSkill: () => void
 }
 
-export function DateActionDialog({ open, onOpenChange, selectedDate, onScheduleWorkout, onParseBoxWod, onLookupWod, onMarkBoxDay, onPlanSkill }: DateActionDialogProps) {
+export function DateActionDialog({ open, onOpenChange, selectedDate, onScheduleWorkout, onParseBoxWod, onLookupWod, onMarkBoxDay, onMarkRestDay, onPlanSkill }: DateActionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[340px] bg-card border-border text-foreground">
@@ -62,6 +63,16 @@ export function DateActionDialog({ open, onOpenChange, selectedDate, onScheduleW
             <div>
               <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Jour Box CrossFit</div>
               <div className="text-xs text-muted-foreground">Marquer ce jour comme entraînement en box</div>
+            </div>
+          </button>
+          <button
+            onClick={() => { onOpenChange(false); onMarkRestDay() }}
+            className="group flex items-center gap-3 w-full py-3 text-left transition-colors hover:bg-muted/60"
+          >
+            <Moon className="w-5 h-5 text-sky-600 flex-shrink-0" />
+            <div>
+              <div className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Jour de repos</div>
+              <div className="text-xs text-muted-foreground">Le coach ne proposera pas de séance ce jour-là</div>
             </div>
           </button>
           <button

@@ -23,7 +23,7 @@ export interface UnifiedActivity {
   workout_id?: string
   personalized_workout_id?: string
   program_enrollment_id?: string
-  session_type?: 'workout' | 'box_session' | 'program_session'
+  session_type?: 'workout' | 'box_session' | 'program_session' | 'rest'
   session_data?: Record<string, unknown>
   workout_name?: string  // alias de title pour compatibilité avec les composants existants
   workout_type?: string

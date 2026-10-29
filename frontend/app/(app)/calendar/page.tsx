@@ -35,6 +35,7 @@ function CalendarContent() {
     selectedEvent, setSelectedEvent,
     handleScheduleWorkout,
     handleMarkBoxDay,
+    handleMarkRestDay,
     handleScheduleSkill,
     refetch,
   } = useCalendarPage()
@@ -154,6 +155,7 @@ function CalendarContent() {
         onParseBoxWod={() => { setParseBoxWodMode('instagram'); setParseBoxWodOpen(true) }}
         onLookupWod={() => { setParseBoxWodMode('search'); setParseBoxWodOpen(true) }}
         onMarkBoxDay={handleMarkBoxDay}
+        onMarkRestDay={handleMarkRestDay}
         onPlanSkill={() => setScheduleSkillOpen(true)}
       />
 

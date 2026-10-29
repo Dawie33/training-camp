@@ -70,6 +70,17 @@ describe('DailySessionService', () => {
     expect(recommendationsService.getNextSessionRecommendation).not.toHaveBeenCalled()
   })
 
+  it("ne génère aucune séance un jour de repos planifié par l'athlète", async () => {
+    const restDay = { ...todaySchedule, workout_id: null, session_type: 'rest' }
+    scheduleService.findByDate.mockResolvedValue(restDay)
+
+    const result = await service.checkAndGenerateDailySession('user-1')
+
+    expect(result).toEqual({ generated: false, reason: 'already_scheduled', schedule: restDay })
+    expect(generator.generatePersonalizedWorkout).not.toHaveBeenCalled()
+    expect(workoutsService.create).not.toHaveBeenCalled()
+  })
+
   it('renvoie la recommandation un jour de repos, sans planifier de séance', async () => {
     scheduleService.findByDate.mockResolvedValue(null)
     recommendationsService.getNextSessionRecommendation.mockResolvedValue({

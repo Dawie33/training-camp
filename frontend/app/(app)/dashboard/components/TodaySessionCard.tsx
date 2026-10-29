@@ -277,6 +277,8 @@ export function TodaySessionCard() {
           <div className="h-4 w-full bg-muted rounded" />
           <div className="h-4 w-1/2 bg-muted rounded" />
         </div>
+      ) : result?.schedule?.session_type === 'rest' ? (
+        <RestDay />
       ) : result?.schedule ? (
         <PlannedSession schedule={result.schedule} />
       ) : result?.reason === 'rest_recommended' ? (
