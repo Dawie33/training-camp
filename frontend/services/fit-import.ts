@@ -61,6 +61,8 @@ export function getSportLabel(sport: string | null, index: number, totalActiviti
   const isBike = sport?.toLowerCase().includes('cycl') || sport?.toLowerCase().includes('bik')
   if (isBike) return 'Vélo'
   if (!isRun) return 'Force / Mouvements'
+  // Départ / retour n'a de sens que pour une séance en plusieurs fichiers (ex. Murph)
+  if (totalActivities === 1) return 'Course'
   const runActivities = Array.from({ length: totalActivities })
   const runIndex = runActivities
     .map((_, i) => i)

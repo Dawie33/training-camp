@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { WorkoutSession } from '@/domain/entities/workout'
 import { sessionService, type WodAnalysis } from '@/services/sessions'
 import { PostWodAnalysisModal } from '@/components/workout/PostWodAnalysisModal'
+import { SessionDetails } from './SessionDetails'
 import { Brain, ClipboardList, Dumbbell, Timer, X } from 'lucide-react'
 
 interface WorkoutHistoryListProps {
@@ -397,11 +398,11 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
         onRegenerate={handleRegenerate}
       />
 
-      {/* Dialog détails */}
+      {/* Dialog détails, en z-[70] : au-dessus de la barre de navigation mobile (z-50) et de son menu (z-[60]) */}
       {selectedSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSelectedSession(null)}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSelectedSession(null)}>
           <div
-            className="bg-card border border-border rounded-lg shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
+            className="bg-card border border-border rounded-lg shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -413,7 +414,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">Date de début</h4>
@@ -427,6 +428,7 @@ export function WorkoutHistoryList({ limit = 10 }: WorkoutHistoryListProps) {
                 )}
               </div>
 
+              {selectedSession.results && <SessionDetails results={selectedSession.results} />}
               {selectedSession.notes && (
                 <div>
                   <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Notes</h4>

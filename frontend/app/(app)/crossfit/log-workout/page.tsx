@@ -6,12 +6,10 @@ import { TimeInput } from '@/components/ui/time-input'
 import { ExerciseResult, PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout-structure'
 import { scheduleApi, sessionService, workoutsService } from '@/services'
+import { FitDataSummary } from '@/components/fit-import/FitDataSummary'
 import {
   FitFileTooLargeError,
-  HrZoneData,
   MultiActivityFitData,
-  describeHrMaxReference,
-  getSportLabel,
   parseFitFiles,
 } from '@/services/fit-import'
 import { motion } from 'framer-motion'
@@ -19,8 +17,6 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-
-const ZONE_COLORS = ['#64748b', '#22c55e', '#3b82f6', '#f97316', '#ef4444']
 
 const CONDITIONING_SECTION_TYPES: SectionType[] = [
   'metcon', 'amrap', 'emom', 'for_time', 'circuit', 'intervals', 'tabata', 'finisher'
@@ -41,33 +37,6 @@ const SECTION_TYPE_LABELS: Partial<Record<SectionType, string>> = {
   circuit: 'WOD',
   tabata: 'WOD',
   finisher: 'Finisher',
-}
-
-function HrZonesChart({ zones, totalSeconds }: { zones: HrZoneData[]; totalSeconds: number }) {
-  const total = totalSeconds || zones.reduce((s, z) => s + z.seconds, 0)
-  return (
-    <div className="space-y-2 pt-1">
-      <p className="text-xs text-muted-foreground font-medium">Zones de fréquence cardiaque</p>
-      {zones.map(z => {
-        const pct = total > 0 ? Math.round((z.seconds / total) * 100) : 0
-        const mm = Math.floor(z.seconds / 60)
-        const ss = String(Math.floor(z.seconds % 60)).padStart(2, '0')
-        return (
-          <div key={z.zone} className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground w-20 shrink-0">{z.label}</span>
-            <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                // Couleur selon le numéro de zone : les zones vides sont retirées, l'index de la liste ne suffit pas
-                style={{ width: `${pct}%`, backgroundColor: ZONE_COLORS[z.zone - 1] }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground w-16 text-right shrink-0">{mm}:{ss} ({pct}%)</span>
-          </div>
-        )
-      })}
-    </div>
-  )
 }
 
 /**
@@ -782,91 +751,7 @@ function LogWorkoutContent() {
               )}
             </button>
           ) : (
-            <div className="space-y-3">
-              {/* Activités séparées */}
-              {fitData.activities.map((activity, idx) => {
-                const isRun = activity.sport?.toLowerCase().includes('run')
-                const label = getSportLabel(activity.sport, idx, fitData.activities.length)
-                const dur = activity.duration_seconds
-                  ? `${Math.floor(activity.duration_seconds / 60)}:${String(Math.floor(activity.duration_seconds % 60)).padStart(2, '0')}`
-                  : null
-                return (
-                  <div key={idx} className={`rounded-lg p-3 border ${isRun ? 'bg-emerald-50 border-emerald-200' : 'bg-secondary/40 border-border'}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-sm font-semibold ${isRun ? 'text-emerald-700' : 'text-foreground'}`}>{label}</span>
-                      {dur && <span className="ml-auto text-xs text-muted-foreground">{dur}</span>}
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {isRun && activity.avg_pace_min_km && (
-                        <div className="bg-card rounded-lg p-2 text-center col-span-1">
-                          <p className="text-sm font-bold text-emerald-700">
-                            {Math.floor(activity.avg_pace_min_km)}:{String(Math.round((activity.avg_pace_min_km % 1) * 60)).padStart(2, '0')}
-                          </p>
-                          <p className="text-muted-foreground text-xs">min/km</p>
-                        </div>
-                      )}
-                      {isRun && activity.distance_meters && activity.distance_meters > 0 && (
-                        <div className="bg-card rounded-lg p-2 text-center">
-                          <p className="text-sm font-bold text-primary">{(activity.distance_meters / 1000).toFixed(2)} km</p>
-                          <p className="text-muted-foreground text-xs">Distance</p>
-                        </div>
-                      )}
-                      {activity.avg_heart_rate && (
-                        <div className="bg-card rounded-lg p-2 text-center">
-                          <p className="text-sm font-bold text-destructive">{activity.avg_heart_rate} bpm</p>
-                          <p className="text-muted-foreground text-xs">FC moy.</p>
-                        </div>
-                      )}
-                      {activity.max_heart_rate && (
-                        <div className="bg-card rounded-lg p-2 text-center">
-                          <p className="text-sm font-bold text-destructive/80">{activity.max_heart_rate} bpm</p>
-                          <p className="text-muted-foreground text-xs">FC max</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-
-              {/* Totaux */}
-              <div className="pt-1 border-t border-border">
-                <p className="text-xs text-muted-foreground mb-2">Totaux</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {fitData.totals.calories && (
-                    <div className="bg-secondary/40 rounded-lg p-3 text-center">
-                      <p className="text-lg font-bold text-primary">{fitData.totals.calories}</p>
-                      <p className="text-muted-foreground text-xs mt-0.5">Calories</p>
-                    </div>
-                  )}
-                  {fitData.totals.distance_meters && fitData.totals.distance_meters > 0 && (
-                    <div className="bg-secondary/40 rounded-lg p-3 text-center">
-                      <p className="text-lg font-bold text-primary">{(fitData.totals.distance_meters / 1000).toFixed(2)} km</p>
-                      <p className="text-muted-foreground text-xs mt-0.5">Distance</p>
-                    </div>
-                  )}
-                  {fitData.totals.duration_seconds > 0 && (
-                    <div className="bg-secondary/40 rounded-lg p-3 text-center">
-                      <p className="text-lg font-bold text-foreground">
-                        {Math.floor(fitData.totals.duration_seconds / 60)}:{String(Math.floor(fitData.totals.duration_seconds % 60)).padStart(2, '0')}
-                      </p>
-                      <p className="text-muted-foreground text-xs mt-0.5">Durée totale</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Zones HR cumulées */}
-              {fitData.totals.hr_zones && fitData.totals.hr_zones.length > 0 && (
-                <>
-                  <HrZonesChart zones={fitData.totals.hr_zones} totalSeconds={fitData.totals.duration_seconds} />
-                  {describeHrMaxReference(fitData.totals.hr_max_reference) && (
-                    <p className="text-xs text-muted-foreground">
-                      {describeHrMaxReference(fitData.totals.hr_max_reference)}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
+            <FitDataSummary data={fitData} />
           )}
         </div>
 
