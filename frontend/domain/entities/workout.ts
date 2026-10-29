@@ -1,6 +1,7 @@
 // ============================================================================
 // TYPES POUR LES WORKOUTS
 // ============================================================================
+import type { MultiActivityFitData } from '@/services/fit-import'
 import { WorkoutBlocks } from './workout-structure'
 
 export interface AdminWorkoutExercise {
@@ -158,6 +159,15 @@ export interface WorkoutSessionResults {
     elapsed_time_seconds?: number
     split_time_seconds?: number
     reps_after_split?: number
+    /** Score AMRAP */
+    rounds?: number
+    reps?: number
+    /** For Time terminé au time cap */
+    cap_reached?: boolean
+    rounds_completed?: number
+    partial_note?: string
+    /** Fichier(s) .fit importé(s) à la saisie : activités, totaux et zones cardiaques */
+    coros?: MultiActivityFitData
     session_title?: string
     exercise_results?: ExerciseResult[]
     /** Format historique, texte libre par exercice. Lu seul — les nouvelles séances remplissent `exercise_results`. */
