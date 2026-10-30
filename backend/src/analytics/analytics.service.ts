@@ -4,6 +4,7 @@ import { InjectConnection } from 'nest-knexjs'
 import { BenchmarkEntry, computeBenchmarkProgress } from './calculators/benchmark-progress'
 import { computeEnergySystems } from './calculators/energy-systems'
 import { computeMovementExposure, LoggedExercise } from './calculators/movement-exposure'
+import { computeRunning, readFitActivities, RunningSessionInput } from './calculators/running'
 import { computeSkillProgress, SkillProgramRow, SkillStepRow } from './calculators/skill-progress'
 import { computeStrengthHistory, OneRepMaxEntry } from './calculators/strength-history'
 import { computeStrengthRatios } from './calculators/strength-ratios'
@@ -15,6 +16,7 @@ import {
   EnergySystemsResult,
   LatestSession,
   MovementExposureResult,
+  RunningResult,
   SessionAnalysis,
   SkillProgressResult,
   StrengthHistoryResult,
@@ -33,6 +35,8 @@ export interface PerformanceOverview {
   load: TrainingLoadResult
   movements: MovementExposureResult
   skills: SkillProgressResult
+  /** Course à pied, lue dans les fichiers .fit importés au log de séance. */
+  running: RunningResult
   /** Dernière séance terminée et relecture de son analyse stockée — aucune génération IA déclenchée ici. */
   latest_session: LatestSession | null
   computed_at: string
@@ -63,6 +67,10 @@ export class AnalyticsService {
     const since = new Date()
     since.setMonth(since.getMonth() - months)
     const sinceISO = since.toISOString()
+    // La course compare les 28 derniers jours aux 28 d'avant : il faut au moins 56 jours d'historique,
+    // même quand la période demandée est plus courte.
+    const now = new Date()
+    const runningSince = new Date(Math.min(since.getTime(), now.getTime() - 56 * 24 * 3600 * 1000))
 
     const [
       sessions,
@@ -73,6 +81,7 @@ export class AnalyticsService {
       skillSteps,
       latestSessionRow,
       firstSessionRow,
+      fitSessionRows,
     ] = await Promise.all([
       this.knex('workout_sessions')
         .select('started_at', 'completed_at', 'results')
@@ -139,6 +148,15 @@ export class AnalyticsService {
         .where('user_id', userId)
         .whereNotNull('completed_at')
         .first() as Promise<{ first_started_at: string | null } | undefined>,
+
+      // Séances avec un import .fit : seule source de distance et d'allure pour la course
+      this.knex('workout_sessions')
+        .select('started_at', 'results')
+        .where('user_id', userId)
+        .whereNotNull('completed_at')
+        .whereRaw("results->'coros' is not null")
+        .where('started_at', '>=', runningSince.toISOString())
+        .orderBy('started_at', 'asc') as Promise<SessionRow[]>,
     ])
 
     const oneRepMaxes: Record<string, number> = {}
@@ -177,6 +195,11 @@ export class AnalyticsService {
       source: row.source,
     }))
 
+    const runningSessions: RunningSessionInput[] = fitSessionRows.map(row => ({
+      started_at: new Date(row.started_at).toISOString(),
+      activities: readFitActivities(row.results),
+    }))
+
     return {
       period_months: months,
       strength_ratios: computeStrengthRatios(oneRepMaxes, estimatedLifts),
@@ -187,6 +210,7 @@ export class AnalyticsService {
       load: computeTrainingLoad(durations),
       movements: computeMovementExposure(loggedExercises, oneRepMaxes),
       skills: computeSkillProgress(skillPrograms, skillSteps),
+      running: computeRunning(runningSessions, since, now),
       latest_session: this.readLatestSession(latestSessionRow),
       computed_at: new Date().toISOString(),
     }

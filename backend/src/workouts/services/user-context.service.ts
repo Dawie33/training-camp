@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
+import type { RunningResult } from 'src/analytics/types/analytics.types'
 import type { Injury } from 'src/common/injuries/injury.constants'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
 import { toParisDate } from 'src/common/utils/date-only'
@@ -102,6 +103,24 @@ export interface PerformanceDiagnosticSummary {
   benchmark_trends: { name: string; trend: string; delta_pct: number | null }[]
   sessions_per_week: number
   consistency_pct: number
+  /** Course à pied lue dans les fichiers .fit, null quand aucune course n'a été importée sur la période. */
+  running: RunningDiagnostic | null
+}
+
+/** Synthèse course à pied du diagnostic, réduite à ce qui oriente la programmation. */
+export interface RunningDiagnostic {
+  last_28_days_km: number
+  previous_28_days_km: number
+  recent_pace_min_km: number | null
+  /** Positif = plus lent que sur les 28 jours d'avant. */
+  pace_change_pct: number | null
+  /** Part du temps de course en zones 1-2 (facile) et 4-5 (intense), null sans zones cardiaques. */
+  easy_zone_pct: number | null
+  hard_zone_pct: number | null
+  /** Dernière séance à stations (format Hyrox) : écart entre le segment de course le plus rapide et le plus lent. */
+  latest_stations: { segment_count: number; spread_pct: number } | null
+  /** Dernière sortie découpée en tours : dérive d'allure du premier au dernier tour d'effort. */
+  latest_laps: { segment_count: number; drift_pct: number } | null
 }
 
 /**
@@ -396,6 +415,33 @@ export class UserContextService {
 
       sessions_per_week: overview.volume.avg_per_week,
       consistency_pct: overview.volume.consistency_pct,
+      running: this.buildRunningDiagnostic(overview.running),
+    }
+  }
+
+  /** Réduit le bloc course du diagnostic à ce que le prompt affiche. */
+  private buildRunningDiagnostic(running: RunningResult | undefined): RunningDiagnostic | null {
+    if (!running?.available) return null
+
+    const zoneShare = (zones: number[]) =>
+      running.zones
+        ? running.zones.filter(zone => zones.includes(zone.zone)).reduce((sum, zone) => sum + zone.share_pct, 0)
+        : null
+    const stations = running.segments.find(segment => segment.kind === 'stations')
+    const laps = running.segments.find(segment => segment.kind === 'laps')
+
+    return {
+      last_28_days_km: running.last_28_days_km,
+      previous_28_days_km: running.previous_28_days_km,
+      recent_pace_min_km: running.recent_pace_min_km,
+      pace_change_pct: running.pace_change_pct,
+      easy_zone_pct: zoneShare([1, 2]),
+      hard_zone_pct: zoneShare([4, 5]),
+      latest_stations: stations
+        ? { segment_count: stations.paces_min_km.length, spread_pct: stations.spread_pct }
+        : null,
+      latest_laps:
+        laps && laps.drift_pct !== null ? { segment_count: laps.paces_min_km.length, drift_pct: laps.drift_pct } : null,
     }
   }
 }

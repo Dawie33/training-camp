@@ -1,4 +1,8 @@
-import { PerformanceDiagnosticSummary, RatioImbalance } from 'src/workouts/services/user-context.service'
+import {
+  PerformanceDiagnosticSummary,
+  RatioImbalance,
+  RunningDiagnostic,
+} from 'src/workouts/services/user-context.service'
 
 const DIRECTION_LABELS: Record<RatioImbalance['direction'], string> = {
   below: 'trop bas',
@@ -31,6 +35,55 @@ export function formatRatioImbalances(imbalances: RatioImbalance[]): string[] {
       `- ${ratio.label} : ${ratio.value_pct} %, ${DIRECTION_LABELS[ratio.direction]} (cible ${ratio.target}) — ${ratio.reading}` +
       (ratio.estimated ? ' (1RM estimé — à confirmer par un test)' : '')
   )
+}
+
+/** Allure en min/km au format montre (5,17 → « 5:10 »). */
+export function formatPace(paceMinKm: number): string {
+  const totalSeconds = Math.round(paceMinKm * 60)
+  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`
+}
+
+const signed = (value: number) => `${value > 0 ? '+' : ''}${value}`
+
+/**
+ * Met en forme le bloc course à pied. Une allure qui augmente est plus lente : le sens est
+ * écrit en toutes lettres pour que le modèle ne lise pas « +5 % » comme une progression.
+ *
+ * @param running Synthèse course issue du diagnostic
+ * @returns Les lignes à insérer dans le prompt
+ */
+export function formatRunningLines(running: RunningDiagnostic): string[] {
+  const lines = [
+    `- Volume : ${running.last_28_days_km} km sur les 28 derniers jours (${running.previous_28_days_km} km les 28 jours d’avant)`,
+  ]
+
+  if (running.recent_pace_min_km !== null) {
+    const change =
+      running.pace_change_pct !== null
+        ? `, ${signed(running.pace_change_pct)} % vs les 28 jours d’avant (${running.pace_change_pct > 0 ? 'plus lent' : running.pace_change_pct < 0 ? 'plus rapide' : 'stable'})`
+        : ''
+    lines.push(`- Allure moyenne sur 28 jours : ${formatPace(running.recent_pace_min_km)} /km${change}`)
+  }
+
+  if (running.easy_zone_pct !== null && running.hard_zone_pct !== null) {
+    lines.push(
+      `- Temps de course par zone cardiaque : ${running.easy_zone_pct} % en zones 1-2 (facile), ${running.hard_zone_pct} % en zones 4-5 (intense)`
+    )
+  }
+
+  if (running.latest_stations) {
+    lines.push(
+      `- Dernière séance à stations (format Hyrox, ${running.latest_stations.segment_count} segments de course) : ${running.latest_stations.spread_pct} % d’écart d’allure entre le segment le plus rapide et le plus lent`
+    )
+  }
+
+  if (running.latest_laps) {
+    lines.push(
+      `- Dernière sortie découpée (${running.latest_laps.segment_count} tours d’effort) : allure ${signed(running.latest_laps.drift_pct)} % du premier au dernier tour (positif = ralentissement)`
+    )
+  }
+
+  return lines
 }
 
 /**
@@ -79,6 +132,11 @@ export function buildDiagnosticPromptLines(diagnostic?: PerformanceDiagnosticSum
         benchmark.delta_pct !== null ? ` (${benchmark.delta_pct > 0 ? '+' : ''}${benchmark.delta_pct} %)` : ''
       lines.push(`- ${benchmark.name} : ${TREND_LABELS[benchmark.trend] ?? benchmark.trend}${delta}`)
     }
+  }
+
+  if (diagnostic.running) {
+    lines.push('### Course à pied (fichiers .fit)')
+    lines.push(...formatRunningLines(diagnostic.running))
   }
 
   if (lines.length === 0) return []

@@ -202,3 +202,46 @@ export interface SkillProgressResult {
   available: boolean
   skills: SkillProgress[]
 }
+
+/** Part du temps de course passée dans une zone cardiaque, tous fichiers .fit confondus. */
+export interface RunningZoneShare {
+  zone: number
+  label: string
+  share_pct: number
+}
+
+/**
+ * Allures des segments de course d'une même séance.
+ * - `stations` : plusieurs fichiers de course séparés par d'autres activités (format Hyrox). Leur ordre
+ *   n'est pas enregistré, on ne mesure donc que l'écart entre le segment le plus rapide et le plus lent.
+ * - `laps` : tours d'un seul fichier de course, dans l'ordre : on mesure aussi la dérive du premier au dernier.
+ */
+export interface RunSegmentAnalysis {
+  session_date: string
+  kind: 'stations' | 'laps'
+  /** Allures des segments en min/km, dans l'ordre enregistré. */
+  paces_min_km: number[]
+  /** Écart entre le segment le plus lent et le plus rapide, en % de l'allure la plus rapide. */
+  spread_pct: number
+  /** Du premier au dernier tour, en % (positif = plus lent à la fin). Null pour `stations`. */
+  drift_pct: number | null
+}
+
+export interface RunningResult {
+  /** Au moins une activité de course importée depuis un .fit sur la période. */
+  available: boolean
+  total_runs: number
+  total_distance_km: number
+  /** Kilomètres courus sur les 28 derniers jours, puis sur les 28 jours d'avant. */
+  last_28_days_km: number
+  previous_28_days_km: number
+  /** Allure moyenne pondérée par la distance, en min/km, sur chaque fenêtre de 28 jours (null sous 2 sorties). */
+  recent_pace_min_km: number | null
+  previous_pace_min_km: number | null
+  /** Évolution de l'allure, en % (positif = plus lent). Null si l'une des deux fenêtres manque. */
+  pace_change_pct: number | null
+  /** Répartition du temps de course par zone cardiaque, null si aucun fichier ne porte de zones. */
+  zones: RunningZoneShare[] | null
+  /** Séances découpées en segments, de la plus récente à la plus ancienne (5 au plus). */
+  segments: RunSegmentAnalysis[]
+}

@@ -48,6 +48,7 @@ function buildContext(overrides: Partial<UserAIContext> = {}): UserAIContext {
       benchmark_trends: [],
       sessions_per_week: 0,
       consistency_pct: 0,
+      running: null,
     },
     ...overrides,
   }
