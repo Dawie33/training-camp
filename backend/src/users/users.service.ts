@@ -105,6 +105,7 @@ export class UsersService {
     if (data.height !== undefined) updateData.height = data.height
     if (data.weight !== undefined) updateData.weight = data.weight
     if (data.body_fat_percentage !== undefined) updateData.body_fat_percentage = data.body_fat_percentage
+    if (data.max_heart_rate !== undefined) updateData.max_heart_rate = data.max_heart_rate
     if (data.equipment_available !== undefined)
       updateData.equipment_available = JSON.stringify(data.equipment_available)
     if (data.injuries !== undefined) updateData.injuries = JSON.stringify(data.injuries)

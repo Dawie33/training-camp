@@ -90,6 +90,19 @@ describe('UsersService', () => {
       expect(result).toEqual(publicUser)
     })
 
+    it('enregistre la FC max, référence des zones cardiaques des imports .fit', async () => {
+      // Arrange
+      const builder = createKnexBuilderMock({ returning: [publicUser] })
+      const knexMock: any = jest.fn().mockReturnValue(builder)
+      const service = await buildService(knexMock)
+
+      // Act
+      await service.update('u1', { max_heart_rate: 192 })
+
+      // Assert
+      expect(builder.update).toHaveBeenCalledWith({ max_heart_rate: 192 })
+    })
+
     it("lève une NotFoundException sans invalider le cache si l'utilisateur n'existe pas", async () => {
       // Arrange
       const builder = createKnexBuilderMock({ returning: [] })
