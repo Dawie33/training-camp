@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
-import { FitImportService } from './fit-import.service'
+import { FitImportService, readStartTime, sortByStartTime } from './fit-import.service'
 
 /**
  * Fichier FIT synthétique : des enregistrements cardio (message « record », n° 20 : timestamp + heart_rate)
@@ -198,5 +198,42 @@ describe('FitImportService.parseMultipleFitFiles — tours', () => {
     const { activities } = await moduleRef.get(FitImportService).parseMultipleFitFiles([EASY_SESSION], 'user-1')
 
     expect(activities[0].laps).toEqual([])
+  })
+})
+
+describe('readStartTime', () => {
+  it('renvoie l’heure de départ au format ISO', () => {
+    expect(readStartTime(new Date('2026-06-16T08:00:00.000Z'))).toBe('2026-06-16T08:00:00.000Z')
+    expect(readStartTime('2026-06-16T08:00:00Z')).toBe('2026-06-16T08:00:00.000Z')
+  })
+
+  it('renvoie null quand la montre ne l’a pas écrite ou qu’elle est illisible', () => {
+    expect(readStartTime(undefined)).toBeNull()
+    expect(readStartTime('pas une date')).toBeNull()
+    expect(readStartTime({})).toBeNull()
+  })
+})
+
+describe('sortByStartTime', () => {
+  const at = (time: string | null, sport: string) => ({ start_time: time, sport })
+
+  it('remet les activités dans l’ordre où elles ont été faites, pas dans l’ordre de sélection des fichiers', () => {
+    const sorted = sortByStartTime([
+      at('2026-06-16T08:10:00.000Z', 'rowing'),
+      at('2026-06-16T08:00:00.000Z', 'running'),
+      at('2026-06-16T08:15:00.000Z', 'running'),
+    ])
+
+    expect(sorted.map(a => a.start_time)).toEqual([
+      '2026-06-16T08:00:00.000Z',
+      '2026-06-16T08:10:00.000Z',
+      '2026-06-16T08:15:00.000Z',
+    ])
+  })
+
+  it('garde l’ordre d’envoi si une heure manque, plutôt que de deviner', () => {
+    const activities = [at('2026-06-16T08:10:00.000Z', 'rowing'), at(null, 'running')]
+
+    expect(sortByStartTime(activities)).toEqual(activities)
   })
 })

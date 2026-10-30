@@ -1,4 +1,12 @@
-import { RunningResult, RunningZoneShare, RunSegmentAnalysis } from '../types/analytics.types'
+import {
+  HyroxSimulation,
+  HyroxSimulationProgress,
+  RunningResult,
+  RunningZoneShare,
+  RunSegmentAnalysis,
+  RunType,
+  RunTypeCounts,
+} from '../types/analytics.types'
 
 /**
  * Course à pied, lue dans les fichiers .fit importés au log de séance (`results.coros.activities`).
@@ -22,6 +30,8 @@ export interface RunZone {
 
 /** Activité d'un fichier .fit, telle qu'enregistrée dans `results.coros.activities`. */
 export interface FitActivityInput {
+  /** Heure de départ (ISO), absente des imports antérieurs à son enregistrement. */
+  start_time: string | null
   sport: string | null
   duration_seconds: number | null
   distance_meters: number | null
@@ -109,6 +119,7 @@ export function readFitActivities(results: Record<string, unknown> | null): FitA
 
     return [
       {
+        start_time: typeof activity.start_time === 'string' ? activity.start_time : null,
         sport: typeof activity.sport === 'string' ? activity.sport : null,
         duration_seconds: readNumber(activity.duration_seconds),
         distance_meters: readNumber(activity.distance_meters),
@@ -145,6 +156,57 @@ function weightedPace(runs: RunRef[]): number | null {
   return km > 0 ? round(seconds / 60 / km, 2) : null
 }
 
+/** Tours qui signalent un fractionné quand la montre les a marqués. */
+const INTERVAL_MARKERS = new Set(['rest', 'recovery', 'interval'])
+/** Au-delà de cet écart d'allure entre tours, la sortie alterne effort et récupération : c'est un fractionné. */
+const INTERVAL_SPREAD_PCT = 25
+/** Distance d'un segment de course Hyrox (1 km), avec la marge d'imprécision du GPS. */
+const HYROX_SEGMENT_MIN_METERS = 800
+const HYROX_SEGMENT_MAX_METERS = 1200
+/** Une demi-simulation compte 4 segments, une complète 8. */
+const HYROX_MIN_SEGMENTS = 4
+
+const runsOf = (session: RunningSessionInput) => session.activities.filter(activity => isRunSport(activity.sport))
+const hasStations = (session: RunningSessionInput) => session.activities.some(activity => !isRunSport(activity.sport))
+
+/**
+ * Courses d'une séance dans l'ordre où elles ont été faites, et si cet ordre est sûr.
+ * Il ne l'est que si chaque fichier porte son heure de départ : sinon, c'est l'ordre de sélection des fichiers.
+ */
+function orderedRuns(session: RunningSessionInput): { runs: FitActivityInput[]; ordered: boolean } {
+  const runs = runsOf(session)
+  const ordered = runs.every(run => run.start_time !== null)
+  return {
+    runs: ordered ? [...runs].sort((a, b) => (a.start_time as string).localeCompare(b.start_time as string)) : runs,
+    ordered,
+  }
+}
+
+/**
+ * Une sortie est un fractionné si la montre a marqué des récupérations, ou si l'allure varie de plus de 25 %
+ * d'un tour à l'autre (au moins 4 tours). Des tours automatiques de 1 km sur un footing varient de quelques %.
+ * Une sortie importée sans tours ne peut pas être reconnue : elle compte comme continue.
+ */
+export function isIntervalRun(run: FitActivityInput): boolean {
+  if (run.laps.some(lap => lap.intensity !== null && INTERVAL_MARKERS.has(lap.intensity))) return true
+
+  // Allure brute, sans la plage de course : une récupération en marchant compte justement ici
+  const paces = run.laps.flatMap(lap =>
+    lap.duration_seconds && lap.distance_meters && lap.distance_meters >= 100
+      ? [lap.duration_seconds / lap.distance_meters]
+      : []
+  )
+  if (paces.length < 4) return false
+  return ((Math.max(...paces) - Math.min(...paces)) / Math.min(...paces)) * 100 >= INTERVAL_SPREAD_PCT
+}
+
+/** Type d'une séance de course : à stations, fractionné ou continue. */
+export function classifyRunSession(session: RunningSessionInput): RunType {
+  const runs = runsOf(session)
+  if (hasStations(session) && runs.length >= 2) return 'stations'
+  return runs.some(isIntervalRun) ? 'intervals' : 'continuous'
+}
+
 /**
  * Segments d'une séance :
  * - plusieurs fichiers de course entre d'autres activités → format à stations (Hyrox) ;
@@ -152,11 +214,10 @@ function weightedPace(runs: RunRef[]): number | null {
  * Il faut au moins 2 segments à stations, ou 3 tours, pour que l'écart veuille dire quelque chose.
  */
 function analyseSegments(session: RunningSessionInput): RunSegmentAnalysis | null {
-  const runs = session.activities.filter(activity => isRunSport(activity.sport))
-  const hasStations = session.activities.some(activity => !isRunSport(activity.sport))
   const date = new Date(session.started_at).toISOString()
 
-  if (hasStations && runs.length >= 2) {
+  if (classifyRunSession(session) === 'stations') {
+    const { runs, ordered } = orderedRuns(session)
     const paces = runs.flatMap(run => {
       const pace = segmentPace(run.duration_seconds, run.distance_meters)
       return pace === null ? [] : [pace]
@@ -167,12 +228,12 @@ function analyseSegments(session: RunningSessionInput): RunSegmentAnalysis | nul
       kind: 'stations',
       paces_min_km: paces.map(pace => round(pace, 2)),
       spread_pct: changePct(Math.min(...paces), Math.max(...paces)),
-      drift_pct: null,
+      drift_pct: ordered ? changePct(paces[0], paces[paces.length - 1]) : null,
     }
   }
 
   // Le fichier le plus découpé de la séance : c'est lui qui porte les fractions
-  const lapPaces = runs
+  const lapPaces = runsOf(session)
     .map(run =>
       run.laps.flatMap(lap => {
         if (lap.intensity && NON_EFFORT_LAPS.has(lap.intensity)) return []
@@ -190,6 +251,73 @@ function analyseSegments(session: RunningSessionInput): RunSegmentAnalysis | nul
     spread_pct: changePct(Math.min(...lapPaces), Math.max(...lapPaces)),
     drift_pct: changePct(lapPaces[0], lapPaces[lapPaces.length - 1]),
   }
+}
+
+/**
+ * Une simulation Hyrox : au moins 4 segments de course d'environ 1 km, séparés par des stations, et aucune
+ * autre course. Une échelle (1 km, 800 m, 600 m…) ou un fractionné avec rameur n'en est donc pas une.
+ * Renvoie le nombre de segments (le format) et le détail des temps, ou null.
+ */
+export function readHyroxSimulation(
+  session: RunningSessionInput
+): { run_segments: number; simulation: HyroxSimulation } | null {
+  if (classifyRunSession(session) !== 'stations') return null
+  const { runs, ordered } = orderedRuns(session)
+  if (runs.length < HYROX_MIN_SEGMENTS) return null
+
+  const isKmSegment = (run: FitActivityInput) =>
+    run.distance_meters !== null &&
+    run.distance_meters >= HYROX_SEGMENT_MIN_METERS &&
+    run.distance_meters <= HYROX_SEGMENT_MAX_METERS &&
+    segmentPace(run.duration_seconds, run.distance_meters) !== null
+  if (!runs.every(isKmSegment)) return null
+
+  // Un fichier de station sans durée rendrait le temps total faux : la séance n'est pas comparable
+  if (session.activities.some(activity => !activity.duration_seconds)) return null
+
+  const total = session.activities.reduce((sum, activity) => sum + (activity.duration_seconds as number), 0)
+  const run = runs.reduce((sum, activity) => sum + (activity.duration_seconds as number), 0)
+  const paces = runs.map(activity => segmentPace(activity.duration_seconds, activity.distance_meters) as number)
+
+  return {
+    run_segments: runs.length,
+    simulation: {
+      session_date: new Date(session.started_at).toISOString(),
+      total_seconds: Math.round(total),
+      run_seconds: Math.round(run),
+      station_seconds: Math.round(total - run),
+      run_share_pct: Math.round((run / total) * 100),
+      run_drift_pct: ordered ? changePct(paces[0], paces[paces.length - 1]) : null,
+    },
+  }
+}
+
+/** Regroupe les simulations par format et compare chacune à la précédente du même format. */
+function computeHyroxSimulations(sessions: RunningSessionInput[], nowMs: number): HyroxSimulationProgress[] {
+  const byFormat = new Map<number, HyroxSimulation[]>()
+  for (const session of sessions) {
+    if (new Date(session.started_at).getTime() > nowMs) continue
+    const found = readHyroxSimulation(session)
+    if (!found) continue
+    const list = byFormat.get(found.run_segments) ?? []
+    list.push(found.simulation)
+    byFormat.set(found.run_segments, list)
+  }
+
+  return [...byFormat.entries()]
+    .map(([segments, simulations]) => {
+      const sorted = [...simulations].sort((a, b) => b.session_date.localeCompare(a.session_date))
+      const [latest, previous = null] = sorted
+      return {
+        format: `${segments} × 1 km`,
+        run_segments: segments,
+        count: sorted.length,
+        latest,
+        previous,
+        delta_pct: previous ? changePct(previous.total_seconds, latest.total_seconds) : null,
+      }
+    })
+    .sort((a, b) => b.latest.session_date.localeCompare(a.latest.session_date))
 }
 
 /** Répartition du temps de course par zone cardiaque, sur toutes les activités qui en portent. */
@@ -212,10 +340,11 @@ function computeZones(activities: FitActivityInput[]): RunningZoneShare[] | null
 }
 
 /**
- * Diagnostic de course à pied : volume, allure, zones cardiaques et tenue d'allure entre segments.
+ * Diagnostic de course à pied : volume, types de sortie, allure des sorties continues, zones cardiaques,
+ * tenue d'allure entre segments et simulations Hyrox.
  *
- * @param sessions Séances terminées depuis au moins 56 jours, avec leurs activités .fit
- * @param periodStart Début de la période du diagnostic, pour les totaux
+ * @param sessions Toutes les séances terminées avec un import .fit (les simulations ne sont pas bornées à la période)
+ * @param periodStart Début de la période du diagnostic, pour les totaux, les zones et les segments
  * @param now Date de référence des fenêtres de 28 jours
  */
 export function computeRunning(sessions: RunningSessionInput[], periodStart: Date, now = new Date()): RunningResult {
@@ -223,26 +352,32 @@ export function computeRunning(sessions: RunningSessionInput[], periodStart: Dat
   const recentStart = nowMs - WINDOW_DAYS * DAY_MS
   const previousStart = nowMs - 2 * WINDOW_DAYS * DAY_MS
 
-  const runs: RunRef[] = []
+  const runs: (RunRef & { type: RunType })[] = []
   const periodRunActivities: FitActivityInput[] = []
   const segments: RunSegmentAnalysis[] = []
+  const runTypes: RunTypeCounts = { continuous: 0, intervals: 0, stations: 0 }
 
   for (const session of sessions) {
     const at = new Date(session.started_at).getTime()
     if (!Number.isFinite(at) || at > nowMs) continue
 
-    const runActivities = session.activities.filter(activity => isRunSport(activity.sport))
+    const runActivities = runsOf(session)
     if (runActivities.length === 0) continue
+    const type = classifyRunSession(session)
 
+    let validRuns = 0
     for (const activity of runActivities) {
       // Une activité sans allure exploitable (GPS coupé, tapis non calibré) ne fausse ni le volume ni l'allure
       if (segmentPace(activity.duration_seconds, activity.distance_meters) === null) continue
+      validRuns += 1
       runs.push({
         at,
+        type,
         duration_seconds: activity.duration_seconds as number,
         distance_meters: activity.distance_meters as number,
       })
     }
+    if (validRuns > 0 && at > recentStart) runTypes[type] += 1
 
     if (at >= periodStart.getTime()) {
       periodRunActivities.push(...runActivities)
@@ -255,9 +390,10 @@ export function computeRunning(sessions: RunningSessionInput[], periodStart: Dat
   const recent = runs.filter(run => run.at > recentStart)
   const previous = runs.filter(run => run.at > previousStart && run.at <= recentStart)
   const km = (list: RunRef[]) => round(list.reduce((sum, run) => sum + run.distance_meters, 0) / 1000, 1)
+  const continuous = (list: (RunRef & { type: RunType })[]) => list.filter(run => run.type === 'continuous')
 
-  const recentPace = weightedPace(recent)
-  const previousPace = weightedPace(previous)
+  const recentPace = weightedPace(continuous(recent))
+  const previousPace = weightedPace(continuous(previous))
 
   return {
     available: inPeriod.length > 0,
@@ -265,10 +401,12 @@ export function computeRunning(sessions: RunningSessionInput[], periodStart: Dat
     total_distance_km: km(inPeriod),
     last_28_days_km: km(recent),
     previous_28_days_km: km(previous),
+    run_types: runTypes,
     recent_pace_min_km: recentPace,
     previous_pace_min_km: previousPace,
     pace_change_pct: recentPace !== null && previousPace !== null ? changePct(previousPace, recentPace) : null,
     zones: computeZones(periodRunActivities),
     segments: segments.sort((a, b) => b.session_date.localeCompare(a.session_date)).slice(0, MAX_SEGMENT_SESSIONS),
+    hyrox_simulations: computeHyroxSimulations(sessions, nowMs),
   }
 }

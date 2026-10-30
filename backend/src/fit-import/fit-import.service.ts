@@ -22,6 +22,8 @@ type ParsedSession = NonNullable<ParsedFit['sessions']>[number]
 
 // Données extraites d'un fichier FIT (une activité), avant enrichissement dans FitActivity
 export interface ParsedFitData {
+  /** Heure de départ de l'activité (ISO), null si le fichier ne la donne pas */
+  start_time: string | null
   duration_seconds: number | null
   calories: number | null
   avg_heart_rate: number | null
@@ -43,6 +45,8 @@ export interface ParsedFitData {
 
 // Format enrichi par activité pour /parse-multiple
 export interface FitActivity {
+  /** Heure de départ (ISO) : donne l'ordre réel des activités d'une séance à stations */
+  start_time: string | null
   sport: string | null
   duration_seconds: number | null
   calories: number | null
@@ -73,6 +77,23 @@ export interface MultiActivityFitData {
 }
 
 const isRunSport = (sport: string | null) => !!sport?.toLowerCase().includes('run')
+
+/** Heure de départ au format ISO, ou null si la montre ne l'a pas écrite (ou valeur illisible). */
+export function readStartTime(value: unknown): string | null {
+  if (!(value instanceof Date) && typeof value !== 'string' && typeof value !== 'number') return null
+  const date = new Date(value)
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null
+}
+
+/**
+ * Remet les activités dans l'ordre où elles ont été faites, quel que soit l'ordre de sélection des fichiers :
+ * c'est cet ordre qui permet de mesurer la dérive d'allure entre les segments d'une séance à stations.
+ * Si une heure manque, l'ordre d'envoi est gardé tel quel plutôt que d'être deviné.
+ */
+export function sortByStartTime<T extends { start_time: string | null }>(activities: T[]): T[] {
+  if (activities.some(activity => activity.start_time === null)) return activities
+  return [...activities].sort((a, b) => (a.start_time as string).localeCompare(b.start_time as string))
+}
 
 interface UserHrProfile {
   max_heart_rate: number | null
@@ -149,6 +170,7 @@ export class FitImportService {
     const timeInZone: unknown = session.time_in_hr_zone
     const sport: string | null = session.sport ?? null
     return {
+      start_time: readStartTime(session.start_time),
       duration_seconds: session.total_elapsed_time ?? null,
       calories: session.total_calories ?? null,
       avg_heart_rate: session.avg_heart_rate ?? null,
@@ -183,7 +205,8 @@ export class FitImportService {
       sessionMaxHr: highestSessionHr(parsed),
     })
 
-    const activities: FitActivity[] = parsed.map(d => ({
+    const activities: FitActivity[] = sortByStartTime(parsed).map(d => ({
+      start_time: d.start_time,
       sport: d.sport,
       duration_seconds: d.duration_seconds,
       calories: d.calories,

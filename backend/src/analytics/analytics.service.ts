@@ -67,10 +67,7 @@ export class AnalyticsService {
     const since = new Date()
     since.setMonth(since.getMonth() - months)
     const sinceISO = since.toISOString()
-    // La course compare les 28 derniers jours aux 28 d'avant : il faut au moins 56 jours d'historique,
-    // même quand la période demandée est plus courte.
     const now = new Date()
-    const runningSince = new Date(Math.min(since.getTime(), now.getTime() - 56 * 24 * 3600 * 1000))
 
     const [
       sessions,
@@ -149,13 +146,14 @@ export class AnalyticsService {
         .whereNotNull('completed_at')
         .first() as Promise<{ first_started_at: string | null } | undefined>,
 
-      // Séances avec un import .fit : seule source de distance et d'allure pour la course
+      // Séances avec un import .fit : seule source de distance et d'allure pour la course.
+      // Non bornées à la période : les fenêtres de 28 jours en couvrent 56, et les simulations Hyrox,
+      // rares, se comparent sur toute l'histoire comme les benchmarks. Le calculateur filtre le reste.
       this.knex('workout_sessions')
         .select('started_at', 'results')
         .where('user_id', userId)
         .whereNotNull('completed_at')
         .whereRaw("results->'coros' is not null")
-        .where('started_at', '>=', runningSince.toISOString())
         .orderBy('started_at', 'asc') as Promise<SessionRow[]>,
     ])
 

@@ -45,6 +45,16 @@ export function formatPace(paceMinKm: number): string {
 
 const signed = (value: number) => `${value > 0 ? '+' : ''}${value}`
 
+const plural = (count: number, one: string, many: string) => `${count} ${count > 1 ? many : one}`
+
+/** Durée au format chrono (4488 → « 1:14:48 », 905 → « 15:05 »). */
+export function formatDuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = String(Math.round(totalSeconds % 60)).padStart(2, '0')
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}` : `${minutes}:${seconds}`
+}
+
 /**
  * Met en forme le bloc course à pied. Une allure qui augmente est plus lente : le sens est
  * écrit en toutes lettres pour que le modèle ne lise pas « +5 % » comme une progression.
@@ -53,8 +63,10 @@ const signed = (value: number) => `${value > 0 ? '+' : ''}${value}`
  * @returns Les lignes à insérer dans le prompt
  */
 export function formatRunningLines(running: RunningDiagnostic): string[] {
+  const { continuous, intervals, stations } = running.run_types
   const lines = [
     `- Volume : ${running.last_28_days_km} km sur les 28 derniers jours (${running.previous_28_days_km} km les 28 jours d’avant)`,
+    `- Séances de course sur 28 jours : ${plural(continuous, 'sortie continue', 'sorties continues')}, ${plural(intervals, 'fractionné', 'fractionnés')}, ${plural(stations, 'séance à stations', 'séances à stations')}`,
   ]
 
   if (running.recent_pace_min_km !== null) {
@@ -62,7 +74,9 @@ export function formatRunningLines(running: RunningDiagnostic): string[] {
       running.pace_change_pct !== null
         ? `, ${signed(running.pace_change_pct)} % vs les 28 jours d’avant (${running.pace_change_pct > 0 ? 'plus lent' : running.pace_change_pct < 0 ? 'plus rapide' : 'stable'})`
         : ''
-    lines.push(`- Allure moyenne sur 28 jours : ${formatPace(running.recent_pace_min_km)} /km${change}`)
+    lines.push(
+      `- Allure moyenne des sorties continues sur 28 jours : ${formatPace(running.recent_pace_min_km)} /km${change}`
+    )
   }
 
   if (running.easy_zone_pct !== null && running.hard_zone_pct !== null) {
@@ -72,14 +86,28 @@ export function formatRunningLines(running: RunningDiagnostic): string[] {
   }
 
   if (running.latest_stations) {
+    const { segment_count, spread_pct, drift_pct } = running.latest_stations
+    const drift = drift_pct !== null ? `, allure ${signed(drift_pct)} % du premier au dernier segment` : ''
     lines.push(
-      `- Dernière séance à stations (format Hyrox, ${running.latest_stations.segment_count} segments de course) : ${running.latest_stations.spread_pct} % d’écart d’allure entre le segment le plus rapide et le plus lent`
+      `- Dernière séance à stations (format Hyrox, ${segment_count} segments de course) : ${spread_pct} % d’écart d’allure entre le segment le plus rapide et le plus lent${drift}`
     )
   }
 
   if (running.latest_laps) {
     lines.push(
       `- Dernière sortie découpée (${running.latest_laps.segment_count} tours d’effort) : allure ${signed(running.latest_laps.drift_pct)} % du premier au dernier tour (positif = ralentissement)`
+    )
+  }
+
+  for (const simulation of running.hyrox_simulations) {
+    const drift =
+      simulation.run_drift_pct !== null ? `, allure ${signed(simulation.run_drift_pct)} % du 1er au dernier km` : ''
+    const delta =
+      simulation.delta_pct !== null
+        ? ` ; ${signed(simulation.delta_pct)} % vs la précédente du même format (${simulation.delta_pct < 0 ? 'plus rapide' : simulation.delta_pct > 0 ? 'plus lent' : 'identique'})`
+        : ' ; première de ce format'
+    lines.push(
+      `- Simulation Hyrox ${simulation.format} (${plural(simulation.count, 'réalisée', 'réalisées')}) : dernière en ${formatDuration(simulation.total_seconds)}, ${simulation.run_share_pct} % du temps en course et ${100 - simulation.run_share_pct} % aux stations${drift}${delta}`
     )
   }
 
