@@ -212,19 +212,54 @@ export interface RunningZoneShare {
 
 /**
  * Allures des segments de course d'une même séance.
- * - `stations` : plusieurs fichiers de course séparés par d'autres activités (format Hyrox). Leur ordre
- *   n'est pas enregistré, on ne mesure donc que l'écart entre le segment le plus rapide et le plus lent.
- * - `laps` : tours d'un seul fichier de course, dans l'ordre : on mesure aussi la dérive du premier au dernier.
+ * - `stations` : plusieurs fichiers de course séparés par d'autres activités (format Hyrox).
+ * - `laps` : tours d'un seul fichier de course.
  */
 export interface RunSegmentAnalysis {
   session_date: string
   kind: 'stations' | 'laps'
-  /** Allures des segments en min/km, dans l'ordre enregistré. */
+  /** Allures des segments en min/km, dans l'ordre où ils ont été courus quand il est connu. */
   paces_min_km: number[]
   /** Écart entre le segment le plus lent et le plus rapide, en % de l'allure la plus rapide. */
   spread_pct: number
-  /** Du premier au dernier tour, en % (positif = plus lent à la fin). Null pour `stations`. */
+  /**
+   * Du premier au dernier segment, en % (positif = plus lent à la fin). Null pour une séance à stations
+   * importée avant l'enregistrement des heures de départ : l'ordre des fichiers n'y est pas fiable.
+   */
   drift_pct: number | null
+}
+
+/** Type d'une séance de course : l'allure d'un fractionné ne se compare pas à celle d'un footing. */
+export type RunType = 'continuous' | 'intervals' | 'stations'
+
+/** Nombre de séances de course par type sur les 28 derniers jours. */
+export type RunTypeCounts = Record<RunType, number>
+
+export interface HyroxSimulation {
+  session_date: string
+  /** Somme des fichiers .fit de la séance : les transitions non enregistrées par la montre n'y sont pas. */
+  total_seconds: number
+  run_seconds: number
+  station_seconds: number
+  /** Part du temps passée à courir, en %. */
+  run_share_pct: number
+  /** Dérive d'allure du premier au dernier km, null si l'ordre des segments n'est pas connu. */
+  run_drift_pct: number | null
+}
+
+/**
+ * Simulations Hyrox d'un même format (même nombre de segments d'environ 1 km).
+ * Une simulation ne se compare qu'à une simulation du même format, comme un benchmark.
+ */
+export interface HyroxSimulationProgress {
+  /** Libellé du format, par exemple « 8 × 1 km ». */
+  format: string
+  run_segments: number
+  count: number
+  latest: HyroxSimulation
+  previous: HyroxSimulation | null
+  /** Écart de temps total avec la simulation précédente, en % (négatif = plus rapide). */
+  delta_pct: number | null
 }
 
 export interface RunningResult {
@@ -232,16 +267,23 @@ export interface RunningResult {
   available: boolean
   total_runs: number
   total_distance_km: number
-  /** Kilomètres courus sur les 28 derniers jours, puis sur les 28 jours d'avant. */
+  /** Kilomètres courus sur les 28 derniers jours, puis sur les 28 jours d'avant, tous types confondus. */
   last_28_days_km: number
   previous_28_days_km: number
-  /** Allure moyenne pondérée par la distance, en min/km, sur chaque fenêtre de 28 jours (null sous 2 sorties). */
+  /** Séances de course des 28 derniers jours, par type. */
+  run_types: RunTypeCounts
+  /**
+   * Allure moyenne des sorties continues, pondérée par la distance, en min/km, sur chaque fenêtre de 28 jours
+   * (null sous 2 sorties). Les fractionnés et les séances à stations n'y entrent pas.
+   */
   recent_pace_min_km: number | null
   previous_pace_min_km: number | null
-  /** Évolution de l'allure, en % (positif = plus lent). Null si l'une des deux fenêtres manque. */
+  /** Évolution de cette allure, en % (positif = plus lent). Null si l'une des deux fenêtres manque. */
   pace_change_pct: number | null
-  /** Répartition du temps de course par zone cardiaque, null si aucun fichier ne porte de zones. */
+  /** Répartition du temps de course par zone cardiaque, null si aucun fichier ne porte de zones fiables. */
   zones: RunningZoneShare[] | null
   /** Séances découpées en segments, de la plus récente à la plus ancienne (5 au plus). */
   segments: RunSegmentAnalysis[]
+  /** Simulations Hyrox par format, sans limite de période (on en fait rarement), la plus récente d'abord. */
+  hyrox_simulations: HyroxSimulationProgress[]
 }

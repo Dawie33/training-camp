@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
-import type { RunningResult } from 'src/analytics/types/analytics.types'
+import type { RunningResult, RunTypeCounts } from 'src/analytics/types/analytics.types'
 import type { Injury } from 'src/common/injuries/injury.constants'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
 import { toParisDate } from 'src/common/utils/date-only'
@@ -111,16 +111,32 @@ export interface PerformanceDiagnosticSummary {
 export interface RunningDiagnostic {
   last_28_days_km: number
   previous_28_days_km: number
+  /** Séances de course des 28 derniers jours par type : continue, fractionné, à stations. */
+  run_types: RunTypeCounts
+  /** Allure moyenne des sorties continues seulement. */
   recent_pace_min_km: number | null
   /** Positif = plus lent que sur les 28 jours d'avant. */
   pace_change_pct: number | null
   /** Part du temps de course en zones 1-2 (facile) et 4-5 (intense), null sans zones cardiaques. */
   easy_zone_pct: number | null
   hard_zone_pct: number | null
-  /** Dernière séance à stations (format Hyrox) : écart entre le segment de course le plus rapide et le plus lent. */
-  latest_stations: { segment_count: number; spread_pct: number } | null
+  /**
+   * Dernière séance à stations (format Hyrox) : écart entre le segment de course le plus rapide et le plus lent,
+   * et dérive du premier au dernier quand l'ordre des segments est connu.
+   */
+  latest_stations: { segment_count: number; spread_pct: number; drift_pct: number | null } | null
   /** Dernière sortie découpée en tours : dérive d'allure du premier au dernier tour d'effort. */
   latest_laps: { segment_count: number; drift_pct: number } | null
+  /** Dernière simulation Hyrox de chaque format, comparée à la précédente du même format. */
+  hyrox_simulations: {
+    format: string
+    count: number
+    total_seconds: number
+    run_share_pct: number
+    run_drift_pct: number | null
+    /** Négatif = plus rapide que la simulation précédente du même format. */
+    delta_pct: number | null
+  }[]
 }
 
 /**
@@ -435,13 +451,26 @@ export class UserContextService {
       previous_28_days_km: running.previous_28_days_km,
       recent_pace_min_km: running.recent_pace_min_km,
       pace_change_pct: running.pace_change_pct,
+      run_types: running.run_types,
       easy_zone_pct: zoneShare([1, 2]),
       hard_zone_pct: zoneShare([4, 5]),
       latest_stations: stations
-        ? { segment_count: stations.paces_min_km.length, spread_pct: stations.spread_pct }
+        ? {
+            segment_count: stations.paces_min_km.length,
+            spread_pct: stations.spread_pct,
+            drift_pct: stations.drift_pct,
+          }
         : null,
       latest_laps:
         laps && laps.drift_pct !== null ? { segment_count: laps.paces_min_km.length, drift_pct: laps.drift_pct } : null,
+      hyrox_simulations: running.hyrox_simulations.map(simulation => ({
+        format: simulation.format,
+        count: simulation.count,
+        total_seconds: simulation.latest.total_seconds,
+        run_share_pct: simulation.latest.run_share_pct,
+        run_drift_pct: simulation.latest.run_drift_pct,
+        delta_pct: simulation.delta_pct,
+      })),
     }
   }
 }
