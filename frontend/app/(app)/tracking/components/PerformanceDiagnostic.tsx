@@ -12,42 +12,14 @@ import {
 import { motion } from 'framer-motion'
 import { Activity, AlertTriangle, Dumbbell, Gauge, Target, TrendingDown, TrendingUp } from 'lucide-react'
 import { usePerformanceOverview } from '@/hooks/usePerformanceOverview'
+import { EmptyHint, Section } from './diagnostic-ui'
+import { RunningPanel } from './RunningPanel'
 
 const VERDICT_STYLES: Record<StrengthRatio['verdict'], { label: string; className: string }> = {
   below: { label: 'En retard', className: 'text-orange-600 bg-orange-500/10 border-orange-500/30' },
   in_range: { label: 'Équilibré', className: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/30' },
   above: { label: 'En avance', className: 'text-blue-600 bg-blue-500/10 border-blue-500/30' },
   unavailable: { label: 'À renseigner', className: 'text-muted-foreground bg-secondary border-border' },
-}
-
-function Section({ title, subtitle, icon, children }: {
-  title: string
-  subtitle?: string
-  icon: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <section className="bg-card border border-border rounded-lg p-5 space-y-4">
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <h3 className="font-semibold text-foreground">{title}</h3>
-          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
-        </div>
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function EmptyHint({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-sm text-muted-foreground bg-secondary/40 border border-dashed border-border rounded-lg px-4 py-3">
-      {children}
-    </p>
-  )
 }
 
 /** Jauge situant la valeur d'un ratio par rapport à sa fourchette de référence. */
@@ -392,6 +364,7 @@ export function PerformanceDiagnostic({ months = 3 }: { months?: number }) {
     >
       <StrengthRatiosPanel data={overview.strength_ratios} />
       <EnergySystemsPanel data={overview.energy_systems} />
+      <RunningPanel data={overview.running} />
       <BenchmarksPanel data={overview.benchmarks} />
       <VolumeAndLoadPanel volume={overview.volume} load={overview.load} />
       <MovementsPanel data={overview.movements} />
