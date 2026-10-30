@@ -1,4 +1,13 @@
-import { computeRunning, FitActivityInput, readFitActivities, RunningSessionInput, segmentPace } from './running'
+import {
+  classifyRunSession,
+  computeRunning,
+  FitActivityInput,
+  isIntervalRun,
+  readFitActivities,
+  readHyroxSimulation,
+  RunningSessionInput,
+  segmentPace,
+} from './running'
 
 const now = new Date('2026-10-30T18:00:00.000Z')
 const periodStart = new Date('2026-07-30T18:00:00.000Z')
@@ -6,6 +15,7 @@ const periodStart = new Date('2026-07-30T18:00:00.000Z')
 /** Sortie de course : `km` kilomètres à `pace` min/km. */
 function run(km: number, pace: number, extra: Partial<FitActivityInput> = {}): FitActivityInput {
   return {
+    start_time: null,
     sport: 'running',
     duration_seconds: km * pace * 60,
     distance_meters: km * 1000,
@@ -16,6 +26,7 @@ function run(km: number, pace: number, extra: Partial<FitActivityInput> = {}): F
 }
 
 const rowing: FitActivityInput = {
+  start_time: null,
   sport: 'rowing',
   duration_seconds: 300,
   distance_meters: null,
@@ -61,6 +72,7 @@ describe('readFitActivities', () => {
 
     expect(activities).toEqual([
       {
+        start_time: null,
         sport: 'running',
         duration_seconds: 1800,
         distance_meters: 6000,
@@ -260,5 +272,181 @@ describe('computeRunning', () => {
 
     expect(result.available).toBe(false)
     expect(result.total_distance_km).toBe(0)
+  })
+})
+
+/** Tour de montre : `km` kilomètres à `pace` min/km. */
+const lap = (km: number, pace: number, intensity: string | null = null) => ({
+  duration_seconds: km * pace * 60,
+  distance_meters: km * 1000,
+  intensity,
+})
+
+/** Heure de départ, `minutes` après 8 h le jour de la séance. */
+const startAt = (minutes: number) => new Date(Date.UTC(2026, 9, 28, 8, minutes)).toISOString()
+
+describe('isIntervalRun', () => {
+  it('ne prend pas un footing en tours automatiques de 1 km pour un fractionné', () => {
+    // Sortie du 30/10 : de 7:04 à 7:33 /km, puis un bout de 155 m
+    const easy = run(6.2, 7.3, {
+      laps: [lap(1, 7.17), lap(1, 7.14), lap(1, 7.07), lap(1, 7.36), lap(1, 7.52), lap(1, 7.55), lap(0.16, 7.77)],
+    })
+
+    expect(isIntervalRun(easy)).toBe(false)
+  })
+
+  it('reconnaît un fractionné marqué par la montre', () => {
+    expect(isIntervalRun(run(5, 5, { laps: [lap(0.4, 4.5, 'active'), lap(0.2, 9, 'recovery')] }))).toBe(true)
+  })
+
+  it('reconnaît un fractionné non marqué à l’écart d’allure entre tours', () => {
+    // 400 m à 4:30 et 200 m de récupération en marchant à 10:00
+    const laps = [lap(0.4, 4.5), lap(0.2, 10), lap(0.4, 4.5), lap(0.2, 10)]
+
+    expect(isIntervalRun(run(1.2, 6, { laps }))).toBe(true)
+  })
+
+  it('compte comme continue une sortie importée sans tours', () => {
+    expect(isIntervalRun(run(7, 6.7))).toBe(false)
+  })
+})
+
+describe('classifyRunSession', () => {
+  it('distingue séance à stations, fractionné et sortie continue', () => {
+    expect(classifyRunSession(session(1, [run(1, 5), rowing, run(1, 5)]))).toBe('stations')
+    expect(classifyRunSession(session(1, [run(5, 5, { laps: [lap(0.4, 4.5, 'interval')] })]))).toBe('intervals')
+    expect(classifyRunSession(session(1, [run(6, 6)]))).toBe('continuous')
+    // Une seule course avant une séance de rameur : rien à comparer entre segments
+    expect(classifyRunSession(session(1, [run(2, 5), rowing]))).toBe('continuous')
+  })
+})
+
+describe('computeRunning — types de sortie', () => {
+  const intervals = run(5, 4.5, { laps: [lap(0.4, 4, 'interval'), lap(0.2, 9, 'recovery')] })
+
+  it('compte les séances des 28 derniers jours par type', () => {
+    const result = computeRunning(
+      [
+        session(40, [run(8, 6)]),
+        session(10, [run(5, 6)]),
+        session(8, [intervals]),
+        session(3, [run(1, 5), rowing, run(1, 5.2)]),
+        session(1, [run(6, 6)]),
+      ],
+      periodStart,
+      now
+    )
+
+    expect(result.run_types).toEqual({ continuous: 2, intervals: 1, stations: 1 })
+  })
+
+  it('ne calcule l’allure moyenne que sur les sorties continues', () => {
+    const result = computeRunning(
+      [
+        session(10, [run(5, 6)]),
+        session(8, [intervals]),
+        session(3, [run(1, 4.8), rowing, run(1, 5)]),
+        session(1, [run(5, 6)]),
+      ],
+      periodStart,
+      now
+    )
+
+    // Avec le fractionné et les segments à stations, la moyenne tomberait sous 5:30
+    expect(result.recent_pace_min_km).toBe(6)
+    // Le volume, lui, compte toutes les courses
+    expect(result.last_28_days_km).toBe(17)
+  })
+})
+
+describe('computeRunning — ordre des segments à stations', () => {
+  it('mesure la dérive dans l’ordre réel des courses quand chaque fichier a son heure de départ', () => {
+    // Fichiers sélectionnés dans le désordre : le dernier km couru (5:30) est envoyé en premier
+    const result = computeRunning(
+      [
+        session(2, [
+          run(1, 5.5, { start_time: startAt(20) }),
+          { ...rowing, start_time: startAt(6) },
+          run(1, 5, { start_time: startAt(0) }),
+          run(1, 5.2, { start_time: startAt(10) }),
+        ]),
+      ],
+      periodStart,
+      now
+    )
+
+    expect(result.segments[0]).toMatchObject({ kind: 'stations', paces_min_km: [5, 5.2, 5.5], drift_pct: 10 })
+  })
+})
+
+describe('readHyroxSimulation', () => {
+  /** Simulation : un km de course puis une station de `stationSeconds`, `segments` fois. */
+  const simulation = (segments: number, pace: number, stationSeconds: number, daysAgo = 2) =>
+    session(
+      daysAgo,
+      Array.from({ length: segments }, (_, i) => [
+        run(1, pace + i * 0.1, { start_time: startAt(i * 10) }),
+        { ...rowing, duration_seconds: stationSeconds, start_time: startAt(i * 10 + 5) },
+      ]).flat()
+    )
+
+  it('reconnaît une simulation complète et sépare temps de course et temps aux stations', () => {
+    // 8 km de 5:00 à 5:42 /km, 8 stations de 4 min
+    const found = readHyroxSimulation(simulation(8, 5, 240))
+
+    expect(found?.run_segments).toBe(8)
+    expect(found?.simulation).toMatchObject({
+      total_seconds: 4488,
+      run_seconds: 2568,
+      station_seconds: 1920,
+      run_share_pct: 57,
+      run_drift_pct: 14,
+    })
+  })
+
+  it('n’en voit pas dans une échelle de distances, ni sous 4 segments', () => {
+    const ladder = session(2, [run(1, 5), rowing, run(0.8, 5), rowing, run(0.6, 5), rowing, run(0.4, 5), rowing])
+
+    expect(readHyroxSimulation(ladder)).toBeNull()
+    expect(readHyroxSimulation(simulation(3, 5, 240))).toBeNull()
+  })
+
+  it('écarte une simulation dont une station n’a pas de durée : son temps total serait faux', () => {
+    const sim = simulation(4, 5, 240)
+    sim.activities[1] = { ...sim.activities[1], duration_seconds: null }
+
+    expect(readHyroxSimulation(sim)).toBeNull()
+  })
+})
+
+describe('computeRunning — simulations Hyrox', () => {
+  const simulation = (segments: number, stationSeconds: number, daysAgo: number) =>
+    session(
+      daysAgo,
+      Array.from({ length: segments }, () => [run(1, 5), { ...rowing, duration_seconds: stationSeconds }]).flat()
+    )
+
+  it('compare chaque simulation à la précédente du même format seulement, sans limite de période', () => {
+    const result = computeRunning(
+      [
+        // Simulation complète il y a 200 jours, hors période : elle sert quand même de point de comparaison
+        simulation(8, 300, 200),
+        simulation(8, 240, 5),
+        simulation(4, 200, 20),
+      ],
+      periodStart,
+      now
+    )
+
+    expect(result.hyrox_simulations.map(s => [s.format, s.count])).toEqual([
+      ['8 × 1 km', 2],
+      ['4 × 1 km', 1],
+    ])
+    // 8 × (300 + 300 s) = 4800 s, puis 8 × (300 + 240 s) = 4320 s
+    expect(result.hyrox_simulations[0].previous?.total_seconds).toBe(4800)
+    expect(result.hyrox_simulations[0].delta_pct).toBe(-10)
+    // La demi-simulation ne se compare pas à la complète
+    expect(result.hyrox_simulations[1].previous).toBeNull()
+    expect(result.hyrox_simulations[1].delta_pct).toBeNull()
   })
 })

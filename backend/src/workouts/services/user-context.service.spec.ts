@@ -451,6 +451,7 @@ describe('UserContextService.getUserAIContext', () => {
         available: true,
         last_28_days_km: 24.5,
         previous_28_days_km: 18,
+        run_types: { continuous: 3, intervals: 1, stations: 1 },
         recent_pace_min_km: 5.5,
         pace_change_pct: -3.2,
         zones: [
@@ -466,6 +467,23 @@ describe('UserContextService.getUserAIContext', () => {
           { session_date: '2026-10-20', kind: 'stations', paces_min_km: [5, 5.5], spread_pct: 10, drift_pct: null },
           { session_date: '2026-10-10', kind: 'laps', paces_min_km: [5, 5, 5], spread_pct: 0, drift_pct: 0 },
         ],
+        hyrox_simulations: [
+          {
+            format: '8 × 1 km',
+            run_segments: 8,
+            count: 2,
+            latest: {
+              session_date: '2026-10-25',
+              total_seconds: 4488,
+              run_seconds: 2568,
+              station_seconds: 1920,
+              run_share_pct: 57,
+              run_drift_pct: 14,
+            },
+            previous: null,
+            delta_pct: -3.2,
+          },
+        ],
       },
     })
     const service = await buildService(createKnexMock())
@@ -479,10 +497,14 @@ describe('UserContextService.getUserAIContext', () => {
       previous_28_days_km: 18,
       recent_pace_min_km: 5.5,
       pace_change_pct: -3.2,
+      run_types: { continuous: 3, intervals: 1, stations: 1 },
       easy_zone_pct: 65,
       hard_zone_pct: 15,
-      latest_stations: { segment_count: 2, spread_pct: 10 },
+      latest_stations: { segment_count: 2, spread_pct: 10, drift_pct: null },
       latest_laps: { segment_count: 3, drift_pct: 8 },
+      hyrox_simulations: [
+        { format: '8 × 1 km', count: 2, total_seconds: 4488, run_share_pct: 57, run_drift_pct: 14, delta_pct: -3.2 },
+      ],
     })
   })
 

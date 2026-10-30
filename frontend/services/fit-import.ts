@@ -23,6 +23,8 @@ export interface FitLap {
 
 // Format enrichi par activité pour /parse-multiple
 export interface FitActivity {
+  /** Heure de départ (ISO). Absente des séances importées avant son ajout */
+  start_time?: string | null
   sport: string | null
   duration_seconds: number | null
   calories: number | null

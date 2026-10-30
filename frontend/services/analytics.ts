@@ -190,7 +190,32 @@ export interface RunSegmentAnalysis {
   kind: 'stations' | 'laps'
   paces_min_km: number[]
   spread_pct: number
+  /** Null pour une séance à stations importée avant l'enregistrement des heures de départ */
   drift_pct: number | null
+}
+
+export type RunType = 'continuous' | 'intervals' | 'stations'
+
+export type RunTypeCounts = Record<RunType, number>
+
+export interface HyroxSimulation {
+  session_date: string
+  total_seconds: number
+  run_seconds: number
+  station_seconds: number
+  run_share_pct: number
+  run_drift_pct: number | null
+}
+
+/** Simulations d'un même format, comparées entre elles seulement */
+export interface HyroxSimulationProgress {
+  format: string
+  run_segments: number
+  count: number
+  latest: HyroxSimulation
+  previous: HyroxSimulation | null
+  /** Négatif = plus rapide */
+  delta_pct: number | null
 }
 
 export interface RunningResult {
@@ -199,12 +224,15 @@ export interface RunningResult {
   total_distance_km: number
   last_28_days_km: number
   previous_28_days_km: number
+  run_types: RunTypeCounts
+  /** Sorties continues seulement */
   recent_pace_min_km: number | null
   previous_pace_min_km: number | null
   /** Positif = plus lent */
   pace_change_pct: number | null
   zones: RunningZoneShare[] | null
   segments: RunSegmentAnalysis[]
+  hyrox_simulations: HyroxSimulationProgress[]
 }
 
 export interface PerformanceOverview {
