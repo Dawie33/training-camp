@@ -14,6 +14,7 @@ const emptyOverview = {
   movements: { most_scaled: [] },
   benchmarks: [],
   volume: { avg_per_week: 0, consistency_pct: 0 },
+  running: { available: false },
 }
 
 const analyticsMock = { getOverview: jest.fn().mockResolvedValue(emptyOverview) }
@@ -441,5 +442,55 @@ describe('UserContextService.getUserAIContext', () => {
         estimated: true,
       },
     ])
+  })
+  it('running : réduit le bloc course aux zones cumulées et aux derniers segments de chaque type', async () => {
+    // Arrange
+    analyticsMock.getOverview.mockResolvedValueOnce({
+      ...emptyOverview,
+      running: {
+        available: true,
+        last_28_days_km: 24.5,
+        previous_28_days_km: 18,
+        recent_pace_min_km: 5.5,
+        pace_change_pct: -3.2,
+        zones: [
+          { zone: 1, label: 'Recovery', share_pct: 10 },
+          { zone: 2, label: 'Easy', share_pct: 55 },
+          { zone: 3, label: 'Aerobic', share_pct: 20 },
+          { zone: 4, label: 'Threshold', share_pct: 10 },
+          { zone: 5, label: 'VO2 Max', share_pct: 5 },
+        ],
+        // Du plus récent au plus ancien : seul le premier de chaque type est gardé
+        segments: [
+          { session_date: '2026-10-29', kind: 'laps', paces_min_km: [5, 5.1, 5.4], spread_pct: 8, drift_pct: 8 },
+          { session_date: '2026-10-20', kind: 'stations', paces_min_km: [5, 5.5], spread_pct: 10, drift_pct: null },
+          { session_date: '2026-10-10', kind: 'laps', paces_min_km: [5, 5, 5], spread_pct: 0, drift_pct: 0 },
+        ],
+      },
+    })
+    const service = await buildService(createKnexMock())
+
+    // Act
+    const result = await service.getUserAIContext('user-running')
+
+    // Assert
+    expect(result.diagnostic.running).toEqual({
+      last_28_days_km: 24.5,
+      previous_28_days_km: 18,
+      recent_pace_min_km: 5.5,
+      pace_change_pct: -3.2,
+      easy_zone_pct: 65,
+      hard_zone_pct: 15,
+      latest_stations: { segment_count: 2, spread_pct: 10 },
+      latest_laps: { segment_count: 3, drift_pct: 8 },
+    })
+  })
+
+  it('running : null quand aucune course n’a été importée', async () => {
+    const service = await buildService(createKnexMock())
+
+    const result = await service.getUserAIContext('user-sans-course')
+
+    expect(result.diagnostic.running).toBeNull()
   })
 })

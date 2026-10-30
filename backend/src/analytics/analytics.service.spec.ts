@@ -10,7 +10,7 @@ const USER_ID = 'user-1'
  */
 function createBuilder(rows: unknown[] = [], firstValue?: unknown) {
   const builder: any = {}
-  for (const method of ['select', 'where', 'whereNotNull', 'orderBy', 'join', 'leftJoin', 'min']) {
+  for (const method of ['select', 'where', 'whereNotNull', 'whereRaw', 'orderBy', 'join', 'leftJoin', 'min']) {
     builder[method] = jest.fn().mockReturnValue(builder)
   }
   builder.first = jest.fn().mockResolvedValue(firstValue)
@@ -58,13 +58,32 @@ describe('AnalyticsService', () => {
   it("filtre chaque requête sur l'utilisateur", async () => {
     await getOverview()
 
-    expect(queries).toHaveLength(8)
+    expect(queries).toHaveLength(9)
     for (const { table, builder } of queries) {
       const userFilter = builder.where.mock.calls.find(
         ([column, value]: [string, unknown]) => column.endsWith('user_id') && value === USER_ID
       )
       expect({ table, filtered: Boolean(userFilter) }).toEqual({ table, filtered: true })
     }
+  })
+
+  describe('course à pied', () => {
+    it('lit les courses dans les imports .fit des séances', async () => {
+      const started = new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString()
+      const overview = await getOverview({
+        sessions: [
+          {
+            started_at: started,
+            completed_at: started,
+            results: { coros: { activities: [{ sport: 'running', duration_seconds: 1800, distance_meters: 6000 }] } },
+          },
+        ],
+      })
+
+      expect(overview.running.available).toBe(true)
+      expect(overview.running.total_distance_km).toBe(6)
+      expect(overview.running.last_28_days_km).toBe(6)
+    })
   })
 
   describe("durée d'effort", () => {

@@ -178,6 +178,35 @@ export interface SkillProgressResult {
   skills: SkillProgress[]
 }
 
+export interface RunningZoneShare {
+  zone: number
+  label: string
+  share_pct: number
+}
+
+export interface RunSegmentAnalysis {
+  session_date: string
+  /** `stations` : fichiers de course séparés par d'autres activités (Hyrox) ; `laps` : tours d'un même fichier */
+  kind: 'stations' | 'laps'
+  paces_min_km: number[]
+  spread_pct: number
+  drift_pct: number | null
+}
+
+export interface RunningResult {
+  available: boolean
+  total_runs: number
+  total_distance_km: number
+  last_28_days_km: number
+  previous_28_days_km: number
+  recent_pace_min_km: number | null
+  previous_pace_min_km: number | null
+  /** Positif = plus lent */
+  pace_change_pct: number | null
+  zones: RunningZoneShare[] | null
+  segments: RunSegmentAnalysis[]
+}
+
 export interface PerformanceOverview {
   period_months: number
   strength_ratios: StrengthRatiosResult
@@ -188,6 +217,7 @@ export interface PerformanceOverview {
   load: TrainingLoadResult
   movements: MovementExposureResult
   skills: SkillProgressResult
+  running: RunningResult
   latest_session: LatestSession | null
   computed_at: string
 }
