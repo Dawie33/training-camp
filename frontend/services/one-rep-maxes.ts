@@ -26,6 +26,7 @@ export const CROSSFIT_LIFTS: { value: string; label: string }[] = [
   { value: 'overhead_squat', label: 'Overhead Squat' },
   { value: 'strict_press', label: 'Strict Press' },
   { value: 'push_press', label: 'Push Press' },
+  { value: 'push_jerk', label: 'Push Jerk' },
   { value: 'thruster', label: 'Thruster' },
   { value: 'pull_up', label: 'Pull Up' },
   { value: 'dips', label: 'Dips' },
