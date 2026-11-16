@@ -35,6 +35,8 @@ Depuis le calendrier, le lien vers la page de log transporte l'identifiant du cr
 | **Appréciation et notes** | Note de 1 à 5 et commentaire libre |
 | **Fichier de montre (FIT)** | Pré-remplit durée, distance et zones de fréquence cardiaque |
 
+Avec **un seul** fichier `.fit`, sa durée pré-remplit le chrono du WOD. Avec **plusieurs** fichiers, le chrono reste vide : la page propose « Total des fichiers » (simulation Hyrox enregistrée segment par segment) ou « Dernier fichier » (séance à modules dont seul le metcon final porte le score), ou une saisie manuelle. Additionner les fichiers d'une séance à modules classerait le metcon dans la mauvaise filière.
+
 Sans RPE ni résultats par exercice, certains indicateurs du diagnostic restent vides. C'est attendu, pas un bug.
 
 ## Compétences (skills)
