@@ -14,6 +14,7 @@ export const ONE_REP_MAX_LIFTS = [
   'overhead_squat',
   'strict_press',
   'push_press',
+  'push_jerk',
   'thruster',
   'pull_up',
   'dips',
