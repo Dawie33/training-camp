@@ -12,6 +12,7 @@ import {
   MultiActivityFitData,
   parseFitFiles,
 } from '@/services/fit-import'
+import { autoFillChronoSeconds, fitChronoChoices, formatChrono, toTimeParts } from '@/lib/fit-chrono'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -343,6 +344,14 @@ function LogWorkoutContent() {
     : selectedWorkout?.estimated_duration || 60
   const sessionMinutesValue = sessionMinutesInput ?? String(defaultSessionMinutes)
 
+  const fitChoices = useMemo(() => (fitData ? fitChronoChoices(fitData.activities) : []), [fitData])
+
+  const applyFitChrono = (seconds: number) => {
+    const parts = toTimeParts(seconds)
+    setTimeMinutes(parts.minutes)
+    setTimeSeconds(parts.seconds)
+  }
+
   const handleSelectWorkout = useCallback((workout: Workouts) => {
     setSelectedWorkout(workout)
     setSearch(workout.name || '')
@@ -365,17 +374,21 @@ function LogWorkoutContent() {
       setIsParsing(true)
       const data = await parseFitFiles(fileArray)
       setFitData(data)
-      if (data.totals.duration_seconds) {
-        const totalMin = Math.floor(data.totals.duration_seconds / 60)
-        const totalSec = Math.floor(data.totals.duration_seconds % 60)
-        setTimeMinutes(String(totalMin))
-        setTimeSeconds(String(totalSec).padStart(2, '0'))
+      // Plusieurs fichiers : le chrono du WOD est ambigu, l'athlète le choisit dans « Résultats »
+      const chronoSeconds = autoFillChronoSeconds(data.activities)
+      if (chronoSeconds !== null) {
+        const parts = toTimeParts(chronoSeconds)
+        setTimeMinutes(parts.minutes)
+        setTimeSeconds(parts.seconds)
       }
       const runCount = data.activities.filter(a => a.sport?.toLowerCase().includes('run')).length
-      const label = fileArray.length > 1
-        ? `${fileArray.length} activités importées (${runCount} course${runCount > 1 ? 's' : ''})`
-        : 'Activité .fit importée'
-      toast.success(label)
+      if (fileArray.length > 1) {
+        toast.success(`${fileArray.length} activités importées (${runCount} course${runCount > 1 ? 's' : ''})`, {
+          description: 'Choisis le chrono du WOD dans « Résultats ».',
+        })
+      } else {
+        toast.success('Activité .fit importée')
+      }
     } catch (error) {
       toast.error(error instanceof FitFileTooLargeError ? error.message : 'Impossible de lire le(s) fichier(s) .fit')
     } finally {
@@ -786,12 +799,40 @@ function LogWorkoutContent() {
                 </button>
               </div>
               {!capAtteint ? (
-                <TimeInput
-                  minutes={timeMinutes}
-                  seconds={timeSeconds}
-                  onMinutesChange={setTimeMinutes}
-                  onSecondsChange={setTimeSeconds}
-                />
+                <>
+                  <TimeInput
+                    minutes={timeMinutes}
+                    seconds={timeSeconds}
+                    onMinutesChange={setTimeMinutes}
+                    onSecondsChange={setTimeSeconds}
+                  />
+                  {fitChoices.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Plusieurs fichiers .fit : lequel est le chrono du WOD ? Ou saisis-le à la main.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {fitChoices.map((choice) => {
+                          const isApplied = formatChrono(choice.seconds) === `${timeMinutes}:${timeSeconds}`
+                          return (
+                            <button
+                              key={choice.key}
+                              type="button"
+                              onClick={() => applyFitChrono(choice.seconds)}
+                              aria-pressed={isApplied}
+                              className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${isApplied
+                                  ? 'bg-primary/10 border-primary/40 text-primary'
+                                  : 'bg-secondary border-border text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                              {choice.label} · <span className="font-mono">{formatChrono(choice.seconds)}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="space-y-2 bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
                   <div className="flex items-center gap-2">
