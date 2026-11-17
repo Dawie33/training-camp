@@ -12,6 +12,13 @@ export interface OneRepMax {
 export interface UpsertOneRepMaxDto {
   value: number
   source: 'real' | 'estimated'
+  measured_at?: string
+}
+
+export interface OneRepMaxInput {
+  value: string
+  source: 'real' | 'estimated'
+  measured_at: string
 }
 
 // Garder synchronisé avec ONE_REP_MAX_LIFTS (backend/src/one-rep-maxes/one-rep-max.constants.ts) :
@@ -33,6 +40,7 @@ export const CROSSFIT_LIFTS: { value: string; label: string }[] = [
 ]
 
 export interface OneRepMaxHistoryEntry {
+  id: string
   value: number
   source: 'real' | 'estimated'
   measured_at: string
@@ -49,6 +57,10 @@ class OneRepMaxesService {
 
   async getHistory(): Promise<Record<string, OneRepMaxHistoryEntry[]>> {
     return apiClient.get<Record<string, OneRepMaxHistoryEntry[]>>('/one-rep-maxes/history')
+  }
+
+  async deleteHistory(id: string): Promise<void> {
+    return apiClient.delete<void>(`/one-rep-maxes/history/${id}`)
   }
 }
 

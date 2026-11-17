@@ -67,6 +67,15 @@ describe('AnalyticsService', () => {
     }
   })
 
+  it("ordonne les égalités de date des 1RM par saisie pour que le diagnostic reflète le courant", async () => {
+    await getOverview()
+    const history = queries.find(query => query.table === 'one_rep_max_history')
+    expect(history?.builder.orderBy.mock.calls).toEqual([
+      ['measured_at', 'asc'],
+      ['insertion_order', 'asc'],
+    ])
+  })
+
   describe('course à pied', () => {
     it('lit les courses dans les imports .fit des séances', async () => {
       const started = new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString()
