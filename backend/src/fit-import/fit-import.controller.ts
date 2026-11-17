@@ -1,14 +1,8 @@
-import {
-  BadRequestException,
-  Controller,
-  Post,
-  Request,
-  UploadedFiles,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { BadRequestException, Controller, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common'
 import { FilesInterceptor } from '@nestjs/platform-express'
 import { Throttle } from '@nestjs/throttler'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { FitImportService, MultiActivityFitData } from './fit-import.service'
 
@@ -36,7 +30,7 @@ export class FitImportController {
   )
   async parseMultipleFit(
     @UploadedFiles() files: Express.Multer.File[],
-    @Request() req: { user: { id: string } }
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<MultiActivityFitData> {
     if (!files?.length) {
       throw new BadRequestException('Aucun fichier fourni')
@@ -44,7 +38,7 @@ export class FitImportController {
     // L'utilisateur sert à lire sa FC max (profil) pour calculer les zones cardiaques
     return this.fitImportService.parseMultipleFitFiles(
       files.map(f => f.buffer),
-      req.user.id
+      user.id
     )
   }
 }

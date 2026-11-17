@@ -1,5 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
+import { CurrentUser } from '../../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../../common/types/authenticated-user'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import {
   CreateSkillProgramDto,
@@ -20,40 +22,40 @@ export class SkillsController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(@Request() req: { user: { id: string } }, @Query('status') status?: string) {
-    return this.service.findAll(req.user.id, status)
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Query('status') status?: string) {
+    return this.service.findAll(user.id, status)
   }
 
   // Static routes MUST come before :id parameterized routes
   @Get('progress/step/:stepId')
   @UseGuards(JwtAuthGuard)
-  async getStepLogs(@Param('stepId') stepId: string, @Request() req: { user: { id: string } }) {
-    return this.service.getStepLogs(stepId, req.user.id)
+  async getStepLogs(@Param('stepId') stepId: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.getStepLogs(stepId, user.id)
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.service.findOne(id, req.user.id)
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.findOne(id, user.id)
   }
 
   @Post('generate-ai')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async generateWithAI(@Body() dto: GenerateSkillProgramDto, @Request() req: { user: { id: string } }) {
-    return this.aiGenerator.generateSkillProgram(req.user.id, dto)
+  async generateWithAI(@Body() dto: GenerateSkillProgramDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.aiGenerator.generateSkillProgram(user.id, dto)
   }
 
   @Post('progress')
   @UseGuards(JwtAuthGuard)
-  async logProgress(@Body() dto: CreateSkillProgressLogDto, @Request() req: { user: { id: string } }) {
-    return this.service.logProgress(req.user.id, dto)
+  async logProgress(@Body() dto: CreateSkillProgressLogDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.logProgress(user.id, dto)
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Body() dto: CreateSkillProgramDto, @Request() req: { user: { id: string } }) {
-    return this.service.create(req.user.id, dto)
+  async create(@Body() dto: CreateSkillProgramDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.create(user.id, dto)
   }
 
   @Patch(':id/steps/:stepId')
@@ -62,9 +64,9 @@ export class SkillsController {
     @Param('id') id: string,
     @Param('stepId') stepId: string,
     @Body() dto: UpdateSkillStepDto,
-    @Request() req: { user: { id: string } }
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.service.updateStep(id, stepId, req.user.id, dto)
+    return this.service.updateStep(id, stepId, user.id, dto)
   }
 
   @Patch(':id')
@@ -72,20 +74,20 @@ export class SkillsController {
   async updateProgram(
     @Param('id') id: string,
     @Body() dto: UpdateSkillProgramDto,
-    @Request() req: { user: { id: string } }
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.service.updateProgram(id, req.user.id, dto)
+    return this.service.updateProgram(id, user.id, dto)
   }
 
   @Delete('progress/:logId')
   @UseGuards(JwtAuthGuard)
-  async deleteLog(@Param('logId') logId: string, @Request() req: { user: { id: string } }) {
-    return this.service.deleteLog(logId, req.user.id)
+  async deleteLog(@Param('logId') logId: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.deleteLog(logId, user.id)
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async deleteProgram(@Param('id') id: string, @Request() req: { user: { id: string } }) {
-    return this.service.deleteProgram(id, req.user.id)
+  async deleteProgram(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.deleteProgram(id, user.id)
   }
 }

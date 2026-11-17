@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { isUniqueViolation } from 'src/common/utils/postgres-errors'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { AuthResponseDto, LoginDto, SignupDto } from './dto/auth.dto'
 
 // Les anciens hash restent valides : bcrypt stocke le coût dans le hash et compare() le relit
@@ -125,9 +126,9 @@ export class AuthService {
    * Renvoie null si l'utilisateur n'existe pas, n'est pas actif, ou si le jeton a été révoqué.
    * @param {string} userId - Identifiant de l'utilisateur.
    * @param {unknown} tokenVersion - Version lue dans le jeton (`ver`). Un jeton sans version est refusé.
-   * @returns {Promise<User | null>} - utilisateur si valide, sans sa version de jeton.
+   * @returns {Promise<AuthenticatedUser | null>} - utilisateur si valide, sans sa version de jeton.
    */
-  async validateUser(userId: string, tokenVersion: unknown) {
+  async validateUser(userId: string, tokenVersion: unknown): Promise<AuthenticatedUser | null> {
     const user = await this.knex('users')
       .where({ id: userId })
       .first(['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'token_version'])

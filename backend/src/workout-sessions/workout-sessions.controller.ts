@@ -1,29 +1,11 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common'
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
-import { Request } from 'express'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from './dto/session.dto'
 import { WorkoutAnalysisService } from './workout-analysis.service'
 import { WorkoutSessionsService } from './workout-sessions.service'
-
-interface AuthenticatedRequest extends Request {
-  user: {
-    id: string
-    email: string
-  }
-}
 
 @Controller('workout-sessions')
 @UseGuards(JwtAuthGuard)
@@ -34,14 +16,18 @@ export class WorkoutSessionsController {
   ) {}
 
   @Get()
-  async findAll(@Req() req: AuthenticatedRequest, @Query('limit') limit?: number, @Query('offset') offset?: number) {
-    const userId = req.user.id
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number
+  ) {
+    const userId = user.id
     return this.sessionsService.findAll(userId, limit, offset)
   }
 
   @Get(':id')
-  async findOne(@Req() req: AuthenticatedRequest, @Param('id') sessionId: string) {
-    const userId = req.user.id
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') sessionId: string) {
+    const userId = user.id
     const session = await this.sessionsService.findOne(sessionId, userId)
 
     if (!session) {
@@ -52,24 +38,24 @@ export class WorkoutSessionsController {
   }
 
   @Get('workout/:workoutId')
-  async findByWorkout(@Req() req: AuthenticatedRequest, @Param('workoutId') workoutId: string) {
-    const userId = req.user.id
+  async findByWorkout(@CurrentUser() user: AuthenticatedUser, @Param('workoutId') workoutId: string) {
+    const userId = user.id
     return this.sessionsService.findByWorkout(workoutId, userId)
   }
 
   @Post()
-  async create(@Req() req: AuthenticatedRequest, @Body() data: CreateWorkoutSessionDto) {
-    const userId = req.user.id
+  async create(@CurrentUser() user: AuthenticatedUser, @Body() data: CreateWorkoutSessionDto) {
+    const userId = user.id
     return this.sessionsService.create(userId, data)
   }
 
   @Patch(':id')
   async update(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') sessionId: string,
     @Body() data: UpdateWorkoutSessionDto
   ) {
-    const userId = req.user.id
+    const userId = user.id
     const session = await this.sessionsService.update(sessionId, userId, data)
 
     if (!session) {
@@ -81,14 +67,18 @@ export class WorkoutSessionsController {
 
   @Post(':id/analyze')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async analyze(@Req() req: AuthenticatedRequest, @Param('id') sessionId: string, @Query('force') force?: string) {
-    const userId = req.user.id
+  async analyze(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') sessionId: string,
+    @Query('force') force?: string
+  ) {
+    const userId = user.id
     return this.analysisService.analyzeSession(sessionId, userId, force === 'true')
   }
 
   @Delete(':id')
-  async delete(@Req() req: AuthenticatedRequest, @Param('id') sessionId: string) {
-    const userId = req.user.id
+  async delete(@CurrentUser() user: AuthenticatedUser, @Param('id') sessionId: string) {
+    const userId = user.id
     const deleted = await this.sessionsService.delete(sessionId, userId)
 
     if (!deleted) {

@@ -1,16 +1,6 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Query,
-  Request,
-  UseGuards,
-} from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import {
   CreateScheduledActivityDto,
@@ -28,16 +18,16 @@ export class ScheduledActivitiesController {
    * Vue unifiée de toutes les activités planifiées (CrossFit + Vélo + Force)
    */
   @Get('unified')
-  async findUnified(@Request() req: { user: { id: string } }, @Query() query: UnifiedActivityQueryDto) {
-    return this.service.findUnified(req.user.id, query)
+  async findUnified(@CurrentUser() user: AuthenticatedUser, @Query() query: UnifiedActivityQueryDto) {
+    return this.service.findUnified(user.id, query)
   }
 
   /**
    * Crée une nouvelle activité planifiée (Vélo / Force)
    */
   @Post()
-  async create(@Request() req: { user: { id: string } }, @Body() data: CreateScheduledActivityDto) {
-    return this.service.create(req.user.id, data)
+  async create(@CurrentUser() user: AuthenticatedUser, @Body() data: CreateScheduledActivityDto) {
+    return this.service.create(user.id, data)
   }
 
   /**
@@ -45,34 +35,34 @@ export class ScheduledActivitiesController {
    */
   @Patch(':id')
   async update(
-    @Request() req: { user: { id: string } },
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateScheduledActivityDto
   ) {
-    return this.service.update(id, req.user.id, data)
+    return this.service.update(id, user.id, data)
   }
 
   /**
    * Supprime une activité planifiée (Vélo / Force)
    */
   @Delete(':id')
-  async delete(@Request() req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
-    return this.service.delete(id, req.user.id)
+  async delete(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.delete(id, user.id)
   }
 
   /**
    * Marque une activité comme complétée
    */
   @Patch(':id/complete')
-  async markAsCompleted(@Request() req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
-    return this.service.markAsCompleted(id, req.user.id)
+  async markAsCompleted(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.markAsCompleted(id, user.id)
   }
 
   /**
    * Marque une activité comme sautée
    */
   @Patch(':id/skip')
-  async markAsSkipped(@Request() req: { user: { id: string } }, @Param('id', ParseUUIDPipe) id: string) {
-    return this.service.markAsSkipped(id, req.user.id)
+  async markAsSkipped(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.service.markAsSkipped(id, user.id)
   }
 }
