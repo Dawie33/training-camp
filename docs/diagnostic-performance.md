@@ -63,6 +63,27 @@ Chaque écart est accompagné d'une interprétation de coach : cause probable et
 
 ### 1RM estimés
 
+Sur `/crossfit/rm`, chaque saisie peut porter une date réelle facultative (sans date :
+instant de la saisie). Une date future est refusée. Une date seule `AAAA-MM-JJ` est
+conservée comme minuit UTC ; une heure ISO doit inclure son fuseau. Le courant porte
+le jour du relevé à Paris, sans conversion accidentelle des colonnes SQL `date`.
+
+Le 1RM courant est le relevé **le plus récent**, pas le plus lourd. À instant de
+relevé exactement identique, **la dernière saisie prime, même moins lourde**.
+L'historique propose une suppression confirmée : seul le propriétaire authentifié
+peut supprimer un relevé (`DELETE /api/one-rep-maxes/history/:id`). Le courant et
+la courbe sont actualisés ; supprimer le dernier relevé retire le courant.
+Insertion/suppression et recalcul sont transactionnels et sérialisés par athlète ;
+le cache de contexte IA est invalidé seulement après validation.
+
+La migration additive `20261117150000_add_one_rep_max_history_order.ts` ajoute
+`insertion_order` (séquence unique) et un index de recherche du dernier relevé.
+Elle est nécessaire avant le déploiement du code. Pour les anciennes égalités,
+l'ordre chronologique de saisie est **impossible à reconstruire** : les UUID sont
+aléatoires et aucun horodatage de création n'existait. La migration leur affecte
+un ordre stable arbitraire ; le prochain recalcul utilise cet ordre. Aucune
+ancienne ligne n'est supprimée ni datée artificiellement.
+
 Un 1RM est **réel** (testé) ou **estimé** (calculé depuis une série de plusieurs reps), au choix de l'athlète sur la page des 1RM. Une estimation peut se tromper d'environ 5 %.
 
 - Un ratio qui repose sur au moins un 1RM estimé est signalé « estimé », à l'écran comme pour le coach IA : le déséquilibre est à confirmer par un test.

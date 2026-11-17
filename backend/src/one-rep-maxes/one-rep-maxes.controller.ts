@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Put, UseGuards } from '@nestjs/common'
 import { CurrentUser } from '../common/decorators/current-user.decorator'
 import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
@@ -26,6 +26,12 @@ export class OneRepMaxesController {
     @Body() dto: UpsertOneRepMaxDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.service.upsert(user.id, lift, dto.value, dto.source)
+    return this.service.upsert(user.id, lift, dto.value, dto.source, dto.measured_at)
+  }
+
+  @Delete('history/:id')
+  @HttpCode(204)
+  async deleteHistory(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    await this.service.deleteHistory(user.id, id)
   }
 }
