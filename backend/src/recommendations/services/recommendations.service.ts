@@ -4,45 +4,43 @@ import { toParisDate } from 'src/common/utils/date-only'
 import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
 import { buildRecommendationSystemPrompt, buildRecommendationUserPrompt } from '../prompts/recommendation.prompt'
 import { AIRecommendationSchema, NextSessionRecommendation, SessionStats } from '../schemas/recommendation.schema'
+import { DailyCoachStore } from './daily-coach-store.service'
 
 @Injectable()
 export class RecommendationsService {
-  private readonly cache = new Map<string, { data: NextSessionRecommendation; expiresAt: number }>()
-  private readonly TTL_MS = 2 * 60 * 60 * 1000 // 2h
-
   constructor(
     private readonly openaiClientService: OpenAIClientService,
-    private readonly userContextService: UserContextService
+    private readonly userContextService: UserContextService,
+    private readonly store: DailyCoachStore
   ) {}
 
-  async getNextSessionRecommendation(userId: string): Promise<NextSessionRecommendation> {
-    const cached = this.cache.get(userId)
-    if (cached && Date.now() < cached.expiresAt) {
-      return cached.data
-    }
+  async getNextSessionRecommendation(
+    userId: string,
+    day = toParisDate(new Date())
+  ): Promise<NextSessionRecommendation> {
+    return this.store.run(userId, day, 'recommendation', async () => {
+      const ctx = await this.userContextService.getUserAIContext(userId)
+      const stats = this.computeSessionStats(ctx)
 
-    const ctx = await this.userContextService.getUserAIContext(userId)
-    const stats = this.computeSessionStats(ctx)
+      const recommendation = await this.openaiClientService.createJsonCompletion({
+        purpose: 'recommandation du coach',
+        messages: [
+          { role: 'system', content: buildRecommendationSystemPrompt() },
+          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
+        ],
+        temperature: 0.4,
+        maxOutputTokens: 800,
+        schema: AIRecommendationSchema,
+      })
 
-    const recommendation = await this.openaiClientService.createJsonCompletion({
-      purpose: 'recommandation du coach',
-      messages: [
-        { role: 'system', content: buildRecommendationSystemPrompt() },
-        { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
-      ],
-      temperature: 0.4,
-      maxOutputTokens: 800,
-      schema: AIRecommendationSchema,
+      const result: NextSessionRecommendation = {
+        recommendation,
+        session_stats: stats,
+        generated_at: new Date().toISOString(),
+      }
+
+      return async () => result
     })
-
-    const result: NextSessionRecommendation = {
-      recommendation,
-      session_stats: stats,
-      generated_at: new Date().toISOString(),
-    }
-
-    this.cache.set(userId, { data: result, expiresAt: Date.now() + this.TTL_MS })
-    return result
   }
 
   private computeSessionStats(ctx: UserAIContext): SessionStats {

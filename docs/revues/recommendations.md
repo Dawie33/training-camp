@@ -1,6 +1,25 @@
 # Revue du module `recommendations`
 
-Revue sécurité et qualité du module `backend/src/recommendations/` et de ses usages côté frontend (issue #49). Aucun code n'a été modifié : ce document décrit l'état au moment de la revue et propose des issues.
+Revue sécurité et qualité du module `backend/src/recommendations/` et de ses usages côté frontend (issue #49).
+
+## Actualisation du 17 novembre 2026
+
+Les sections 1 à 5 ci-dessous conservent **le constat historique**, non l'état actuel. Corrections apportées :
+
+- **B1 / M2** : suppression du cache mémoire. La migration additive `20261117150000_create_daily_coach_operations.ts` persiste décisions et résultats par utilisateur, journée parisienne et opération. Claims SQL atomiques, bail de dix minutes, jeton vérifié sous verrou transactionnel. Trois tentatives quotidiennes maximum par opération, délai de dix minutes après échec (arbitrage utilisateur). Les erreurs et les crashs ne remettent pas le compteur à zéro. Un repos réussi survit aux redémarrages.
+- **B2** : création du workout, du créneau/de la proposition, du snapshot et du résultat durable dans une transaction commune. Une erreur de planification ou un créneau supprimé pendant l'IA ne laisse plus de workout orphelin. Les adaptations `transaction?: Knex.Transaction` restent optionnelles pour les autres consommateurs. Google Calendar est différé après commit et ses erreurs sont journalisées.
+- **B3** : union Zod discriminée. CrossFit autorise uniquement `technique_metcon`, `strength_max`, `conditioning`, `vo2max`, `core` ; repos uniquement `active_recovery`. Durée entière de 20 à 90 minutes. Benchmark exclu de ce flux (programmation mensuelle séparée). Prompt et documentation alignés.
+- **B5** : une proposition sur un créneau déjà généré par le coach est refusée avant l'IA ; l'état est revérifié sous verrou lors de l'enregistrement.
+- **#40 / #54** : le code de départ utilise déjà les dates parisiennes et `POST daily-session/check`, contrairement à la revue initiale.
+- **S1** : le code de départ dispose déjà de `workout-visibility.ts` et de filtres partagés dans `WorkoutsService` ; ne pas réintroduire le filtre historique décrit plus bas. Le lot workouts traite ses contrôles d'accès séparément.
+
+**Limites** : aucune promesse exactly-once fournisseur : réponse perdue/crash/timeout peut entraîner un second appel après expiration du bail, et le client OpenAI partagé peut réessayer. Les écritures sont atomiques et protégées contre un worker périmé, pas les facturations externes. Google reste best effort (pas d'outbox). Les résultats sont figés pour la journée ; pas de purge automatique de la table historique. Extraction du contexte (#32/#35), suppression du personnalisé (#48) et configuration (#34) exclues.
+
+**Améliorations restant à suivre** : B4 (date explicite, modalités et plages d'urgence du prompt), M1 (vestiges multi-sport), M4 (types JSON partagés), M5 (séparer consignes coach/athlète). Le contrat HTTP reste inchangé.
+
+**Validation de ce lot** : huit suites ciblées, 66 tests réussis, dont `app.module.spec.ts`, services workouts/schedule, claims et schéma Zod ; typecheck backend réussi. Après la dernière adaptation de `findByDate` transactionnel, les trois suites directement concernées ont été relancées sous `TZ=Europe/Paris` : 34 tests réussis. Les tests de claims utilisent le vrai compilateur Knex PostgreSQL avec transport simulé. **Migration, rollback et concurrence n'ont pas été vérifiés sur PostgreSQL réel**, faute de configuration de test isolée ; aucune requête à la base partagée n'a été effectuée.
+
+## Constat historique (avant corrections)
 
 ## 1. Rôle du module
 

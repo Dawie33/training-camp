@@ -1,10 +1,12 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Knex } from 'knex'
 import { toParisDate } from 'src/common/utils/date-only'
 import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
 import { WorkoutScheduleService } from 'src/workouts/services/workout-schedule.service'
 import { WorkoutsService } from 'src/workouts/services/workouts.service'
 import { AIRecommendation } from '../schemas/recommendation.schema'
 import { RecommendationsService } from './recommendations.service'
+import { DailyCoachStore } from './daily-coach-store.service'
 
 /** Ce que le coach a retenu pour la séance — conservé sur le créneau pour rester fidèle à la séance générée. */
 export type CoachRecommendationSnapshot = Pick<
@@ -58,15 +60,15 @@ export class DailySessionService {
     private readonly recommendationsService: RecommendationsService,
     private readonly generator: AIWorkoutGeneratorService,
     private readonly workoutsService: WorkoutsService,
-    private readonly scheduleService: WorkoutScheduleService
+    private readonly scheduleService: WorkoutScheduleService,
+    private readonly store: DailyCoachStore
   ) {}
 
   /**
    * Génère et planifie la séance du jour si elle n'existe pas déjà.
    *
-   * Au plus un appel OpenAI par jour : dès qu'un créneau existe pour aujourd'hui,
-   * la méthode sort sans rien générer. Un jour de repos recommandé ne produit
-   * aucune séance — c'est une décision de programmation, pas un échec.
+   * Les décisions et tentatives sont persistées par journée parisienne.
+   * Un repos ne produit aucun créneau.
    *
    * @param userId ID de l'utilisateur
    */
@@ -83,36 +85,45 @@ export class DailySessionService {
     }
 
     try {
-      const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId)
+      return await this.store.run<DailySessionResult>(userId, today, 'session', async () => {
+        const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId, today)
 
-      if (recommendation.recommended_sport === 'rest') {
-        return {
-          generated: false,
-          reason: 'rest_recommended',
-          schedule: null,
-          recommendation: toSnapshot(recommendation),
+        if (recommendation.recommended_sport === 'rest') {
+          return async () => ({
+            generated: false,
+            reason: 'rest_recommended',
+            schedule: null,
+            recommendation: toSnapshot(recommendation),
+          })
         }
-      }
 
-      const saved = await this.generateWorkout(userId, recommendation)
+        const save = await this.prepareWorkout(userId, recommendation)
+        return async trx => {
+          const saved = await save(trx)
 
-      const schedule = await this.scheduleService.create(userId, {
-        workout_id: saved.id,
-        scheduled_date: today,
+          const schedule = await this.scheduleService.create(
+            userId,
+            {
+              workout_id: saved.id,
+              scheduled_date: today,
+            },
+            trx
+          )
+
+          await this.scheduleService.setCoachRecommendation(schedule.id, userId, toSnapshot(recommendation), trx)
+
+          return {
+            generated: true,
+            schedule: await this.scheduleService.findByDate(userId, today, trx),
+          }
+        }
       })
-
-      await this.scheduleService.setCoachRecommendation(schedule.id, userId, toSnapshot(recommendation))
-
-      return {
-        generated: true,
-        schedule: await this.scheduleService.findByDate(userId, today),
-      }
     } catch (error) {
       // Une génération ratée ne doit jamais bloquer la connexion : on journalise et on passe.
       this.logger.warn(`Séance du jour non générée pour ${userId} : ${(error as Error).message}`)
 
       // Un appel concurrent a pu planifier la séance entre-temps (conflit sur la date) : on la renvoie.
-      const concurrent = await this.scheduleService.findByDate(userId, today).catch(() => null)
+      const concurrent = await this.scheduleService.findByDate(userId, today)
       if (concurrent) return { generated: false, reason: 'already_scheduled', schedule: concurrent }
 
       return { generated: false, reason: 'failed', schedule: null }
@@ -123,8 +134,8 @@ export class DailySessionService {
    * Génère, à la demande, le WOD que le coach aurait proposé pour aujourd'hui.
    *
    * Utile quand le créneau du jour est occupé par une séance planifiée par l'athlète : la séance
-   * reste en place, la proposition est seulement gardée à côté. Au plus un appel OpenAI par jour :
-   * une proposition déjà enregistrée est renvoyée telle quelle.
+   * reste en place, la proposition est seulement gardée à côté.
+   * Une proposition déjà enregistrée est renvoyée telle quelle ; les échecs sont bornés en base.
    *
    * @param userId ID de l'utilisateur
    * @throws NotFoundException si aucun créneau n'existe aujourd'hui
@@ -136,27 +147,41 @@ export class DailySessionService {
     if (!schedule) throw new NotFoundException("Aucune séance planifiée aujourd'hui")
 
     if (schedule.coach_proposal) return schedule.coach_proposal as CoachProposal
+    if (schedule.coach_recommendation) throw new ConflictException('Cette séance a déjà été générée par le coach')
 
-    const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId)
+    return this.store.run<CoachProposal>(userId, today, 'proposal', async () => {
+      const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId, today)
 
-    const workout =
-      recommendation.recommended_sport === 'rest' ? null : await this.generateWorkout(userId, recommendation)
+      const save =
+        recommendation.recommended_sport === 'rest' ? null : await this.prepareWorkout(userId, recommendation)
 
-    const proposal: CoachProposal = {
-      ...toSnapshot(recommendation),
-      workout_id: workout?.id ?? null,
-      workout_name: workout?.name ?? null,
-    }
-    await this.scheduleService.setCoachProposal(schedule.id as string, userId, { ...proposal })
+      return async trx => {
+        // Lock the target so a concurrent edit/delete cannot detach the proposed workout.
+        const current = await trx('user_workout_schedule')
+          .where({ id: schedule.id, user_id: userId })
+          .forUpdate()
+          .first()
+        if (!current) throw new NotFoundException("Aucune séance planifiée aujourd'hui")
+        if (current.coach_recommendation) throw new ConflictException('Cette séance a déjà été générée par le coach')
+        if (current.coach_proposal) return current.coach_proposal as CoachProposal
+        const workout = save ? await save(trx) : null
+        const proposal: CoachProposal = {
+          ...toSnapshot(recommendation),
+          workout_id: workout?.id ?? null,
+          workout_name: workout?.name ?? null,
+        }
+        await this.scheduleService.setCoachProposal(schedule.id as string, userId, { ...proposal }, trx)
 
-    return proposal
+        return proposal
+      }
+    })
   }
 
   /** Génère le WOD correspondant à la recommandation et l'enregistre comme workout privé de l'athlète. */
-  private async generateWorkout(
+  private async prepareWorkout(
     userId: string,
     recommendation: AIRecommendation
-  ): Promise<{ id: string; name: string }> {
+  ): Promise<(trx: Knex.Transaction) => Promise<{ id: string; name: string }>> {
     const wod = await this.generator.generatePersonalizedWorkout(userId, {
       workoutType: recommendation.recommended_type,
       duration: recommendation.suggested_duration,
@@ -164,26 +189,29 @@ export class DailySessionService {
       additionalInstructions: recommendation.suggested_instructions ?? undefined,
     })
 
-    const saved = await this.workoutsService.create(
-      {
-        name: wod.name,
-        description: wod.description,
-        workout_type: wod.workout_type,
-        estimated_duration: wod.estimated_duration,
-        difficulty: wod.difficulty,
-        intensity: wod.intensity,
-        blocks: wod.blocks as Record<string, unknown>,
-        equipment_required: wod.equipment_required || [],
-        focus_areas: wod.focus_areas || [],
-        tags: wod.tags || [],
-        coach_notes: wod.coach_notes || undefined,
-        isPublic: false,
-        status: 'published',
-        ai_generated: true,
-      },
-      userId
-    )
+    return async trx => {
+      const saved = await this.workoutsService.create(
+        {
+          name: wod.name,
+          description: wod.description,
+          workout_type: wod.workout_type,
+          estimated_duration: wod.estimated_duration,
+          difficulty: wod.difficulty,
+          intensity: wod.intensity,
+          blocks: wod.blocks as Record<string, unknown>,
+          equipment_required: wod.equipment_required || [],
+          focus_areas: wod.focus_areas || [],
+          tags: wod.tags || [],
+          coach_notes: wod.coach_notes || undefined,
+          isPublic: false,
+          status: 'published',
+          ai_generated: true,
+        },
+        userId,
+        trx
+      )
 
-    return { id: saved.id, name: wod.name }
+      return { id: saved.id, name: wod.name }
+    }
   }
 }

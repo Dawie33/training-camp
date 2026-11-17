@@ -5,6 +5,7 @@ import { WorkoutScheduleService } from 'src/workouts/services/workout-schedule.s
 import { WorkoutsService } from 'src/workouts/services/workouts.service'
 import { DailySessionService } from './daily-session.service'
 import { RecommendationsService } from './recommendations.service'
+import { DailyCoachStore } from './daily-coach-store.service'
 
 const recommendation = {
   recommended_sport: 'crossfit' as const,
@@ -30,9 +31,17 @@ describe('DailySessionService', () => {
     setCoachRecommendation: jest.fn(),
     setCoachProposal: jest.fn(),
   }
+  const trx = jest.fn()
+  const store = { run: jest.fn() }
 
   beforeEach(async () => {
     jest.resetAllMocks()
+    trx.mockImplementation(() => ({
+      where: jest.fn().mockReturnThis(),
+      forUpdate: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue(todaySchedule),
+    }))
+    store.run.mockImplementation(async (_user, _day, _op, prepare) => (await prepare())(trx))
     const moduleRef = await Test.createTestingModule({
       providers: [
         DailySessionService,
@@ -40,6 +49,7 @@ describe('DailySessionService', () => {
         { provide: AIWorkoutGeneratorService, useValue: generator },
         { provide: WorkoutsService, useValue: workoutsService },
         { provide: WorkoutScheduleService, useValue: scheduleService },
+        { provide: DailyCoachStore, useValue: store },
       ],
     }).compile()
     service = moduleRef.get(DailySessionService)
@@ -100,22 +110,29 @@ describe('DailySessionService', () => {
     recommendationsService.getNextSessionRecommendation.mockResolvedValue({ recommendation })
     generator.generatePersonalizedWorkout.mockResolvedValue({ name: 'Front Rack Chipper', blocks: {} })
     workoutsService.create.mockResolvedValue({ id: 'workout-1' })
-    scheduleService.create.mockResolvedValue({ id: 'schedule-1' })
+    scheduleService.create.mockResolvedValue(todaySchedule)
 
     const result = await service.checkAndGenerateDailySession('user-1')
 
     // La séance générée appartient à l'athlète : l'auteur est passé au service, pas dans les données
     expect(workoutsService.create).toHaveBeenCalledWith(
       expect.not.objectContaining({ created_by_user_id: expect.anything() }),
-      'user-1'
+      'user-1',
+      trx
     )
-    expect(scheduleService.setCoachRecommendation).toHaveBeenCalledWith('schedule-1', 'user-1', {
-      recommended_type: 'technique_metcon',
-      urgency: 'medium',
-      reason: recommendation.reason,
-      coaching_insight: recommendation.coaching_insight,
-      suggested_duration: 50,
-    })
+    expect(scheduleService.setCoachRecommendation).toHaveBeenCalledWith(
+      'schedule-1',
+      'user-1',
+      {
+        recommended_type: 'technique_metcon',
+        urgency: 'medium',
+        reason: recommendation.reason,
+        coaching_insight: recommendation.coaching_insight,
+        suggested_duration: 50,
+      },
+      trx
+    )
+    expect(scheduleService.findByDate).toHaveBeenLastCalledWith('user-1', expect.any(String), trx)
     expect(result).toEqual({ generated: true, schedule: todaySchedule })
   })
 
@@ -177,7 +194,7 @@ describe('DailySessionService', () => {
 
       const expected = { ...snapshot, workout_id: 'workout-9', workout_name: 'Front Rack Chipper' }
       expect(result).toEqual(expected)
-      expect(scheduleService.setCoachProposal).toHaveBeenCalledWith('schedule-1', 'user-1', expected)
+      expect(scheduleService.setCoachProposal).toHaveBeenCalledWith('schedule-1', 'user-1', expected, trx)
       expect(scheduleService.create).not.toHaveBeenCalled()
       expect(scheduleService.setCoachRecommendation).not.toHaveBeenCalled()
     })
@@ -193,6 +210,25 @@ describe('DailySessionService', () => {
       expect(result).toEqual({ ...snapshot, workout_id: null, workout_name: null })
       expect(generator.generatePersonalizedWorkout).not.toHaveBeenCalled()
       expect(scheduleService.setCoachProposal).toHaveBeenCalled()
+    })
+
+    it('refuse une seconde génération pour une séance du coach', async () => {
+      scheduleService.findByDate.mockResolvedValue({ ...todaySchedule, coach_recommendation: snapshot })
+      await expect(service.generateProposal('user-1')).rejects.toThrow('déjà été générée')
+      expect(generator.generatePersonalizedWorkout).not.toHaveBeenCalled()
+    })
+
+    it('ne sauvegarde pas le WOD si le créneau a été supprimé pendant l’appel IA', async () => {
+      scheduleService.findByDate.mockResolvedValue(todaySchedule)
+      recommendationsService.getNextSessionRecommendation.mockResolvedValue({ recommendation })
+      generator.generatePersonalizedWorkout.mockResolvedValue({ name: 'WOD', blocks: {} })
+      trx.mockImplementation(() => ({
+        where: jest.fn().mockReturnThis(),
+        forUpdate: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(null),
+      }))
+      await expect(service.generateProposal('user-1')).rejects.toBeInstanceOf(NotFoundException)
+      expect(workoutsService.create).not.toHaveBeenCalled()
     })
   })
 })

@@ -33,11 +33,11 @@ Si un créneau existe déjà, qu'il soit planifié à la main ou généré plus 
 | Champ | Contenu |
 |---|---|
 | Sport recommandé | `crossfit` ou `rest` (repos) |
-| Type de séance | Ex. AMRAP, EMOM, force + metcon |
+| Type de séance | `technique_metcon`, `strength_max`, `conditioning`, `vo2max`, `core` ; repos : `active_recovery` |
 | Urgence | Faible, moyenne ou élevée |
 | Raison | Pourquoi ce choix aujourd'hui |
 | Conseil du coach | Point d'attention pour la séance |
-| Durée suggérée | En minutes |
+| Durée suggérée | Entier de 20 à 90 minutes (récupération active pour le repos) |
 | Focus et consignes | Facultatifs, transmis au générateur de WOD |
 
 ## Autres automatismes du même type
@@ -55,9 +55,14 @@ Le benchmark mensuel choisit en priorité un benchmark jamais testé, puis le pl
 > **Détail technique**
 >
 > - Endpoint : `POST /api/recommendations/daily-session/check` → `DailySessionService.checkAndGenerateDailySession()`.
-> - La recommandation vient de `RecommendationsService`, avec un cache mémoire de 2 heures par athlète. Ce cache est perdu à chaque redémarrage du backend.
-> - Le WOD est enregistré dans `workouts` (`ai_generated: true`, privé), puis planifié dans `user_workout_schedule`.
+> - La recommandation et les résultats des opérations sont persistés dans `daily_coach_operations`, par athlète, journée parisienne et opération (`recommendation`, `session`, `proposal`). Un repos reste identique après redémarrage.
+> - Chaque opération autorise trois tentatives au maximum par jour, avec dix minutes d'attente **après un échec**. Un bail distinct de dix minutes protège une exécution en cours ; après un crash, une tentative peut reprendre à son expiration.
+> - La réservation SQL atomique exclut les générations concurrentes pour une même clé. Le jeton de réservation est revérifié sous verrou avant toute écriture métier : une ancienne exécution remplacée ne peut pas enregistrer son résultat.
+> - Le WOD privé, le créneau (ou la proposition), l'explication et le résultat persistant sont enregistrés dans une même transaction. Une erreur de planification annule le WOD.
+> - Google Calendar est synchronisé uniquement après commit, hors transaction, sans bloquer la réponse ; une erreur est journalisée. Cette livraison reste best effort, sans outbox.
 > - La recommandation est copiée dans `user_workout_schedule.coach_recommendation`.
 > - Côté frontend, `TodaySessionCard` mutualise les appels simultanés (StrictMode) pour éviter deux générations.
 > - Côté backend, un conflit de date entre deux appels concurrents renvoie le créneau existant au lieu d'une erreur.
 > - Une génération est coûteuse : deux appels OpenAI (recommandation puis WOD).
+
+La limite porte sur les tentatives applicatives, pas sur les requêtes facturées par OpenAI : le client partagé peut réessayer une requête. Un crash ou un timeout après traitement par OpenAI mais avant persistance peut entraîner un nouvel appel ; le fournisseur n'offre pas ici de garantie « exactly once ». Le bail couvre les délais IA par défaut ; si une exécution dépasse dix minutes (configuration différente ou latence), un remplaçant peut travailler en parallèle, mais seul le détenteur du jeton courant peut enregistrer le résultat. Les résultats réussis sont figés pour la journée, y compris si l'historique change ensuite. Une tentative échouée peut recommencer le lendemain avec une nouvelle clé ; les anciennes lignes ne sont pas purgées automatiquement.
