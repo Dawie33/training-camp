@@ -19,7 +19,7 @@ sequenceDiagram
     participant U as Athlète
     participant B as Backend NestJS
     participant C as Contexte utilisateur
-    participant IA as OpenAI (gpt-4.1 par défaut)
+    participant IA as OpenAI (modèle configuré)
     participant D as Base de données
 
     U->>B: Demande (séance, recommandation, bilan…)
@@ -65,7 +65,7 @@ Tout nouveau service IA doit injecter ce service.
 > **Détail technique**
 >
 > Le client OpenAI est partagé via `OpenAIClientService` (`common/ai/`). Chaque appel utilise :
-> - le modèle de la variable `OPENAI_MODEL` (`gpt-4.1` par défaut) ;
+> - le modèle `OPENAI_MODEL` lu via `ConfigService`, avec son unique défaut défini par le schéma Joi (`common/config/env.validation.ts`) ;
 > - une température envoyée seulement aux modèles gpt-4.x (`temperatureParam()`), car les modèles GPT-5+ la refusent ;
 > - `response_format: { type: 'json_object' }` ;
 > - un prompt système (règles, structure attendue) et un prompt utilisateur (contexte, demande).
