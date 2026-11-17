@@ -1,11 +1,12 @@
-import { Body, Controller, Get, HttpCode, Post, Request, Res, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, Post, Res, UseGuards } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Throttle } from '@nestjs/throttler'
 import type { CookieOptions, Response } from 'express'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { AuthService } from './auth.service'
 import { LoginDto, SignupDto } from './dto/auth.dto'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
-import type { RequestWithUser } from './types/auth.types'
 
 @Controller('auth')
 export class AuthController {
@@ -53,16 +54,16 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  async logout(@Request() req: RequestWithUser, @Res({ passthrough: true }) res: Response) {
+  async logout(@CurrentUser() user: AuthenticatedUser, @Res({ passthrough: true }) res: Response) {
     // Effacer le cookie ne suffit pas : une copie du jeton resterait valide jusqu'à son expiration
-    await this.authService.revokeTokens(req.user.id)
+    await this.authService.revokeTokens(user.id)
     res.clearCookie('access_token', this.cookieOptions)
     return { message: 'Logged out' }
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getProfile(@Request() req: RequestWithUser) {
-    return req.user
+  async getProfile(@CurrentUser() user: AuthenticatedUser) {
+    return user
   }
 }

@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Param, Put, Request, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { OneRepMaxLiftParamDto, UpsertOneRepMaxDto } from './dto/one-rep-max.dto'
 import { OneRepMaxesService } from './one-rep-maxes.service'
@@ -9,21 +11,21 @@ export class OneRepMaxesController {
   constructor(private readonly service: OneRepMaxesService) {}
 
   @Get()
-  async findAll(@Request() req: { user: { id: string } }) {
-    return this.service.findAllByUser(req.user.id)
+  async findAll(@CurrentUser() user: AuthenticatedUser) {
+    return this.service.findAllByUser(user.id)
   }
 
   @Get('history')
-  async findHistory(@Request() req: { user: { id: string } }) {
-    return this.service.findHistoryByUser(req.user.id)
+  async findHistory(@CurrentUser() user: AuthenticatedUser) {
+    return this.service.findHistoryByUser(user.id)
   }
 
   @Put(':lift')
   async upsert(
     @Param() { lift }: OneRepMaxLiftParamDto,
     @Body() dto: UpsertOneRepMaxDto,
-    @Request() req: { user: { id: string } }
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.service.upsert(req.user.id, lift, dto.value, dto.source)
+    return this.service.upsert(user.id, lift, dto.value, dto.source)
   }
 }

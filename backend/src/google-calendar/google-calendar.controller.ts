@@ -1,6 +1,8 @@
-import { Controller, Delete, Get, Logger, Query, Req, Res, UseGuards } from '@nestjs/common'
+import { Controller, Delete, Get, Logger, Query, Res, UseGuards } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { Response } from 'express'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 
 import { GoogleCalendarService } from './google-calendar.service'
@@ -19,8 +21,8 @@ export class GoogleCalendarController {
 
   @Get('auth-url')
   @UseGuards(JwtAuthGuard)
-  getAuthUrl(@Req() req) {
-    const url = this.googleCalendarService.getAuthUrl(req.user.id)
+  getAuthUrl(@CurrentUser() user: AuthenticatedUser) {
+    const url = this.googleCalendarService.getAuthUrl(user.id)
     return { url }
   }
 
@@ -56,17 +58,17 @@ export class GoogleCalendarController {
 
   @Get('status')
   @UseGuards(JwtAuthGuard)
-  async status(@Req() req): Promise<{ available: boolean; connected: boolean }> {
+  async status(@CurrentUser() user: AuthenticatedUser): Promise<{ available: boolean; connected: boolean }> {
     // available = false : le front masque le bouton au lieu d'envoyer vers une page d'erreur Google
     const available = this.googleCalendarService.isAvailable()
-    const connected = available && (await this.googleCalendarService.isConnected(req.user.id))
+    const connected = available && (await this.googleCalendarService.isConnected(user.id))
     return { available, connected }
   }
 
   @Delete('disconnect')
   @UseGuards(JwtAuthGuard)
-  async disconnect(@Req() req) {
-    await this.googleCalendarService.disconnect(req.user.id)
+  async disconnect(@CurrentUser() user: AuthenticatedUser) {
+    await this.googleCalendarService.disconnect(user.id)
     return { success: true }
   }
 }

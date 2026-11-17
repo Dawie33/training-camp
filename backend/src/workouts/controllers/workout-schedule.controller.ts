@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { CurrentUser } from '../../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../../common/types/authenticated-user'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 import { WorkoutScheduleService } from '../services/workout-schedule.service'
@@ -16,8 +18,8 @@ export class WorkoutScheduleController {
    */
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(@Request() req: { user: { id: string } }, @Query() query: ScheduleQueryDto) {
-    return this.scheduleService.findAllByUser(req.user.id, query)
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Query() query: ScheduleQueryDto) {
+    return this.scheduleService.findAllByUser(user.id, query)
   }
 
   /**
@@ -25,8 +27,8 @@ export class WorkoutScheduleController {
    */
   @Get('week-suggestion')
   @UseGuards(JwtAuthGuard)
-  async getWeekSuggestion(@Request() req: { user: { id: string } }, @Query('weekStart') weekStart: string) {
-    return this.scheduleService.suggestWeek(req.user.id, weekStart)
+  async getWeekSuggestion(@CurrentUser() user: AuthenticatedUser, @Query('weekStart') weekStart: string) {
+    return this.scheduleService.suggestWeek(user.id, weekStart)
   }
 
   /**
@@ -34,8 +36,8 @@ export class WorkoutScheduleController {
    */
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Request() req: { user: { id: string } }, @Param('id') id: string) {
-    return this.scheduleService.findOne(id, req.user.id)
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.scheduleService.findOne(id, user.id)
   }
 
   /**
@@ -43,8 +45,8 @@ export class WorkoutScheduleController {
    */
   @Get('by-date/:date')
   @UseGuards(JwtAuthGuard)
-  async findByDate(@Request() req: { user: { id: string } }, @Param('date') date: string) {
-    return this.scheduleService.findByDate(req.user.id, date)
+  async findByDate(@CurrentUser() user: AuthenticatedUser, @Param('date') date: string) {
+    return this.scheduleService.findByDate(user.id, date)
   }
 
   /**
@@ -52,8 +54,8 @@ export class WorkoutScheduleController {
    */
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Request() req: { user: { id: string } }, @Body() data: CreateScheduleDto) {
-    return this.scheduleService.create(req.user.id, data)
+  async create(@CurrentUser() user: AuthenticatedUser, @Body() data: CreateScheduleDto) {
+    return this.scheduleService.create(user.id, data)
   }
 
   /**
@@ -61,8 +63,8 @@ export class WorkoutScheduleController {
    */
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  async update(@Request() req: { user: { id: string } }, @Param('id') id: string, @Body() data: UpdateScheduleDto) {
-    return this.scheduleService.update(id, req.user.id, data)
+  async update(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() data: UpdateScheduleDto) {
+    return this.scheduleService.update(id, user.id, data)
   }
 
   /**
@@ -70,8 +72,8 @@ export class WorkoutScheduleController {
    */
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async delete(@Request() req: { user: { id: string } }, @Param('id') id: string) {
-    return this.scheduleService.delete(id, req.user.id)
+  async delete(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.scheduleService.delete(id, user.id)
   }
 
   /**
@@ -80,11 +82,11 @@ export class WorkoutScheduleController {
   @Patch(':id/complete')
   @UseGuards(JwtAuthGuard)
   async markAsCompleted(
-    @Request() req: { user: { id: string } },
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() body: { session_id?: string }
   ) {
-    return this.scheduleService.markAsCompleted(id, req.user.id, body.session_id)
+    return this.scheduleService.markAsCompleted(id, user.id, body.session_id)
   }
 
   /**
@@ -92,7 +94,7 @@ export class WorkoutScheduleController {
    */
   @Patch(':id/skip')
   @UseGuards(JwtAuthGuard)
-  async markAsSkipped(@Request() req: { user: { id: string } }, @Param('id') id: string) {
-    return this.scheduleService.markAsSkipped(id, req.user.id)
+  async markAsSkipped(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.scheduleService.markAsSkipped(id, user.id)
   }
 }

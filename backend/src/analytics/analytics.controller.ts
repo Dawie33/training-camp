@@ -1,12 +1,9 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common'
-import { Request } from 'express'
+import { Controller, Get, Query, UseGuards } from '@nestjs/common'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { AnalyticsService } from './analytics.service'
 import { OverviewQueryDto } from './dto/overview-query.dto'
-
-interface AuthenticatedRequest extends Request {
-  user: { id: string; email: string }
-}
 
 @Controller('analytics')
 @UseGuards(JwtAuthGuard)
@@ -19,7 +16,7 @@ export class AnalyticsController {
    * @param query `months` : profondeur d'analyse, entière entre 1 et 12 mois (3 par défaut), sinon 400
    */
   @Get('overview')
-  async getOverview(@Req() req: AuthenticatedRequest, @Query() query: OverviewQueryDto) {
-    return this.analyticsService.getOverview(req.user.id, query.months)
+  async getOverview(@CurrentUser() user: AuthenticatedUser, @Query() query: OverviewQueryDto) {
+    return this.analyticsService.getOverview(user.id, query.months)
   }
 }

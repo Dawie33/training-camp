@@ -2,6 +2,7 @@ import { UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Test } from '@nestjs/testing'
 import type { Response } from 'express'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { GoogleCalendarController } from './google-calendar.controller'
 import { GoogleCalendarService } from './google-calendar.service'
 
@@ -64,16 +65,24 @@ describe('GoogleCalendarController', () => {
   })
 
   describe('status', () => {
-    const req = { user: { id: 'user-1' } }
+    const user: AuthenticatedUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      firstName: 'Test',
+      lastName: 'User',
+      role: 'user',
+      isActive: true,
+    }
 
     it("indique si la fonctionnalité est disponible et si l'utilisateur est connecté", async () => {
-      await expect(controller.status(req)).resolves.toEqual({ available: true, connected: true })
+      await expect(controller.status(user)).resolves.toEqual({ available: true, connected: true })
+      expect(service.isConnected).toHaveBeenCalledWith(user.id)
     })
 
     it('renvoie connected=false sans lire la base quand la fonctionnalité est indisponible', async () => {
       service.isAvailable.mockReturnValue(false)
 
-      await expect(controller.status(req)).resolves.toEqual({ available: false, connected: false })
+      await expect(controller.status(user)).resolves.toEqual({ available: false, connected: false })
       expect(service.isConnected).not.toHaveBeenCalled()
     })
   })

@@ -1,5 +1,7 @@
-import { Controller, Post, Request, UseGuards } from '@nestjs/common'
+import { Controller, Post, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
+import { CurrentUser } from '../common/decorators/current-user.decorator'
+import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
 import { DailySessionService } from './services/daily-session.service'
 
@@ -15,8 +17,8 @@ export class RecommendationsController {
    */
   @Post('daily-session/check')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async checkDailySession(@Request() req: { user: { id: string } }) {
-    return this.dailySessionService.checkAndGenerateDailySession(req.user.id)
+  async checkDailySession(@CurrentUser() user: AuthenticatedUser) {
+    return this.dailySessionService.checkAndGenerateDailySession(user.id)
   }
 
   /**
@@ -25,7 +27,7 @@ export class RecommendationsController {
    */
   @Post('daily-session/proposal')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async generateProposal(@Request() req: { user: { id: string } }) {
-    return this.dailySessionService.generateProposal(req.user.id)
+  async generateProposal(@CurrentUser() user: AuthenticatedUser) {
+    return this.dailySessionService.generateProposal(user.id)
   }
 }

@@ -2,6 +2,17 @@
 
 Ce document décrit comment Training Camp authentifie ses utilisateurs et quelles mesures protègent l'application. Il s'adresse aux Product Owners et aux développeurs qui touchent à l'authentification ou aux API.
 
+## Utilisateur courant dans les contrôleurs
+
+Les routes protégées injectent le profil validé par Passport avec `@CurrentUser() user: AuthenticatedUser`.
+Le décorateur se trouve dans `backend/src/common/decorators/current-user.decorator.ts` et le type partagé
+dans `backend/src/common/types/authenticated-user.ts`. Il expose `id`, `email`, `firstName`, `lastName`, `role`
+et `isActive`, sans jeton ni version de jeton.
+
+`@CurrentUser()` ne remplace pas `@UseGuards(JwtAuthGuard)` : le guard reste obligatoire sur la route ou
+le contrôleur. Le décorateur lit uniquement `request.user`, jamais les données envoyées par le client,
+et renvoie HTTP 401 si ce profil est absent.
+
 ## Flux de connexion
 
 ```mermaid
