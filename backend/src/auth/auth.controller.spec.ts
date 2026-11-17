@@ -146,18 +146,41 @@ describe('AuthController', () => {
   })
 
   describe('logout', () => {
-    it('efface le cookie avec les mêmes options', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/auth/logout')
-        .set('Cookie', `access_token=${validToken()}`)
-        .expect(200)
+    it.each(['development', 'production'])('efface le cookie posé au login en %s', async nodeEnv => {
+      const cookieApp = await createApp({ nodeEnv })
+      authService.login.mockResolvedValue({ access_token: validToken(), user })
 
-      const cookie = accessTokenCookie(res)
-      expect(cookie).toMatch(/^access_token=;/)
-      expect(cookie).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT')
-      expect(cookie).toContain('HttpOnly')
-      expect(cookie).toContain('SameSite=Lax')
-      expect(cookie).toContain('Path=/')
+      try {
+        const login = await request(cookieApp.getHttpServer()).post('/auth/login').send(loginBody).expect(200)
+        const loginCookie = accessTokenCookie(login)
+        const logout = await request(cookieApp.getHttpServer())
+          .post('/auth/logout')
+          .set('Cookie', loginCookie.split(';')[0])
+          .expect(200)
+
+        const cookie = accessTokenCookie(logout)
+        expect(cookie).toMatch(/^access_token=;/)
+        expect(cookie).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT')
+        expect(cookie).not.toContain('Max-Age=')
+        const scopeAndSecurity = (value: string) =>
+          value.split('; ').filter(part => /^(Path=|Domain=|HttpOnly$|Secure$|SameSite=)/.test(part))
+        expect(scopeAndSecurity(cookie)).toEqual(scopeAndSecurity(loginCookie))
+      } finally {
+        await cookieApp.close()
+      }
+    })
+
+    it('retire le cookie du client après une connexion puis une déconnexion', async () => {
+      authService.login.mockResolvedValue({ access_token: validToken(), user })
+      const client = request.agent(app.getHttpServer())
+
+      await client.post('/auth/login').send(loginBody).expect(200)
+      await client.get('/auth/me').expect(200)
+      await client.post('/auth/logout').expect(200)
+      authService.validateUser.mockClear()
+      await client.get('/auth/me').expect(401)
+
+      expect(authService.validateUser).not.toHaveBeenCalled()
     })
 
     it("révoque les jetons de l'utilisateur connecté", async () => {
