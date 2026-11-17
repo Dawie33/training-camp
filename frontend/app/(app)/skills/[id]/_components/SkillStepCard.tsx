@@ -155,13 +155,16 @@ export function SkillStepCard({
               </div>
             )}
 
+            {step.status !== 'locked' && (
+              <Button size="sm" onClick={onLogSession} className="rounded-full">
+                <Plus className="w-3 h-3 mr-1" />
+                Logger session
+              </Button>
+            )}
+
             {/* Actions for active step */}
             {isActive && isProgramActive && (
               <div className="flex flex-wrap gap-3 pt-2">
-                <Button size="sm" onClick={onLogSession} className="rounded-full">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Logger session
-                </Button>
                 <Button size="sm" variant="outline" onClick={onComplete} className="rounded-full border-border text-foreground hover:border-primary hover:text-primary">
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Marquer complète

@@ -276,6 +276,13 @@ describe('ScheduledActivitiesService — synchronisation Google Agenda', () => {
   })
 
   describe('update', () => {
+    it('requires a skill progress log rather than completing a slot directly', async () => {
+      const { service, knexMock } = await buildService({
+        scheduled_activities: [{ ...activityRow, activity_type: 'skill', activity_id: 'p1' }],
+      })
+      await expect(service.update('a1', 'user-1', { status: 'completed' })).rejects.toMatchObject({ status: 400 })
+      expect(knexMock).toHaveBeenCalledTimes(1)
+    })
     /** Lecture de l'activité, puis contrôle de conflit vide, puis mise à jour qui renvoie `updated`. */
     async function buildMove(updated: Record<string, unknown>) {
       const built = await buildService({ scheduled_activities: [updated] })

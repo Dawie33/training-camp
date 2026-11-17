@@ -19,10 +19,10 @@ export const RecommendedExerciseSchema = z.object({
 
 export const SkillStepSchema = z.object({
   step_number: z.number().int().positive(),
-  title: z.string().min(1),
+  title: z.string().min(1).max(255),
   description: z.string().min(1),
   validation_criteria: ValidationCriteriaSchema,
-  recommended_exercises: z.array(RecommendedExerciseSchema).min(1),
+  recommended_exercises: z.array(RecommendedExerciseSchema).min(2),
   coaching_tips: z.string().nullable().optional(),
   estimated_duration_weeks: z.number().int().positive().nullable().optional(),
   frequency: z.string().nullable().optional(),
@@ -30,14 +30,28 @@ export const SkillStepSchema = z.object({
   warmup: z.string().nullable().optional(),
 })
 
-export const GeneratedSkillProgramSchema = z.object({
-  skill_name: z.string().min(1),
-  skill_category: z.enum(['gymnastics', 'olympic_lifting', 'strength', 'mobility']),
-  description: z.string().min(1),
-  estimated_weeks: z.number().int().positive(),
-  progression_notes: z.string(),
-  safety_notes: z.string(),
-  steps: z.array(SkillStepSchema).min(2),
-})
+export const GeneratedSkillProgramSchema = z
+  .object({
+    skill_name: z.string().min(1).max(255),
+    skill_category: z.enum(['gymnastics', 'olympic_lifting', 'strength', 'mobility']),
+    description: z.string().min(1),
+    estimated_weeks: z.number().int().positive(),
+    progression_notes: z.string(),
+    safety_notes: z.string(),
+    steps: z.array(SkillStepSchema).min(4).max(10),
+  })
+  .superRefine((program, context) => {
+    if (!hasConsecutiveSteps(program.steps)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['steps'],
+        message: 'Les etapes doivent etre numerotees de 1 a N dans l ordre',
+      })
+    }
+  })
+
+export function hasConsecutiveSteps(steps: { step_number: number }[]): boolean {
+  return steps.every((step, index) => step.step_number === index + 1)
+}
 
 export type GeneratedSkillProgramValidated = z.infer<typeof GeneratedSkillProgramSchema>

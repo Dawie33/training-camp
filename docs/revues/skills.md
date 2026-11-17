@@ -1,6 +1,27 @@
 # Revue du module `skills`
 
-Revue sécurité et qualité du module `backend/src/skills/` et de ses usages côté frontend (issue #50). Aucun code n'a été modifié : ce document décrit l'état au moment de la revue et propose des issues.
+Revue sécurité et qualité du module `backend/src/skills/` et de ses usages côté frontend (issue #50).
+Les sections détaillées ci-dessous conservent le diagnostic initial ; l'état des corrections figure dans
+le tableau suivant et prévaut sur les anciennes références de lignes et cases à cocher.
+
+## État des corrections — 17 novembre 2026
+
+| Point | État dans ce worktree |
+|---|---|
+| I1 | DTO imbriqués validés, 4–10 étapes, titres bornés, JSON typé ; validation Zod partagée des objets critères/exercices avant écriture. Les données historiques malformées d'exercices sont ignorées avec diagnostic, sans bloquer le contexte IA. |
+| I2 | IA et enregistrement rejettent doublons, trous et désordre (1..N). IA : 4–10 étapes et au moins 2 exercices, comme le prompt. |
+| I3 | Migration additive nullable, DTO, insertion et frontend transmettent fréquence, moment et échauffement. **Migration non exécutée sur PostgreSQL** : Docker Desktop indisponible ; vérification SQL `up`/`down` uniquement. |
+| I4 | Invalidation après commit pour création, transitions, suppression et journaux ; pause/reprise et suppression de journal incluses. |
+| I5 | Nettoyage transactionnel des créneaux `skill` encore planifiés dès aujourd'hui à Paris lors d'une suppression, fin ou abandon ; passé et activités terminées préservés. Suppression Google après commit au mieux. |
+| I6 | Le calendrier ouvre la saisie du journal à la date du créneau ; journal et créneau sont écrits atomiquement. Le PATCH direct `completed` d'un skill est refusé pour éviter un second chemin sans journal. Supprimer le dernier journal du jour réouvre le créneau terminé (ou le retire dès aujourd'hui si le programme est terminé/abandonné). Les étapes déjà franchies restent saisissables. |
+| I7 | Les deux écrans utilisaient déjà `toLocalDateString()` dans le code de départ : pas de correction UTC à refaire. DTO date stricte, rejet des dates futures et réponses date-only ajoutés. |
+| A3 | Transitions depuis l'étape en cours uniquement, programme actif, transaction et verrou de programme ; booléen override validé. |
+| A5 | 84 tests réussis, 9 suites : skills, contexte utilisateur, scheduled-activities et app.module.spec.ts. Typecheck backend, lint frontend et typecheck frontend réussis. Pas de test navigateur ni de migration sur une base réelle. |
+
+**Choix produit non tranchés** : un seul skill par jour (index existant), politique de replanification
+après pause/abandon/fin, et conservation enrichie du nom d'un programme supprimé dans l'historique du
+calendrier. Aucun index ni règle multi-sport modifiés. Les autres améliorations A1/A2/A4/A6 restent
+à traiter ; aucune issue supplémentaire n'a été créée. Les extractions #32/#35 et les autres lots sont exclus.
 
 Sauf mention contraire, les chemins backend sont relatifs à `backend/src/skills/` et les chemins frontend à `frontend/`.
 

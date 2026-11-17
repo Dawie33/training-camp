@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing'
+import { Logger } from '@nestjs/common'
 import { getConnectionToken } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
 import { UserContextService } from './user-context.service'
@@ -105,6 +106,24 @@ async function buildService(knexMock: any): Promise<UserContextService> {
 }
 
 describe('UserContextService.getUserAIContext', () => {
+  it.each(['abc', '{"name":"Dip"}', '[{"name":5}]', 42])(
+    'ignores malformed historic skill exercises with a logged diagnostic: %s',
+    async recommended_exercises => {
+      const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+      try {
+        const service = await buildService(
+          createKnexMock({
+            activeSkills: [{ program_id: 'p', step_id: 's', recommended_exercises }],
+          })
+        )
+        const result = await service.getUserAIContext('user-1')
+        expect(result.activeSkills[0].recommended_exercises).toEqual([])
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('etape s'))
+      } finally {
+        warn.mockRestore()
+      }
+    }
+  )
   it('profil absent en base → applique les valeurs par défaut', async () => {
     // Arrange
     const knexMock = createKnexMock()

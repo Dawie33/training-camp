@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { toDateOnly } from 'src/common/utils/date-only'
@@ -313,6 +313,9 @@ export class ScheduledActivitiesService {
 
     if (!existing) {
       throw new NotFoundException('Activité non trouvée')
+    }
+    if (existing.activity_type === 'skill' && data.status === 'completed') {
+      throw new BadRequestException('Enregistrez la seance dans le journal du programme de skill')
     }
 
     // Sans ce contrôle, un PATCH pouvait relier l'activité au programme d'un autre utilisateur

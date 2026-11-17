@@ -93,6 +93,9 @@ function NewSkillContent() {
           recommended_exercises: s.recommended_exercises as unknown as Record<string, unknown>[] | undefined,
           coaching_tips: s.coaching_tips,
           estimated_duration_weeks: s.estimated_duration_weeks,
+          frequency: s.frequency,
+          when_to_train: s.when_to_train,
+          warmup: s.warmup,
         })),
       })
       toast.success('Programme sauvegarde')

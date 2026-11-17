@@ -6,7 +6,6 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
   const status = (calendarEvent.status as string) || 'scheduled'
   const module = (calendarEvent.module as string) || 'crossfit'
   const colors = statusColors[status] || statusColors.scheduled
-  const onComplete = calendarEvent._onComplete as (() => void) | undefined
   const onSkip = calendarEvent._onSkip as (() => void) | undefined
   const onDelete = calendarEvent._onDelete as (() => void) | undefined
   const onPrint = calendarEvent._onPrint as (() => void) | undefined
@@ -87,14 +86,16 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
         {status === 'scheduled' && !isRestDay && (
           <>
-            {onComplete && isSkill && (
+            {isSkill && skillProgramId && (
               <Button
                 size="sm"
-                onClick={onComplete}
+                asChild
                 className={c.complete}
               >
-                <Check className="w-3.5 h-3.5 mr-1" />
-                Terminer
+                <a href={`/skills/${skillProgramId}?logDate=${encodeURIComponent(String(calendarEvent.scheduled_date))}`}>
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                  Logger la séance
+                </a>
               </Button>
             )}
             {onSkip && (
