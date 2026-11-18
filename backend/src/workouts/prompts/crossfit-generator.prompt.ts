@@ -1,5 +1,6 @@
 import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
+import { buildProfilePreferenceLines, formatPhysicalLimitations } from 'src/common/profile/profile-prompt'
 /**
  * Prompt système spécialisé pour la génération de workouts de CrossFit par IA
  * Ce prompt guide l'IA pour créer des WODs structurés selon la méthodologie CrossFit
@@ -25,6 +26,7 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     elite: 'Elite',
   }
   lines.push(`**Niveau** : ${levelMap[context.sport_level] ?? context.sport_level}`)
+  lines.push(...buildProfilePreferenceLines(context))
 
   if (context.height || context.weight) {
     const parts: string[] = []
@@ -66,14 +68,8 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     lines.push(injuriesBlock)
   }
 
-  const limKeys = Object.keys(context.physical_limitations)
-  if (limKeys.length > 0) {
-    lines.push('')
-    lines.push('**Limitations physiques** :')
-    for (const k of limKeys) {
-      lines.push(`- ${k} : ${JSON.stringify(context.physical_limitations[k])}`)
-    }
-  }
+  const limitations = formatPhysicalLimitations(context.physical_limitations)
+  if (limitations) lines.push('', limitations)
 
   if (context.equipment_available.length > 0) {
     lines.push('')

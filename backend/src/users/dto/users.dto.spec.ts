@@ -17,6 +17,64 @@ function validate(body: Record<string, unknown>): Promise<UpdateUserDto> {
 }
 
 describe('UpdateUserDto (PATCH /users/me)', () => {
+  it('valide les preferences structurees et permet leur effacement explicite', async () => {
+    const body = {
+      dateOfBirth: '1990-06-15',
+      gender: 'other',
+      resting_heart_rate: 52,
+      global_goals: { strength: true, weight_loss: false },
+      training_preferences: { preferred_duration: 60, sessions_per_week: 4 },
+      physical_limitations: ['Amplitude de cheville limitee sans douleur'],
+      schedule_preferences: { available_days: ['monday', 'friday'] },
+    }
+    await expect(validate(body)).resolves.toEqual(expect.objectContaining(body))
+    const cleared = {
+      dateOfBirth: null,
+      gender: null,
+      resting_heart_rate: null,
+      global_goals: {},
+      training_preferences: {},
+      physical_limitations: [],
+      schedule_preferences: {},
+    }
+    await expect(validate(cleared)).resolves.toEqual(expect.objectContaining(cleared))
+  })
+
+  it.each([
+    { dateOfBirth: '2999-01-01' },
+    { dateOfBirth: '2024-02-30' },
+    { dateOfBirth: '1990-06-15T00:00:00Z' },
+    { dateOfBirth: '1899-12-31' },
+    { gender: 'unknown' },
+    { resting_heart_rate: 29 },
+    { resting_heart_rate: 121 },
+    { resting_heart_rate: 55.5 },
+    { global_goals: { strength: 'false' } },
+    { global_goals: { unknown: true } },
+    { global_goals: [] },
+    { global_goals: null },
+    { training_preferences: { preferred_duration: '60' } },
+    { training_preferences: { preferred_duration: 19 } },
+    { training_preferences: { preferred_duration: 91 } },
+    { training_preferences: { sessions_per_week: 1.5 } },
+    { training_preferences: { sessions_per_week: 8 } },
+    { training_preferences: { intensity: 'high' } },
+    { training_preferences: null },
+    { physical_limitations: { notes: 'douleur' } },
+    { physical_limitations: [' '] },
+    { physical_limitations: ['a'.repeat(301)] },
+    { physical_limitations: [' '.repeat(301) + 'restriction'] },
+    { physical_limitations: Array(11).fill('limitation') },
+    { physical_limitations: null },
+    { schedule_preferences: { available_days: ['monday', 'monday'] } },
+    { schedule_preferences: { available_days: ['lundi'] } },
+    { schedule_preferences: { available_days: 'monday' } },
+    { schedule_preferences: { hour: '10:00' } },
+    { schedule_preferences: null },
+  ])('rejette un nouveau champ mal forme : %j', async body => {
+    await expect(validate(body)).rejects.toThrow(BadRequestException)
+  })
+
   it('accepte le formulaire du profil', async () => {
     const body = {
       firstName: 'Dawie',

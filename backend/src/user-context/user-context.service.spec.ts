@@ -3,6 +3,8 @@ import { Logger } from '@nestjs/common'
 import { getConnectionToken } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
 import { UserContextService } from './user-context.service'
+import { buildAthleteContextSection } from 'src/workouts/prompts/crossfit-generator.prompt'
+import { buildRecommendationUserPrompt } from 'src/recommendations/prompts/recommendation.prompt'
 
 /**
  * Le diagnostic vient du module analytics, testé séparément par ses propres
@@ -106,6 +108,88 @@ async function buildService(knexMock: any): Promise<UserContextService> {
 }
 
 describe('UserContextService.getUserAIContext', () => {
+  it('injecte les donnees de profil dans le prompt sans transmettre la date de naissance', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-06-14T12:00:00Z'))
+    try {
+      const profile = {
+        dateOfBirth: new Date(1990, 5, 15),
+        gender: 'female',
+        resting_heart_rate: 51,
+        max_heart_rate: 193,
+        global_goals: { endurance: true },
+        training_preferences: { preferred_duration: 55, sessions_per_week: 4 },
+        physical_limitations: ['Amplitude cheville limitee'],
+        schedule_preferences: { available_days: ['monday', 'friday'] },
+      }
+      const knexMock = createKnexMock({ profile })
+      const service = await buildService(knexMock)
+      const context = await service.getUserAIContext('u1')
+      expect(context.age).toBe(35)
+      expect(context.schedule_preferences).toEqual(profile.schedule_preferences)
+      const prompt = buildAthleteContextSection(context)
+      for (const text of [
+        '35 ans',
+        'female',
+        '51 bpm',
+        '193 bpm',
+        '55 min',
+        '4 seances',
+        'monday',
+        'friday',
+        'endurance',
+        'Amplitude cheville limitee',
+      ]) {
+        expect(prompt).toContain(text)
+      }
+      expect(prompt).not.toContain('1990-06-15')
+      const recommendationPrompt = buildRecommendationUserPrompt(context, {
+        total_sessions_21d: 0,
+        by_sport: {},
+        days_since_last: {},
+      })
+      for (const text of ['55 min', '4 seances', 'monday', 'Amplitude cheville limitee']) {
+        expect(recommendationPrompt).toContain(text)
+      }
+      const callsBefore = knexMock.mock.calls.length
+      expect(await service.getUserAIContext('u1')).toBe(context)
+      expect(knexMock).toHaveBeenCalledTimes(callsBefore)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('conserve les limitations historiques et ignore avec diagnostic les preferences invalides', async () => {
+    const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+    try {
+      const service = await buildService(
+        createKnexMock({
+          profile: {
+            physical_limitations: { mobility: 'Cheville' },
+            training_preferences: { preferred_duration: 45, old_preference: 'keep' },
+            schedule_preferences: { available_days: 'monday' },
+          },
+        })
+      )
+      const context = await service.getUserAIContext('u1')
+      expect(context.physical_limitations).toEqual({ mobility: 'Cheville' })
+      expect(context.training_preferences.preferred_duration).toBe(45)
+      expect(context.schedule_preferences).toEqual({})
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('schedule_preferences'))
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('actualise l age le jour anniversaire a Paris meme avant minuit UTC', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-06-14T22:30:00Z'))
+    try {
+      const service = await buildService(createKnexMock({ profile: { dateOfBirth: '1990-06-15' } }))
+      expect((await service.getUserAIContext('u1')).age).toBe(36)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
   it.each(['abc', '{"name":"Dip"}', '[{"name":5}]', 42])(
     'ignores malformed historic skill exercises with a logged diagnostic: %s',
     async recommended_exercises => {

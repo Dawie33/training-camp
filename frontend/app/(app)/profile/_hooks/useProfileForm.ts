@@ -36,6 +36,7 @@ export function useProfileForm() {
       setMaxHeartRate(user.max_heart_rate != null ? String(user.max_heart_rate) : '')
       setEquipment(user.equipment_available ?? [])
     }).catch(() => {
+      toast.error('Impossible de charger le profil. Recharge la page avant de modifier tes préférences.')
       if (authUser) {
         setFirstName(authUser.firstName ?? '')
         setLastName(authUser.lastName ?? '')
@@ -81,6 +82,7 @@ export function useProfileForm() {
 
   return {
     fullUser,
+    setFullUser,
     authUser,
     // Profile tab
     firstName, setFirstName,

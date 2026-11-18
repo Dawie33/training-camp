@@ -3,13 +3,15 @@ import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
 import { UserContextService } from 'src/user-context/user-context.service'
+import { toDateOnly } from 'src/common/utils/date-only'
 import { UpdateUserDto, UserProfile } from './dto'
 
 /**
  * Colonnes de `users` renvoyées au client. C'est une liste blanche : une colonne
  * n'est exposée que si elle est listée ici. Ne jamais y ajouter password,
  * google_refresh_token ou medical_notes.
- * injuries est une donnée de santé : elle n'est exposée que via /users/me, à son propriétaire.
+ * Les donnees de profil (dont injuries, FC, date de naissance) ne sont exposees
+ * que via /users/me, a leur proprietaire.
  */
 export const PUBLIC_USER_COLUMNS = [
   'id',
@@ -22,6 +24,13 @@ export const PUBLIC_USER_COLUMNS = [
   'weight',
   'body_fat_percentage',
   'max_heart_rate',
+  'dateOfBirth',
+  'gender',
+  'resting_heart_rate',
+  'global_goals',
+  'training_preferences',
+  'physical_limitations',
+  'schedule_preferences',
   'equipment_available',
   'injuries',
   'created_at',
@@ -51,6 +60,7 @@ export class UsersService {
 
     // Les entrées à l'ancien format (onboarding) sont ignorées
     user.injuries = parseStoredInjuries(user.injuries)
+    if (user.dateOfBirth) user.dateOfBirth = toDateOnly(user.dateOfBirth)
 
     // Récupérer les stats de l'utilisateur
     const [workoutsCount, sessionsCount, totalTime] = await Promise.all([
@@ -106,6 +116,17 @@ export class UsersService {
     if (data.weight !== undefined) updateData.weight = data.weight
     if (data.body_fat_percentage !== undefined) updateData.body_fat_percentage = data.body_fat_percentage
     if (data.max_heart_rate !== undefined) updateData.max_heart_rate = data.max_heart_rate
+    if (data.dateOfBirth !== undefined) updateData.dateOfBirth = data.dateOfBirth
+    if (data.gender !== undefined) updateData.gender = data.gender
+    if (data.resting_heart_rate !== undefined) updateData.resting_heart_rate = data.resting_heart_rate
+    for (const key of [
+      'global_goals',
+      'training_preferences',
+      'physical_limitations',
+      'schedule_preferences',
+    ] as const) {
+      if (data[key] !== undefined) updateData[key] = JSON.stringify(data[key])
+    }
     if (data.equipment_available !== undefined)
       updateData.equipment_available = JSON.stringify(data.equipment_available)
     if (data.injuries !== undefined) updateData.injuries = JSON.stringify(data.injuries)
@@ -116,6 +137,10 @@ export class UsersService {
 
     this.userContextService.invalidateCache(id)
 
-    return { ...row, injuries: parseStoredInjuries(row.injuries) }
+    return {
+      ...row,
+      ...(row.dateOfBirth ? { dateOfBirth: toDateOnly(row.dateOfBirth) } : {}),
+      injuries: parseStoredInjuries(row.injuries),
+    }
   }
 }

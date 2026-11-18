@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/user-context/user-context.service'
+import { buildProfilePreferenceLines } from 'src/common/profile/profile-prompt'
 import { GenerateSkillProgramDto } from '../dto/skill.dto'
 import { buildSkillProgressionSystemPrompt, buildSkillProgressionUserPrompt } from '../prompts/skill-progression.prompt'
 import { GeneratedSkillProgramSchema, GeneratedSkillProgramValidated } from '../schemas/skill-program.schema'
@@ -16,17 +17,22 @@ export class AISkillGeneratorService {
     const ctx = await this.userContextService.getUserAIContext(userId)
 
     const systemPrompt = buildSkillProgressionSystemPrompt()
-    const userPrompt = buildSkillProgressionUserPrompt({
-      skillName: params.skillName,
-      skillCategory: params.skillCategory,
-      currentCapabilities: params.currentCapabilities,
-      constraints: params.constraints,
-      userLevel: params.userLevel ?? ctx.sport_level,
-      availableEquipment: params.availableEquipment?.length ? params.availableEquipment : ctx.equipment_available,
-      injuries: ctx.injuries,
-      physicalLimitations: ctx.physical_limitations,
-      strengthImbalances: ctx.diagnostic.ratio_imbalances,
-    })
+    const userPrompt =
+      buildSkillProgressionUserPrompt({
+        skillName: params.skillName,
+        skillCategory: params.skillCategory,
+        currentCapabilities: params.currentCapabilities,
+        constraints: params.constraints,
+        userLevel: params.userLevel ?? ctx.sport_level,
+        availableEquipment: params.availableEquipment?.length ? params.availableEquipment : ctx.equipment_available,
+        injuries: ctx.injuries,
+        physicalLimitations: ctx.physical_limitations,
+        strengthImbalances: ctx.diagnostic.ratio_imbalances,
+      }) +
+      '\n' +
+      buildProfilePreferenceLines(ctx).join('\n') +
+      '\nObjectifs declares : ' +
+      JSON.stringify(ctx.global_goals)
 
     return this.openaiClientService.createJsonCompletion({
       purpose: 'programme de compétence',

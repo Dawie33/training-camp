@@ -1,5 +1,6 @@
 import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
+import { buildProfilePreferenceLines, formatPhysicalLimitations } from 'src/common/profile/profile-prompt'
 import type { UserAIContext } from 'src/user-context/types/user-context.types'
 import { SessionStats } from '../schemas/recommendation.schema'
 
@@ -68,6 +69,9 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
   }
 
   const lines: string[] = []
+  lines.push(...buildProfilePreferenceLines(ctx))
+  const limitations = formatPhysicalLimitations(ctx.physical_limitations)
+  if (limitations) lines.push(limitations)
 
   // Profil
   lines.push('## PROFIL ATHLÈTE')
