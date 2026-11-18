@@ -55,6 +55,12 @@ export class UpdateScheduleDto {
   notes?: string
 }
 
+export class CompleteScheduleDto {
+  @IsOptional()
+  @IsUUID()
+  session_id?: string
+}
+
 /**
  * Filtres et pagination pour la recherche de planifications.
  */

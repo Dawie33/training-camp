@@ -48,13 +48,26 @@ Le travail technique suit un circuit à part :
 
 > **Détail technique — enregistrement**
 >
-> `sessionService` procède en deux temps :
-> 1. `startSession()` crée la session avec sa date de début.
-> 2. `updateSession()` la complète avec `completed_at`, `notes` et `results`.
+> La page appelle une seule fois `sessionService.startSession()` avec `started_at`,
+> `completed_at`, `notes`, `results` et, depuis le calendrier, `schedule_id`.
 >
-> Ensuite, si `scheduleId` est présent, `scheduleApi.markAsCompleted(scheduleId, sessionId)` met à jour `user_workout_schedule`.
+> Le serveur valide les dates, les résultats et les références avant écriture. La séance,
+> son éventuelle mesure benchmark et la complétion du créneau sont enregistrées dans la
+> même transaction : un échec ne laisse pas de séance partielle. Le créneau doit appartenir
+> à l'athlète et correspondre au workout ; un jour Box sans workout précis accepte celui réellement fait.
+> Supprimer la séance remet son créneau au statut « scheduled ».
 >
-> Une session référence soit un `workout_id` (catalogue), soit un `personalized_workout_id` (WOD généré par IA), jamais les deux.
+> Une session peut référencer un `workout_id` visible (catalogue) ou un `personalized_workout_id`
+> appartenant à l'athlète, jamais les deux. Le log libre sans référence reste possible pour
+> les usages historiques. Les appels séparés démarrer/compléter restent compatibles pour les autres clients.
+
+> **Historique des benchmarks**
+>
+> Les nouvelles mesures issues du log sont liées par `benchmark_history.session_id` :
+> corriger le score met à jour la mesure, à la date `completed_at`, et supprimer la séance
+> retire cette mesure. Les anciennes mesures sans lien certain restent intactes.
+> Un workout utilisé par une séance, une mesure ou un créneau ne peut plus être supprimé
+> (409) : il peut être archivé sans perdre les données associées.
 
 > **Détail technique — contrat du champ `results`**
 >

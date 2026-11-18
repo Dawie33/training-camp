@@ -67,7 +67,6 @@ export function BenchmarkResultForm({ workout, onSuccess }: BenchmarkResultFormP
 
             const data: SaveBenchmarkResultDto = {
                 workoutId: workout.id,
-                workoutName: workout.name,
                 result
             }
 

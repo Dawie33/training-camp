@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import type { AuthenticatedUser } from '../../common/types/authenticated-user'
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
+import { CompleteScheduleDto, CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 import { WorkoutScheduleService } from '../services/workout-schedule.service'
 
 /**
@@ -36,7 +36,7 @@ export class WorkoutScheduleController {
    */
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.scheduleService.findOne(id, user.id)
   }
 
@@ -63,7 +63,11 @@ export class WorkoutScheduleController {
    */
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  async update(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string, @Body() data: UpdateScheduleDto) {
+  async update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() data: UpdateScheduleDto
+  ) {
     return this.scheduleService.update(id, user.id, data)
   }
 
@@ -72,7 +76,7 @@ export class WorkoutScheduleController {
    */
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async delete(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+  async delete(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.scheduleService.delete(id, user.id)
   }
 
@@ -83,8 +87,8 @@ export class WorkoutScheduleController {
   @UseGuards(JwtAuthGuard)
   async markAsCompleted(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-    @Body() body: { session_id?: string }
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: CompleteScheduleDto
   ) {
     return this.scheduleService.markAsCompleted(id, user.id, body.session_id)
   }
@@ -94,7 +98,7 @@ export class WorkoutScheduleController {
    */
   @Patch(':id/skip')
   @UseGuards(JwtAuthGuard)
-  async markAsSkipped(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+  async markAsSkipped(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.scheduleService.markAsSkipped(id, user.id)
   }
 }

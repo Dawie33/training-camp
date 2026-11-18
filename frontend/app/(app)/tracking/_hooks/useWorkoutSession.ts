@@ -11,8 +11,8 @@ export function useWorkoutSession() {
     const fetchWorkoutsSessions = useCallback(async () => {
         try {
             setLoading(true)
-            const results = await sessionService.getAll()
-            setWorkoutSessions(results.rows)
+            const results = await sessionService.getHistory()
+            setWorkoutSessions(results)
         } catch (err) {
             toast.error(`Failed to load workouts : ${err}`)
 

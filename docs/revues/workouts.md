@@ -1,7 +1,25 @@
 # Revue du module `workouts`
 
 > Issue #53. Revue faite sur la branche `fix/39-typecheck` (backend reformaté par Prettier) : les numéros de ligne correspondent à ce code.
-> Aucune modification de code dans cette revue. Chaque point a été vérifié en lisant le code, et certains en exécutant un petit script (`ValidationPipe`, Knex).
+> Les constats détaillés ci-dessous décrivent la revue initiale. État de reprise au 17 novembre 2026 ci-dessous ; les anciens numéros de ligne ne sont plus des références au code courant.
+
+## État des corrections — 17 novembre 2026
+
+| Points | État vérifié contre le code courant |
+|---|---|
+| S1, S2, S3, B3 | Déjà corrigés avant cette reprise : auteur serveur, droits auteur/admin du catalogue, visibilité partagée et liste de benchmarks vide. Protections conservées. |
+| S1 — conservation | Renforcé : supprimer un workout utilisé par une séance, une mesure benchmark ou un créneau renvoie 409. Archiver conserve l'historique au lieu de déclencher les anciennes cascades. |
+| B1, M1 | Corrigés : `UpdateWorkoutDto` hérite du DTO de création (déjà entièrement optionnel), tous les champs sont persistés, PATCH vide → 400, ligne inaccessible/inexistante → 404. Champs calculés et auteur refusés, objets JSON validés. |
+| B2 | Corrigé : lookup visible et nom canonique en base ; le nom client est refusé. Profil et historique sont écrits dans une transaction, avec verrou du profil pour éviter les mises à jour concurrentes perdues. Le formulaire frontend est aligné. |
+| B4 | Migration `20261117150000_link_benchmark_sessions.ts` : suppression de l'unicité globale de `scheduled_date`, sans supprimer la colonne ni les données. Exécution PostgreSQL up/down encore à vérifier : Docker est indisponible sur cet hôte. |
+| S4 | Corrigé : texte/référence limités à 5 000 caractères, nom à 100, rejet HTTP avant appel IA. |
+| S5 — lien de séance | Corrigé : DTO de complétion, UUID des créneaux, contrôle propriétaire, séance terminée et correspondance du workout. Les créneaux Box sans référence fixe restent compatibles. La création d'un créneau applique aussi la visibilité catalogue. |
+
+**Restant, hors corrections importantes de cette reprise :** S5 (dates des paramètres de suggestion/recherche), B5 (conflit de création concurrente et whitelist de tri), M3 (prompts d'extraction), M4 (#32 : extraction/cache). M2 (doublon de suppression) était déjà corrigé. M5 reste un objectif de couverture exhaustive, pas un défaut bloquant : les tests ciblent les comportements corrigés.
+
+**Arbitrage produit non modifié :** un résultat benchmark continue de déterminer `sport_level`. Aucun reset arbitraire du niveau n'est fait quand la dernière mesure liée à une séance est supprimée. Les usages publics/catalogue et les anciens workouts personnalisés sont conservés ; #48 n'est pas implémentée.
+
+**Validation :** 14 suites / 140 tests backend passent (`workout-sessions`, `workouts`, `app.module.spec.ts`), typechecks backend/frontend et lint frontend/backend modifié passent. SQL `up/down` de la migration généré et vérifié, sans exécution PostgreSQL. Aucun commit, aucune PR et aucune modification d'issue distante.
 
 ## 1. Rôle du module
 
@@ -165,9 +183,9 @@ L'appliquer dans `findAll`, `getBenchmarkWorkouts`, `findOne` (passer `userId`) 
 
 **Terminé quand** :
 
-- [ ] Cocher « Benchmark » dans l'édition est bien enregistré en base
-- [ ] `PATCH` avec un body vide renvoie 400, et `PATCH` d'un id inconnu renvoie 404
-- [ ] Un test unitaire couvre `update`
+- [x] Cocher « Benchmark » dans l'édition est bien enregistré en base
+- [x] `PATCH` avec un body vide renvoie 400, et `PATCH` d'un id inconnu renvoie 404
+- [x] Un test unitaire couvre `update`
 
 ---
 
@@ -189,8 +207,8 @@ Autre effet, plus discutable : un seul résultat de benchmark **écrase** `users
 
 **Terminé quand** :
 
-- [ ] Le nom enregistré dans `benchmark_history` est toujours celui de la base (test)
-- [ ] `workoutName` n'est plus accepté par l'API
+- [x] Le nom enregistré dans `benchmark_history` est toujours celui de la base (test)
+- [x] `workoutName` n'est plus accepté par l'API
 
 ---
 
@@ -238,7 +256,7 @@ Autre effet, plus discutable : un seul résultat de benchmark **écrase** `users
 
 **Terminé quand** :
 
-- [ ] Un texte au-delà de la limite renvoie 400 avant tout appel OpenAI (test du DTO)
+- [x] Un texte au-delà de la limite renvoie 400 avant tout appel OpenAI (test HTTP du DTO)
 
 ---
 
@@ -287,8 +305,8 @@ Autre effet, plus discutable : un seul résultat de benchmark **écrase** `users
 
 **Terminé quand** :
 
-- [ ] `UpdateWorkoutDto` dérive de `CreateWorkoutDto`
-- [ ] `usage_count`, `average_rating`, `total_ratings` et `created_by_user_id` sont refusés en entrée
+- [x] `UpdateWorkoutDto` dérive de `CreateWorkoutDto`
+- [x] `usage_count`, `average_rating`, `total_ratings` et `created_by_user_id` sont refusés en entrée
 
 ---
 
@@ -302,7 +320,7 @@ Autre effet, plus discutable : un seul résultat de benchmark **écrase** `users
 
 **Terminé quand** :
 
-- [ ] Il ne reste qu'une méthode de suppression, couverte par un test
+- [x] Il ne reste qu'une méthode de suppression, couverte par un test
 
 ---
 

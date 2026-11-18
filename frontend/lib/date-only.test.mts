@@ -2,7 +2,16 @@
 // Lancer depuis frontend/ : TZ=Europe/Paris node --test lib/date-only.test.mts (puis avec TZ=UTC)
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { toLocalDateString } from './date-only.ts'
+import { toLocalDateString, toLocalDateTimeInput } from './date-only.ts'
+
+test('datetime-local conserve le jour et l’heure locale à minuit, été comme hiver', () => {
+  for (const month of [0, 6]) {
+    const instant = new Date(2026, month, 5, 0, 30)
+    const input = toLocalDateTimeInput(instant)
+    assert.equal(input, `2026-${month === 0 ? '01' : '07'}-05T00:30`)
+    assert.equal(new Date(input).getTime(), instant.getTime())
+  }
+})
 
 test('lit le jour local, sans passer par UTC', () => {
   assert.equal(toLocalDateString(new Date(2026, 9, 6)), '2026-10-06')

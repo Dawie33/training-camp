@@ -39,7 +39,7 @@ export function useCrossfitDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    sessionService.getAll({ limit: 5, orderBy: 'completed_at', orderDir: 'desc' })
+    sessionService.getAll({ limit: 5 })
       .then((res) => setSessions(res.rows ?? res))
       .catch(() => toast.error('Impossible de charger les sessions'))
       .finally(() => setLoading(false))
