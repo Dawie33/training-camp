@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { OneRepMaxesService } from './one-rep-maxes.service'
 
 type Row = Record<string, string | number>

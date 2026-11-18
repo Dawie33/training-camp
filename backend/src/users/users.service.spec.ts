@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { PUBLIC_USER_COLUMNS, UsersService } from './users.service'
 
 function createKnexBuilderMock(terminal: { first?: unknown; returning?: unknown[] } = {}) {

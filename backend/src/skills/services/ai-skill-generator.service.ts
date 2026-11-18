@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { GenerateSkillProgramDto } from '../dto/skill.dto'
 import { buildSkillProgressionSystemPrompt, buildSkillProgressionUserPrompt } from '../prompts/skill-progression.prompt'
 import { GeneratedSkillProgramSchema, GeneratedSkillProgramValidated } from '../schemas/skill-program.schema'

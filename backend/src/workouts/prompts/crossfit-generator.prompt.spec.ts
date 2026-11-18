@@ -3,7 +3,7 @@ import {
   buildCrossFitSystemPrompt,
   buildCrossFitWorkoutPrompt,
 } from './crossfit-generator.prompt'
-import { UserAIContext } from '../services/user-context.service'
+import type { UserAIContext } from 'src/user-context/types/user-context.types'
 
 /**
  * Construit un UserAIContext minimal valide, surchargeable par test.

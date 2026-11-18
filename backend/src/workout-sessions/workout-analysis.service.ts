@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { applyVisibility } from 'src/workouts/services/workout-visibility'
 import { WodAnalysis, WodAnalysisSchema } from './schemas/wod-analysis.schema'
 import type { SessionResults } from './schemas/session-results.schema'

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { UpdateUserDto, UserProfile } from './dto'
 
 /**

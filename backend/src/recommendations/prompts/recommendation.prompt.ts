@@ -1,6 +1,6 @@
 import { buildDiagnosticPromptLines } from 'src/common/ai/diagnostic-prompt'
 import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
-import { UserAIContext } from 'src/workouts/services/user-context.service'
+import type { UserAIContext } from 'src/user-context/types/user-context.types'
 import { SessionStats } from '../schemas/recommendation.schema'
 
 const SPORT_LABELS: Record<string, string> = {

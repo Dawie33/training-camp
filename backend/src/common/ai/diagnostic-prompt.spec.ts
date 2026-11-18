@@ -1,4 +1,4 @@
-import { PerformanceDiagnosticSummary, RunningDiagnostic } from 'src/workouts/services/user-context.service'
+import type { PerformanceDiagnosticSummary, RunningDiagnostic } from './diagnostic.types'
 import { buildDiagnosticPromptLines, formatDuration, formatPace, formatRunningLines } from './diagnostic-prompt'
 
 const emptyDiagnostic: PerformanceDiagnosticSummary = {

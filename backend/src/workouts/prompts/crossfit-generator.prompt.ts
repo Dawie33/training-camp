@@ -6,7 +6,7 @@ import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
  */
 
 import { EQUIPMENT_PRESETS } from '../constants/equipment.constants'
-import { UserAIContext } from '../services/user-context.service'
+import type { UserAIContext } from 'src/user-context/types/user-context.types'
 
 /**
  * Construit la section "profil de l'athlète" injectée dans les prompts de génération

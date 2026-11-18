@@ -1,5 +1,5 @@
 import { Knex } from 'knex'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { GoogleCalendarService } from 'src/google-calendar/google-calendar.service'
 import { toParisDate } from 'src/common/utils/date-only'
 import { SkillsService } from './skills.service'

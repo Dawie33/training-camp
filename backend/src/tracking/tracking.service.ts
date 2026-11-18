@@ -5,7 +5,8 @@ import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { SessionResults } from 'src/workout-sessions/schemas/session-results.schema'
-import { PerformanceDiagnosticSummary, UserContextService } from 'src/workouts/services/user-context.service'
+import type { PerformanceDiagnosticSummary } from 'src/common/ai/diagnostic.types'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { AIProgressionReport, AIProgressionReportSchema } from './schemas/progression-report.schema'
 import {
   BenchmarkHistoryRow,

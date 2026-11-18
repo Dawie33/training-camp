@@ -52,13 +52,20 @@ Le bilan mensuel, lui, est vérifié à chaque connexion. Il n'est régénéré 
 
 ## Contexte utilisateur partagé
 
-**`UserContextService`** (exporté par `WorkoutsModule`) construit le contexte transmis à l'IA :
+**`UserContextService`** (exporté par `UserContextModule`, dans `backend/src/user-context/`) construit le contexte transmis à l'IA :
 
 - niveau, objectifs, blessures, matériel disponible ;
 - 1RM (records de force) ;
 - séances et analyses récentes ;
 - compétences en cours de progression ;
 - synthèse du **diagnostic calculé** (champ `diagnostic`).
+
+Le module importe uniquement `AnalyticsModule`. Ses consommateurs importent directement `UserContextModule`,
+y compris pour `invalidateCache()` : ils partagent une seule instance du cache (TTL 30 min). Les types de
+contexte sont dans `user-context/types/user-context.types.ts` et ceux du diagnostic destiné aux prompts dans
+`common/ai/diagnostic.types.ts`, sans dépendance de `common/` vers `workouts/`.
+`RecommendationsModule` et `WorkoutSessionsModule` conservent aussi `WorkoutsModule` pour leurs usages métier
+réels (génération/planification et accès aux workouts), pas pour accéder au contexte.
 
 Tout nouveau service IA doit injecter ce service.
 

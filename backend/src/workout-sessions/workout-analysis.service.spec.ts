@@ -2,7 +2,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
 import { OpenAIClientService } from '../common/ai/openai-client.service'
-import { UserContextService } from '../workouts/services/user-context.service'
+import { UserContextService } from '../user-context/user-context.service'
 import { WorkoutAnalysisService } from './workout-analysis.service'
 
 function builder(value: unknown) {
