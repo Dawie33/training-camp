@@ -1,4 +1,23 @@
-import { IsArray, IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator'
+import { Type } from 'class-transformer'
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator'
 
 export class GenerateSkillProgramDto {
   @IsString()
@@ -27,6 +46,8 @@ export class GenerateSkillProgramDto {
 
 export class CreateSkillProgramDto {
   @IsString()
+  @MinLength(1)
+  @MaxLength(255)
   skill_name!: string
 
   @IsEnum(['gymnastics', 'olympic_lifting', 'strength', 'mobility'])
@@ -37,9 +58,12 @@ export class CreateSkillProgramDto {
   description?: string
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
   estimated_weeks?: number
 
   @IsOptional()
+  @IsObject()
   ai_parameters?: Record<string, unknown>
 
   @IsOptional()
@@ -51,17 +75,56 @@ export class CreateSkillProgramDto {
   safety_notes?: string
 
   @IsArray()
+  @ArrayMinSize(4)
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => CreateSkillStepDto)
   steps!: CreateSkillStepDto[]
 }
 
 export class CreateSkillStepDto {
+  @IsInt()
+  @Min(1)
   step_number!: number
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(255)
   title!: string
+
+  @IsOptional()
+  @IsString()
   description?: string
+
+  @IsOptional()
+  @IsObject()
   validation_criteria?: Record<string, unknown>
+
+  @IsOptional()
+  @IsArray()
+  @IsObject({ each: true })
   recommended_exercises?: Record<string, unknown>[]
+
+  @IsOptional()
+  @IsString()
   coaching_tips?: string
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   estimated_duration_weeks?: number
+
+  @IsOptional()
+  @IsString()
+  frequency?: string | null
+
+  @IsOptional()
+  @IsString()
+  when_to_train?: string | null
+
+  @IsOptional()
+  @IsString()
+  warmup?: string | null
 }
 
 export class UpdateSkillProgramDto {
@@ -80,6 +143,7 @@ export class UpdateSkillStepDto {
   status?: string
 
   @IsOptional()
+  @IsBoolean()
   manually_overridden?: boolean
 }
 
@@ -87,10 +151,12 @@ export class CreateSkillProgressLogDto {
   @IsUUID()
   step_id!: string
 
-  @IsString()
+  @IsDateString({ strict: true })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
   session_date!: string
 
   @IsOptional()
+  @IsObject()
   performance_data?: Record<string, unknown>
 
   @IsOptional()

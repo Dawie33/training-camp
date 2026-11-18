@@ -109,7 +109,8 @@ export class AnalyticsService {
       this.knex('one_rep_max_history')
         .select('lift', 'value', 'source', 'measured_at')
         .where('user_id', userId)
-        .orderBy('measured_at', 'asc'),
+        .orderBy('measured_at', 'asc')
+        .orderBy('insertion_order', 'asc'),
 
       this.knex('skill_programs')
         .select('id as program_id', 'skill_name', 'skill_category')

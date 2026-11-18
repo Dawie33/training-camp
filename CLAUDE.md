@@ -24,7 +24,7 @@ Monorepo npm workspaces :
 - NestJS 11, TypeScript 5.7
 - PostgreSQL 15 via Knex.js (query builder + migrations)
 - JWT (Passport.js), class-validator/class-transformer (DTOs)
-- OpenAI API (`gpt-4.1` par défaut, configurable via `OPENAI_MODEL`, `json_object`, Zod validation)
+- OpenAI API (modèle configurable via `OPENAI_MODEL`, défaut défini dans Joi, `json_object`, Zod validation)
 - `@nestjs/throttler` — rate limiting global + par route
 - Préfixe API : `/api`
 
@@ -118,7 +118,7 @@ Cinq services OpenAI, chacun avec son fichier de prompt et son schéma Zod :
 
 Tous appellent `openaiClientService.createJsonCompletion({ purpose, messages, temperature, maxOutputTokens, schema })` (`common/ai/`, module global), qui centralise :
 
-- le modèle, lu dans `OPENAI_MODEL` (défaut `gpt-4.1`). Ne jamais coder le modèle en dur.
+- le modèle, lu via `ConfigService` dans `OPENAI_MODEL` (défaut défini uniquement dans le schéma Joi). Ne jamais coder le modèle en dur.
 - la température, envoyée seulement aux modèles gpt-4.x (GPT-5+ la refuse).
 - le délai maximal de 120 s (`OPENAI_TIMEOUT_MS`) et une seule nouvelle tentative (`OPENAI_MAX_RETRIES`).
 - `response_format: json_object` et la validation Zod de la réponse.

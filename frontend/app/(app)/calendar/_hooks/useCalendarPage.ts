@@ -99,6 +99,7 @@ export function useCalendarPage() {
         start: Temporal.PlainDate.from(dateStr),
         end: Temporal.PlainDate.from(dateStr),
         status: schedule.status,
+        scheduled_date: schedule.scheduled_date,
         module: schedule.module,
         moduleColor: MODULE_COLORS[schedule.module] || '',
         location: schedule.location,

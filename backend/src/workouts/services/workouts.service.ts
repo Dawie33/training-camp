@@ -315,7 +315,7 @@ export class WorkoutsService {
    * @param createdByUserId Auteur du workout, toujours fourni par le serveur (jamais par le client)
    * @returns Le workout créé
    */
-  async create(data: CreateWorkoutDto, createdByUserId: string) {
+  async create(data: CreateWorkoutDto, createdByUserId: string, transaction?: Knex.Transaction) {
     // Build the record with proper JSON handling
     const record: {
       name: string | null
@@ -372,7 +372,7 @@ export class WorkoutsService {
     }
 
     // Insert the workout
-    const [row] = await this.knex('workouts').insert(record).returning('*')
+    const [row] = await (transaction ?? this.knex)('workouts').insert(record).returning('*')
 
     return row
   }

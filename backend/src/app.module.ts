@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { KnexModule } from 'nest-knexjs'
@@ -38,7 +38,11 @@ import { WorkoutsModule } from './workouts/workouts.module'
         limit: 60, // 60 requêtes par minute par IP (routes normales)
       },
     ]),
-    KnexModule.forRoot({ config: getKnexConfig() }),
+    KnexModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({ config: getKnexConfig(config.getOrThrow<string>('NODE_ENV')) }),
+    }),
     AuthModule,
     WorkoutsModule,
     WorkoutSessionsModule,

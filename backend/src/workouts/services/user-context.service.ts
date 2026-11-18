@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
@@ -6,6 +6,7 @@ import type { RunningResult, RunTypeCounts } from 'src/analytics/types/analytics
 import type { Injury } from 'src/common/injuries/injury.constants'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
 import { toParisDate } from 'src/common/utils/date-only'
+import { RecommendedExerciseSchema } from 'src/skills/schemas/skill-program.schema'
 
 /**
  * Résumé d'une analyse IA post-workout récente, utilisé comme contexte pour la génération.
@@ -171,6 +172,26 @@ export interface UserAIContext {
  */
 @Injectable()
 export class UserContextService {
+  private readonly logger = new Logger(UserContextService.name)
+
+  private parseSkillExercises(value: unknown, stepId: string): ActiveSkillContext['recommended_exercises'] {
+    if (value == null) return []
+    let decoded: unknown = value
+    if (typeof value === 'string') {
+      try {
+        decoded = JSON.parse(value)
+      } catch {
+        this.logger.warn(`Exercices de skill ignores : JSON invalide (etape ${stepId})`)
+        return []
+      }
+    }
+    const parsed = RecommendedExerciseSchema.array().safeParse(decoded)
+    if (!parsed.success) {
+      this.logger.warn(`Exercices de skill ignores : structure invalide (etape ${stepId})`)
+      return []
+    }
+    return parsed.data
+  }
   private readonly cache = new Map<string, { data: UserAIContext; expiresAt: number }>()
   private readonly TTL_MS = 30 * 60 * 1000
 
@@ -336,11 +357,7 @@ export class UserContextService {
         step_id: row.step_id,
         step_title: row.step_title,
         step_description: row.step_description ?? undefined,
-        recommended_exercises: Array.isArray(row.recommended_exercises)
-          ? row.recommended_exercises
-          : typeof row.recommended_exercises === 'string'
-            ? JSON.parse(row.recommended_exercises)
-            : [],
+        recommended_exercises: this.parseSkillExercises(row.recommended_exercises, row.step_id),
         coaching_tips: row.coaching_tips ?? undefined,
         last_trained: row.last_trained ?? null,
       })

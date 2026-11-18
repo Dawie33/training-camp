@@ -16,6 +16,8 @@ function builderResolving(rows: unknown) {
   for (const method of [
     'select',
     'leftJoin',
+    'join',
+    'forUpdate',
     'where',
     'whereIn',
     'whereNot',
@@ -40,6 +42,7 @@ async function buildService(tables: Record<string, unknown[]>) {
     return builders[table]
   })
   knexMock.raw = jest.fn()
+  knexMock.transaction = jest.fn(callback => callback(knexMock))
 
   // Client Google simulé : aucun appel réseau, comportement « non connecté » par défaut
   const google = {
@@ -72,6 +75,86 @@ const activityRow = {
 }
 
 describe('ScheduledActivitiesService.findUnified', () => {
+  it('rejects a move if the slot became completed after the initial read', async () => {
+    const { service, knexMock } = await buildService({})
+    const write = builderResolving([])
+    knexMock
+      .mockImplementationOnce(() => builderResolving([{ ...activityRow, activity_type: 'skill', activity_id: 'p1' }]))
+      .mockImplementationOnce(() => builderResolving([]))
+      .mockImplementationOnce(() => write)
+    await expect(service.update('a1', 'user-1', { scheduled_date: '2026-10-07' })).rejects.toMatchObject({
+      status: 409,
+    })
+    expect(write.whereNot).toHaveBeenCalledWith('status', 'completed')
+  })
+
+  it('allows editing notes on a completed skill without moving it', async () => {
+    const { service, builders } = await buildService({
+      scheduled_activities: [{ ...activityRow, activity_type: 'skill', activity_id: 'p1', status: 'completed' }],
+      skill_programs: [{ id: 'p1' }],
+    })
+    await service.update('a1', 'user-1', { notes: 'Seance historique' })
+    expect(builders.scheduled_activities.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notes: 'Seance historique',
+        status: 'completed',
+      })
+    )
+  })
+
+  it('creates a completed skill slot when the session was already logged', async () => {
+    const { service, knexMock, builders } = await buildService({
+      scheduled_activities: [{ ...activityRow, activity_type: 'skill', activity_id: 'p1', status: 'completed' }],
+      skill_programs: [{ id: 'p1', skill_name: 'Muscle-up' }],
+      skill_progress_logs: [{ id: 'log1' }],
+    })
+    knexMock.mockImplementationOnce(() => builderResolving([]))
+    await expect(
+      service.create('user-1', {
+        activity_type: 'skill',
+        activity_id: 'p1',
+        scheduled_date: '2026-10-06',
+      })
+    ).resolves.toMatchObject({ status: 'completed' })
+    expect(knexMock.transaction).toHaveBeenCalledTimes(1)
+    expect(builders.skill_progress_logs.where).toHaveBeenCalledWith({
+      'skill_program_steps.program_id': 'p1',
+      'skill_progress_logs.user_id': 'user-1',
+      'skill_progress_logs.session_date': '2026-10-06',
+    })
+    expect(builders.scheduled_activities.insert).toHaveBeenCalledWith(expect.objectContaining({ status: 'completed' }))
+  })
+
+  it('keeps a linked skill scheduled if no journal exists', async () => {
+    const { service, knexMock, builders } = await buildService({
+      scheduled_activities: [{ ...activityRow, activity_type: 'skill', activity_id: 'p1' }],
+      skill_programs: [{ id: 'p1' }],
+    })
+    knexMock.mockImplementationOnce(() => builderResolving([]))
+    await service.create('user-1', { activity_type: 'skill', activity_id: 'p1', scheduled_date: '2026-10-06' })
+    expect(builders.scheduled_activities.insert).toHaveBeenCalledWith(expect.objectContaining({ status: 'scheduled' }))
+  })
+
+  it('allows direct completion of a skill without a program', async () => {
+    const { service, builders } = await buildService({
+      scheduled_activities: [{ ...activityRow, activity_type: 'skill', activity_id: null }],
+    })
+    await service.update('a1', 'user-1', { status: 'completed' })
+    expect(builders.scheduled_activities.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'completed' }))
+  })
+
+  it.each([{ scheduled_date: '2026-10-07' }, { activity_id: 'p2' }])(
+    'rejects changing the date or program of a completed skill: %j',
+    async patch => {
+      const { service, knexMock } = await buildService({
+        scheduled_activities: [{ ...activityRow, activity_type: 'skill', activity_id: 'p1', status: 'completed' }],
+        skill_programs: [{ id: 'p2' }],
+      })
+      await expect(service.update('a1', 'user-1', patch)).rejects.toMatchObject({ status: 409 })
+      expect(knexMock.mock.calls.filter(([table]: [string]) => table === 'scheduled_activities')).toHaveLength(1)
+    }
+  )
+
   it("renvoie le bon jour pour une colonne date, sans le décalage d'un jour de toISOString()", async () => {
     const { service } = await buildService({ scheduled_activities: [activityRow] })
 
@@ -276,6 +359,13 @@ describe('ScheduledActivitiesService — synchronisation Google Agenda', () => {
   })
 
   describe('update', () => {
+    it('requires a skill progress log rather than completing a slot directly', async () => {
+      const { service, knexMock } = await buildService({
+        scheduled_activities: [{ ...activityRow, activity_type: 'skill', activity_id: 'p1' }],
+      })
+      await expect(service.update('a1', 'user-1', { status: 'completed' })).rejects.toMatchObject({ status: 400 })
+      expect(knexMock).toHaveBeenCalledTimes(1)
+    })
     /** Lecture de l'activité, puis contrôle de conflit vide, puis mise à jour qui renvoie `updated`. */
     async function buildMove(updated: Record<string, unknown>) {
       const built = await buildService({ scheduled_activities: [updated] })

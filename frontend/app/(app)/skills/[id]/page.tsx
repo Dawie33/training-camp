@@ -5,6 +5,7 @@ import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { Suspense } from 'react'
 import { LogSessionModal } from './_components/LogSessionModal'
 import { SkillHeader } from './_components/SkillHeader'
 import { SkillStepCard } from './_components/SkillStepCard'
@@ -120,5 +121,5 @@ function SkillDetailContent() {
 }
 
 export default function SkillDetailPage() {
-  return <SkillDetailContent />
+  return <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin mx-auto my-20" />}><SkillDetailContent /></Suspense>
 }

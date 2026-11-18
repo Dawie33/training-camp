@@ -1,4 +1,7 @@
 import { Test } from '@nestjs/testing'
+import { ConfigService } from '@nestjs/config'
+import { OpenAIClientService } from './common/ai/openai-client.service'
+import { envValidationSchema } from './common/config/env.validation'
 
 /**
  * Vérifie que toute l'injection de dépendances se résout : un provider qui dépend d'un module
@@ -16,6 +19,7 @@ describe('AppModule', () => {
       OPENAI_API_KEY: 'sk-test',
       JWT_SECRET: 'x'.repeat(64),
     }
+    delete process.env.OPENAI_MODEL
   })
 
   afterAll(() => {
@@ -31,6 +35,10 @@ describe('AppModule', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile()
 
     expect(moduleRef).toBeDefined()
+    const config = moduleRef.get(ConfigService)
+    const { value: defaultModel } = envValidationSchema.extract('OPENAI_MODEL').validate(undefined)
+    expect(config.getOrThrow('OPENAI_MODEL')).toBe(defaultModel)
+    expect(moduleRef.get(OpenAIClientService).model).toBe(config.getOrThrow('OPENAI_MODEL'))
     await moduleRef.close()
   })
 })

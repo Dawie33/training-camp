@@ -1,4 +1,5 @@
 import { BadGatewayException, GatewayTimeoutException, Injectable, Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import OpenAI, { APIConnectionTimeoutError } from 'openai'
 import type { ChatCompletion, ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 import type { z } from 'zod'
@@ -36,16 +37,18 @@ export interface JsonCompletionRequest<S extends z.ZodTypeAny> {
 export class OpenAIClientService {
   private readonly logger = new Logger(OpenAIClientService.name)
   readonly client: OpenAI
-  readonly model: string = process.env.OPENAI_MODEL ?? 'gpt-6-luna'
+  readonly model: string
   // Les gpt-4.x n'ont pas de phase de raisonnement ; les modèles plus récents (GPT-5+ et GPT-6) si
-  private readonly isReasoningModel = !this.model.startsWith('gpt-4')
+  private readonly isReasoningModel: boolean
 
-  constructor() {
-    const apiKey = process.env.OPENAI_API_KEY
+  constructor(config: ConfigService) {
+    const apiKey = config.get<string>('OPENAI_API_KEY')
     if (!apiKey) {
       throw new Error('OPENAI_API_KEY environment variable is not set')
     }
 
+    this.model = config.getOrThrow<string>('OPENAI_MODEL')
+    this.isReasoningModel = !this.model.startsWith('gpt-4')
     this.client = new OpenAI({ apiKey, timeout: OPENAI_TIMEOUT_MS, maxRetries: OPENAI_MAX_RETRIES })
   }
 

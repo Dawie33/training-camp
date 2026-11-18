@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
+import { Knex } from 'knex'
 import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
 
@@ -76,6 +77,31 @@ describe('WorkoutScheduleService — synchronisation Google Agenda', () => {
   describe('create', () => {
     const workout = { id: 'w1', name: 'Fran', workout_type: 'for_time', estimated_duration: 20 }
     const inserted = { ...scheduleRow, google_event_id: null }
+
+    it('diffère Google au commit quand une transaction est fournie', async () => {
+      const { service, knexMock, google } = await buildService([[workout], [], [inserted]])
+      let commit!: () => void
+      knexMock.executionPromise = new Promise<void>(resolve => {
+        commit = resolve
+      })
+      await service.create('user-1', { workout_id: 'w1', scheduled_date: '2026-10-06' }, knexMock as Knex.Transaction)
+      expect(google.syncWorkout).not.toHaveBeenCalled()
+      commit()
+      await knexMock.executionPromise
+      expect(google.syncWorkout).toHaveBeenCalledTimes(1)
+    })
+
+    it('ne synchronise pas Google après rollback', async () => {
+      const { service, knexMock, google } = await buildService([[workout], [], [inserted]])
+      let rollback!: (error: Error) => void
+      knexMock.executionPromise = new Promise<void>((_resolve, reject) => {
+        rollback = reject
+      })
+      await service.create('user-1', { workout_id: 'w1', scheduled_date: '2026-10-06' }, knexMock as Knex.Transaction)
+      rollback(new Error('Rollback'))
+      await expect(knexMock.executionPromise).rejects.toThrow('Rollback')
+      expect(google.syncWorkout).not.toHaveBeenCalled()
+    })
 
     it("enregistre l'id de l'événement Google créé", async () => {
       // workout, contrôle de doublon (vide), insertion, enregistrement de l'id
