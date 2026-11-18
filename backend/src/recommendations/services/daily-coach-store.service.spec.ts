@@ -21,6 +21,24 @@ function database() {
 }
 
 describe('DailyCoachStore', () => {
+  it('reconcile un resultat persiste sans preparer une nouvelle generation', async () => {
+    const { db, responses, transaction } = database()
+    const result = { schedule: { id: 'old' } }
+    responses.push([], [], { result })
+    const prepare = jest.fn()
+    const replay = jest.fn(async (trx: Knex.Transaction, cached: typeof result) => {
+      expect(trx).toBe(db)
+      expect(cached).toEqual(result)
+      return { schedule: { id: 'current' } }
+    })
+    await expect(new DailyCoachStore(db).run('u', '2026-10-06', 'session', prepare, replay)).resolves.toEqual({
+      schedule: { id: 'current' },
+    })
+    expect(prepare).not.toHaveBeenCalled()
+    expect(transaction).toHaveBeenCalledTimes(1)
+    await db.destroy()
+  })
+
   it('ne prépare pas une seconde génération pendant que le détenteur du claim travaille', async () => {
     const { db, responses, queries } = database()
     responses.push([], [{}])

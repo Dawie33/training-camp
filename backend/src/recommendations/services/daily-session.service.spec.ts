@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
+import knex, { Knex } from 'knex'
 import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
 import { WorkoutScheduleService } from 'src/workouts/services/workout-schedule.service'
 import { WorkoutsService } from 'src/workouts/services/workouts.service'
@@ -157,6 +158,48 @@ describe('DailySessionService', () => {
     expect(result).toEqual({ generated: false, reason: 'failed', schedule: null })
   })
 
+  function replayPersisted(result: unknown, current = todaySchedule) {
+    const db = knex({ client: 'pg' })
+    const responses = [[], [], { result }, current]
+    db.client.runner = (_builder: Knex.QueryBuilder) => ({
+      run: async () => responses.shift(),
+    })
+    Object.defineProperty(db, 'transaction', {
+      value: async (work: (trx: Knex) => Promise<unknown>) => work(db),
+    })
+    const realStore = new DailyCoachStore(db)
+    store.run.mockImplementation(realStore.run.bind(realStore))
+    return db
+  }
+
+  it('ne renvoie pas un creneau supprime ou deplace depuis le resultat persiste', async () => {
+    const db = replayPersisted({ generated: true, schedule: todaySchedule })
+    scheduleService.findByDate.mockResolvedValue(null)
+
+    await expect(service.checkAndGenerateDailySession('user-1')).resolves.toEqual({
+      generated: false,
+      reason: 'failed',
+      schedule: null,
+    })
+    expect(scheduleService.findByDate).toHaveBeenLastCalledWith('user-1', expect.any(String), db)
+    expect(generator.generatePersonalizedWorkout).not.toHaveBeenCalled()
+    expect(recommendationsService.getNextSessionRecommendation).not.toHaveBeenCalled()
+    await db.destroy()
+  })
+
+  it('renvoie le creneau courant apparu pendant la relecture du resultat persiste', async () => {
+    const current = { ...todaySchedule, id: 'replacement' }
+    scheduleService.findByDate.mockResolvedValueOnce(null).mockResolvedValueOnce(current)
+    store.run.mockImplementation(async (_user, _day, _op, _prepare, replay) =>
+      replay(trx, { generated: true, schedule: todaySchedule })
+    )
+    await expect(service.checkAndGenerateDailySession('user-1')).resolves.toEqual({
+      generated: false,
+      reason: 'already_scheduled',
+      schedule: current,
+    })
+  })
+
   describe('generateProposal', () => {
     const snapshot = {
       recommended_type: 'technique_metcon',
@@ -165,6 +208,33 @@ describe('DailySessionService', () => {
       coaching_insight: recommendation.coaching_insight,
       suggested_duration: 50,
     }
+
+    it('rattache une proposition persistante au creneau de remplacement sans IA', async () => {
+      const proposal = { ...snapshot, workout_id: 'workout-9', workout_name: 'Existing WOD' }
+      const db = replayPersisted(proposal)
+      scheduleService.findByDate.mockResolvedValue(todaySchedule)
+
+      await expect(service.generateProposal('user-1')).resolves.toEqual(proposal)
+
+      expect(scheduleService.setCoachProposal).toHaveBeenCalledWith('schedule-1', 'user-1', proposal, db)
+      expect(generator.generatePersonalizedWorkout).not.toHaveBeenCalled()
+      expect(recommendationsService.getNextSessionRecommendation).not.toHaveBeenCalled()
+      await db.destroy()
+    })
+
+    it('refuse de rejouer une proposition si le creneau a disparu', async () => {
+      scheduleService.findByDate.mockResolvedValue(todaySchedule)
+      trx.mockImplementation(() => ({
+        where: jest.fn().mockReturnThis(),
+        forUpdate: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(null),
+      }))
+      store.run.mockImplementation(async (_user, _day, _op, _prepare, replay) =>
+        replay(trx, { ...snapshot, workout_id: null, workout_name: null })
+      )
+      await expect(service.generateProposal('user-1')).rejects.toBeInstanceOf(NotFoundException)
+      expect(scheduleService.setCoachProposal).not.toHaveBeenCalled()
+    })
 
     it('refuse quand aucun créneau n’existe aujourd’hui', async () => {
       scheduleService.findByDate.mockResolvedValue(null)

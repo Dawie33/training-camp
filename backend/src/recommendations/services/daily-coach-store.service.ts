@@ -19,7 +19,8 @@ export class DailyCoachStore {
     userId: string,
     day: string,
     operation: Operation,
-    prepare: () => Promise<(trx: Knex.Transaction) => Promise<T>>
+    prepare: () => Promise<(trx: Knex.Transaction) => Promise<T>>,
+    replay?: (trx: Knex.Transaction, result: T) => Promise<T>
   ): Promise<T> {
     const key = { user_id: userId, day, operation }
     await this.knex('daily_coach_operations').insert(key).onConflict(['user_id', 'day', 'operation']).ignore()
@@ -39,7 +40,10 @@ export class DailyCoachStore {
 
     if (!claim) {
       const row = await this.knex('daily_coach_operations').where(key).first()
-      if (row?.result != null) return row.result as T
+      if (row?.result != null) {
+        const result = row.result as T
+        return replay ? this.knex.transaction(trx => replay(trx, result)) : result
+      }
       throw new ConflictException('Coach déjà en cours, en attente ou limite quotidienne atteinte')
     }
 

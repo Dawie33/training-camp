@@ -85,39 +85,50 @@ export class DailySessionService {
     }
 
     try {
-      return await this.store.run<DailySessionResult>(userId, today, 'session', async () => {
-        const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId, today)
+      return await this.store.run<DailySessionResult>(
+        userId,
+        today,
+        'session',
+        async () => {
+          const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId, today)
 
-        if (recommendation.recommended_sport === 'rest') {
-          return async () => ({
-            generated: false,
-            reason: 'rest_recommended',
-            schedule: null,
-            recommendation: toSnapshot(recommendation),
-          })
-        }
-
-        const save = await this.prepareWorkout(userId, recommendation)
-        return async trx => {
-          const saved = await save(trx)
-
-          const schedule = await this.scheduleService.create(
-            userId,
-            {
-              workout_id: saved.id,
-              scheduled_date: today,
-            },
-            trx
-          )
-
-          await this.scheduleService.setCoachRecommendation(schedule.id, userId, toSnapshot(recommendation), trx)
-
-          return {
-            generated: true,
-            schedule: await this.scheduleService.findByDate(userId, today, trx),
+          if (recommendation.recommended_sport === 'rest') {
+            return async () => ({
+              generated: false,
+              reason: 'rest_recommended',
+              schedule: null,
+              recommendation: toSnapshot(recommendation),
+            })
           }
+
+          const save = await this.prepareWorkout(userId, recommendation)
+          return async trx => {
+            const saved = await save(trx)
+
+            const schedule = await this.scheduleService.create(
+              userId,
+              {
+                workout_id: saved.id,
+                scheduled_date: today,
+              },
+              trx
+            )
+
+            await this.scheduleService.setCoachRecommendation(schedule.id, userId, toSnapshot(recommendation), trx)
+
+            return {
+              generated: true,
+              schedule: await this.scheduleService.findByDate(userId, today, trx),
+            }
+          }
+        },
+        async (trx, result) => {
+          const schedule = await this.scheduleService.findByDate(userId, today, trx)
+          if (schedule) return { generated: false, reason: 'already_scheduled', schedule }
+          if (result.reason === 'rest_recommended') return result
+          return { generated: false, reason: 'failed', schedule: null }
         }
-      })
+      )
     } catch (error) {
       // Une génération ratée ne doit jamais bloquer la connexion : on journalise et on passe.
       this.logger.warn(`Séance du jour non générée pour ${userId} : ${(error as Error).message}`)
@@ -149,32 +160,48 @@ export class DailySessionService {
     if (schedule.coach_proposal) return schedule.coach_proposal as CoachProposal
     if (schedule.coach_recommendation) throw new ConflictException('Cette séance a déjà été générée par le coach')
 
-    return this.store.run<CoachProposal>(userId, today, 'proposal', async () => {
-      const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId, today)
+    return this.store.run<CoachProposal>(
+      userId,
+      today,
+      'proposal',
+      async () => {
+        const { recommendation } = await this.recommendationsService.getNextSessionRecommendation(userId, today)
 
-      const save =
-        recommendation.recommended_sport === 'rest' ? null : await this.prepareWorkout(userId, recommendation)
+        const save =
+          recommendation.recommended_sport === 'rest' ? null : await this.prepareWorkout(userId, recommendation)
 
-      return async trx => {
-        // Lock the target so a concurrent edit/delete cannot detach the proposed workout.
+        return async trx => {
+          // Lock the target so a concurrent edit/delete cannot detach the proposed workout.
+          const current = await trx('user_workout_schedule')
+            .where({ id: schedule.id, user_id: userId, scheduled_date: today })
+            .forUpdate()
+            .first()
+          if (!current) throw new NotFoundException("Aucune séance planifiée aujourd'hui")
+          if (current.coach_recommendation) throw new ConflictException('Cette séance a déjà été générée par le coach')
+          if (current.coach_proposal) return current.coach_proposal as CoachProposal
+          const workout = save ? await save(trx) : null
+          const proposal: CoachProposal = {
+            ...toSnapshot(recommendation),
+            workout_id: workout?.id ?? null,
+            workout_name: workout?.name ?? null,
+          }
+          await this.scheduleService.setCoachProposal(schedule.id as string, userId, { ...proposal }, trx)
+
+          return proposal
+        }
+      },
+      async (trx, proposal) => {
         const current = await trx('user_workout_schedule')
-          .where({ id: schedule.id, user_id: userId })
+          .where({ user_id: userId, scheduled_date: today })
           .forUpdate()
           .first()
         if (!current) throw new NotFoundException("Aucune séance planifiée aujourd'hui")
         if (current.coach_recommendation) throw new ConflictException('Cette séance a déjà été générée par le coach')
         if (current.coach_proposal) return current.coach_proposal as CoachProposal
-        const workout = save ? await save(trx) : null
-        const proposal: CoachProposal = {
-          ...toSnapshot(recommendation),
-          workout_id: workout?.id ?? null,
-          workout_name: workout?.name ?? null,
-        }
-        await this.scheduleService.setCoachProposal(schedule.id as string, userId, { ...proposal }, trx)
-
+        await this.scheduleService.setCoachProposal(current.id, userId, { ...proposal }, trx)
         return proposal
       }
-    })
+    )
   }
 
   /** Génère le WOD correspondant à la recommandation et l'enregistre comme workout privé de l'athlète. */
