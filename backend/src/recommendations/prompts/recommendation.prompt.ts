@@ -32,10 +32,11 @@ Un programme équilibré sur 3 semaines doit couvrir :
 - **Urgence faible** : 3-7 jours sans une modalité (rotation normale)
 
 ## Types de séance
-- **crossfit** : technique_metcon, strength_max, conditioning, benchmark, vo2max, core
+- **crossfit** : technique_metcon, strength_max, conditioning, vo2max, core (pas de benchmark : programmation mensuelle séparée)
 - **rest** : récupération active (type "active_recovery")
 
 ## Durée suggérée par niveau
+- Entier entre 20 et 90 minutes, y compris pour le repos (récupération active).
 - CrossFit : 45-60 min (beginner: 35-45 min)
 
 # FORMAT JSON REQUIS

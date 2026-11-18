@@ -2,16 +2,27 @@ import { z } from 'zod'
 
 export const RecommendedSportSchema = z.enum(['crossfit', 'rest'])
 
-export const AIRecommendationSchema = z.object({
-  recommended_sport: RecommendedSportSchema,
-  recommended_type: z.string().min(1),
+const recommendationFields = {
   urgency: z.enum(['low', 'medium', 'high']),
   reason: z.string().min(1),
   coaching_insight: z.string().min(1),
-  suggested_duration: z.number().int().positive(),
-  suggested_focus: z.string().nullable().optional(),
-  suggested_instructions: z.string().nullable().optional(),
-})
+  suggested_duration: z.number().int().min(20).max(90),
+  suggested_focus: z.string().max(500).nullable().optional(),
+  suggested_instructions: z.string().max(2000).nullable().optional(),
+}
+
+export const AIRecommendationSchema = z.discriminatedUnion('recommended_sport', [
+  z.object({
+    ...recommendationFields,
+    recommended_sport: z.literal('crossfit'),
+    recommended_type: z.enum(['technique_metcon', 'strength_max', 'conditioning', 'vo2max', 'core']),
+  }),
+  z.object({
+    ...recommendationFields,
+    recommended_sport: z.literal('rest'),
+    recommended_type: z.literal('active_recovery'),
+  }),
+])
 
 export type AIRecommendation = z.infer<typeof AIRecommendationSchema>
 

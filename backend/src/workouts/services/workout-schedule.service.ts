@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { toDateOnly } from 'src/common/utils/date-only'
@@ -11,6 +11,7 @@ import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/s
  */
 @Injectable()
 export class WorkoutScheduleService {
+  private readonly logger = new Logger(WorkoutScheduleService.name)
   constructor(
     @InjectModel() private readonly knex: Knex,
     private readonly googleCalendarService: GoogleCalendarService
@@ -129,8 +130,8 @@ export class WorkoutScheduleService {
    * @param date Date au format YYYY-MM-DD
    * @returns La planification pour cette date ou null
    */
-  async findByDate(userId: string, date: string) {
-    const schedule = await this.knex('user_workout_schedule')
+  async findByDate(userId: string, date: string, transaction?: Knex.Transaction) {
+    const schedule = await (transaction ?? this.knex)('user_workout_schedule')
       .select(
         'user_workout_schedule.*',
         this.knex.raw(`COALESCE(workouts.name, personalized_workouts.plan_json->>'name') as workout_name`),
@@ -158,7 +159,8 @@ export class WorkoutScheduleService {
    * @param data Données de la planification
    * @returns La planification créée
    */
-  async create(userId: string, data: CreateScheduleDto) {
+  async create(userId: string, data: CreateScheduleDto, transaction?: Knex.Transaction) {
+    const db = transaction ?? this.knex
     const isBoxSession = data.session_type === 'box_session'
     // « Repos » : marqueur sans workout, qui empêche le coach de générer une séance ce jour-là
     const isRestDay = data.session_type === 'rest'
@@ -173,7 +175,7 @@ export class WorkoutScheduleService {
 
     if (data.workout_id) {
       // Vérifier si le workout standard existe
-      const workout = await this.knex('workouts').where('id', data.workout_id).first()
+      const workout = await db('workouts').where('id', data.workout_id).first()
       if (!workout) {
         throw new NotFoundException('Workout non trouvé')
       }
@@ -182,7 +184,7 @@ export class WorkoutScheduleService {
       workoutDuration = workout.estimated_duration
     } else if (data.personalized_workout_id) {
       // Vérifier si le workout personnalisé existe et appartient à l'utilisateur
-      const pw = await this.knex('personalized_workouts')
+      const pw = await db('personalized_workouts')
         .where('id', data.personalized_workout_id)
         .where('user_id', userId)
         .first()
@@ -195,7 +197,7 @@ export class WorkoutScheduleService {
     }
 
     // Vérifier qu'il n'y a pas déjà une planification pour cette date
-    const existing = await this.knex('user_workout_schedule')
+    const existing = await db('user_workout_schedule')
       .where('user_id', userId)
       .where('scheduled_date', data.scheduled_date)
       .first()
@@ -204,7 +206,7 @@ export class WorkoutScheduleService {
       throw new ConflictException('Un workout est déjà planifié pour cette date')
     }
 
-    const [schedule] = await this.knex('user_workout_schedule')
+    const [schedule] = await db('user_workout_schedule')
       .insert({
         user_id: userId,
         workout_id: data.workout_id || null,
@@ -220,26 +222,38 @@ export class WorkoutScheduleService {
     // Un jour de repos n'encombre pas l'agenda Google
     if (isRestDay) return schedule
 
-    // Sync vers Google Calendar (sans bloquer si non connecté ou en cas d'erreur)
-    let googleEventId: string | null = null
-    try {
-      googleEventId = await this.googleCalendarService.syncWorkout(userId, {
-        name: workoutName,
-        scheduledDate: data.scheduled_date,
-        duration: workoutDuration,
-        type: workoutType,
-      })
-    } catch {
-      // Google Calendar non connecté ou erreur silencieuse
+    const sync = async () => {
+      // Sync vers Google Calendar (sans bloquer si non connecté ou en cas d'erreur)
+      let googleEventId: string | null = null
+      try {
+        googleEventId = await this.googleCalendarService.syncWorkout(userId, {
+          name: workoutName,
+          scheduledDate: data.scheduled_date,
+          duration: workoutDuration,
+          type: workoutType,
+        })
+      } catch (error) {
+        this.logger.warn(`Synchronisation Google impossible pour ${schedule.id}`, error)
+      }
+
+      // L'id est gardé pour pouvoir déplacer ou supprimer l'événement plus tard (sinon il reste orphelin)
+      if (googleEventId) {
+        await this.knex('user_workout_schedule').where('id', schedule.id).update({ google_event_id: googleEventId })
+        return { ...schedule, google_event_id: googleEventId }
+      }
+
+      return schedule
     }
 
-    // L'id est gardé pour pouvoir déplacer ou supprimer l'événement plus tard (sinon il reste orphelin)
-    if (googleEventId) {
-      await this.knex('user_workout_schedule').where('id', schedule.id).update({ google_event_id: googleEventId })
-      return { ...schedule, google_event_id: googleEventId }
+    if (transaction) {
+      void transaction.executionPromise
+        .then(sync, error => {
+          this.logger.debug(`Synchronisation annulée après rollback de ${schedule.id}`, error)
+        })
+        .catch(error => this.logger.error(`Synchronisation Google échouée pour ${schedule.id}`, error))
+      return schedule
     }
-
-    return schedule
+    return sync()
   }
 
   /**
@@ -249,10 +263,16 @@ export class WorkoutScheduleService {
    * @param userId ID de l'utilisateur
    * @param recommendation Raison et conseil du coach, tels qu'affichés au dashboard
    */
-  async setCoachRecommendation(id: string, userId: string, recommendation: Record<string, unknown>) {
-    await this.knex('user_workout_schedule')
+  async setCoachRecommendation(
+    id: string,
+    userId: string,
+    recommendation: Record<string, unknown>,
+    transaction?: Knex.Transaction
+  ) {
+    const updated = await (transaction ?? this.knex)('user_workout_schedule')
       .where({ id, user_id: userId })
       .update({ coach_recommendation: JSON.stringify(recommendation), updated_at: this.knex.fn.now() })
+    if (!updated) throw new NotFoundException('Planification non trouvée')
   }
 
   /**
@@ -261,10 +281,16 @@ export class WorkoutScheduleService {
    * @param userId ID de l'utilisateur
    * @param proposal WOD proposé (ou repos) et explication du coach
    */
-  async setCoachProposal(id: string, userId: string, proposal: Record<string, unknown>) {
-    await this.knex('user_workout_schedule')
+  async setCoachProposal(
+    id: string,
+    userId: string,
+    proposal: Record<string, unknown>,
+    transaction?: Knex.Transaction
+  ) {
+    const updated = await (transaction ?? this.knex)('user_workout_schedule')
       .where({ id, user_id: userId })
       .update({ coach_proposal: JSON.stringify(proposal), updated_at: this.knex.fn.now() })
+    if (!updated) throw new NotFoundException('Planification non trouvée')
   }
 
   /**
