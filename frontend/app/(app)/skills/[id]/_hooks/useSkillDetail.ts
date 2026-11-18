@@ -3,7 +3,7 @@
 import type { SkillProgram, SkillProgressLog } from '@/domain/entities/skill'
 import { toLocalDateString } from '@/lib/date-only'
 import { skillsService } from '@/services/skills'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
@@ -38,6 +38,8 @@ export type WodModalState =
 export function useSkillDetail() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
+  const logDate = searchParams.get('logDate')
   const id = params.id as string
 
   const [program, setProgram] = useState<SkillProgram | null>(null)
@@ -56,12 +58,16 @@ export function useSkillDetail() {
       setProgram(data)
       const activeStep = data.steps?.find(s => s.status === 'in_progress')
       if (activeStep) setExpandedStep(activeStep.id)
+      if (logDate && /^\d{4}-\d{2}-\d{2}$/.test(logDate) && activeStep) {
+        setLogModal({ isOpen: true, stepId: activeStep.id, data: { value: '', notes: '', date: logDate }, saving: false })
+        router.replace(`/skills/${id}`, { scroll: false })
+      }
     } catch {
       toast.error('Erreur lors du chargement du programme')
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, logDate, router])
 
   useEffect(() => {
     fetchProgram()
@@ -144,7 +150,9 @@ export function useSkillDetail() {
   }
 
   const openLogModal = (stepId: string) => {
-    setLogModal({ isOpen: true, stepId, data: { value: '', notes: '', date: toLocalDateString() }, saving: false })
+    const date = logDate && /^\d{4}-\d{2}-\d{2}$/.test(logDate) ? logDate : toLocalDateString()
+    setLogModal({ isOpen: true, stepId, data: { value: '', notes: '', date }, saving: false })
+    if (logDate) router.replace(`/skills/${id}`, { scroll: false })
   }
 
   const handleSaveLog = async () => {

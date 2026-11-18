@@ -87,12 +87,20 @@ export function CustomEventModal({ calendarEvent }: { calendarEvent: Record<stri
       <div className={`flex flex-wrap gap-2 pt-3 border-t ${c.border}`}>
         {status === 'scheduled' && !isRestDay && (
           <>
-            {onComplete && isSkill && (
+            {isSkill && skillProgramId && (
               <Button
                 size="sm"
-                onClick={onComplete}
+                asChild
                 className={c.complete}
               >
+                <a href={`/skills/${skillProgramId}?logDate=${encodeURIComponent(String(calendarEvent.scheduled_date))}`}>
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                  Logger la séance
+                </a>
+              </Button>
+            )}
+            {isSkill && !calendarEvent.activity_id && onComplete && (
+              <Button size="sm" onClick={onComplete} className={c.complete}>
                 <Check className="w-3.5 h-3.5 mr-1" />
                 Terminer
               </Button>

@@ -1,7 +1,10 @@
 import { BadGatewayException, GatewayTimeoutException, Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { Test } from '@nestjs/testing'
 import { APIConnectionTimeoutError, InternalServerError } from 'openai'
 import { z } from 'zod'
 import { AI_INVALID_RESPONSE_MESSAGE, AIInvalidResponseException } from './ai-invalid-response.exception'
+import { AiModule } from './ai.module'
 import {
   OPENAI_MAX_RETRIES,
   OPENAI_TIMEOUT_MS,
@@ -15,9 +18,11 @@ jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
 
 describe('OpenAIClientService', () => {
   const originalEnv = process.env
+  let config: ConfigService
 
   beforeEach(() => {
-    process.env = { ...originalEnv, OPENAI_API_KEY: 'sk-test' }
+    process.env = { ...originalEnv, OPENAI_API_KEY: 'sk-process-env', OPENAI_MODEL: 'gpt-4.1' }
+    config = new ConfigService({ OPENAI_API_KEY: 'sk-injected', OPENAI_MODEL: 'gpt-5' })
   })
 
   afterEach(() => {
@@ -25,36 +30,58 @@ describe('OpenAIClientService', () => {
   })
 
   it('borne la durée et le nombre de tentatives des requêtes', () => {
-    const service = new OpenAIClientService()
+    const service = new OpenAIClientService(config)
 
     expect(service.client.timeout).toBe(OPENAI_TIMEOUT_MS)
     expect(service.client.maxRetries).toBe(OPENAI_MAX_RETRIES)
   })
 
   it('refuse de démarrer sans clé API', () => {
+    config = new ConfigService({ OPENAI_MODEL: 'gpt-5' })
     delete process.env.OPENAI_API_KEY
 
-    expect(() => new OpenAIClientService()).toThrow('OPENAI_API_KEY')
+    expect(() => new OpenAIClientService(config)).toThrow('OPENAI_API_KEY')
+  })
+
+  it('utilise la configuration injectée plutôt que process.env, y compris via AiModule', async () => {
+    const moduleRef = await Test.createTestingModule({ imports: [AiModule] })
+      .overrideProvider(ConfigService)
+      .useValue(config)
+      .compile()
+    try {
+      const service = moduleRef.get(OpenAIClientService)
+      expect(service.model).toBe('gpt-5')
+      expect(service.client.apiKey).toBe('sk-injected')
+    } finally {
+      await moduleRef.close()
+    }
+  })
+
+  it('ne définit pas de modèle par défaut hors de la validation Joi', () => {
+    config = new ConfigService({ OPENAI_API_KEY: 'sk-injected' })
+    delete process.env.OPENAI_MODEL
+
+    expect(() => new OpenAIClientService(config)).toThrow('OPENAI_MODEL')
   })
 
   it("n'envoie la température qu'aux modèles gpt-4.x", () => {
-    process.env.OPENAI_MODEL = 'gpt-4.1'
-    expect(new OpenAIClientService().temperatureParam(0.7)).toEqual({ temperature: 0.7 })
+    config.set('OPENAI_MODEL', 'gpt-4.1')
+    expect(new OpenAIClientService(config).temperatureParam(0.7)).toEqual({ temperature: 0.7 })
 
-    process.env.OPENAI_MODEL = 'gpt-5'
-    expect(new OpenAIClientService().temperatureParam(0.7)).toEqual({})
+    config.set('OPENAI_MODEL', 'gpt-5')
+    expect(new OpenAIClientService(config).temperatureParam(0.7)).toEqual({})
   })
 
   it('garde le plafond de tokens tel quel pour les gpt-4.x', () => {
-    process.env.OPENAI_MODEL = 'gpt-4.1'
+    config.set('OPENAI_MODEL', 'gpt-4.1')
 
-    expect(new OpenAIClientService().completionParams(4096)).toEqual({ max_completion_tokens: 4096 })
+    expect(new OpenAIClientService(config).completionParams(4096)).toEqual({ max_completion_tokens: 4096 })
   })
 
   it('laisse de la place au raisonnement des modèles récents', () => {
-    process.env.OPENAI_MODEL = 'gpt-6-luna'
+    config.set('OPENAI_MODEL', 'gpt-6-luna')
 
-    expect(new OpenAIClientService().completionParams(4096)).toEqual({
+    expect(new OpenAIClientService(config).completionParams(4096)).toEqual({
       max_completion_tokens: 4096 + REASONING_TOKEN_BUDGET,
       reasoning_effort: 'low',
     })
@@ -67,7 +94,7 @@ describe('OpenAIClientService', () => {
 
     beforeEach(() => {
       warn.mockClear()
-      service = new OpenAIClientService()
+      service = new OpenAIClientService(config)
       create = jest.spyOn(service.client.chat.completions, 'create')
     })
 
@@ -89,7 +116,9 @@ describe('OpenAIClientService', () => {
       respondWith('{"summary": "Bonne séance"}')
 
       await expect(request()).resolves.toEqual({ summary: 'Bonne séance' })
-      expect(create).toHaveBeenCalledWith(expect.objectContaining({ response_format: { type: 'json_object' } }))
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ model: 'gpt-5', response_format: { type: 'json_object' } })
+      )
     })
 
     it('JSON invalide → 502 générique', async () => {

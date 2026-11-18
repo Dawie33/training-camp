@@ -39,6 +39,9 @@ export class SkillsService {
       recommended_exercises?: Record<string, unknown>[]
       coaching_tips?: string
       estimated_duration_weeks?: number
+      frequency?: string | null
+      when_to_train?: string | null
+      warmup?: string | null
     }[]
   }): Promise<SkillProgram> {
     return apiClient.post<SkillProgram>('/skills', data)
