@@ -6,6 +6,15 @@ le tableau suivant et prévaut sur les anciennes références de lignes et cases
 
 ## État des corrections — 17 novembre 2026
 
+Complément du 18 novembre : les trois retours fonctionnels sur la PR #104 sont corrigés.
+Les skills sans programme restent terminables directement (API et interface). Un créneau skill
+terminé ne peut changer ni de date ni de programme, y compris si sa complétion survient entre la
+lecture et l'écriture du déplacement. La création d'un créneau lié réconcilie les journaux
+préexistants sous le verrou du programme, sans imposer une deuxième saisie.
+Tests ciblés calendrier/skills et injection : 51 tests réussis ; typechecks backend/frontend et lint
+frontend réussis. L'utilisateur a confirmé le 18 novembre l'exécution réussie de la migration sur
+sa base ; le rollback PostgreSQL réel et la vérification navigateur restent non vérifiés ici.
+
 | Point | État dans ce worktree |
 |---|---|
 | I1 | DTO imbriqués validés, 4–10 étapes, titres bornés, JSON typé ; validation Zod partagée des objets critères/exercices avant écriture. Les données historiques malformées d'exercices sont ignorées avec diagnostic, sans bloquer le contexte IA. |

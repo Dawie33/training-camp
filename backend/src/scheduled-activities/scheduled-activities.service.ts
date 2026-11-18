@@ -260,23 +260,36 @@ export class ScheduledActivitiesService {
       throw alreadyScheduled(data.activity_type)
     }
 
-    if (data.activity_type === 'skill' && data.activity_id) {
-      await this.assertOwnsSkillProgram(userId, data.activity_id)
-    }
-
-    const [row] = await this.rejectDuplicate(data.activity_type, () =>
-      this.knex('scheduled_activities')
+    const insert = (db: Knex | Knex.Transaction, status: 'scheduled' | 'completed') =>
+      db('scheduled_activities')
         .insert({
           user_id: userId,
           scheduled_date: data.scheduled_date,
           activity_type: data.activity_type,
           activity_id: data.activity_id || null,
-          status: 'scheduled',
+          status,
           location: data.location || null,
           notes: data.notes || null,
         })
         .returning('*')
-    )
+
+    const [row] = await this.rejectDuplicate(data.activity_type, async () => {
+      if (data.activity_type !== 'skill' || !data.activity_id) return insert(this.knex, 'scheduled')
+      return this.knex.transaction(async trx => {
+        const program = await trx('skill_programs').where({ id: data.activity_id, user_id: userId }).forUpdate().first()
+        if (!program) throw new NotFoundException('Programme de skill non trouvé')
+
+        const log = await trx('skill_progress_logs')
+          .join('skill_program_steps', 'skill_program_steps.id', 'skill_progress_logs.step_id')
+          .where({
+            'skill_program_steps.program_id': data.activity_id,
+            'skill_progress_logs.user_id': userId,
+            'skill_progress_logs.session_date': toDateOnly(data.scheduled_date),
+          })
+          .first('skill_progress_logs.id')
+        return insert(trx, log ? 'completed' : 'scheduled')
+      })
+    })
 
     const activity = await this.enrichOne(row)
 
@@ -314,7 +327,11 @@ export class ScheduledActivitiesService {
     if (!existing) {
       throw new NotFoundException('Activité non trouvée')
     }
-    if (existing.activity_type === 'skill' && data.status === 'completed') {
+    if (
+      existing.activity_type === 'skill' &&
+      (data.activity_id ?? existing.activity_id) &&
+      data.status === 'completed'
+    ) {
       throw new BadRequestException('Enregistrez la seance dans le journal du programme de skill')
     }
 
@@ -326,6 +343,10 @@ export class ScheduledActivitiesService {
     // existing.scheduled_date est un objet Date (colonne date) : on compare les jours, pas les types
     const dateChanged = !!data.scheduled_date && toDateOnly(data.scheduled_date) !== toDateOnly(existing.scheduled_date)
     const programChanged = !!data.activity_id && data.activity_id !== existing.activity_id
+
+    if (existing.activity_type === 'skill' && existing.status === 'completed' && (dateChanged || programChanged)) {
+      throw new ConflictException('Une seance de skill terminee ne peut pas changer de date ou de programme')
+    }
 
     if (dateChanged) {
       const conflict = await this.knex('scheduled_activities')
@@ -340,10 +361,12 @@ export class ScheduledActivitiesService {
       }
     }
 
-    const [row] = await this.rejectDuplicate(existing.activity_type, () =>
-      this.knex('scheduled_activities')
-        .where('id', id)
-        .where('user_id', userId)
+    const [row] = await this.rejectDuplicate(existing.activity_type, () => {
+      const update = this.knex('scheduled_activities').where('id', id).where('user_id', userId)
+      if (existing.activity_type === 'skill' && (dateChanged || programChanged)) {
+        update.whereNot('status', 'completed')
+      }
+      return update
         .update({
           scheduled_date: data.scheduled_date ?? existing.scheduled_date,
           status: data.status ?? existing.status,
@@ -353,7 +376,10 @@ export class ScheduledActivitiesService {
           updated_at: new Date(),
         })
         .returning('*')
-    )
+    })
+    if (!row) {
+      throw new ConflictException('La seance a change ; rechargez le calendrier avant de la modifier')
+    }
 
     const activity = await this.enrichOne(row)
 

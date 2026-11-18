@@ -83,6 +83,12 @@ La fréquence, le moment et l'échauffement sont conservés dans `skill_program_
 `20261117150000_add_skill_step_programming`). Les anciennes étapes gardent ces champs à `null`.
 
 Le calendrier ouvre le journal du programme pour enregistrer une séance, à la date du créneau.
+Un créneau skill sans programme conserve l'action « Terminer », sans journal associé.
+Lors de la création d'un créneau lié à un programme, un journal déjà présent pour ce programme,
+cet utilisateur et ce jour le marque directement terminé : aucune double saisie n'est nécessaire.
+Cette vérification utilise le même verrou de programme que l'ajout ou la suppression des journaux.
+Un créneau skill terminé ne peut plus changer de date ou de programme ; ses notes et son lieu
+restent modifiables. Cette restriction préserve la date réelle du journal.
 L'enregistrement du journal termine atomiquement le créneau du même programme et du même jour,
 s'il est encore planifié. La suppression du dernier journal de ce programme pour ce jour remet le
 créneau terminé à « planifié » (ou le retire si le programme est terminé/abandonné et le créneau est
