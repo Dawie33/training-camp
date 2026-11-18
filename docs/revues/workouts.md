@@ -19,6 +19,8 @@
 
 **Arbitrage produit non modifié :** un résultat benchmark continue de déterminer `sport_level`. Aucun reset arbitraire du niveau n'est fait quand la dernière mesure liée à une séance est supprimée. Les usages publics/catalogue et les anciens workouts personnalisés sont conservés ; #48 n'est pas implémentée.
 
+**Suivi de revue PR #106 — 18 novembre 2026 :** après insertion ou correction d'une mesure, le résumé du benchmark est reconstruit depuis la plus récente (`measured_at DESC`, puis `id DESC`). Le niveau n'est actualisé que si la mesure enregistrée est aussi la plus récente de l'utilisateur, tous benchmarks confondus. Corriger octobre ne remplace donc plus le résumé de novembre ni un niveau issu d'une mesure ultérieure. Tests de non-régression : correction ancienne du même benchmark, correction antérieure à un autre benchmark et actualisation de la mesure courante.
+
 **Validation :** 14 suites / 140 tests backend passent (`workout-sessions`, `workouts`, `app.module.spec.ts`), typechecks backend/frontend et lint frontend/backend modifié passent. SQL `up/down` de la migration généré et vérifié, sans exécution PostgreSQL. Aucun commit, aucune PR et aucune modification d'issue distante.
 
 ## 1. Rôle du module

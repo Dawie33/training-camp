@@ -244,11 +244,32 @@ describe('WorkoutsService — visibilité des workouts', () => {
 })
 
 describe('WorkoutsService — historique benchmark transactionnel', () => {
-  it('fait un upsert par séance avec sa date de réalisation, sans créer de doublon à la correction', async () => {
-    const user = createChainableBuilder({ sport_level: 'beginner', benchmark_results: {} })
+  it.each([
+    { savedId: 'october', latestId: 'november', overallId: 'november', expectedLevel: 'advanced' },
+    { savedId: 'october', latestId: 'october', overallId: 'other-workout', expectedLevel: 'advanced' },
+    { savedId: 'october', latestId: 'october', overallId: 'october', expectedLevel: 'intermediate' },
+  ])('préserve la chronologie après upsert : %j', async ({ savedId, latestId, overallId, expectedLevel }) => {
+    const user = createChainableBuilder({
+      sport_level: 'advanced',
+      benchmark_results: { Cindy: { result: { rounds: 20 } } },
+    })
     const update = createChainableBuilder(1)
-    const history = createChainableBuilder(1)
-    const db = jest.fn().mockReturnValueOnce(user).mockReturnValueOnce(update).mockReturnValueOnce(history)
+    const history = createChainableBuilder([{ id: savedId }])
+    const latest = createChainableBuilder({
+      id: latestId,
+      score_type: 'time_seconds',
+      score_value: latestId === savedId ? '300' : '240',
+      extra_reps: null,
+      measured_at: latestId === savedId ? '2026-10-01T10:00:00Z' : '2026-11-01T10:00:00Z',
+    })
+    const overall = createChainableBuilder({ id: overallId })
+    const db = jest
+      .fn()
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce(history)
+      .mockReturnValueOnce(latest)
+      .mockReturnValueOnce(overall)
+      .mockReturnValueOnce(update)
     const moduleRef = await Test.createTestingModule({
       providers: [
         WorkoutsService,
@@ -261,7 +282,7 @@ describe('WorkoutsService — historique benchmark transactionnel', () => {
       ],
     }).compile()
     const service = moduleRef.get(WorkoutsService)
-    await service.recordBenchmarkResult('user', 'fran', 'Fran', { time_seconds: 300 }, 'manual', {
+    const result = await service.recordBenchmarkResult('user', 'fran', 'Fran', { time_seconds: 300 }, 'manual', {
       sessionId: 'session',
       measuredAt: '2026-10-01T10:00:00Z',
     })
@@ -276,5 +297,23 @@ describe('WorkoutsService — historique benchmark transactionnel', () => {
     )
     expect(history.onConflict).toHaveBeenCalledWith('session_id')
     expect(history.merge).toHaveBeenCalled()
+    expect(latest.where).toHaveBeenCalledWith({ user_id: 'user', workout_id: 'fran' })
+    expect(latest.orderBy.mock.calls).toEqual([
+      ['measured_at', 'desc'],
+      ['id', 'desc'],
+    ])
+    expect(overall.where).toHaveBeenCalledWith({ user_id: 'user' })
+    expect(result.benchmark_results).toEqual({
+      Cindy: { result: { rounds: 20 } },
+      Fran: {
+        workout_id: 'fran',
+        result: { time_seconds: latestId === savedId ? 300 : 240 },
+        date: latestId === savedId ? '2026-10-01T10:00:00Z' : '2026-11-01T10:00:00Z',
+      },
+    })
+    expect(result.level).toBe(expectedLevel)
+    const profileUpdate = update.update.mock.calls[0][0]
+    if (overallId === savedId) expect(profileUpdate.sport_level).toBe(expectedLevel)
+    else expect(profileUpdate).not.toHaveProperty('sport_level')
   })
 })

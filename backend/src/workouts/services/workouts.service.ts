@@ -441,26 +441,10 @@ export class WorkoutsService {
 
     const existingResults = user?.benchmark_results || {}
 
-    const updatedResults = {
-      ...existingResults,
-      [workoutName]: {
-        workout_id: workoutId,
-        result,
-        date: options.measuredAt ?? new Date().toISOString(),
-      },
-    }
-
     // Calculer le niveau basé sur les résultats
     const calculatedLevel = calculateLevelFromBenchmarks(workoutName, result, user?.sport_level || 'beginner')
-
-    // Mettre à jour directement dans la table users
-    await db('users')
-      .where({ id: userId })
-      .update({
-        benchmark_results: JSON.stringify(updatedResults),
-        sport_level: calculatedLevel,
-        updated_at: new Date(),
-      })
+    let updatedResults: Record<string, unknown> = existingResults
+    let currentLevel: string = user?.sport_level || 'beginner'
 
     // Historiser le résultat pour pouvoir suivre la progression dans le temps
     let scoreType: string | null = null
@@ -493,14 +477,46 @@ export class WorkoutsService {
         session_id: options.sessionId ?? null,
       }
       const insert = db('benchmark_history').insert(history)
-      if (options.sessionId) await insert.onConflict('session_id').merge()
-      else await insert
+      const [saved] = await (options.sessionId ? insert.onConflict('session_id').merge() : insert).returning('id')
+      const latest = await db('benchmark_history')
+        .where({ user_id: userId, workout_id: workoutId })
+        .orderBy('measured_at', 'desc')
+        .orderBy('id', 'desc')
+        .first()
+      updatedResults = {
+        ...existingResults,
+        [workoutName]: {
+          workout_id: workoutId,
+          result:
+            latest.id === saved.id
+              ? result
+              : {
+                  [latest.score_type]: Number(latest.score_value),
+                  ...(latest.extra_reps !== null ? { reps: latest.extra_reps } : {}),
+                },
+          date: latest.measured_at,
+        },
+      }
+      const latestOverall = await db('benchmark_history')
+        .where({ user_id: userId })
+        .orderBy('measured_at', 'desc')
+        .orderBy('id', 'desc')
+        .first()
+      const updatesLevel = latestOverall.id === saved.id
+      if (updatesLevel) currentLevel = calculatedLevel
+      await db('users')
+        .where({ id: userId })
+        .update({
+          benchmark_results: JSON.stringify(updatedResults),
+          ...(updatesLevel ? { sport_level: currentLevel } : {}),
+          updated_at: new Date(),
+        })
     }
 
     this.userContextService.invalidateCache(userId)
 
     return {
-      level: calculatedLevel,
+      level: currentLevel,
       benchmark_results: updatedResults,
     }
   }
