@@ -1,5 +1,5 @@
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { AISkillGeneratorService } from './ai-skill-generator.service'
 import { GeneratedSkillProgramSchema } from '../schemas/skill-program.schema'
 

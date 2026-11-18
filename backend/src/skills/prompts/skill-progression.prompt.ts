@@ -1,7 +1,7 @@
 import type { Injury } from 'src/common/injuries/injury.constants'
 import { formatInjuriesForPrompt } from 'src/common/injuries/injury-prompt'
 import { formatRatioImbalances } from 'src/common/ai/diagnostic-prompt'
-import type { RatioImbalance } from 'src/workouts/services/user-context.service'
+import type { RatioImbalance } from 'src/common/ai/diagnostic.types'
 
 /** Catégories où les ratios entre 1RM ont un sens : il n'en existe pas pour la gymnastique ni la mobilité. */
 const STRENGTH_RATIO_CATEGORIES: SkillProgressionParams['skillCategory'][] = ['olympic_lifting', 'strength']

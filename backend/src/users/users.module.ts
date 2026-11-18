@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common'
-import { WorkoutsModule } from 'src/workouts/workouts.module'
+import { UserContextModule } from 'src/user-context/user-context.module'
 import { UsersController } from './users.controller'
 import { UsersService } from './users.service'
 
 @Module({
-  imports: [WorkoutsModule],
+  imports: [UserContextModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService], // Exporter pour que d'autres modules puissent l'utiliser

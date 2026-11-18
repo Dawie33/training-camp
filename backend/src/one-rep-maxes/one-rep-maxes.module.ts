@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common'
-import { WorkoutsModule } from 'src/workouts/workouts.module'
+import { UserContextModule } from 'src/user-context/user-context.module'
 import { OneRepMaxesController } from './one-rep-maxes.controller'
 import { OneRepMaxesService } from './one-rep-maxes.service'
 
 @Module({
-  imports: [WorkoutsModule],
+  imports: [UserContextModule],
   controllers: [OneRepMaxesController],
   providers: [OneRepMaxesService],
   exports: [OneRepMaxesService],

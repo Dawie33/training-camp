@@ -4,7 +4,8 @@ import { AIInvalidResponseException } from '../../common/ai/ai-invalid-response.
 import { OpenAIClientService } from '../../common/ai/openai-client.service'
 import { buildCrossFitSystemPrompt, buildCrossFitWorkoutPrompt } from '../prompts/crossfit-generator.prompt'
 import { GeneratedWorkoutSchema, GeneratedWorkoutValidated } from '../schemas/workout.schema'
-import { ActiveSkillContext, UserContextService } from './user-context.service'
+import type { ActiveSkillContext } from 'src/user-context/types/user-context.types'
+import { UserContextService } from 'src/user-context/user-context.service'
 
 /**
  * Type pour la structure du workout généré par l'IA

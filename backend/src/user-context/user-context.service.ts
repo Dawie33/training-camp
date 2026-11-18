@@ -2,168 +2,18 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
 import { AnalyticsService } from 'src/analytics/analytics.service'
-import type { RunningResult, RunTypeCounts } from 'src/analytics/types/analytics.types'
-import type { Injury } from 'src/common/injuries/injury.constants'
+import type { RunningResult } from 'src/analytics/types/analytics.types'
+import type { PerformanceDiagnosticSummary, RunningDiagnostic } from 'src/common/ai/diagnostic.types'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
 import { toParisDate } from 'src/common/utils/date-only'
 import { RecommendedExerciseSchema } from 'src/skills/schemas/skill-program.schema'
-
-/**
- * Résumé d'une analyse IA post-workout récente, utilisé comme contexte pour la génération.
- */
-export interface RecentAnalysis {
-  date: string
-  workout_name: string
-  performance_level: 'pr' | 'above_average' | 'average' | 'below_average' | 'first_time'
-  strengths: string[]
-  improvements: string[]
-  next_steps: string
-}
-
-/**
- * Étape en cours d'un programme de compétence actif, avec ses exercices recommandés
- * et la date de dernière pratique — injectée dans les prompts de génération IA.
- */
-export interface ActiveSkillContext {
-  program_id: string
-  skill_name: string
-  skill_category: string
-  step_id: string
-  step_title: string
-  step_description?: string
-  recommended_exercises: Array<{
-    name: string
-    sets?: number
-    reps?: string | number
-    rest?: string
-    intensity?: string
-    notes?: string
-  }>
-  coaching_tips?: string
-  last_trained: string | null // ISO date ou null si jamais travaillé
-}
-
-/**
- * Résumé d'un rapport de progression généré par sport (tendance, points forts/faibles, recommandations).
- */
-export interface ProgressionReportSummary {
-  sport: string
-  period_months: number
-  overall_trend: 'improving' | 'stable' | 'declining'
-  period_summary: string
-  strengths: string[]
-  weak_points: string[]
-  recommendations: string[]
-  overall_fitness_level?: string
-  generated_at: string
-}
-
-export type RecentSessionSport = 'crossfit'
-
-/**
- * Séance récente tous sports confondus (CrossFit, force), utilisée comme
- * contexte pour la génération IA et les suggestions de type de séance.
- */
-export interface RecentSession {
-  date: string
-  sport: RecentSessionSport
-  workout_type?: string
-  duration_minutes: number
-  perceived_effort?: number
-}
-
-/** Ratio de force sorti de sa fourchette cible, dans un sens ou dans l'autre. */
-export interface RatioImbalance {
-  label: string
-  value_pct: number
-  target: string
-  direction: 'below' | 'above'
-  reading: string
-  /** Ratio calculé sur au moins un 1RM estimé : à confirmer par un test avant d'en faire un axe de travail. */
-  estimated: boolean
-}
-
-/**
- * Synthèse du diagnostic calculé, sous une forme assez compacte pour tenir dans un prompt.
- *
- * On n'y met que ce qui oriente une décision de programmation : les écarts, les manques
- * et les alertes. Les séries complètes restent dans le module analytics.
- */
-export interface PerformanceDiagnosticSummary {
-  /**
-   * Ratios de force hors fourchette, avec la lecture coach de l'écart. Un ratio trop haut
-   * compte autant qu'un trop bas : il désigne le mouvement du dénominateur comme limitant.
-   */
-  ratio_imbalances: RatioImbalance[]
-  /** Domaines temporels sous 10 % du volume — un athlète ne progresse que là où il s'expose. */
-  underworked_domains: string[]
-  load_zone: string | null
-  load_change_pct: number | null
-  /** Mouvements scalés plus d'une fois sur deux : points faibles techniques probables. */
-  most_scaled_movements: string[]
-  benchmark_trends: { name: string; trend: string; delta_pct: number | null }[]
-  sessions_per_week: number
-  consistency_pct: number
-  /** Course à pied lue dans les fichiers .fit, null quand aucune course n'a été importée sur la période. */
-  running: RunningDiagnostic | null
-}
-
-/** Synthèse course à pied du diagnostic, réduite à ce qui oriente la programmation. */
-export interface RunningDiagnostic {
-  last_28_days_km: number
-  previous_28_days_km: number
-  /** Séances de course des 28 derniers jours par type : continue, fractionné, à stations. */
-  run_types: RunTypeCounts
-  /** Allure moyenne des sorties continues seulement. */
-  recent_pace_min_km: number | null
-  /** Positif = plus lent que sur les 28 jours d'avant. */
-  pace_change_pct: number | null
-  /** Part du temps de course en zones 1-2 (facile) et 4-5 (intense), null sans zones cardiaques. */
-  easy_zone_pct: number | null
-  hard_zone_pct: number | null
-  /**
-   * Dernière séance à stations (format Hyrox) : écart entre le segment de course le plus rapide et le plus lent,
-   * et dérive du premier au dernier quand l'ordre des segments est connu.
-   */
-  latest_stations: { segment_count: number; spread_pct: number; drift_pct: number | null } | null
-  /** Dernière sortie découpée en tours : dérive d'allure du premier au dernier tour d'effort. */
-  latest_laps: { segment_count: number; drift_pct: number } | null
-  /** Dernière simulation Hyrox de chaque format, comparée à la précédente du même format. */
-  hyrox_simulations: {
-    format: string
-    count: number
-    total_seconds: number
-    run_share_pct: number
-    run_drift_pct: number | null
-    /** Négatif = plus rapide que la simulation précédente du même format. */
-    delta_pct: number | null
-  }[]
-}
-
-/**
- * Contexte complet d'un utilisateur (1RMs, équipements, historique, compétences actives,
- * rapports de progression, diagnostic calculé) fourni aux services de génération IA.
- * Voir `UserContextService`.
- */
-export interface UserAIContext {
-  sport_level: string
-  height?: number
-  weight?: number
-  oneRepMaxes: { lift: string; value: number }[]
-  benchmarkResults: Record<string, { result: Record<string, number | string>; date: string }>
-  global_goals: Record<string, boolean>
-  injuries: Injury[]
-  physical_limitations: Record<string, unknown>
-  equipment_available: string[]
-  training_preferences: { preferred_duration?: number; sessions_per_week?: number }
-  recentSessions: RecentSession[]
-  recentAnalyses: RecentAnalysis[]
-  activeSkills: ActiveSkillContext[]
-  completedSkillNames: string[]
-  progressionReports: ProgressionReportSummary[]
-  /** Métriques calculées par le module analytics — jamais estimées par l'IA. */
-  diagnostic: PerformanceDiagnosticSummary
-}
+import type {
+  ActiveSkillContext,
+  ProgressionReportSummary,
+  RecentAnalysis,
+  RecentSession,
+  UserAIContext,
+} from './types/user-context.types'
 
 /**
  * Agrège le contexte complet d'un utilisateur (profil, 1RMs, équipements, historique

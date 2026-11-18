@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common'
-import { WorkoutsModule } from 'src/workouts/workouts.module'
+import { UserContextModule } from 'src/user-context/user-context.module'
 import { TrackingController } from './tracking.controller'
 import { TrackingService } from './tracking.service'
 
 @Module({
-  imports: [WorkoutsModule],
+  imports: [UserContextModule],
   controllers: [TrackingController],
   providers: [TrackingService],
 })

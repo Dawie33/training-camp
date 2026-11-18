@@ -128,7 +128,7 @@ Blocs de prompt partagés : `formatInjuriesForPrompt()` (`common/injuries/`) pou
 
 ### UserContextService
 
-Exporté depuis `WorkoutsModule`. Fournit le contexte utilisateur complet aux services IA : 1RMs, équipements, sessions récentes, analyses récentes, compétences actives (`ActiveSkillContext`). À injecter dans tout nouveau service IA.
+Exporté depuis `UserContextModule` (`backend/src/user-context/`), qui dépend uniquement d'`AnalyticsModule`. Fournit le contexte utilisateur complet aux services IA : 1RMs, équipements, sessions récentes, analyses récentes, compétences actives (`ActiveSkillContext`). À injecter dans tout nouveau service IA, en important `UserContextModule` également pour les invalidations du cache partagé (TTL 30 min). Les types de contexte vivent dans `user-context/types/user-context.types.ts` ; les types de diagnostic pour les prompts dans `common/ai/diagnostic.types.ts`.
 
 ## Architecture frontend (Next.js App Router)
 

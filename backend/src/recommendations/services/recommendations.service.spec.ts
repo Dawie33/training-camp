@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
-import { UserAIContext, UserContextService } from 'src/workouts/services/user-context.service'
+import type { UserAIContext } from 'src/user-context/types/user-context.types'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { RecommendationsService } from './recommendations.service'
 import { DailyCoachStore } from './daily-coach-store.service'
 

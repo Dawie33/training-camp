@@ -63,14 +63,14 @@ Liste complète : `.claude/rules/commands.md`.
 - **Ne jamais supprimer les security headers** définis dans `frontend/next.config.ts`.
 - **Ne jamais réactiver `turbopack: { root: '../' }`** dans `frontend/next.config.ts` — cause des redémarrages intempestifs du backend en watch mode.
 - **Toute interaction OpenAI** doit utiliser `model: 'gpt-4.1'`, `response_format: json_object`, et valider la réponse avec un schéma Zod dédié.
-- **Injecter `UserContextService`** (exporté par `WorkoutsModule`) dans tout nouveau service IA nécessitant le contexte utilisateur (1RM, équipements, sessions, compétences actives).
+- **Injecter `UserContextService`** (exporté par `UserContextModule`) dans tout nouveau service IA nécessitant le contexte utilisateur (1RM, équipements, sessions, compétences actives). Importer ce même module pour invalider le cache partagé.
 - **Ne pas confondre les deux flux de log de workout** : `LogWorkoutModal` (calendrier, API backend) et `WorkoutResultModal` (timer intégré, `localStorage`) sont deux chemins séparés et non interchangeables.
 - **Les migrations Knex** vivent dans `backend/src/database/migrations/`, jamais dans `backend/database/`.
 - **Ne pas lancer un backend séparé** en parallèle de `npm run dev` : conflit sur le port 3001.
 
 ## Fichiers et répertoires clés
 
-- `backend/src/workouts/user-context.service.ts` — contexte utilisateur partagé pour les services IA.
+- `backend/src/user-context/user-context.service.ts` — contexte utilisateur partagé pour les services IA ; types dans `user-context/types/`, types de diagnostic des prompts dans `common/ai/diagnostic.types.ts`.
 - `backend/src/workouts/ai-workout-generator.service.ts`, `backend/src/skills/ai-skill-generator.service.ts`, `backend/src/workout-sessions/workout-analysis.service.ts` — les trois services de génération/analyse IA.
 - `frontend/services/apiClient.ts` — client HTTP central (gestion JWT automatique).
 - `frontend/services/resourceApi.ts` — factory générique pour les clients CRUD.

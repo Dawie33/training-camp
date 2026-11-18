@@ -6,7 +6,7 @@ import { toDateOnly, toParisDate } from 'src/common/utils/date-only'
 import { safeJsonStringify } from 'src/common/utils/utils'
 import { BenchmarkResultDto, SaveBenchmarkResultDto } from 'src/workouts/dto/workout.dto'
 import { CreateWorkoutDto, UpdateWorkoutDto, WorkoutDto, WorkoutQueryDto } from '../dto/workout.dto'
-import { UserContextService } from './user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
 import { applyEditPermission, applyVisibility, WorkoutViewer } from './workout-visibility'
 

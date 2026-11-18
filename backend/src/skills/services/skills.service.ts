@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { toDateOnly, toParisDate } from 'src/common/utils/date-only'
 import { GoogleCalendarService } from 'src/google-calendar/google-calendar.service'
 import {

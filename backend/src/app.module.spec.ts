@@ -2,6 +2,8 @@ import { Test } from '@nestjs/testing'
 import { ConfigService } from '@nestjs/config'
 import { OpenAIClientService } from './common/ai/openai-client.service'
 import { envValidationSchema } from './common/config/env.validation'
+import { UserContextModule } from './user-context/user-context.module'
+import { UserContextService } from './user-context/user-context.service'
 
 /**
  * Vérifie que toute l'injection de dépendances se résout : un provider qui dépend d'un module
@@ -39,6 +41,8 @@ describe('AppModule', () => {
     const { value: defaultModel } = envValidationSchema.extract('OPENAI_MODEL').validate(undefined)
     expect(config.getOrThrow('OPENAI_MODEL')).toBe(defaultModel)
     expect(moduleRef.get(OpenAIClientService).model).toBe(config.getOrThrow('OPENAI_MODEL'))
+    const sharedContext = moduleRef.select(UserContextModule).get(UserContextService, { strict: true })
+    expect(moduleRef.get(UserContextService, { each: true })).toEqual([sharedContext])
     await moduleRef.close()
   })
 })

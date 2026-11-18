@@ -1,22 +1,20 @@
 import { Module } from '@nestjs/common'
-import { AnalyticsModule } from '../analytics/analytics.module'
+import { UserContextModule } from '../user-context/user-context.module'
 import { GoogleCalendarModule } from '../google-calendar/google-calendar.module'
 import { WorkoutScheduleController } from './controllers/workout-schedule.controller'
 import { WorkoutsController } from './controllers/workouts.controller'
 import { AIWorkoutGeneratorService } from './services/ai-workout-generator.service'
-import { UserContextService } from './services/user-context.service'
 import { WorkoutScheduleService } from './services/workout-schedule.service'
 import { WorkoutsService } from './services/workouts.service'
 
 /**
  * Module workouts : CRUD des workouts et de leur planification, génération assistée
- * par IA (WODs) et agrégation du contexte utilisateur.
- * `UserContextService` est exporté pour être réutilisé par tout nouveau service IA.
+ * par IA (WODs).
  */
 @Module({
-  imports: [GoogleCalendarModule, AnalyticsModule],
+  imports: [GoogleCalendarModule, UserContextModule],
   controllers: [WorkoutsController, WorkoutScheduleController],
-  providers: [WorkoutsService, AIWorkoutGeneratorService, WorkoutScheduleService, UserContextService],
-  exports: [WorkoutsService, WorkoutScheduleService, UserContextService, AIWorkoutGeneratorService],
+  providers: [WorkoutsService, AIWorkoutGeneratorService, WorkoutScheduleService],
+  exports: [WorkoutsService, WorkoutScheduleService, AIWorkoutGeneratorService],
 })
 export class WorkoutsModule {}

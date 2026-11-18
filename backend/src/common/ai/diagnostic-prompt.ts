@@ -1,8 +1,4 @@
-import {
-  PerformanceDiagnosticSummary,
-  RatioImbalance,
-  RunningDiagnostic,
-} from 'src/workouts/services/user-context.service'
+import type { PerformanceDiagnosticSummary, RatioImbalance, RunningDiagnostic } from './diagnostic.types'
 
 const DIRECTION_LABELS: Record<RatioImbalance['direction'], string> = {
   below: 'trop bas',

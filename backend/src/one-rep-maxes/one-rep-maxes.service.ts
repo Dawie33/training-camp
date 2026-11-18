@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
-import { UserContextService } from 'src/workouts/services/user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { toDateOnly, toParisDate } from '../common/utils/date-only'
 import type { OneRepMaxLift, OneRepMaxSource } from './one-rep-max.constants'
 

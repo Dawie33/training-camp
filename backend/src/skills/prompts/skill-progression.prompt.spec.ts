@@ -1,5 +1,5 @@
 import { buildSkillProgressionUserPrompt, SkillProgressionParams } from './skill-progression.prompt'
-import type { RatioImbalance } from 'src/workouts/services/user-context.service'
+import type { RatioImbalance } from 'src/common/ai/diagnostic.types'
 
 const SNATCH_TOO_LOW: RatioImbalance = {
   label: 'Snatch / Clean & Jerk',

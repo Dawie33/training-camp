@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
-import { UserContextService } from './user-context.service'
+import { UserContextService } from 'src/user-context/user-context.service'
 import { WorkoutScheduleService } from './workout-schedule.service'
 import * as visibility from './workout-visibility'
 import { WorkoutsService } from './workouts.service'
