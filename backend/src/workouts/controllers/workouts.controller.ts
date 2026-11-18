@@ -23,6 +23,7 @@ import {
   LookupWorkoutDto,
   ParseWorkoutTextDto,
   SaveBenchmarkResultDto,
+  UpdateWorkoutDto,
   WorkoutDto,
   WorkoutQueryDto,
 } from '../dto/workout.dto'
@@ -263,7 +264,7 @@ export class WorkoutsController {
   @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND })) id: string,
-    @Body() updateWorkoutDto: CreateWorkoutDto,
+    @Body() updateWorkoutDto: UpdateWorkoutDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
     return await this.service.update(id, updateWorkoutDto, user)

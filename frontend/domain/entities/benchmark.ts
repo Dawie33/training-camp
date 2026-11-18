@@ -19,7 +19,6 @@ export interface BenchmarkResult {
 
 export interface SaveBenchmarkResultDto {
   workoutId: string
-  workoutName: string
   result: BenchmarkResult
 
   // Contexte optionnel

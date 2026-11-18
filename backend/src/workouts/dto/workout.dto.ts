@@ -7,6 +7,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -36,6 +37,7 @@ export class CreateWorkoutDto {
   workout_type?: string
 
   @IsOptional()
+  @IsObject()
   blocks?: Record<string, unknown>
 
   @IsInt()
@@ -51,6 +53,7 @@ export class CreateWorkoutDto {
   difficulty?: string
 
   @IsOptional()
+  @IsObject()
   scaling_options?: Record<string, unknown>
 
   @IsArray()
@@ -70,22 +73,12 @@ export class CreateWorkoutDto {
   ai_generated?: boolean
 
   @IsOptional()
+  @IsObject()
   ai_parameters?: Record<string, unknown>
 
   @IsOptional()
+  @IsObject()
   target_metrics?: Record<string, unknown>
-
-  @IsInt()
-  @IsOptional()
-  usage_count?: number
-
-  @IsNumber()
-  @IsOptional()
-  average_rating?: number
-
-  @IsInt()
-  @IsOptional()
-  total_ratings?: number
 
   @IsBoolean()
   @IsOptional()
@@ -128,63 +121,7 @@ export class CreateWorkoutDto {
 /**
  * Données de mise à jour partielle d'un workout du référentiel commun.
  */
-export class UpdateWorkoutDto {
-  @IsString()
-  @IsOptional()
-  name?: string
-
-  @IsString()
-  @IsOptional()
-  description?: string
-
-  @IsString()
-  @IsOptional()
-  workout_type?: string
-
-  @IsInt()
-  @IsOptional()
-  estimated_duration?: number
-
-  @IsString()
-  @IsOptional()
-  intensity?: string
-
-  @IsString()
-  @IsOptional()
-  difficulty?: string
-
-  @IsString()
-  @IsOptional()
-  @IsIn(['draft', 'published', 'archived'])
-  status?: string
-
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean
-
-  @IsBoolean()
-  @IsOptional()
-  isFeatured?: boolean
-
-  @IsBoolean()
-  @IsOptional()
-  isPublic?: boolean
-
-  @IsOptional()
-  blocks?: Record<string, unknown>
-
-  @IsArray()
-  @IsOptional()
-  tags?: string[]
-
-  @IsString()
-  @IsOptional()
-  scheduled_date?: string
-
-  @IsString()
-  @IsOptional()
-  image_url?: string
-}
+export class UpdateWorkoutDto extends CreateWorkoutDto {}
 
 /**
  * Paramètres de génération d'un workout générique via l'IA.
@@ -426,6 +363,7 @@ export class WorkoutDto {
 export class ParseWorkoutTextDto {
   @IsString()
   @MinLength(10)
+  @MaxLength(5000)
   text!: string
 }
 
@@ -435,10 +373,12 @@ export class ParseWorkoutTextDto {
 export class LookupWorkoutDto {
   @IsString()
   @MinLength(2)
+  @MaxLength(100)
   name!: string
 
   @IsOptional()
   @IsString()
+  @MaxLength(5000)
   referenceData?: string
 }
 
@@ -475,10 +415,6 @@ export class SaveBenchmarkResultDto {
   @IsNotEmpty()
   @IsUUID()
   workoutId!: string
-
-  @IsNotEmpty()
-  @IsString()
-  workoutName!: string
 
   @ValidateNested()
   @Type(() => BenchmarkResultDto)

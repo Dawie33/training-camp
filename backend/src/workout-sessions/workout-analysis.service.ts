@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectConnection } from 'nest-knexjs'
 import { OpenAIClientService } from 'src/common/ai/openai-client.service'
 import { UserContextService } from 'src/workouts/services/user-context.service'
+import { applyVisibility } from 'src/workouts/services/workout-visibility'
 import { WodAnalysis, WodAnalysisSchema } from './schemas/wod-analysis.schema'
+import type { SessionResults } from './schemas/session-results.schema'
+import { describeEffort, describeRx, describeScore } from './prompts/session-performance'
 
 @Injectable()
 export class WorkoutAnalysisService {
@@ -15,7 +18,10 @@ export class WorkoutAnalysisService {
 
   async analyzeSession(sessionId: string, userId: string, force = false): Promise<WodAnalysis> {
     // 1. Récupérer la session
-    const session = await this.knex('workout_sessions').where({ id: sessionId, user_id: userId }).first()
+    const session = await this.knex('workout_sessions')
+      .select('*', this.knex.raw('updated_at::text as analysis_version'))
+      .where({ id: sessionId, user_id: userId })
+      .first()
 
     if (!session) throw new NotFoundException('Session not found')
 
@@ -28,17 +34,26 @@ export class WorkoutAnalysisService {
     // 2. Récupérer le workout associé
     let workout: Record<string, unknown> | null = null
     if (session.workout_id) {
-      workout = (await this.knex('workouts').where({ id: session.workout_id }).first()) ?? null
+      workout = await applyVisibility(this.knex('workouts').where({ id: session.workout_id }), { id: userId }).first()
+      if (!workout) throw new NotFoundException('Workout non trouvé')
     } else if (session.personalized_workout_id) {
-      workout =
-        (await this.knex('personalized_workouts').where({ id: session.personalized_workout_id }).first()) ?? null
+      const personalized = await this.knex('personalized_workouts')
+        .where({ id: session.personalized_workout_id, user_id: userId })
+        .first()
+      if (!personalized) throw new NotFoundException('Workout personnalisé non trouvé')
+      workout = typeof personalized.plan_json === 'string' ? JSON.parse(personalized.plan_json) : personalized.plan_json
     }
 
     // 3. Récupérer les sessions passées pour le même workout (pour comparaison)
     const pastSessions: Record<string, unknown>[] = []
-    if (session.workout_id) {
+    if (session.workout_id || session.personalized_workout_id) {
       const rows = await this.knex('workout_sessions')
-        .where({ workout_id: session.workout_id, user_id: userId })
+        .where({
+          ...(session.workout_id
+            ? { workout_id: session.workout_id }
+            : { personalized_workout_id: session.personalized_workout_id }),
+          user_id: userId,
+        })
         .whereNot({ id: sessionId })
         .whereNotNull('completed_at')
         .orderBy('started_at', 'desc')
@@ -47,12 +62,12 @@ export class WorkoutAnalysisService {
     }
 
     // 4. Construire le prompt
-    const results = (session.results as Record<string, unknown>) ?? {}
+    const results: SessionResults = session.results ?? {}
     const workoutName = (workout?.name as string) ?? 'Workout inconnu'
     const workoutType = (workout?.workout_type as string) ?? 'conditioning'
 
-    const scoreDescription = this.buildScoreDescription(results, workoutType)
-    const pastPerfsDescription = this.buildPastPerfsDescription(pastSessions, workoutType)
+    const scoreDescription = describeScore(results)
+    const pastPerfsDescription = this.buildPastPerfsDescription(pastSessions)
     const workoutDescription = this.buildWorkoutDescription(workout)
 
     const prompt = `Tu es un coach CrossFit expert. Analyse la performance suivante et donne un retour constructif et motivant.
@@ -62,7 +77,7 @@ ${workoutDescription}
 
 **Performance actuelle :**
 ${scoreDescription}
-- RX : ${results.rx ? 'Oui' : 'Non (Scaled)'}
+${describeEffort(results)}
 ${session.notes ? `- Notes de l'athlète : "${session.notes}"` : ''}
 
 **Historique des performances sur ce workout :**
@@ -86,42 +101,24 @@ Réponds en JSON avec exactement cette structure :
       schema: WodAnalysisSchema,
     })
 
-    await this.knex('workout_sessions')
-      .where({ id: sessionId })
+    const updated = await this.knex('workout_sessions')
+      .where({ id: sessionId, user_id: userId, updated_at: session.analysis_version })
       .update({ ai_analysis: JSON.stringify(analysis) })
+    if (!updated) throw new ConflictException('La séance a changé pendant l’analyse. Relancez l’analyse.')
 
     this.userContextService.invalidateCache(userId)
 
     return analysis
   }
 
-  private buildScoreDescription(results: Record<string, unknown>, workoutType: string): string {
-    if (results.cap_reached) {
-      const parts = [`- Cap atteint (DNF)`]
-      if (results.reps_at_cap) parts.push(`- Score : ${results.reps_at_cap} reps au cap`)
-      if (results.cap_description) parts.push(`- Où : ${results.cap_description}`)
-      return parts.join('\n')
-    }
-    if (results.elapsed_time_seconds) {
-      const secs = results.elapsed_time_seconds as number
-      const m = Math.floor(secs / 60)
-      const s = secs % 60
-      return `- Temps : ${m}m${s > 0 ? `${s}s` : ''}`
-    }
-    if (workoutType === 'amrap' && (results.rounds || results.reps)) {
-      return `- Score AMRAP : ${results.rounds ?? 0} rounds + ${results.reps ?? 0} reps`
-    }
-    return '- Workout complété (score libre)'
-  }
-
-  private buildPastPerfsDescription(sessions: Record<string, unknown>[], workoutType: string): string {
+  private buildPastPerfsDescription(sessions: Record<string, unknown>[]): string {
     if (sessions.length === 0) return 'Première fois sur ce workout.'
 
     const lines = sessions.map((s, i) => {
-      const r = (s.results as Record<string, unknown>) ?? {}
+      const r = (s.results as SessionResults) ?? {}
       const date = new Date(s.started_at as string).toLocaleDateString('fr-FR')
-      const score = this.buildScoreDescription(r, workoutType).replace(/\n/g, ', ').replace(/- /g, '')
-      const rx = r.rx ? 'RX' : 'Scaled'
+      const score = describeScore(r).replace(/\n/g, ', ').replace(/- /g, '')
+      const rx = describeRx(r)
       return `${i + 1}. ${date} — ${score} (${rx})`
     })
 

@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getConnectionToken } from 'nest-knexjs'
 import { UserContextService } from './user-context.service'
@@ -24,6 +24,10 @@ function createChainableBuilder(resolvedValue: unknown) {
     'update',
     'returning',
     'delete',
+    'forUpdate',
+    'insert',
+    'onConflict',
+    'merge',
   ]) {
     builder[method] = jest.fn().mockReturnThis()
   }
@@ -82,6 +86,9 @@ describe('WorkoutsService — visibilité des workouts', () => {
   let visibilitySpy: jest.SpyInstance
 
   async function buildService(knexMock: jest.Mock): Promise<WorkoutsService> {
+    Object.assign(knexMock, {
+      transaction: jest.fn((callback: (trx: jest.Mock) => Promise<unknown>) => callback(knexMock)),
+    })
     const moduleRef = await Test.createTestingModule({
       providers: [
         WorkoutsService,
@@ -166,7 +173,7 @@ describe('WorkoutsService — visibilité des workouts', () => {
 
   it("refuse la suppression d'un workout que l'utilisateur ne peut pas supprimer (404)", async () => {
     // Arrange — la suppression filtrée ne touche aucune ligne
-    const builder = createChainableBuilder(0)
+    const builder = createChainableBuilder(undefined)
     const service = await buildService(jest.fn().mockReturnValue(builder))
     const permissionSpy = jest.spyOn(visibility, 'applyEditPermission')
 
@@ -177,12 +184,136 @@ describe('WorkoutsService — visibilité des workouts', () => {
 
   it("supprime le workout de l'utilisateur", async () => {
     // Arrange — une ligne supprimée
-    const service = await buildService(jest.fn().mockReturnValue(createChainableBuilder(1)))
+    const service = await buildService(
+      jest
+        .fn()
+        .mockReturnValueOnce(createChainableBuilder({ id: 'mon-workout' }))
+        .mockReturnValue(createChainableBuilder(undefined))
+    )
 
     // Act
     const result = await service.remove('mon-workout', viewer)
 
     // Assert
     expect(result).toEqual({ success: true })
+  })
+
+  it('refuse la suppression d’un workout déjà utilisé pour préserver les séances et le calendrier', async () => {
+    const service = await buildService(
+      jest
+        .fn()
+        .mockReturnValueOnce(createChainableBuilder({ id: 'workout' }))
+        .mockReturnValue(createChainableBuilder({ id: 'session' }))
+    )
+    await expect(service.remove('workout', viewer)).rejects.toBeInstanceOf(ConflictException)
+  })
+
+  it('enregistre tous les champs modifiables, dont le benchmark et les JSON', async () => {
+    const query = createChainableBuilder([{ id: 'workout', is_benchmark: true }])
+    const service = await buildService(jest.fn().mockReturnValue(query))
+    await service.update(
+      'workout',
+      {
+        is_benchmark: true,
+        coach_notes: 'Technique',
+        equipment_required: ['barbell'],
+        slug: 'test',
+      },
+      viewer
+    )
+    expect(query.update).toHaveBeenCalledWith({
+      is_benchmark: true,
+      coach_notes: 'Technique',
+      equipment_required: '["barbell"]',
+      slug: 'test',
+    })
+    await expect(service.update('workout', {}, viewer)).rejects.toBeInstanceOf(BadRequestException)
+  })
+
+  it('utilise le nom canonique et vérifie la visibilité pour un résultat de benchmark', async () => {
+    const query = createChainableBuilder({ id: 'workout', name: 'Fran', is_benchmark: true })
+    const service = await buildService(jest.fn().mockReturnValue(query))
+    const record = jest.spyOn(service, 'recordBenchmarkResult').mockResolvedValue({
+      level: 'beginner',
+      benchmark_results: {},
+    })
+    await service.saveBenchmarkResult('user-2', { workoutId: 'workout', result: { time_seconds: 300 } })
+    expect(visibilitySpy).toHaveBeenCalledWith(query, { id: 'user-2' })
+    expect(record).toHaveBeenCalledWith('user-2', 'workout', 'Fran', { time_seconds: 300 }, 'manual')
+  })
+})
+
+describe('WorkoutsService — historique benchmark transactionnel', () => {
+  it.each([
+    { savedId: 'october', latestId: 'november', overallId: 'november', expectedLevel: 'advanced' },
+    { savedId: 'october', latestId: 'october', overallId: 'other-workout', expectedLevel: 'advanced' },
+    { savedId: 'october', latestId: 'october', overallId: 'october', expectedLevel: 'intermediate' },
+  ])('préserve la chronologie après upsert : %j', async ({ savedId, latestId, overallId, expectedLevel }) => {
+    const user = createChainableBuilder({
+      sport_level: 'advanced',
+      benchmark_results: { Cindy: { result: { rounds: 20 } } },
+    })
+    const update = createChainableBuilder(1)
+    const history = createChainableBuilder([{ id: savedId }])
+    const latest = createChainableBuilder({
+      id: latestId,
+      score_type: 'time_seconds',
+      score_value: latestId === savedId ? '300' : '240',
+      extra_reps: null,
+      measured_at: latestId === savedId ? '2026-10-01T10:00:00Z' : '2026-11-01T10:00:00Z',
+    })
+    const overall = createChainableBuilder({ id: overallId })
+    const db = jest
+      .fn()
+      .mockReturnValueOnce(user)
+      .mockReturnValueOnce(history)
+      .mockReturnValueOnce(latest)
+      .mockReturnValueOnce(overall)
+      .mockReturnValueOnce(update)
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        WorkoutsService,
+        {
+          provide: getConnectionToken(),
+          useValue: { transaction: (callback: (trx: jest.Mock) => Promise<unknown>) => callback(db) },
+        },
+        { provide: UserContextService, useValue: { invalidateCache: jest.fn() } },
+        { provide: WorkoutScheduleService, useValue: {} },
+      ],
+    }).compile()
+    const service = moduleRef.get(WorkoutsService)
+    const result = await service.recordBenchmarkResult('user', 'fran', 'Fran', { time_seconds: 300 }, 'manual', {
+      sessionId: 'session',
+      measuredAt: '2026-10-01T10:00:00Z',
+    })
+    expect(user.forUpdate).toHaveBeenCalled()
+    expect(history.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        session_id: 'session',
+        measured_at: '2026-10-01T10:00:00Z',
+        workout_name: 'Fran',
+        score_value: 300,
+      })
+    )
+    expect(history.onConflict).toHaveBeenCalledWith('session_id')
+    expect(history.merge).toHaveBeenCalled()
+    expect(latest.where).toHaveBeenCalledWith({ user_id: 'user', workout_id: 'fran' })
+    expect(latest.orderBy.mock.calls).toEqual([
+      ['measured_at', 'desc'],
+      ['id', 'desc'],
+    ])
+    expect(overall.where).toHaveBeenCalledWith({ user_id: 'user' })
+    expect(result.benchmark_results).toEqual({
+      Cindy: { result: { rounds: 20 } },
+      Fran: {
+        workout_id: 'fran',
+        result: { time_seconds: latestId === savedId ? 300 : 240 },
+        date: latestId === savedId ? '2026-10-01T10:00:00Z' : '2026-11-01T10:00:00Z',
+      },
+    })
+    expect(result.level).toBe(expectedLevel)
+    const profileUpdate = update.update.mock.calls[0][0]
+    if (overallId === savedId) expect(profileUpdate.sport_level).toBe(expectedLevel)
+    else expect(profileUpdate).not.toHaveProperty('sport_level')
   })
 })

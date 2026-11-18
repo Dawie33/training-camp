@@ -208,39 +208,21 @@ export class WorkoutsService {
    * @throws NotFoundException si le workout n'existe pas ou si l'utilisateur ne peut pas le modifier
    */
   async update(id: string, data: UpdateWorkoutDto, viewer: WorkoutViewer) {
-    const updateData: Partial<{
-      name: string
-      slug: string
-      description: string
-      workout_type: string
-      wod_format: string
-      difficulty: string
-      intensity: string
-      estimated_duration: number
-      status: string
-      isActive: boolean
-      isFeatured: boolean
-      isPublic: boolean
-      blocks: string
-      tags: string
-      scheduled_date: string
-      image_url: string
-    }> = {}
-
-    if (data.name !== undefined) updateData.name = data.name
-    if (data.description !== undefined) updateData.description = data.description
-    if (data.workout_type !== undefined) updateData.workout_type = data.workout_type
-    if (data.difficulty !== undefined) updateData.difficulty = data.difficulty
-    if (data.intensity !== undefined) updateData.intensity = data.intensity
-    if (data.estimated_duration !== undefined) updateData.estimated_duration = data.estimated_duration
-    if (data.status !== undefined) updateData.status = data.status
-    if (data.isActive !== undefined) updateData.isActive = data.isActive
-    if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured
-    if (data.isPublic !== undefined) updateData.isPublic = data.isPublic
-    if (data.blocks !== undefined) updateData.blocks = JSON.stringify(data.blocks)
-    if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags)
-    if (data.scheduled_date !== undefined) updateData.scheduled_date = data.scheduled_date
-    if (data.image_url !== undefined) updateData.image_url = data.image_url
+    const updateData: Record<string, unknown> = {}
+    const jsonFields = new Set([
+      'blocks',
+      'tags',
+      'scaling_options',
+      'equipment_required',
+      'focus_areas',
+      'metrics_tracked',
+      'ai_parameters',
+      'target_metrics',
+    ])
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) updateData[key] = jsonFields.has(key) ? JSON.stringify(value) : value
+    }
+    if (Object.keys(updateData).length === 0) throw new BadRequestException('Aucun champ à modifier')
     const [row] = await applyEditPermission(this.knex('workouts').where({ id }), viewer)
       .update(updateData)
       .returning('*')
@@ -398,13 +380,13 @@ export class WorkoutsService {
   /**
    * Enregistre le résultat d'un benchmark et calcule/met à jour le niveau de l'utilisateur
    * @param user_id ID de l'utilisateur
-   * @param data Données du benchmark (workoutId, workoutName, result)
+   * @param data Données du benchmark (workoutId, result)
    */
   async saveBenchmarkResult(user_id: string, data: SaveBenchmarkResultDto) {
-    const { workoutId, workoutName, result } = data
+    const { workoutId, result } = data
 
     // Vérifier que le workout ciblé est bien un benchmark
-    const workout = await this.knex('workouts').where({ id: workoutId }).first()
+    const workout = await applyVisibility(this.knex('workouts').where({ id: workoutId }), { id: user_id }).first()
 
     if (!workout) {
       throw new NotFoundException('Workout introuvable')
@@ -416,7 +398,7 @@ export class WorkoutsService {
     const { level, benchmark_results } = await this.recordBenchmarkResult(
       user_id,
       workoutId,
-      workoutName,
+      workout.name,
       result,
       'manual'
     )
@@ -443,33 +425,26 @@ export class WorkoutsService {
     workoutId: string,
     workoutName: string,
     result: BenchmarkResultDto,
-    source: 'manual' | 'scheduled_test'
-  ) {
+    source: 'manual' | 'scheduled_test',
+    options: { sessionId?: string; measuredAt?: string; transaction?: Knex.Transaction } = {}
+  ): Promise<{ level: string; benchmark_results: Record<string, unknown> }> {
+    if (!options.transaction) {
+      const recorded = await this.knex.transaction(transaction =>
+        this.recordBenchmarkResult(userId, workoutId, workoutName, result, source, { ...options, transaction })
+      )
+      this.userContextService.invalidateCache(userId)
+      return recorded
+    }
+    const db = options.transaction
     // Récupérer le profil utilisateur
-    const user = await this.knex('users').where({ id: userId }).first()
+    const user = await db('users').where({ id: userId }).forUpdate().first()
 
     const existingResults = user?.benchmark_results || {}
 
-    const updatedResults = {
-      ...existingResults,
-      [workoutName]: {
-        workout_id: workoutId,
-        result,
-        date: new Date().toISOString(),
-      },
-    }
-
     // Calculer le niveau basé sur les résultats
     const calculatedLevel = calculateLevelFromBenchmarks(workoutName, result, user?.sport_level || 'beginner')
-
-    // Mettre à jour directement dans la table users
-    await this.knex('users')
-      .where({ id: userId })
-      .update({
-        benchmark_results: JSON.stringify(updatedResults),
-        sport_level: calculatedLevel,
-        updated_at: new Date(),
-      })
+    let updatedResults: Record<string, unknown> = existingResults
+    let currentLevel: string = user?.sport_level || 'beginner'
 
     // Historiser le résultat pour pouvoir suivre la progression dans le temps
     let scoreType: string | null = null
@@ -489,7 +464,7 @@ export class WorkoutsService {
     }
 
     if (scoreType && scoreValue !== null) {
-      await this.knex('benchmark_history').insert({
+      const history = {
         user_id: userId,
         workout_id: workoutId,
         workout_name: workoutName,
@@ -498,13 +473,50 @@ export class WorkoutsService {
         extra_reps: extraReps,
         calculated_level: calculatedLevel,
         source,
-      })
+        measured_at: options.measuredAt ?? new Date().toISOString(),
+        session_id: options.sessionId ?? null,
+      }
+      const insert = db('benchmark_history').insert(history)
+      const [saved] = await (options.sessionId ? insert.onConflict('session_id').merge() : insert).returning('id')
+      const latest = await db('benchmark_history')
+        .where({ user_id: userId, workout_id: workoutId })
+        .orderBy('measured_at', 'desc')
+        .orderBy('id', 'desc')
+        .first()
+      updatedResults = {
+        ...existingResults,
+        [workoutName]: {
+          workout_id: workoutId,
+          result:
+            latest.id === saved.id
+              ? result
+              : {
+                  [latest.score_type]: Number(latest.score_value),
+                  ...(latest.extra_reps !== null ? { reps: latest.extra_reps } : {}),
+                },
+          date: latest.measured_at,
+        },
+      }
+      const latestOverall = await db('benchmark_history')
+        .where({ user_id: userId })
+        .orderBy('measured_at', 'desc')
+        .orderBy('id', 'desc')
+        .first()
+      const updatesLevel = latestOverall.id === saved.id
+      if (updatesLevel) currentLevel = calculatedLevel
+      await db('users')
+        .where({ id: userId })
+        .update({
+          benchmark_results: JSON.stringify(updatedResults),
+          ...(updatesLevel ? { sport_level: currentLevel } : {}),
+          updated_at: new Date(),
+        })
     }
 
     this.userContextService.invalidateCache(userId)
 
     return {
-      level: calculatedLevel,
+      level: currentLevel,
       benchmark_results: updatedResults,
     }
   }
@@ -542,6 +554,38 @@ export class WorkoutsService {
     }
 
     return grouped
+  }
+
+  async removeSessionBenchmark(transaction: Knex.Transaction, userId: string, sessionId: string): Promise<void> {
+    const user = await transaction('users').where({ id: userId }).forUpdate().first()
+    const removed = await transaction('benchmark_history').where({ user_id: userId, session_id: sessionId }).first()
+    if (!removed) return
+    await transaction('benchmark_history').where({ user_id: userId, session_id: sessionId }).delete()
+    const latest = await transaction('benchmark_history')
+      .where({ user_id: userId, workout_id: removed.workout_id })
+      .orderBy('measured_at', 'desc')
+      .orderBy('id', 'desc')
+      .first()
+    const results = { ...(user?.benchmark_results ?? {}) }
+    if (latest) {
+      results[removed.workout_name] = {
+        workout_id: latest.workout_id,
+        result: {
+          [latest.score_type]: Number(latest.score_value),
+          ...(latest.extra_reps !== null ? { reps: latest.extra_reps } : {}),
+        },
+        date: latest.measured_at,
+      }
+    } else {
+      delete results[removed.workout_name]
+    }
+    // Supprimer une mesure n'est pas une nouvelle évaluation du niveau déclaré.
+    await transaction('users')
+      .where({ id: userId })
+      .update({
+        benchmark_results: JSON.stringify(results),
+        updated_at: transaction.fn.now(),
+      })
   }
 
   /**
@@ -610,15 +654,22 @@ export class WorkoutsService {
 
   /**
    * Supprime un workout, si l'utilisateur a le droit de le modifier (voir `applyEditPermission`).
-   * Attention : les séances, planifications et l'historique de benchmark liés sont supprimés en cascade.
+   * Les workouts utilisés ne sont pas supprimés : leur historique doit rester consultable.
    * @param id ID du workout
    * @param viewer Utilisateur connecté
    * @returns Le résultat de la suppression
    * @throws NotFoundException si le workout n'existe pas ou si l'utilisateur ne peut pas le supprimer
    */
   async remove(id: string, viewer: WorkoutViewer) {
-    const deleted = await applyEditPermission(this.knex('workouts').where({ id }), viewer).delete()
-    if (deleted === 0) throw new NotFoundException('Workout non trouvé')
+    await this.knex.transaction(async trx => {
+      const workout = await applyEditPermission(trx('workouts').where({ id }), viewer).forUpdate().first()
+      if (!workout) throw new NotFoundException('Workout non trouvé')
+      for (const table of ['workout_sessions', 'benchmark_history', 'user_workout_schedule']) {
+        const reference = await trx(table).where({ workout_id: id }).first()
+        if (reference) throw new ConflictException('Ce workout est utilisé. Archivez-le plutôt que de le supprimer.')
+      }
+      await trx('workouts').where({ id }).delete()
+    })
     return { success: true }
   }
 }

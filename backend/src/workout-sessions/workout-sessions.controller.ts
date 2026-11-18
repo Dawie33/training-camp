@@ -1,9 +1,21 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { CurrentUser } from '../common/decorators/current-user.decorator'
 import type { AuthenticatedUser } from '../common/types/authenticated-user'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { CreateWorkoutSessionDto, UpdateWorkoutSessionDto } from './dto/session.dto'
+import { CreateWorkoutSessionDto, ListSessionsQueryDto, UpdateWorkoutSessionDto } from './dto/session.dto'
 import { WorkoutAnalysisService } from './workout-analysis.service'
 import { WorkoutSessionsService } from './workout-sessions.service'
 
@@ -16,17 +28,13 @@ export class WorkoutSessionsController {
   ) {}
 
   @Get()
-  async findAll(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number
-  ) {
+  async findAll(@CurrentUser() user: AuthenticatedUser, @Query() query: ListSessionsQueryDto) {
     const userId = user.id
-    return this.sessionsService.findAll(userId, limit, offset)
+    return this.sessionsService.findAll(userId, query.limit, query.offset)
   }
 
   @Get(':id')
-  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') sessionId: string) {
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) sessionId: string) {
     const userId = user.id
     const session = await this.sessionsService.findOne(sessionId, userId)
 
@@ -38,7 +46,7 @@ export class WorkoutSessionsController {
   }
 
   @Get('workout/:workoutId')
-  async findByWorkout(@CurrentUser() user: AuthenticatedUser, @Param('workoutId') workoutId: string) {
+  async findByWorkout(@CurrentUser() user: AuthenticatedUser, @Param('workoutId', ParseUUIDPipe) workoutId: string) {
     const userId = user.id
     return this.sessionsService.findByWorkout(workoutId, userId)
   }
@@ -52,7 +60,7 @@ export class WorkoutSessionsController {
   @Patch(':id')
   async update(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id') sessionId: string,
+    @Param('id', ParseUUIDPipe) sessionId: string,
     @Body() data: UpdateWorkoutSessionDto
   ) {
     const userId = user.id
@@ -69,7 +77,7 @@ export class WorkoutSessionsController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async analyze(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id') sessionId: string,
+    @Param('id', ParseUUIDPipe) sessionId: string,
     @Query('force') force?: string
   ) {
     const userId = user.id
@@ -77,7 +85,7 @@ export class WorkoutSessionsController {
   }
 
   @Delete(':id')
-  async delete(@CurrentUser() user: AuthenticatedUser, @Param('id') sessionId: string) {
+  async delete(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) sessionId: string) {
     const userId = user.id
     const deleted = await this.sessionsService.delete(sessionId, userId)
 

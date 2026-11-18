@@ -4,6 +4,7 @@ import { InjectModel } from 'nest-knexjs'
 import { toDateOnly } from 'src/common/utils/date-only'
 import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
+import { applyVisibility } from './workout-visibility'
 
 /**
  * Gère la planification des workouts sur le calendrier utilisateur, la synchronisation
@@ -175,7 +176,7 @@ export class WorkoutScheduleService {
 
     if (data.workout_id) {
       // Vérifier si le workout standard existe
-      const workout = await db('workouts').where('id', data.workout_id).first()
+      const workout = await applyVisibility(db('workouts').where('id', data.workout_id), { id: userId }).first()
       if (!workout) {
         throw new NotFoundException('Workout non trouvé')
       }
@@ -306,6 +307,24 @@ export class WorkoutScheduleService {
 
     if (!existing) {
       throw new NotFoundException('Planification non trouvée')
+    }
+
+    if (data.completed_session_id) {
+      const session = await this.knex('workout_sessions')
+        .where({ id: data.completed_session_id, user_id: userId })
+        .first()
+      if (!session) throw new NotFoundException('Session non trouvée')
+      const isUnboundBoxSession =
+        existing.session_type === 'box_session' && !existing.workout_id && !existing.personalized_workout_id
+      if (
+        !session.completed_at ||
+        existing.session_type === 'rest' ||
+        (!isUnboundBoxSession &&
+          ((session.workout_id ?? null) !== (existing.workout_id ?? null) ||
+            (session.personalized_workout_id ?? null) !== (existing.personalized_workout_id ?? null)))
+      ) {
+        throw new BadRequestException('La séance terminée doit correspondre au workout planifié')
+      }
     }
 
     // existing.scheduled_date est un objet Date (colonne date) : on compare les jours, pas les types

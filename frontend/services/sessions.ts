@@ -46,6 +46,20 @@ export class SessionService {
     return sessionApi.getAll(params)
   }
 
+  async getHistory(): Promise<WorkoutSession[]> {
+    const sessions: WorkoutSession[] = []
+    let count: number
+    do {
+      const page = await this.getAll({ limit: 100, offset: sessions.length })
+      sessions.push(...page.rows)
+      count = page.count
+      if (page.rows.length === 0 && sessions.length < count) {
+        throw new Error('Historique incomplet : rechargez les séances')
+      }
+    } while (sessions.length < count)
+    return sessions
+  }
+
   /**
    * Récupère une session de workout par son ID
    * @param sessionId ID de la session

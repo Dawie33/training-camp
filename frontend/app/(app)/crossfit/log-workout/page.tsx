@@ -5,7 +5,9 @@ import { StarRating } from '@/components/ui/star-rating'
 import { TimeInput } from '@/components/ui/time-input'
 import { ExerciseResult, PersonalizedWorkout, Workouts } from '@/domain/entities/workout'
 import { Exercise, SectionType, WorkoutSection } from '@/domain/entities/workout-structure'
-import { scheduleApi, sessionService, workoutsService } from '@/services'
+import { sessionService, workoutsService } from '@/services'
+import { ApiError } from '@/services/apiClient'
+import { toLocalDateTimeInput } from '@/lib/date-only'
 import { FitDataSummary } from '@/components/fit-import/FitDataSummary'
 import {
   FitFileTooLargeError,
@@ -205,7 +207,7 @@ function LogWorkoutContent() {
   // null tant que l'athlète n'a pas touché au champ : la durée affichée est alors déduite du contexte
   const [sessionMinutesInput, setSessionMinutesInput] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
-  const [wodDate, setWodDate] = useState(() => new Date().toISOString().slice(0, 16))
+  const [wodDate, setWodDate] = useState(() => toLocalDateTimeInput())
 
   const [fitData, setFitData] = useState<MultiActivityFitData | null>(null)
   const [isParsing, setIsParsing] = useState(false)
@@ -441,6 +443,10 @@ function LogWorkoutContent() {
         return
       }
     }
+    if (!Number.isFinite(new Date(wodDate).getTime())) {
+      toast.error('Saisis une date de séance valide')
+      return
+    }
 
     try {
       setIsSaving(true)
@@ -456,8 +462,6 @@ function LogWorkoutContent() {
       } else {
         sessionData.workout_id = selectedWorkout?.id
       }
-      const session = await sessionService.startSession(sessionData)
-
       const exerciseResults: ExerciseResult[] = exerciseGroups.flatMap(group =>
         group.exercises.flatMap((exercise, i) => {
           const idx = group.startIndex + i
@@ -510,21 +514,18 @@ function LogWorkoutContent() {
         }
       }
 
-      await sessionService.updateSession(session.id, {
+      await sessionService.startSession({
+        ...sessionData,
+        schedule_id: searchParams.get('scheduleId') || undefined,
         completed_at: completedAt.toISOString(),
         notes: notes || undefined,
         results: resultPayload,
       })
 
-      const scheduleId = searchParams.get('scheduleId')
-      if (scheduleId) {
-        await scheduleApi.markAsCompleted(scheduleId, session.id)
-      }
-
       toast.success('Séance enregistrée !')
       router.push('/crossfit')
-    } catch {
-      toast.error('Erreur lors de l\'enregistrement')
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : 'Erreur lors de l\'enregistrement')
     } finally {
       setIsSaving(false)
     }

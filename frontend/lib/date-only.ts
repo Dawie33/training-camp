@@ -10,3 +10,7 @@ export function toLocalDateString(value: Date | string = new Date()): string {
   const date = new Date(value)
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
+
+export function toLocalDateTimeInput(value: Date = new Date()): string {
+  return `${toLocalDateString(value)}T${pad(value.getHours())}:${pad(value.getMinutes())}`
+}

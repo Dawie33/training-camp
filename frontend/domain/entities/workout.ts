@@ -119,10 +119,11 @@ export function canEditWorkout(
     return user.role === 'admin' && workout.isPublic !== false
 }
 
-export interface WorkoutSessionCreate {
+export interface WorkoutSessionCreate extends WorkoutSessionUpdate {
     workout_id?: string
     personalized_workout_id?: string
     started_at?: string
+    schedule_id?: string
 }
 
 export interface WorkoutSessionMetrics {

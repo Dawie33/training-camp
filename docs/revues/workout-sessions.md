@@ -6,6 +6,29 @@ Ce document s'adresse à un développeur junior : chaque problème donne le fich
 
 Les numéros de ligne correspondent au backend reformaté par Prettier (branche `fix/39-typecheck`).
 
+## État des corrections — 17 novembre 2026
+
+Les sections suivantes conservent les constats initiaux ; ce tableau distingue le code corrigé du travail restant.
+
+| Points | État |
+|---|---|
+| B1 | Corrigé : score for-time, cap (rounds/progression), rounds/reps et split lus depuis le contrat réel, indépendamment du type global du workout. RX dérivé des exercices, sinon « Non renseigné ». RPE, appréciation, durée et charges transmis. Fonctions pures testées dans `prompts/session-performance.spec.ts`. |
+| B2, S1 | Corrigés : lecture de `plan_json`, propriété du plan personnalisé et visibilité du catalogue vérifiées ; création refusée pour les références étrangères/invisibles. Les séances historiques personnalisées restent lisibles sans suppression du circuit #48. |
+| B3 | Corrigé pour les nouvelles mesures : `session_id` nullable unique, FK cascade, upsert et date `completed_at`. Correction et benchmark participent à la transaction de séance. Retirer un score valide ou supprimer la séance retire sa mesure et actualise le résumé benchmark du profil. Les anciennes lignes sans lien fiable ne sont pas supprimées ni rapprochées par heuristique. |
+| B4 | Corrigé : toute modification invalide `ai_analysis`. Une analyse lancée avant une modification ne peut pas écraser cette invalidation (comparaison de version PostgreSQL conservant les microsecondes). |
+| B5 | Corrigé : un POST complet enregistre séance, benchmark et créneau en une transaction. La page n'enchaîne plus POST/PATCH/complétion ; elle affiche le détail des erreurs API. |
+| B6 | Corrigé : suppression transactionnelle, créneau réinitialisé à `scheduled`, mesure benchmark liée supprimée. |
+| B7, S4 | Corrigés : dates ISO strictes et chronologie, pagination entière bornée (100 maximum), UUID des routes, résultats objet non null. Tests HTTP via le vrai `ValidationPipe`. |
+| B8 | Corrigé : l'historique utilisé par les statistiques parcourt toutes les pages de 100 au lieu de s'arrêter à 50 ; le tri envoyé mais ignoré a été retiré du dashboard. L'agrégation SQL reste une optimisation future pour les très gros historiques. |
+| B9 | Corrigé : valeur `datetime-local` construite en heure locale ; tests à 00 h 30 en été/hiver et dans les fuseaux Paris/UTC. |
+| M1 | Ajout des tests des services, du prompt et du contrôleur ; l'objectif d'une couverture exhaustive de chaque méthode n'est pas revendiqué. |
+
+**Migration à appliquer avant déploiement :** `20261117150000_link_benchmark_sessions.ts`. Le cycle réel PostgreSQL up/down reste bloqué sur cet hôte (daemon Docker absent). Les anciennes mesures sont conservées ; les doublons historiques sans `session_id` ne peuvent pas être réparés de manière certaine.
+
+**Restant :** S2 est partiellement traité (deux références refusées, log libre sans référence conservé ; pas de nouvelle contrainte sur les données historiques), S3 (limite des notes), M2 (extraction complète du prompt), M3 (nettoyage/types/code mort) et M4 (date affichée dans le fuseau du serveur). #32/#35 et #48 restent hors périmètre. Aucun retrait d'import de module n'a été nécessaire.
+
+**Validation :** 14 suites / 140 tests backend passent, dont `app.module.spec.ts` ; typechecks backend/frontend, lint frontend et lint backend modifié passent. Tests de date locale : 5 cas dans chacun des fuseaux Paris et UTC. Vérification du vrai client frontend sur 251 séances : trois pages de 100/100/51, total complet ; une page incohérente échoue explicitement. SQL `up/down` de la migration vérifié, exécution PostgreSQL non réalisée.
+
 ## 1. Rôle du module
 
 Le module enregistre les **séances réalisées** (table `workout_sessions`) et produit une **analyse IA post-séance**.
