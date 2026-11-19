@@ -2,6 +2,7 @@
 
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { useState } from 'react'
+import type { UpdateUserDTO } from '@/domain/entities/auth'
 import { EquipmentTab } from './_components/EquipmentTab'
 import { InjuriesTab } from './_components/InjuriesTab'
 import { ProfileTab } from './_components/ProfileTab'
@@ -20,6 +21,9 @@ const tabs: { key: Tab; label: string }[] = [
 
 function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const [athleteChanges, setAthleteChanges] = useState<UpdateUserDTO>({})
+  const [athleteLimitations, setAthleteLimitations] = useState<string | null>(null)
+  const [savingAthlete, setSavingAthlete] = useState(false)
   const {
     fullUser, setFullUser, authUser,
     firstName, setFirstName,
@@ -93,7 +97,16 @@ function ProfilePage() {
 
         {activeTab === 'athlete' && (
           fullUser
-            ? <AthleteTab user={fullUser} onSaved={saved => setFullUser(previous => ({ ...previous, ...saved }))} />
+            ? <AthleteTab
+                user={fullUser}
+                changes={athleteChanges}
+                setChanges={setAthleteChanges}
+                limitationsDraft={athleteLimitations}
+                setLimitationsDraft={setAthleteLimitations}
+                saving={savingAthlete}
+                setSaving={setSavingAthlete}
+                onSaved={saved => setFullUser(previous => ({ ...previous, ...saved }))}
+              />
             : <p role="status" className="text-slate-400">Le profil sportif sera disponible après le chargement du profil.</p>
         )}
 

@@ -90,8 +90,10 @@ Les données sont enregistrées par `PATCH /api/users/me` dans les colonnes exis
 Les clés inconnues, mauvais types et valeurs hors bornes sont rejetés (HTTP 400), y compris dans les JSON.
 Une section JSON se remplace entièrement : `{}` ou `[]` l'efface. Pour `dateOfBirth` (date civile ISO, depuis
 1900 et non future), `gender` (`male`, `female`, `other`) et `resting_heart_rate`, `null` efface la valeur.
-Un champ omis n'est pas modifié ; le formulaire n'envoie que les champs modifiés. Les anciennes données
-ne sont pas migrées automatiquement. Les anciens objets de limitations restent lisibles ; les clés libres
+Un champ omis n'est pas modifié ; le formulaire n'envoie que les champs modifiés.
+Le brouillon Sport reste conservé lors des changements d'onglet du profil, y compris le texte des limitations ;
+il est réinitialisé après une sauvegarde réussie, mais pas après un échec.
+Les anciennes données ne sont pas migrées automatiquement. Les anciens objets de limitations restent lisibles ; les clés libres
 historiques sont signalées dans le formulaire avant leur remplacement explicite.
 
 Ces champs sont volontairement ajoutés à `PUBLIC_USER_COLUMNS`, accessible au propriétaire authentifié

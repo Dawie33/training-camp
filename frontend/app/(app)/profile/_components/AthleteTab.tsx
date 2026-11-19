@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { toast } from 'sonner'
 import type { UpdateUserDTO, User } from '@/domain/entities/auth'
 import { AVAILABLE_DAYS, GOALS } from '@/domain/entities/athlete-profile'
@@ -17,10 +17,21 @@ function limitationText(value: User['physical_limitations']): string {
   ).join('\n')
 }
 
-export function AthleteTab({ user, onSaved }: { user: User; onSaved: (user: User) => void }) {
-  const [changes, setChanges] = useState<UpdateUserDTO>({})
-  const [limitations, setLimitations] = useState(() => limitationText(user.physical_limitations))
-  const [saving, setSaving] = useState(false)
+interface AthleteTabProps {
+  user: User
+  onSaved: (user: User) => void
+  changes: UpdateUserDTO
+  setChanges: Dispatch<SetStateAction<UpdateUserDTO>>
+  limitationsDraft: string | null
+  setLimitationsDraft: Dispatch<SetStateAction<string | null>>
+  saving: boolean
+  setSaving: Dispatch<SetStateAction<boolean>>
+}
+
+export function AthleteTab({
+  user, onSaved, changes, setChanges, limitationsDraft, setLimitationsDraft, saving, setSaving,
+}: AthleteTabProps) {
+  const limitations = limitationsDraft ?? limitationText(user.physical_limitations)
   const values = { ...user, ...changes }
   const training = values.training_preferences ?? {}
   const goals = values.global_goals ?? {}
@@ -64,6 +75,7 @@ export function AthleteTab({ user, onSaved }: { user: User; onSaved: (user: User
       const saved = await usersService.updateMe(changes)
       onSaved(saved)
       setChanges({})
+      setLimitationsDraft(null)
       toast.success('Préférences sportives mises à jour')
     } catch {
       toast.error('Impossible de sauvegarder les préférences sportives')
@@ -177,7 +189,7 @@ export function AthleteTab({ user, onSaved }: { user: User; onSaved: (user: User
           <label htmlFor="physical-limitations" className={labelClass}>Limitations fonctionnelles (hors blessures)</label>
           <textarea id="physical-limitations" rows={4} value={limitations} className={inputClass}
             aria-describedby="physical-limitations-help" onChange={event => {
-              setLimitations(event.target.value)
+              setLimitationsDraft(event.target.value)
               setField('physical_limitations', event.target.value.split('\n').map(line => line.trim()).filter(Boolean))
             }} />
           <p id="physical-limitations-help" className="text-xs text-slate-400 mt-1">
