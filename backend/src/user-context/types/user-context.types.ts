@@ -1,5 +1,6 @@
 import type { PerformanceDiagnosticSummary } from 'src/common/ai/diagnostic.types'
 import type { Injury } from 'src/common/injuries/injury.constants'
+import type { SchedulePreferences, TrainingPreferences } from 'src/common/profile/profile.schema'
 
 /**
  * Résumé d'une analyse IA post-workout récente, utilisé comme contexte pour la génération.
@@ -74,13 +75,18 @@ export interface UserAIContext {
   sport_level: string
   height?: number
   weight?: number
+  age?: number
+  gender?: 'male' | 'female' | 'other'
+  resting_heart_rate?: number
+  max_heart_rate?: number
+  schedule_preferences?: SchedulePreferences
   oneRepMaxes: { lift: string; value: number }[]
   benchmarkResults: Record<string, { result: Record<string, number | string>; date: string }>
   global_goals: Record<string, boolean>
   injuries: Injury[]
-  physical_limitations: Record<string, unknown>
+  physical_limitations: Record<string, unknown> | string[]
   equipment_available: string[]
-  training_preferences: { preferred_duration?: number; sessions_per_week?: number }
+  training_preferences: TrainingPreferences
   recentSessions: RecentSession[]
   recentAnalyses: RecentAnalysis[]
   activeSkills: ActiveSkillContext[]

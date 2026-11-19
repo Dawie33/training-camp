@@ -2,24 +2,30 @@
 
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { useState } from 'react'
+import type { UpdateUserDTO } from '@/domain/entities/auth'
 import { EquipmentTab } from './_components/EquipmentTab'
 import { InjuriesTab } from './_components/InjuriesTab'
 import { ProfileTab } from './_components/ProfileTab'
+import { AthleteTab } from './_components/AthleteTab'
 import { useInjuries } from './_hooks/useInjuries'
 import { useProfileForm } from './_hooks/useProfileForm'
 
-type Tab = 'profile' | 'equipment' | 'injuries'
+type Tab = 'profile' | 'athlete' | 'equipment' | 'injuries'
 
 const tabs: { key: Tab; label: string }[] = [
   { key: 'profile', label: 'Profil' },
+  { key: 'athlete', label: 'Sport' },
   { key: 'equipment', label: 'Équipement' },
   { key: 'injuries', label: 'Blessures' },
 ]
 
 function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const [athleteChanges, setAthleteChanges] = useState<UpdateUserDTO>({})
+  const [athleteLimitations, setAthleteLimitations] = useState<string | null>(null)
+  const [savingAthlete, setSavingAthlete] = useState(false)
   const {
-    fullUser, authUser,
+    fullUser, setFullUser, authUser,
     firstName, setFirstName,
     lastName, setLastName,
     sportLevel, setSportLevel,
@@ -46,7 +52,7 @@ function ProfilePage() {
 
       <div className="max-w-3xl mx-auto px-4 lg:px-8 py-6">
         {/* Tab bar */}
-        <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl border border-slate-700/50 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-slate-800/50 rounded-xl border border-slate-700/50 mb-6">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -87,6 +93,21 @@ function ProfilePage() {
             onClear={() => setEquipment([])}
             onSave={handleSaveEquipment}
           />
+        )}
+
+        {activeTab === 'athlete' && (
+          fullUser
+            ? <AthleteTab
+                user={fullUser}
+                changes={athleteChanges}
+                setChanges={setAthleteChanges}
+                limitationsDraft={athleteLimitations}
+                setLimitationsDraft={setAthleteLimitations}
+                saving={savingAthlete}
+                setSaving={setSavingAthlete}
+                onSaved={saved => setFullUser(previous => ({ ...previous, ...saved }))}
+              />
+            : <p role="status" className="text-slate-400">Le profil sportif sera disponible après le chargement du profil.</p>
         )}
 
         {activeTab === 'injuries' && (

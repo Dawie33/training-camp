@@ -69,6 +69,43 @@ réels (génération/planification et accès aux workouts), pas pour accéder au
 
 Tout nouveau service IA doit injecter ce service.
 
+### Profil sportif modifiable
+
+L'onglet **Sport** de `/profile` permet de renseigner les objectifs, la durée habituelle de séance
+(20 à 90 minutes, échauffement et retour au calme inclus), la fréquence souhaitée (1 à 7 séances/semaine),
+les limitations fonctionnelles hors blessures, la date de naissance, le genre, la FC de repos habituelle
+(30 à 120 bpm) et les jours disponibles. La FC max reste dans l'onglet **Profil** et continue d'alimenter
+les zones cardiaques des imports. Ces informations sont facultatives ; une FC de repos isolée ne mesure
+pas la récupération.
+
+Les données sont enregistrées par `PATCH /api/users/me` dans les colonnes existantes, sans migration :
+
+| Champ JSON | Contrat d'écriture |
+|---|---|
+| `global_goals` | Objet de booléens facultatifs : `weight_loss`, `muscle_gain`, `endurance`, `strength`, `flexibility`, `performance` |
+| `training_preferences` | Objet : `preferred_duration` et `sessions_per_week`, entiers facultatifs |
+| `physical_limitations` | Tableau historique de textes : au plus 10 limitations, 300 caractères chacune ; ne pas dupliquer les blessures |
+| `schedule_preferences` | Objet : `available_days`, tableau sans doublon de jours anglais (`monday` à `sunday`) ; absent ou vide = aucune préférence |
+
+Les clés inconnues, mauvais types et valeurs hors bornes sont rejetés (HTTP 400), y compris dans les JSON.
+Une section JSON se remplace entièrement : `{}` ou `[]` l'efface. Pour `dateOfBirth` (date civile ISO, depuis
+1900 et non future), `gender` (`male`, `female`, `other`) et `resting_heart_rate`, `null` efface la valeur.
+Un champ omis n'est pas modifié ; le formulaire n'envoie que les champs modifiés.
+Le brouillon Sport reste conservé lors des changements d'onglet du profil, y compris le texte des limitations ;
+il est réinitialisé après une sauvegarde réussie, mais pas après un échec.
+Les anciennes données ne sont pas migrées automatiquement. Les anciens objets de limitations restent lisibles ; les clés libres
+historiques sont signalées dans le formulaire avant leur remplacement explicite.
+
+Ces champs sont volontairement ajoutés à `PUBLIC_USER_COLUMNS`, accessible au propriétaire authentifié
+sur `/users/me` uniquement. La date de naissance est sérialisée en date civile sans décalage de fuseau.
+Le contexte partagé calcule l'âge à Paris et **ne transmet pas la date de naissance aux prompts**.
+Les générations de WODs, programmes de compétences et recommandations reçoivent les préférences et
+disponibilités, en plus des objectifs et limitations. Les jours sont **indicatifs** : aucun calendrier
+n'est créé automatiquement. Les contraintes explicites de la demande et les restrictions liées aux blessures
+priment. Les anciennes préférences mal formées sont ignorées avec un avertissement technique, sans réécriture.
+Le cache du contexte IA est invalidé uniquement après une sauvegarde réussie. Les recommandations/séances du jour
+déjà générées restent conservées selon leur contrat quotidien ; le nouveau profil s'applique aux générations suivantes.
+
 > **Détail technique**
 >
 > Le client OpenAI est partagé via `OpenAIClientService` (`common/ai/`). Chaque appel utilise :

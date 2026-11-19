@@ -1,11 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Knex } from 'knex'
 import { InjectModel } from 'nest-knexjs'
+import { isISO8601 } from 'class-validator'
 import { AnalyticsService } from 'src/analytics/analytics.service'
 import type { RunningResult } from 'src/analytics/types/analytics.types'
 import type { PerformanceDiagnosticSummary, RunningDiagnostic } from 'src/common/ai/diagnostic.types'
 import { parseStoredInjuries } from 'src/common/injuries/injury.schema'
-import { toParisDate } from 'src/common/utils/date-only'
+import { toDateOnly, toParisDate } from 'src/common/utils/date-only'
+import {
+  readStoredProfileField,
+  SchedulePreferencesSchema,
+  StoredGoalsSchema,
+  StoredLimitationsSchema,
+  TrainingPreferencesSchema,
+} from 'src/common/profile/profile.schema'
 import { RecommendedExerciseSchema } from 'src/skills/schemas/skill-program.schema'
 import type {
   ActiveSkillContext,
@@ -89,7 +97,12 @@ export class UserContextService {
           'physical_limitations',
           'global_goals',
           'equipment_available',
-          'training_preferences'
+          'training_preferences',
+          'schedule_preferences',
+          'dateOfBirth',
+          'gender',
+          'resting_heart_rate',
+          'max_heart_rate'
         )
         .where('id', userId)
         .first(),
@@ -234,13 +247,33 @@ export class UserContextService {
       sport_level: profile?.sport_level ?? 'intermediate',
       height: profile?.height ?? undefined,
       weight: profile?.weight ?? undefined,
+      age: this.getAge(profile?.dateOfBirth),
+      gender: profile?.gender ?? undefined,
+      resting_heart_rate: profile?.resting_heart_rate ?? undefined,
+      max_heart_rate: profile?.max_heart_rate ?? undefined,
+      schedule_preferences: readStoredProfileField(
+        SchedulePreferencesSchema,
+        profile?.schedule_preferences,
+        {},
+        'schedule_preferences'
+      ),
       oneRepMaxes: oneRepMaxes ?? [],
       benchmarkResults: profile?.benchmark_results ?? {},
-      global_goals: profile?.global_goals ?? {},
+      global_goals: readStoredProfileField(StoredGoalsSchema, profile?.global_goals, {}, 'global_goals'),
       injuries: parseStoredInjuries(profile?.injuries),
-      physical_limitations: profile?.physical_limitations ?? {},
+      physical_limitations: readStoredProfileField(
+        StoredLimitationsSchema,
+        profile?.physical_limitations,
+        {},
+        'physical_limitations'
+      ),
       equipment_available: profile?.equipment_available ?? [],
-      training_preferences: profile?.training_preferences ?? {},
+      training_preferences: readStoredProfileField(
+        TrainingPreferencesSchema.passthrough(),
+        profile?.training_preferences,
+        {},
+        'training_preferences'
+      ),
       recentSessions: recentSessionsMapped,
       recentAnalyses,
       activeSkills,
@@ -251,6 +284,18 @@ export class UserContextService {
 
     this.cache.set(userId, { data: result, expiresAt: Date.now() + this.TTL_MS })
     return result
+  }
+
+  private getAge(birthDate: string | Date | null | undefined): number | undefined {
+    if (!birthDate) return undefined
+    const date = toDateOnly(birthDate)
+    const today = toParisDate(new Date())
+    const age = Number(today.slice(0, 4)) - Number(date.slice(0, 4)) - (today.slice(5) < date.slice(5) ? 1 : 0)
+    if (!isISO8601(date, { strict: true }) || date > today || !Number.isInteger(age) || age < 0 || age > 130) {
+      this.logger.warn('Date de naissance historique invalide ignoree dans le contexte IA')
+      return undefined
+    }
+    return age
   }
 
   /**

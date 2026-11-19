@@ -14,6 +14,9 @@ describe('AISkillGeneratorService', () => {
           equipment_available: ['Barre de traction'],
           injuries: [],
           physical_limitations: {},
+          training_preferences: { preferred_duration: 40, sessions_per_week: 3 },
+          schedule_preferences: { available_days: ['friday'] },
+          global_goals: { strength: true },
           diagnostic: { ratio_imbalances: [] },
         }),
       } as unknown as UserContextService
@@ -30,5 +33,7 @@ describe('AISkillGeneratorService', () => {
         ]),
       })
     )
+    const prompt = createJsonCompletion.mock.calls[0][0].messages[1].content
+    for (const text of ['40 min', '3 seances', 'friday', 'strength']) expect(prompt).toContain(text)
   })
 })

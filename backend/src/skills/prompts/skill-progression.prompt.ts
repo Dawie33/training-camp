@@ -140,7 +140,7 @@ export interface SkillProgressionParams {
   userLevel?: string
   availableEquipment?: string[]
   injuries?: Injury[]
-  physicalLimitations?: Record<string, unknown>
+  physicalLimitations?: Record<string, unknown> | string[]
   /** Déséquilibres de force mesurés, pris en compte seulement en haltérophilie et en force. */
   strengthImbalances?: RatioImbalance[]
 }

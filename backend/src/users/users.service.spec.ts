@@ -74,6 +74,51 @@ describe('UsersService', () => {
   })
 
   describe('update', () => {
+    it('persiste uniquement les champs modifies, serialise les JSON et restitue la date civile', async () => {
+      const builder = createKnexBuilderMock({
+        returning: [{ ...publicUser, dateOfBirth: new Date(1990, 5, 15), resting_heart_rate: 52 }],
+      })
+      const service = await buildService(jest.fn().mockReturnValue(builder))
+      const preferences = {
+        global_goals: { strength: true },
+        training_preferences: { preferred_duration: 45, sessions_per_week: 3 },
+        physical_limitations: ['Mobilite cheville'],
+        schedule_preferences: { available_days: ['monday' as const] },
+      }
+      const result = await service.update('u1', {
+        ...preferences,
+        dateOfBirth: '1990-06-15',
+        gender: 'female',
+        resting_heart_rate: 52,
+      })
+      expect(builder.update).toHaveBeenCalledWith({
+        dateOfBirth: '1990-06-15',
+        gender: 'female',
+        resting_heart_rate: 52,
+        ...Object.fromEntries(Object.entries(preferences).map(([key, value]) => [key, JSON.stringify(value)])),
+      })
+      expect(result.dateOfBirth).toBe('1990-06-15')
+      expect(result.resting_heart_rate).toBe(52)
+      expect(userContextService.invalidateCache).toHaveBeenCalledWith('u1')
+    })
+
+    it('efface les nouveaux scalaires avec null et ne modifie pas les anciens JSON omis', async () => {
+      const builder = createKnexBuilderMock({ returning: [{ ...publicUser, dateOfBirth: null }] })
+      const service = await buildService(jest.fn().mockReturnValue(builder))
+      const changes = { dateOfBirth: null, gender: null, resting_heart_rate: null }
+      const result = await service.update('u1', changes)
+      expect(builder.update).toHaveBeenCalledWith(changes)
+      expect(result.dateOfBirth).toBeNull()
+    })
+
+    it('ne vide pas le cache quand la persistence echoue', async () => {
+      const builder = createKnexBuilderMock()
+      builder.returning.mockRejectedValue(new Error('database unavailable'))
+      const service = await buildService(jest.fn().mockReturnValue(builder))
+      await expect(service.update('u1', { resting_heart_rate: 52 })).rejects.toThrow('database unavailable')
+      expect(userContextService.invalidateCache).not.toHaveBeenCalled()
+    })
+
     it('ne renvoie que les colonnes publiques et invalide le cache IA', async () => {
       // Arrange
       const builder = createKnexBuilderMock({ returning: [publicUser] })
