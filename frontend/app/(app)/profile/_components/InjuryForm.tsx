@@ -1,5 +1,8 @@
 'use client'
 
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
   INJURY_NOTES_MAX_LENGTH,
   INJURY_SEVERITIES,
@@ -18,7 +21,7 @@ import {
 import type { Injury, InjurySeverity, InjuryStatus, InjuryZone, PainfulPattern } from '@/domain/entities/injury'
 import { useState } from 'react'
 
-const inputClass = 'w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors'
+const inputClass = 'w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-colors'
 
 interface InjuryFormProps {
   initial?: Injury
@@ -36,29 +39,29 @@ interface ChipProps {
 
 function Chip({ selected, onClick, title, children }: ChipProps) {
   return (
-    <button
+    <Button variant="ghost"
       type="button"
       onClick={onClick}
       title={title}
       aria-pressed={selected}
       className={`px-2.5 py-1 text-xs rounded-full border transition-all ${
         selected
-          ? 'bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-500/30'
-          : 'border-slate-700/50 text-slate-400 hover:bg-slate-800 hover:text-white'
+          ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:text-primary-foreground'
+          : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground'
       }`}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-sm font-medium text-slate-300 mb-1.5">{label}</p>
-      {hint && <p className="text-xs text-slate-500 -mt-1 mb-1.5">{hint}</p>}
+    <fieldset className="min-w-0">
+      <legend className="text-sm font-medium text-foreground mb-1.5">{label}</legend>
+      {hint && <p className="text-xs text-muted-foreground -mt-1 mb-1.5">{hint}</p>}
       {children}
-    </div>
+    </fieldset>
   )
 }
 
@@ -96,7 +99,7 @@ export function InjuryForm({ initial, saving, onSave, onCancel }: InjuryFormProp
   }
 
   return (
-    <div className="rounded-xl p-4 bg-slate-900/50 border border-orange-500/40 space-y-4">
+    <div className="rounded-xl p-4 bg-background border border-primary/40 space-y-4">
       <p className="text-sm font-bold">{initial ? 'Modifier la blessure' : 'Nouvelle blessure'}</p>
 
       <Field label="Zone">
@@ -127,7 +130,7 @@ export function InjuryForm({ initial, saving, onSave, onCancel }: InjuryFormProp
             </Chip>
           ))}
         </div>
-        {status && <p className="text-xs text-slate-400 mt-1.5">{STATUS_DESCRIPTIONS[status]}</p>}
+        {status && <p className="text-xs text-muted-foreground mt-1.5">{STATUS_DESCRIPTIONS[status]}</p>}
       </Field>
 
       <Field label="Gravité">
@@ -141,7 +144,7 @@ export function InjuryForm({ initial, saving, onSave, onCancel }: InjuryFormProp
       </Field>
 
       {status === 'active' && severity === 'severe' && (
-        <p className="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+        <p className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
           Une douleur présente au quotidien doit être évaluée par un professionnel de santé. En attendant, l'IA mettra
           cette zone au repos complet.
         </p>
@@ -165,7 +168,7 @@ export function InjuryForm({ initial, saving, onSave, onCancel }: InjuryFormProp
         </div>
         {/* Les infobulles (title) ne s'affichent pas sur mobile : on rappelle les exemples ici */}
         {patterns.length > 0 && (
-          <p className="text-xs text-slate-400 mt-1.5">
+          <p className="text-xs text-muted-foreground mt-1.5">
             Exemples concernés : {patterns.map((p) => PATTERN_EXAMPLES[p]).join(' · ')}
           </p>
         )}
@@ -173,7 +176,8 @@ export function InjuryForm({ initial, saving, onSave, onCancel }: InjuryFormProp
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Field label="Depuis (facultatif)">
-          <input
+          <Input
+            aria-label="Depuis (facultatif)"
             type="month"
             value={since}
             max={currentMonth()}
@@ -184,7 +188,8 @@ export function InjuryForm({ initial, saving, onSave, onCancel }: InjuryFormProp
       </div>
 
       <Field label="Note (facultatif)">
-        <textarea
+        <Textarea
+          aria-label="Note (facultatif)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           maxLength={INJURY_NOTES_MAX_LENGTH}
@@ -192,30 +197,30 @@ export function InjuryForm({ initial, saving, onSave, onCancel }: InjuryFormProp
           placeholder="Ex. : douleur sur le jerk au-delà de 80 %"
           className={inputClass}
         />
-        <p className="text-xs text-slate-500 text-right mt-1">
+        <p className="text-xs text-muted-foreground text-right mt-1">
           {notes.length}/{INJURY_NOTES_MAX_LENGTH}
         </p>
       </Field>
 
-      <div className="flex gap-2">
-        <button
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button variant="ghost"
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-700/50 text-slate-300 hover:bg-slate-700/50 transition-colors disabled:opacity-50"
+          className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50"
         >
           Annuler
-        </button>
-        <button
+        </Button>
+        <Button variant="default"
           type="button"
           onClick={handleSubmit}
           disabled={!isComplete || saving}
-          className="flex-1 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+          className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
         >
           {saving ? 'Enregistrement...' : 'Enregistrer la blessure'}
-        </button>
+        </Button>
       </div>
-      {!isComplete && <p className="text-xs text-slate-500 text-center">Zone, statut et gravité sont obligatoires.</p>}
+      {!isComplete && <p className="text-xs text-muted-foreground text-center">Zone, statut et gravité sont obligatoires.</p>}
     </div>
   )
 }

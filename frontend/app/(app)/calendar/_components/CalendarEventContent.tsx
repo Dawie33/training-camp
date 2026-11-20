@@ -18,7 +18,7 @@ export function CustomEventContent({ calendarEvent }: { calendarEvent: Record<st
         {calendarEvent.title as string}
       </span>
       {!!calendarEvent.workout_type && !badge && (
-        <span className="text-[10px] text-slate-500 truncate hidden sm:inline">
+        <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
           {(calendarEvent.workout_type as string).replace(/_/g, ' ')}
         </span>
       )}

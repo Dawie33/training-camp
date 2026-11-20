@@ -1,6 +1,8 @@
 'use client'
 
-import { KeyboardEvent, useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { KeyboardEvent, useId, useState } from 'react'
 
 interface TagInputProps {
   value: string
@@ -14,6 +16,7 @@ interface TagInputProps {
  * Ajout via Entrée, suppression via le bouton × ou Retour arrière sur champ vide.
  */
 export function TagInput({ value, onChange, placeholder = 'Ajouter...', label }: TagInputProps) {
+  const inputId = useId()
   const [inputValue, setInputValue] = useState('')
 
   const tags = value ? value.split(',').map(t => t.trim()).filter(Boolean) : []
@@ -42,37 +45,40 @@ export function TagInput({ value, onChange, placeholder = 'Ajouter...', label }:
 
   return (
     <div className="space-y-2">
-      {label && <label className="text-sm font-medium text-slate-300">{label}</label>}
+      {label && <label htmlFor={inputId} className="text-sm font-medium text-foreground">{label}</label>}
 
-      <div className="flex flex-wrap gap-2 min-h-[46px] p-3 border border-slate-700 rounded-xl bg-slate-900/50">
+      <div className="flex flex-wrap gap-2 min-h-[46px] p-3 border border-border rounded-xl bg-background">
         {tags.map((tag, index) => (
           <span
             key={index}
-            className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-500/15 text-orange-400 rounded-lg text-sm font-medium"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/15 text-primary rounded-lg text-sm font-medium"
           >
             {tag}
-            <button
+            <Button variant="ghost"
               type="button"
+              aria-label={`Supprimer le tag ${tag}`}
               onClick={() => removeTag(index)}
-              className="hover:bg-orange-500/25 rounded-full p-0.5 transition-colors"
+              className="hover:bg-primary/25 rounded-full p-0.5 transition-colors"
             >
               <span className="text-xs">×</span>
-            </button>
+            </Button>
           </span>
         ))}
 
-        <input
+        <Input
+          id={inputId}
+          aria-label={label ? undefined : 'Ajouter un tag'}
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => inputValue.trim() && addTag(inputValue.trim())}
           placeholder={tags.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[120px] bg-transparent border-0 text-white placeholder:text-slate-500 outline-none text-sm"
+          className="flex-1 min-w-[120px] bg-transparent border-0 text-foreground placeholder:text-muted-foreground outline-none text-sm"
         />
       </div>
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         Appuyez sur Entrée ou cliquez ailleurs pour ajouter
       </p>
     </div>

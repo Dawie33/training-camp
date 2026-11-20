@@ -1,3 +1,5 @@
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 import { ExerciseDifficulty } from '@/domain/entities/exercise'
 import { EQUIPMENT_CATEGORIES, EQUIPMENT_PRESET_CROSSFIT_BOX } from '@/domain/entities/equipment-options'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
@@ -13,7 +15,7 @@ const MODES: { id: EquipmentMode; icon: string; label: string; description: stri
 ]
 
 
-const selectClass = 'w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors'
+const selectClass = 'w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-colors'
 
 interface GenerateFormProps {
   workoutType: string
@@ -69,52 +71,54 @@ export function GenerateForm({
   }, [profileEquipment]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-700/50 space-y-4 lg:space-y-5">
+    <div className="bg-card rounded-xl lg:rounded-lg p-4 lg:p-6 border border-border space-y-4 lg:space-y-5">
       <h2 className="text-lg lg:text-xl font-bold">Paramètres du Workout</h2>
 
       {/* Toggle Mode Coach Personnalisé */}
-      <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/50 border border-slate-700/50">
+      <div className="flex items-center justify-between p-3 rounded-xl bg-background border border-border">
         <div>
-          <p className="text-sm font-semibold text-white">Mode coach personnalisé</p>
-          <p className="text-xs text-slate-400 mt-0.5">Adapte le workout à votre profil, 1RMs et historique</p>
+          <p className="text-sm font-semibold text-foreground">Mode coach personnalisé</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Adapte le workout à votre profil, 1RMs et historique</p>
         </div>
         <div className="flex items-center gap-2">
           {personalized && (
-            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-medium rounded-full border border-green-500/30">
+            <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded-full border border-primary/30">
               Basé sur votre profil
             </span>
           )}
-          <button
+          <Button variant="ghost"
             type="button"
+            aria-label="Mode coach personnalisé"
+            aria-pressed={personalized}
             onClick={() => setPersonalized(!personalized)}
-            className={`relative w-11 h-6 rounded-full transition-colors ${personalized ? 'bg-orange-500' : 'bg-slate-700'}`}
+            className={`relative w-11 h-6 p-0 rounded-full transition-colors ${personalized ? 'bg-primary' : 'bg-muted'}`}
           >
             <span
               className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${personalized ? 'translate-x-5' : 'translate-x-0'}`}
             />
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Type de workout + Difficulté */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Type de Workout</label>
-          <select value={workoutType} onChange={(e) => setWorkoutType(e.target.value)} className={selectClass}>
+          <label htmlFor="field-generateform-0" className="block text-sm font-medium text-foreground mb-2">Type de Workout</label>
+          <select id="field-generateform-0" value={workoutType} onChange={(e) => setWorkoutType(e.target.value)} className={selectClass}>
             {WORKOUT_TYPES.crossfit.map((type) => (
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
           </select>
           {suggestionReason && (
-            <p className="text-xs text-orange-400/80 mt-1.5">💡 Suggéré automatiquement — {suggestionReason}</p>
+            <p className="text-xs text-primary mt-1.5">💡 Suggéré automatiquement — {suggestionReason}</p>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label htmlFor="field-generateform-1" className="block text-sm font-medium text-foreground mb-2">
             Difficulté
-            {personalized && <span className="ml-2 text-xs text-slate-500 font-normal">(déterminé par votre profil)</span>}
+            {personalized && <span className="ml-2 text-xs text-muted-foreground font-normal">(déterminé par votre profil)</span>}
           </label>
-          <select
+          <select id="field-generateform-1"
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value as ExerciseDifficulty)}
             disabled={personalized}
@@ -130,19 +134,19 @@ export function GenerateForm({
 
       {/* Durée */}
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">
-          Durée totale : <span className="text-orange-400 font-bold">{duration} min</span>
+        <label htmlFor="field-generateform-2" className="block text-sm font-medium text-foreground mb-2">
+          Durée totale : <span className="text-primary font-bold">{duration} min</span>
         </label>
-        <input
+        <input id="field-generateform-2"
           type="range"
           min="15"
           max="120"
           step="5"
           value={duration}
           onChange={(e) => setDuration(Number(e.target.value))}
-          className="w-full accent-orange-500"
+          className="w-full accent-primary"
         />
-        <div className="flex justify-between text-xs text-slate-500 mt-1">
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>15 min</span>
           <span>120 min</span>
         </div>
@@ -150,76 +154,78 @@ export function GenerateForm({
 
       {/* Environnement d'entraînement */}
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-3">Environnement d'entraînement</label>
+        <label className="block text-sm font-medium text-foreground mb-3">Environnement d'entraînement</label>
 
         {/* Sélecteur de mode */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
           {MODES.map((m) => {
             const isActive = mode === m.id
             return (
-              <button
+              <Button variant="ghost"
                 key={m.id}
                 type="button"
                 onClick={() => selectMode(m.id)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${isActive
-                  ? 'bg-orange-500/15 border-orange-500/60 text-orange-300'
-                  : 'bg-slate-900/50 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                aria-pressed={isActive}
+                className={`h-auto whitespace-normal flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${isActive
+                  ? 'bg-primary/15 border-primary/60 text-primary'
+                  : 'bg-background border-border text-muted-foreground hover:border-border hover:text-foreground'
                   }`}
               >
                 <span className="text-xl">{m.icon}</span>
                 <span className="text-xs font-semibold leading-tight">{m.label}</span>
-                <span className="text-[10px] text-slate-500 leading-tight">{m.description}</span>
-              </button>
+                <span className="text-[10px] text-muted-foreground leading-tight">{m.description}</span>
+              </Button>
             )
           })}
         </div>
 
         {/* Contenu selon le mode */}
         {mode === 'bodyweight' && (
-          <p className="text-xs text-slate-500">Workout sans matériel — poids du corps uniquement.</p>
+          <p className="text-xs text-muted-foreground">Workout sans matériel — poids du corps uniquement.</p>
         )}
 
         {mode === 'home' && profileEquipment.length === 0 && (
-          <p className="text-xs text-amber-400">
+          <p className="text-xs text-foreground">
             ⚠️ Aucun équipement dans ton profil. Configure-le dans <span className="underline">Profil → Équipement</span>.
           </p>
         )}
 
         {mode === 'home' && profileEquipment.length > 0 && (
-          <p className="text-xs text-slate-500">{profileEquipment.length} équipement{profileEquipment.length > 1 ? 's' : ''} depuis ton profil.</p>
+          <p className="text-xs text-muted-foreground">{profileEquipment.length} équipement{profileEquipment.length > 1 ? 's' : ''} depuis ton profil.</p>
         )}
 
         {mode === 'box' && (
-          <p className="text-xs text-slate-500">Matériel complet d'une box CrossFit — barre, rack, haltères, rameur, assault bike...</p>
+          <p className="text-xs text-muted-foreground">Matériel complet d'une box CrossFit — barre, rack, haltères, rameur, assault bike...</p>
         )}
 
         {mode === 'custom' && (
-          <div className="space-y-3 rounded-xl p-3 bg-slate-900/50 border border-slate-700/50">
+          <div className="space-y-3 rounded-xl p-3 bg-background border border-border">
             {EQUIPMENT_CATEGORIES.map((group) => (
               <div key={group.category}>
-                <p className="text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">{group.category}</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">{group.category}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {group.items.map((item) => {
                     const isSelected = equipment.includes(item.value)
                     return (
-                      <button
+                      <Button variant="ghost"
                         key={item.value}
+                        aria-pressed={isSelected}
                         type="button"
                         onClick={() => toggleEquipment(item.value)}
                         className={`px-2.5 py-1 text-xs rounded-full border transition-all ${isSelected
-                          ? 'bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-500/30'
-                          : 'border-slate-700/50 text-slate-400 hover:bg-slate-800 hover:text-white'
+                          ? 'bg-primary text-primary-foreground border-primary hover:text-primary-foreground hover:bg-primary/90'
+                          : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground'
                           }`}
                       >
                         {item.label}
-                      </button>
+                      </Button>
                     )
                   })}
                 </div>
               </div>
             ))}
             {equipment.length > 0 && (
-              <p className="text-xs text-orange-400 pt-1 font-medium">
+              <p className="text-xs text-primary pt-1 font-medium">
                 {equipment.length} équipement{equipment.length > 1 ? 's' : ''} sélectionné{equipment.length > 1 ? 's' : ''}
               </p>
             )}
@@ -229,33 +235,33 @@ export function GenerateForm({
 
       {/* Instructions additionnelles */}
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Instructions additionnelles</label>
-        <textarea
+        <label htmlFor="field-generateform-3" className="block text-sm font-medium text-foreground mb-2">Instructions additionnelles</label>
+        <Textarea id="field-generateform-3"
           value={additionalInstructions}
           onChange={(e) => setAdditionalInstructions(e.target.value)}
           placeholder="Ex: Focus haut du corps, sans sauts..."
-          className="w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white placeholder-slate-600 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors resize-none"
+          className="w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground placeholder-muted-foreground min-h-[100px] focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary/50 transition-colors resize-none"
         />
       </div>
 
       {/* Bouton générer */}
-      <button
+      <Button variant="default"
         onClick={onGenerate}
         disabled={loading}
-        className="w-full px-6 py-3 lg:py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+        className="w-full h-auto whitespace-normal px-6 py-3 lg:py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
       >
         {loading ? (
           <span className="flex items-center justify-center gap-2">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-border" />
             {personalized ? 'Analyse de votre profil et génération...' : 'Génération en cours...'}
           </span>
         ) : (
           'Générer le Workout'
         )}
-      </button>
+      </Button>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400">{error}</div>
+        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-xl text-destructive">{error}</div>
       )}
     </div>
   )
