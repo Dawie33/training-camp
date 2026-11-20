@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 import { RichSectionDisplay } from '@/components/workout/display/RichSectionDisplay'
 import { WorkoutPrintView } from '@/components/workout/WorkoutPrintView'
@@ -14,9 +15,9 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 const difficultyConfig: Record<string, { label: string; color: string }> = {
-  beginner: { label: 'Debutant', color: 'text-emerald-500' },
-  intermediate: { label: 'Intermediaire', color: 'text-amber-500' },
-  advanced: { label: 'Avance', color: 'text-red-500' },
+  beginner: { label: 'Debutant', color: 'text-primary' },
+  intermediate: { label: 'Intermediaire', color: 'text-foreground' },
+  advanced: { label: 'Avance', color: 'text-destructive' },
 }
 
 function PersonalizedWorkoutDetailContent() {
@@ -63,7 +64,7 @@ function PersonalizedWorkoutDetailContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 animate-pulse" />
+        <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 animate-pulse" />
       </div>
     )
   }
@@ -72,7 +73,7 @@ function PersonalizedWorkoutDetailContent() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-3">
-          <p className="text-red-400 font-medium">Workout personnalisé introuvable</p>
+          <p className="text-destructive font-medium">Workout personnalisé introuvable</p>
           <Link href="/personalized-workout" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Retour aux workouts personnalisés
           </Link>
@@ -95,29 +96,30 @@ function PersonalizedWorkoutDetailContent() {
   const diff = w.difficulty ? difficultyConfig[w.difficulty] : null
 
   return (
-    <div className="min-h-screen lg:h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+    <div className="min-h-screen lg:h-screen bg-background text-foreground flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
       {/* LEFT PANEL - Workout Details */}
       <div className="flex-1 flex flex-col overflow-y-auto lg:overflow-hidden order-2 lg:order-1 min-h-0">
         {/* HEADER */}
-        <div className="flex-shrink-0 px-4 lg:px-8 py-4 lg:py-6 border-b border-slate-700/50 sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10 lg:static lg:bg-transparent">
+        <div className="flex-shrink-0 px-4 lg:px-8 py-4 lg:py-6 border-b border-border sticky top-0 bg-background backdrop-blur-sm z-10 lg:static lg:bg-transparent">
           <div className="flex items-start gap-2 lg:gap-4">
-            <button
+            <Button variant="ghost"
+              aria-label="Retour"
               onClick={() => router.back()}
-              className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 hover:text-white mt-1"
+              className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-lg hover:bg-card transition-colors text-muted-foreground hover:text-foreground mt-1"
             >
               <span className="text-sm lg:text-base">&larr;</span>
-            </button>
+            </Button>
 
             <div className="flex items-center gap-2 lg:gap-3 flex-1 min-w-0">
-              <div className="w-1.5 lg:w-2 h-8 lg:h-12 bg-orange-500 rounded-full flex-shrink-0"></div>
+              <div className="w-1.5 lg:w-2 h-8 lg:h-12 bg-primary rounded-full flex-shrink-0"></div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight truncate">{w.name || 'Workout'}</h1>
+                <h1 className="font-display text-2xl sm:text-3xl lg:text-5xl font-semibold tracking-tight break-words">{w.name || 'Workout'}</h1>
                 <div className="flex items-center gap-2 lg:gap-3 mt-1 lg:mt-2 flex-wrap">
-                  <span className="px-2 lg:px-3 py-0.5 lg:py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs lg:text-sm font-semibold">
+                  <span className="px-2 lg:px-3 py-0.5 lg:py-1 bg-primary/20 text-primary rounded-full text-xs lg:text-sm font-semibold">
                     Personnalisé
                   </span>
                   {w.workout_type && (
-                    <span className="px-2 lg:px-3 py-0.5 lg:py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs lg:text-sm font-semibold">
+                    <span className="px-2 lg:px-3 py-0.5 lg:py-1 bg-primary/20 text-primary rounded-full text-xs lg:text-sm font-semibold">
                       {w.workout_type.replace(/_/g, ' ')}
                     </span>
                   )}
@@ -127,7 +129,7 @@ function PersonalizedWorkoutDetailContent() {
                     </span>
                   )}
                   {w.estimated_duration && (
-                    <span className="text-slate-400 text-xs lg:text-sm">
+                    <span className="text-muted-foreground text-xs lg:text-sm">
                       Cap: {w.estimated_duration} min
                     </span>
                   )}
@@ -136,25 +138,25 @@ function PersonalizedWorkoutDetailContent() {
             </div>
 
             <div className="flex items-center gap-1 lg:gap-2">
-              <button
+              <Button variant="ghost"
                 onClick={() => window.print()}
-                className="flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-xs lg:text-sm font-medium text-slate-300"
+                className="flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg bg-card hover:bg-muted transition-colors text-xs lg:text-sm font-medium text-foreground"
                 title="Exporter en PDF"
               >
                 <span>📄</span>
                 <span className="hidden sm:inline">PDF</span>
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Stimulus */}
           {w.blocks?.stimulus && (
-            <p className="text-slate-300 text-sm lg:text-lg mt-3 lg:mt-4 italic">{w.blocks.stimulus}</p>
+            <p className="text-foreground text-sm lg:text-lg mt-3 lg:mt-4 italic">{w.blocks.stimulus}</p>
           )}
 
           {/* Description */}
           {w.description && (
-            <p className="text-slate-400 text-sm mt-2">{w.description}</p>
+            <p className="text-muted-foreground text-sm mt-2">{w.description}</p>
           )}
         </div>
 
@@ -175,49 +177,49 @@ function PersonalizedWorkoutDetailContent() {
 
             {/* Equipment */}
             {w.equipment_required && w.equipment_required.length > 0 && (
-              <div className="pt-4 border-t border-slate-700/50 text-sm text-slate-400">
-                <strong className="text-white">Équipement : </strong>
+              <div className="pt-4 border-t border-border text-sm text-muted-foreground">
+                <strong className="text-foreground">Équipement : </strong>
                 {w.equipment_required.join(', ')}
               </div>
             )}
 
             {/* Coach notes */}
             {w.coach_notes && (
-              <div className="pt-4 border-t border-slate-700/50 text-sm text-slate-400">
-                <strong className="text-white">Notes du coach : </strong>
+              <div className="pt-4 border-t border-border text-sm text-muted-foreground">
+                <strong className="text-foreground">Notes du coach : </strong>
                 {w.coach_notes}
               </div>
             )}
 
             {/* Save WOD button */}
-            <div className="pt-4 border-t border-slate-700/50">
-              <button
+            <div className="pt-4 border-t border-border">
+              <Button variant="ghost"
                 onClick={() => router.push(`/crossfit/log-workout?personalizedWorkoutId=${workout?.id}`)}
-                className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-slate-500 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 bg-card hover:bg-muted border border-border hover:border-border rounded-xl text-sm font-semibold text-foreground hover:text-foreground transition-all flex items-center justify-center gap-2"
               >
                 <span>✓</span>
                 Enregistrer le WOD
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="w-full lg:w-[450px] bg-slate-950/50 border-t lg:border-t-0 lg:border-l border-slate-700/50 flex flex-col items-center justify-center p-4 lg:p-8 backdrop-blur-sm order-1 lg:order-2 flex-shrink-0">
+      <div className="w-full lg:w-[450px] bg-background border-t lg:border-t-0 lg:border-l border-border flex flex-col items-center justify-center p-4 lg:p-8 backdrop-blur-sm order-1 lg:order-2 flex-shrink-0">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
           className="text-center space-y-4 w-full"
         >
-          <button
+          <Button variant="default"
             onClick={handleStartWorkout}
             disabled={isStarting}
-            className="w-full py-3 lg:py-4 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 rounded-xl text-sm lg:text-base font-semibold transition-all shadow-lg shadow-orange-500/30 flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 lg:py-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-sm lg:text-base font-semibold transition-all flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isStarting ? 'Démarrage...' : 'Commencer le workout'}
-          </button>
+          </Button>
         </motion.div>
       </div>
 

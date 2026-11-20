@@ -114,19 +114,19 @@ function PersonalizedWorkoutsContent() {
   const getDifficultyStyle = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+        return 'bg-primary/20 text-primary border-primary/30'
       case 'intermediate':
-        return 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+        return 'bg-secondary text-foreground border-border'
       case 'advanced':
-        return 'bg-red-500/20 text-red-400 border-red-500/30'
+        return 'bg-destructive/20 text-destructive border-destructive/30'
       default:
-        return 'bg-white/10 text-slate-300 border-white/20'
+        return 'bg-card text-foreground border-border'
     }
   }
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+      className="min-h-screen bg-background text-foreground"
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
@@ -136,7 +136,7 @@ function PersonalizedWorkoutsContent() {
         <motion.div variants={fadeInUp}>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Retour au dashboard
@@ -146,37 +146,38 @@ function PersonalizedWorkoutsContent() {
         {/* Header */}
         <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold">
-              <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">Mes Workouts Personnalisés</span>
+            <h1 className="font-display text-4xl sm:text-6xl font-semibold">
+              <span className="text-foreground">Mes Workouts Personnalisés</span>
             </h1>
-            <p className="text-slate-400 mt-1">Total: {totalWorkouts}</p>
+            <p className="text-muted-foreground mt-1">Total: {totalWorkouts}</p>
           </div>
         </motion.div>
 
         {/* Filters & Controls */}
         <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
+              aria-label="Rechercher un workout"
               placeholder="Rechercher un workout..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-white/30"
+              className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-border"
             />
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-end space-x-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
               disabled={currentPage === 0}
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-50"
+              className="bg-card border-border text-foreground hover:bg-card disabled:opacity-50"
             >
               Précédent
             </Button>
-            <div className="text-sm font-medium text-slate-300">
+            <div className="text-sm font-medium text-foreground">
               Page {currentPage + 1} sur {pageCount || 1}
             </div>
             <Button
@@ -184,7 +185,7 @@ function PersonalizedWorkoutsContent() {
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.min(pageCount - 1, prev + 1))}
               disabled={currentPage >= pageCount - 1}
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-50"
+              className="bg-card border-border text-foreground hover:bg-card disabled:opacity-50"
             >
               Suivant
             </Button>
@@ -192,29 +193,29 @@ function PersonalizedWorkoutsContent() {
         </motion.div>
 
         {/* Vue Desktop - Table */}
-        <motion.div variants={fadeInUp} className="hidden md:block rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+        <motion.div variants={fadeInUp} className="hidden md:block rounded-lg border border-border bg-card backdrop-blur-xl overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-white/5">
-                <TableHead className="text-slate-300">Nom</TableHead>
-                <TableHead className="text-slate-300">Difficulté</TableHead>
-                <TableHead className="text-slate-300">Intensité</TableHead>
-                <TableHead className="text-slate-300">Durée</TableHead>
-                <TableHead className="text-right text-slate-300">Actions</TableHead>
+              <TableRow className="border-border hover:bg-card">
+                <TableHead className="text-foreground">Nom</TableHead>
+                <TableHead className="text-foreground">Difficulté</TableHead>
+                <TableHead className="text-foreground">Intensité</TableHead>
+                <TableHead className="text-foreground">Durée</TableHead>
+                <TableHead className="text-right text-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow className="border-white/10">
+                <TableRow className="border-border">
                   <TableCell colSpan={5} className="h-24 text-center">
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : workouts.length === 0 ? (
-                <TableRow className="border-white/10">
-                  <TableCell colSpan={5} className="h-24 text-center text-slate-400">
+                <TableRow className="border-border">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     Aucun workout trouvé
                   </TableCell>
                 </TableRow>
@@ -222,34 +223,35 @@ function PersonalizedWorkoutsContent() {
                 workouts.map((workout) => (
                   <TableRow
                     key={workout.id}
-                    className="cursor-pointer border-white/10 hover:bg-white/10 transition-colors"
+                    className="cursor-pointer border-border hover:bg-card transition-colors"
                     onClick={() => {
                       window.location.href = `/personalized-workout/${workout.id}`
                     }}
                   >
-                    <TableCell className="font-medium text-white">{workout.name}</TableCell>
+                    <TableCell className="font-medium text-foreground">{workout.name}</TableCell>
                     <TableCell>
                       <Badge className={`${getDifficultyStyle(workout.difficulty)} border`}>
                         {workout.difficulty}
                       </Badge>
                     </TableCell>
-                    <TableCell className="capitalize text-slate-300">{workout.intensity}</TableCell>
-                    <TableCell className="text-slate-300">{workout.estimated_duration || 'N/A'} min</TableCell>
+                    <TableCell className="capitalize text-foreground">{workout.intensity}</TableCell>
+                    <TableCell className="text-foreground">{workout.estimated_duration || 'N/A'} min</TableCell>
                     <TableCell
                       className="text-right"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex justify-end gap-2">
-                        <Link href={`/personalized-workout/${workout.id}`}>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-white/10">
+                        <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-card">
+                          <Link href={`/personalized-workout/${workout.id}`} aria-label={`Voir ${workout.name}`}>
                             <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
+                          </Link>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`Supprimer ${workout.name}`}
                           onClick={() => handleDelete(workout.id, workout.name)}
-                          className="text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -265,20 +267,20 @@ function PersonalizedWorkoutsContent() {
         {/* Vue Mobile - Cards */}
         <motion.div variants={fadeInUp} className="md:hidden space-y-3">
           {loading ? (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center">
+            <div className="bg-card backdrop-blur-xl border border-border rounded-lg p-6 text-center">
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             </div>
           ) : workouts.length === 0 ? (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center text-slate-400">
+            <div className="bg-card backdrop-blur-xl border border-border rounded-lg p-6 text-center text-muted-foreground">
               Aucun workout trouvé
             </div>
           ) : (
             workouts.map((workout) => (
               <motion.div
                 key={workout.id}
-                className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 space-y-3 cursor-pointer hover:bg-white/10 transition-all"
+                className="bg-card backdrop-blur-xl border border-border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-card transition-all"
                 onClick={() => {
                   window.location.href = `/personalized-workout/${workout.id}`
                 }}
@@ -288,21 +290,22 @@ function PersonalizedWorkoutsContent() {
                 {/* Header avec nom et actions */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-white line-clamp-1">{workout.name}</h3>
+                    <h3 className="font-semibold text-sm text-foreground line-clamp-1">{workout.name}</h3>
                   </div>
                   <div
                     className="flex gap-1 flex-shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Link href={`/personalized-workout/${workout.id}`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10">
+                    <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-card">
+                      <Link href={`/personalized-workout/${workout.id}`} aria-label={`Voir ${workout.name}`}>
                         <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                      aria-label={`Supprimer ${workout.name}`}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       onClick={() => handleDelete(workout.id, workout.name)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -311,20 +314,20 @@ function PersonalizedWorkoutsContent() {
                 </div>
 
                 {/* Info grid */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500">Difficulté</p>
+                    <p className="text-xs text-muted-foreground">Difficulté</p>
                     <Badge className={`text-xs ${getDifficultyStyle(workout.difficulty)} border`}>
                       {workout.difficulty}
                     </Badge>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500">Intensité</p>
-                    <p className="text-sm font-medium capitalize text-slate-300">{workout.intensity || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Intensité</p>
+                    <p className="text-sm font-medium capitalize text-foreground">{workout.intensity || 'N/A'}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500">Durée</p>
-                    <p className="text-sm font-medium text-slate-300">{workout.estimated_duration || 'N/A'} min</p>
+                    <p className="text-xs text-muted-foreground">Durée</p>
+                    <p className="text-sm font-medium text-foreground">{workout.estimated_duration || 'N/A'} min</p>
                   </div>
                 </div>
               </motion.div>

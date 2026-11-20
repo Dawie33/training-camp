@@ -1,13 +1,16 @@
 'use client'
 
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import type { Dispatch, SetStateAction } from 'react'
 import { toast } from 'sonner'
 import type { UpdateUserDTO, User } from '@/domain/entities/auth'
 import { AVAILABLE_DAYS, GOALS } from '@/domain/entities/athlete-profile'
 import { usersService } from '@/services/users'
 
-const inputClass = 'w-full px-3 py-2.5 rounded-xl bg-slate-900/50 border border-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50'
-const labelClass = 'block text-sm font-medium text-slate-300 mb-1.5'
+const inputClass = 'w-full px-3 py-2.5 rounded-xl bg-background border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50'
+const labelClass = 'block text-sm font-medium text-foreground mb-1.5'
 
 function limitationText(value: User['physical_limitations']): string {
   if (!value) return ''
@@ -85,13 +88,13 @@ export function AthleteTab({
   }
 
   return (
-    <form onSubmit={save} className="bg-slate-800/50 rounded-2xl border border-slate-700/50 p-6 space-y-6">
-      <h2 className="text-lg font-bold">Profil sportif et disponibilités</h2>
-      <p className="text-sm text-slate-400">
+    <form onSubmit={save} className="bg-card rounded-lg border border-border p-4 sm:p-6 space-y-6">
+      <h2 className="font-display text-2xl font-semibold">Profil sportif et disponibilités</h2>
+      <p className="text-sm text-muted-foreground">
         Ces informations facultatives aident le coach IA à adapter ses propositions. Les jours disponibles
         ne créent aucune séance automatiquement. Seuls les champs modifiés sont enregistrés.
       </p>
-      {hasLegacyFields && <details className="text-sm text-amber-300">
+      {hasLegacyFields && <details className="text-sm text-foreground">
         <summary>Anciennes données de profil conservées</summary>
         <p className="mt-2">
           Des champs historiques ne correspondent plus au formulaire. Ils sont conservés si tu ne modifies pas
@@ -103,10 +106,10 @@ export function AthleteTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="birth-date" className={labelClass}>Date de naissance</label>
-            <input id="birth-date" type="date" min="1900-01-01" max={new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' })}
+            <Input id="birth-date" type="date" min="1900-01-01" max={new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' })}
               value={values.dateOfBirth ?? ''} onChange={event => setField('dateOfBirth', event.target.value || null)}
               className={inputClass} aria-describedby="birth-date-help" />
-            <p id="birth-date-help" className="text-xs text-slate-400 mt-1">Seul l&apos;âge est transmis au coach IA.</p>
+            <p id="birth-date-help" className="text-xs text-muted-foreground mt-1">Seul l&apos;âge est transmis au coach IA.</p>
           </div>
           <div>
             <label htmlFor="profile-gender" className={labelClass}>Genre</label>
@@ -125,11 +128,11 @@ export function AthleteTab({
           </div>
           <div>
             <label htmlFor="resting-heart-rate" className={labelClass}>FC de repos (bpm)</label>
-            <input id="resting-heart-rate" type="number" min="30" max="120" step="1"
+            <Input id="resting-heart-rate" type="number" min="30" max="120" step="1"
               value={values.resting_heart_rate ?? ''} className={inputClass}
               onChange={event => setField('resting_heart_rate', event.target.value === '' ? null : Number(event.target.value))}
               aria-describedby="resting-heart-rate-help" />
-            <p id="resting-heart-rate-help" className="text-xs text-slate-400 mt-1">
+            <p id="resting-heart-rate-help" className="text-xs text-muted-foreground mt-1">
               Valeur habituelle mesurée au repos. Une mesure isolée ne permet pas de juger la récupération.
             </p>
           </div>
@@ -147,7 +150,7 @@ export function AthleteTab({
                       name, goals[name as keyof typeof GOALS] === true,
                     ]))
                     setField('global_goals', { ...knownGoals, [goal]: event.target.checked })
-                  }} className="accent-orange-500" />
+                  }} className="accent-primary" />
                 {label}
               </label>
             })}
@@ -157,13 +160,13 @@ export function AthleteTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="preferred-duration" className={labelClass}>Durée habituelle (minutes)</label>
-            <input id="preferred-duration" type="number" min="20" max="90" step="1" className={inputClass}
+            <Input id="preferred-duration" type="number" min="20" max="90" step="1" className={inputClass}
               value={training.preferred_duration ?? ''} onChange={event => changeTraining('preferred_duration', event.target.value)} />
-            <p className="text-xs text-slate-400 mt-1">Séance entière, échauffement et retour au calme inclus.</p>
+            <p className="text-xs text-muted-foreground mt-1">Séance entière, échauffement et retour au calme inclus.</p>
           </div>
           <div>
             <label htmlFor="sessions-per-week" className={labelClass}>Séances souhaitées par semaine</label>
-            <input id="sessions-per-week" type="number" min="1" max="7" step="1" className={inputClass}
+            <Input id="sessions-per-week" type="number" min="1" max="7" step="1" className={inputClass}
               value={training.sessions_per_week ?? ''} onChange={event => changeTraining('sessions_per_week', event.target.value)} />
           </div>
         </div>
@@ -174,7 +177,7 @@ export function AthleteTab({
             {Object.entries(AVAILABLE_DAYS).map(([key, label]) => {
               const day = key as keyof typeof AVAILABLE_DAYS
               return <label key={day} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={days.includes(day)} className="accent-orange-500"
+                <input type="checkbox" checked={days.includes(day)} className="accent-primary"
                   onChange={event => setField('schedule_preferences', {
                     available_days: event.target.checked ? [...days, day] : days.filter(value => value !== day),
                   })} />
@@ -182,26 +185,26 @@ export function AthleteTab({
               </label>
             })}
           </div>
-          <p className="text-xs text-slate-400 mt-2">Aucun jour coché : aucune préférence, pas une semaine sans entraînement.</p>
+          <p className="text-xs text-muted-foreground mt-2">Aucun jour coché : aucune préférence, pas une semaine sans entraînement.</p>
         </fieldset>
 
         <div>
           <label htmlFor="physical-limitations" className={labelClass}>Limitations fonctionnelles (hors blessures)</label>
-          <textarea id="physical-limitations" rows={4} value={limitations} className={inputClass}
+          <Textarea id="physical-limitations" rows={4} value={limitations} className={inputClass}
             aria-describedby="physical-limitations-help" onChange={event => {
               setLimitationsDraft(event.target.value)
               setField('physical_limitations', event.target.value.split('\n').map(line => line.trim()).filter(Boolean))
             }} />
-          <p id="physical-limitations-help" className="text-xs text-slate-400 mt-1">
+          <p id="physical-limitations-help" className="text-xs text-muted-foreground mt-1">
             Une limitation par ligne (10 maximum, 300 caractères chacune), par exemple une amplitude limitée sans douleur.
             Déclare les douleurs, blessures et restrictions associées dans l&apos;onglet Blessures, sans les dupliquer ici.
           </p>
         </div>
       </fieldset>
-      <button type="submit" disabled={saving || !changed}
-        className="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+      <Button variant="default" type="submit" disabled={saving || !changed}
+        className="w-full h-auto whitespace-normal px-6 py-3 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
         {saving ? 'Sauvegarde...' : 'Sauvegarder les préférences'}
-      </button>
+      </Button>
     </form>
   )
 }

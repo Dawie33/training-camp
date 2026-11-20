@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { GenerateForm } from './_components/GenerateForm'
@@ -35,20 +36,21 @@ export default function GenerateWorkoutAIPage() {
   } = useGenerateWorkout()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="px-4 lg:px-8 py-4 lg:py-6 border-b border-slate-700/50 sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10">
+      <div className="px-4 lg:px-8 py-4 lg:py-6 border-b border-border sticky top-0 bg-background backdrop-blur-sm z-10">
         <div className="max-w-7xl mx-auto flex items-center gap-2 lg:gap-3">
-          <button
+          <Button variant="ghost"
+            aria-label="Retour"
             onClick={() => router.back()}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-card border border-border text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div className="w-1.5 lg:w-2 h-8 lg:h-12 bg-orange-500 rounded-full" />
+          </Button>
+          <div className="w-1.5 lg:w-2 h-8 lg:h-12 bg-primary rounded-full" />
           <div>
-            <h1 className="text-2xl lg:text-4xl font-bold tracking-tight">Générer un Workout</h1>
-            <p className="text-slate-400 text-sm lg:text-base mt-0.5">Laissez l'IA créer un workout personnalisé</p>
+            <h1 className="font-display text-3xl lg:text-5xl font-semibold tracking-tight">Générer un Workout</h1>
+            <p className="text-muted-foreground text-sm lg:text-base mt-0.5">Laissez l'IA créer un workout personnalisé</p>
           </div>
         </div>
       </div>

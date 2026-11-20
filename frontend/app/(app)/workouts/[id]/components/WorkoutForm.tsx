@@ -1,5 +1,8 @@
 'use client'
 
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { WORKOUT_TYPES } from '@/domain/entities/workout-structure'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
@@ -23,16 +26,16 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       {/* Type de workout */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-4">
-        <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+      <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <h3 className="font-display text-2xl font-semibold text-foreground border-b border-border pb-3">
           Type de WOD
         </h3>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-2">Catégorie</label>
-            <select
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+            <label htmlFor="field-workoutform-0" className="text-sm font-medium text-foreground block mb-2">Catégorie</label>
+            <select id="field-workoutform-0"
+              className="w-full px-4 py-3 bg-background border border-border text-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary transition-all"
               value={formData.workout_type}
               onChange={(e) => setFormData({ ...formData, workout_type: e.target.value })}
             >
@@ -45,9 +48,9 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-2">Format du WOD</label>
-            <select
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+            <label htmlFor="field-workoutform-1" className="text-sm font-medium text-foreground block mb-2">Format du WOD</label>
+            <select id="field-workoutform-1"
+              className="w-full px-4 py-3 bg-background border border-border text-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary transition-all"
               value={formData.wod_format}
               onChange={(e) => setFormData({ ...formData, wod_format: e.target.value })}
             >
@@ -73,11 +76,11 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
-            className="w-5 h-5 rounded border-slate-700 bg-slate-900/50 text-orange-500 focus:ring-orange-500/50"
+            className="w-5 h-5 rounded border-border bg-background text-primary focus:ring-ring/50"
             checked={formData.is_benchmark}
             onChange={(e) => setFormData({ ...formData, is_benchmark: e.target.checked })}
           />
-          <span className="text-sm font-medium text-slate-300">
+          <span className="text-sm font-medium text-foreground">
             Marquer comme benchmark (WOD de référence à retester dans le temps)
           </span>
         </label>
@@ -85,16 +88,16 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
 
       {/* Bloc RM - visible uniquement pour les types Force */}
       {isStrengthType && (
-        <div className="bg-slate-800/50 border border-orange-500/30 rounded-2xl p-6 space-y-4">
-          <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+        <div className="bg-card border border-primary/30 rounded-lg p-6 space-y-4">
+          <h3 className="font-display text-2xl font-semibold text-foreground border-b border-border pb-3">
             🏋️ Objectif Force
           </h3>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium text-slate-300 block mb-2">Type RM</label>
-              <select
-                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+              <label htmlFor="field-workoutform-2" className="text-sm font-medium text-foreground block mb-2">Type RM</label>
+              <select id="field-workoutform-2"
+                className="w-full px-4 py-3 bg-background border border-border text-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary transition-all"
                 value={formData.rm_type}
                 onChange={(e) => setFormData({ ...formData, rm_type: e.target.value })}
               >
@@ -105,20 +108,20 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-300 block mb-2">Exercice</label>
-              <input
+              <label htmlFor="field-workoutform-3" className="text-sm font-medium text-foreground block mb-2">Exercice</label>
+              <Input id="field-workoutform-3"
                 type="text"
-                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+                className="w-full px-4 py-3 bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary transition-all"
                 value={formData.rm_exercise}
                 onChange={(e) => setFormData({ ...formData, rm_exercise: e.target.value })}
                 placeholder="ex: Back Squat"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-300 block mb-2">Poids cible</label>
-              <input
+              <label htmlFor="field-workoutform-4" className="text-sm font-medium text-foreground block mb-2">Poids cible</label>
+              <Input id="field-workoutform-4"
                 type="text"
-                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+                className="w-full px-4 py-3 bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary transition-all"
                 value={formData.rm_weight}
                 onChange={(e) => setFormData({ ...formData, rm_weight: e.target.value })}
                 placeholder="ex: 120kg"
@@ -129,8 +132,8 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
       )}
 
       {/* Structure du workout */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-4">
-        <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+      <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <h3 className="font-display text-2xl font-semibold text-foreground border-b border-border pb-3">
           Structure du WOD
         </h3>
 
@@ -141,15 +144,15 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
       </div>
 
       {/* Notes personnelles */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-4">
-        <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-3">
+      <div className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <h3 className="font-display text-2xl font-semibold text-foreground border-b border-border pb-3">
           Notes
         </h3>
 
         <div>
-          <label className="text-sm font-medium text-slate-300 block mb-2">Notes personnelles</label>
-          <textarea
-            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all resize-none"
+          <label htmlFor="field-workoutform-5" className="text-sm font-medium text-foreground block mb-2">Notes personnelles</label>
+          <Textarea id="field-workoutform-5"
+            className="w-full px-4 py-3 bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary transition-all resize-none"
             value={formData.personal_notes}
             onChange={(e) => setFormData({ ...formData, personal_notes: e.target.value })}
             rows={3}
@@ -159,21 +162,21 @@ export function WorkoutForm({ formData, setFormData, onSubmit, saving, isNewMode
       </div>
 
       {/* Submit Buttons */}
-      <div className="flex gap-4 pt-2">
-        <button
+      <div className="flex flex-wrap gap-4 pt-2">
+        <Button variant="default"
           type="submit"
           disabled={saving}
-          className="flex-1 py-3 px-6 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="flex-1 py-3 px-6 bg-primary text-primary-foreground hover:bg-primary/90  font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {saving ? 'Enregistrement...' : isNewMode ? 'Créer le Workout' : 'Sauvegarder'}
-        </button>
-        <button
+        </Button>
+        <Button variant="ghost"
           type="button"
           onClick={() => router.back()}
-          className="py-3 px-6 bg-white/5 border border-white/10 text-slate-300 font-medium rounded-xl hover:bg-white/10 transition-all"
+          className="py-3 px-6 bg-card border border-border text-foreground font-medium rounded-xl hover:bg-card transition-all"
         >
           Annuler
-        </button>
+        </Button>
       </div>
     </form>
   )

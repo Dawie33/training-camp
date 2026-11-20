@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
@@ -33,14 +34,14 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-lg text-slate-400">Chargement...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-lg text-muted-foreground">Chargement...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-background">
       <motion.div
         className="max-w-4xl mx-auto p-6 space-y-6 pb-32"
         variants={staggerContainer}
@@ -48,35 +49,36 @@ export default function WorkoutEditPage({ params }: { params: Promise<{ id: stri
         animate="visible"
       >
         {/* Header */}
-        <motion.div variants={fadeInUp} className="flex items-center gap-4">
-          <button
+        <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-4">
+          <Button variant="ghost"
+            aria-label="Retour"
             onClick={() => router.back()}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-card border border-border text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
-          </button>
+          </Button>
           <div>
-            <h1 className="text-3xl font-black text-white">
+            <h1 className="font-display text-3xl sm:text-5xl font-semibold text-foreground">
               {isNewMode ? 'Nouveau' : 'Modifier'}{' '}
-              <span className="bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">
+              <span className="text-foreground">
                 Workout
               </span>
             </h1>
             {isNewMode && (
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Crée ton WOD rapidement
               </p>
             )}
           </div>
 
           {isNewMode && (
-            <button
+            <Button variant="default"
               type="button"
               onClick={() => setShowAIModal(true)}
-              className="ml-auto px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity"
+              className="ml-auto px-4 py-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground font-semibold text-sm"
             >
               ✨ Générer avec IA
-            </button>
+            </Button>
           )}
         </motion.div>
 
