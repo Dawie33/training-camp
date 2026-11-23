@@ -2,14 +2,16 @@
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { exercisesApi } from '@/services/exercises'
 import type { Exercise } from '@/domain/entities/exercise'
-import { Search, X, Plus, Dumbbell } from 'lucide-react'
+import { Search, Plus, Dumbbell } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface ExercisesSidebarProps {
   isOpen: boolean
   onClose: () => void
+  onRestoreFocus: () => void
   onAddExercise: (exercise: Exercise) => void
 }
 
@@ -24,20 +26,20 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  strength: 'bg-blue-100 text-blue-700 border-blue-200',
-  cardio: 'bg-red-100 text-red-700 border-red-200',
-  gymnastics: 'bg-purple-100 text-purple-700 border-purple-200',
-  olympic_lifting: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  powerlifting: 'bg-orange-100 text-orange-700 border-orange-200',
-  endurance: 'bg-green-100 text-green-700 border-green-200',
-  mobility: 'bg-teal-100 text-teal-700 border-teal-200',
+  strength: 'bg-primary text-primary-foreground border-primary',
+  cardio: 'bg-destructive/10 text-destructive border-destructive/30',
+  gymnastics: 'bg-primary text-primary-foreground border-primary',
+  olympic_lifting: 'bg-secondary text-foreground border-border',
+  powerlifting: 'bg-primary text-primary-foreground border-primary',
+  endurance: 'bg-primary text-primary-foreground border-primary',
+  mobility: 'bg-primary text-primary-foreground border-primary',
 }
 
 /**
  * Panneau latéral listant les exercices du référentiel (recherche + filtre par
  * catégorie) pour les ajouter à la section active du `BlocksEditor`.
  */
-export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSidebarProps) {
+export function ExercisesSidebar({ isOpen, onClose, onRestoreFocus, onAddExercise }: ExercisesSidebarProps) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -74,31 +76,29 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
   if (!isOpen) return null
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-        onClick={onClose}
-      />
-
-      {/* Sidebar */}
-      <div className="fixed right-0 top-0 h-full w-96 bg-background border-l shadow-lg z-50 flex flex-col">
+    <Sheet open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
+      <SheetContent
+        aria-describedby={undefined}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          onRestoreFocus()
+        }}
+        className="w-full max-w-sm gap-0"
+      >
         {/* Header */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <SheetTitle className="font-display text-2xl font-semibold flex items-center gap-2">
               <Dumbbell className="h-5 w-5" />
               Exercices
-            </h2>
-            <Button type="button" variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            </SheetTitle>
           </div>
 
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              aria-label="Rechercher un exercice"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher un exercice..."
@@ -110,7 +110,7 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
         {/* Category filter */}
         <div className="p-4 border-b">
           <div className="flex flex-wrap gap-2">
-            <button
+            <Button variant="ghost"
               type="button"
               onClick={() => setSelectedCategory('all')}
               className={`px-3 py-1 text-xs rounded-full border transition-colors ${
@@ -120,9 +120,9 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
               }`}
             >
               Tous ({exercises.length})
-            </button>
+            </Button>
             {categories.map((category) => (
-              <button
+              <Button variant="ghost"
                 type="button"
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -133,7 +133,7 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
                 }`}
               >
                 {CATEGORY_LABELS[category] || category}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -163,7 +163,7 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`inline-block px-2 py-0.5 text-xs rounded-full border ${
-                          CATEGORY_COLORS[exercise.category] || 'bg-gray-100 text-gray-700'
+                          CATEGORY_COLORS[exercise.category] || 'bg-card text-muted-foreground'
                         }`}
                       >
                         {CATEGORY_LABELS[exercise.category] || exercise.category}
@@ -186,6 +186,7 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
                     )}
                   </div>
                   <Button
+                    aria-label={`Ajouter ${exercise.name}`}
                     type="button"
                     size="sm"
                     variant="ghost"
@@ -209,7 +210,7 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
             Cliquez sur un exercice pour l'ajouter à la section active
           </p>
         </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   )
 }

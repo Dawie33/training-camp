@@ -1,8 +1,11 @@
 'use client'
 
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 import type { Exercise as ExerciseType } from '@/domain/entities/exercise'
 import type { Exercise, WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
-import { useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { ExercisesSidebar } from './ExercisesSidebar'
 
 interface BlocksEditorProps {
@@ -35,6 +38,8 @@ const TIMECAP_TYPES = ['for_time', 'amrap', 'emom']
  * d'exercices (`ExercisesSidebar`).
  */
 export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
+  const formId = useId()
+  const libraryTriggerRef = useRef<HTMLButtonElement | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set([0]))
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeSectionIndex, setActiveSectionIndex] = useState<number | null>(null)
@@ -131,20 +136,21 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
     })
   }
 
-  const openExerciseLibrary = (sectionIndex: number) => {
+  const openExerciseLibrary = (sectionIndex: number, trigger: HTMLButtonElement) => {
+    libraryTriggerRef.current = trigger
     setActiveSectionIndex(sectionIndex)
     setSidebarOpen(true)
   }
 
   return (
     <div className="space-y-4">
-      {label && <label className="text-sm font-medium text-slate-300">{label}</label>}
+      {label && <label className="text-sm font-medium text-foreground">{label}</label>}
 
       {/* Stimulus / Objectif */}
       <div>
-        <label className="text-xs font-medium text-slate-400 block mb-1">Stimulus / Objectif du WOD</label>
-        <textarea
-          className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all resize-none text-sm"
+        <label htmlFor={`${formId}-0`} className="text-xs font-medium text-muted-foreground block mb-1">Stimulus / Objectif du WOD</label>
+        <Textarea id={`${formId}-0`}
+          className="w-full px-4 py-3 bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-primary transition-all resize-none text-sm"
           value={blocks.stimulus || ''}
           onChange={(e) => updateBlocks({ ...blocks, stimulus: e.target.value || undefined })}
           placeholder="High intensity metabolic conditioning..."
@@ -160,43 +166,45 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
           const hasTimeAttack = section.type === 'for_time'
 
           return (
-            <div key={sectionIndex} className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
+            <div key={sectionIndex} className="bg-card border border-border rounded-xl overflow-hidden">
               {/* Section header */}
               <div
-                className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/5 transition-colors"
-                onClick={() => toggleSection(sectionIndex)}
+                className="flex items-center justify-between px-4 py-3 hover:bg-secondary transition-colors"
               >
-                <div className="flex items-center gap-3 flex-1">
-                  <span className="text-slate-500 cursor-move">≡</span>
-                  <div>
-                    <span className="text-sm font-semibold text-white">
+                <Button type="button" variant="ghost" aria-expanded={isExpanded}
+                  onClick={() => toggleSection(sectionIndex)}
+                  className="h-auto whitespace-normal justify-start text-left flex items-center gap-3 flex-1 min-w-0">
+                  <span className="text-muted-foreground cursor-move">≡</span>
+                  <span>
+                    <span className="text-sm font-semibold text-foreground">
                       {section.title || `Section ${sectionIndex + 1}`}
                     </span>
-                    <span className="text-xs text-slate-500 ml-2">
+                    <span className="text-xs text-muted-foreground ml-2">
                       {section.type} {section.exercises && `· ${section.exercises.length} exercices`}
                     </span>
-                  </div>
-                </div>
+                  </span>
+                </Button>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button variant="ghost"
                     type="button"
+                    aria-label={`Supprimer la section ${section.title || sectionIndex + 1}`}
                     onClick={(e) => { e.stopPropagation(); removeSection(sectionIndex) }}
-                    className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                   >
                     ×
-                  </button>
-                  <span className="text-slate-500 text-sm">{isExpanded ? '▲' : '▼'}</span>
+                  </Button>
+                  <span className="text-muted-foreground text-sm">{isExpanded ? '▲' : '▼'}</span>
                 </div>
               </div>
 
               {isExpanded && (
-                <div className="px-4 pb-4 space-y-4 border-t border-slate-700/50 pt-4">
+                <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
                   {/* Section metadata */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-slate-400 block mb-1">Type</label>
-                      <select
-                        className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      <label htmlFor={`${formId}-1-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">Type</label>
+                      <select id={`${formId}-1-${sectionIndex}`}
+                        className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                         value={section.type}
                         onChange={(e) => updateSection(sectionIndex, { type: e.target.value as WorkoutSection['type'] })}
                       >
@@ -208,10 +216,10 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-400 block mb-1">Titre</label>
-                      <input
+                      <label htmlFor={`${formId}-2-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">Titre</label>
+                      <Input id={`${formId}-2-${sectionIndex}`}
                         type="text"
-                        className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                        className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                         value={section.title}
                         onChange={(e) => updateSection(sectionIndex, { title: e.target.value })}
                         placeholder="Ex: MetCon"
@@ -219,15 +227,15 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-slate-400 block mb-1">
+                      <label htmlFor={`${formId}-3-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">
                         {hasTimecap ? 'TimeCap (min)' : 'Durée (min)'}
                       </label>
 
-                      <input
+                      <Input id={`${formId}-3-${sectionIndex}`}
                         type="number"
-                        className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                        className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                         value={section.duration_min || ''}
                         onChange={(e) => updateSection(sectionIndex, { duration_min: Number(e.target.value) || undefined })}
                         placeholder='ex: 20min'
@@ -235,13 +243,13 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                     </div>
 
                     <div>
-                      <label className="text-xs font-medium text-slate-400 block mb-1">
+                      <label htmlFor={`${formId}-4-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">
                         {hasTimeAttack ? 'TimeAttack (max)' : 'Durée max)'}
                       </label>
 
-                      <input
+                      <Input id={`${formId}-4-${sectionIndex}`}
                         type="number"
-                        className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                        className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                         value={section.duration_max || ''}
                         onChange={(e) => updateSection(sectionIndex, { duration_max: Number(e.target.value) || undefined })}
                         placeholder='ex: 20min'
@@ -249,19 +257,19 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                     </div>
 
                     <div>
-                      <label className="text-xs font-medium text-slate-400 block mb-1">Rounds</label>
-                      <input
+                      <label htmlFor={`${formId}-5-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">Rounds</label>
+                      <Input id={`${formId}-5-${sectionIndex}`}
                         type="number"
-                        className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                        className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                         value={section.rounds || ''}
                         onChange={(e) => updateSection(sectionIndex, { rounds: Number(e.target.value) || undefined })}
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-slate-400 block mb-1">Repos (sec)</label>
-                      <input
+                      <label htmlFor={`${formId}-6-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">Repos (sec)</label>
+                      <Input id={`${formId}-6-${sectionIndex}`}
                         type="number"
-                        className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                        className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                         value={section.rest_between_rounds || ''}
                         onChange={(e) => updateSection(sectionIndex, { rest_between_rounds: Number(e.target.value) || undefined })}
                       />
@@ -269,10 +277,10 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-slate-400 block mb-1">Tâche après chaque round</label>
-                    <input
+                    <label htmlFor={`${formId}-7-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">Tâche après chaque round</label>
+                    <Input id={`${formId}-7-${sectionIndex}`}
                       type="text"
-                      className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                      className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                       value={section.between_rounds_task || ''}
                       onChange={(e) => updateSection(sectionIndex, { between_rounds_task: e.target.value || undefined })}
                       placeholder="ex: 30 Double-Unders"
@@ -280,9 +288,9 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-slate-400 block mb-1">Description</label>
-                    <textarea
-                      className="w-full px-3 py-2 text-sm bg-slate-900/50 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all resize-none"
+                    <label htmlFor={`${formId}-8-${sectionIndex}`} className="text-xs font-medium text-muted-foreground block mb-1">Description</label>
+                    <Textarea id={`${formId}-8-${sectionIndex}`}
+                      className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all resize-none"
                       value={section.description || ''}
                       onChange={(e) => updateSection(sectionIndex, { description: e.target.value || undefined })}
                       rows={2}
@@ -293,71 +301,71 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                   {/* Exercises */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-medium text-slate-400">Exercices</label>
+                      <label className="text-xs font-medium text-muted-foreground">Exercices</label>
                     </div>
 
                     {(section.exercises || []).map((exercise, exerciseIndex) => (
 
-                      <div key={exerciseIndex} className="bg-slate-900/50 border border-slate-700/30 rounded-xl p-3 space-y-2">
+                      <div key={exerciseIndex} className="bg-background border border-border rounded-xl p-3 space-y-2">
                         <div className="flex items-start gap-2">
-                          <span className="text-slate-600 mt-2 cursor-move text-sm">≡</span>
-                          <div className="flex-1 space-y-2">
+                          <span className="text-muted-foreground mt-2 cursor-move text-sm">≡</span>
+                          <div className="flex-1 min-w-0 space-y-2">
                             <div>
-                              <label className="text-xs font-medium text-slate-500">Nom</label>
-                              <input
+                              <label htmlFor={`${formId}-9-${sectionIndex}-${exerciseIndex}`} className="text-xs font-medium text-muted-foreground">Nom</label>
+                              <Input id={`${formId}-9-${sectionIndex}-${exerciseIndex}`}
                                 type="text"
-                                className="w-full px-3 py-2 text-sm bg-slate-800/50 border border-slate-700/50 text-white placeholder:text-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all font-medium"
+                                className="w-full px-3 py-2 text-sm bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all font-medium"
                                 value={exercise.name}
                                 onChange={(e) => updateExercise(sectionIndex, exerciseIndex, { name: e.target.value })}
                                 placeholder="Ex: Push-ups, Squats..."
                               />
                             </div>
-                            <div className="grid grid-cols-5 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
                               <div>
-                                <label className="text-xs font-medium text-slate-500">Reps</label>
-                                <input
+                                <label htmlFor={`${formId}-10-${sectionIndex}-${exerciseIndex}`} className="text-xs font-medium text-muted-foreground">Reps</label>
+                                <Input id={`${formId}-10-${sectionIndex}-${exerciseIndex}`}
                                   type="text"
-                                  className="w-full px-3 py-2 text-sm bg-slate-800/50 border border-slate-700/50 text-white placeholder:text-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                  className="w-full px-3 py-2 text-sm bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                                   value={exercise.reps || ''}
                                   onChange={(e) => updateExercise(sectionIndex, exerciseIndex, { reps: e.target.value })}
                                   placeholder="10, 10-12..."
                                 />
                               </div>
                               <div>
-                                <label className="text-xs font-medium text-slate-500">Séries</label>
-                                <input
+                                <label htmlFor={`${formId}-11-${sectionIndex}-${exerciseIndex}`} className="text-xs font-medium text-muted-foreground">Séries</label>
+                                <Input id={`${formId}-11-${sectionIndex}-${exerciseIndex}`}
                                   type="number"
-                                  className="w-full px-3 py-2 text-sm bg-slate-800/50 border border-slate-700/50 text-white placeholder:text-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                  className="w-full px-3 py-2 text-sm bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                                   value={exercise.sets || ''}
                                   onChange={(e) => updateExercise(sectionIndex, exerciseIndex, { sets: Number(e.target.value) || undefined })}
                                   placeholder="3"
                                 />
                               </div>
                               <div>
-                                <label className="text-xs font-medium text-slate-500">Poids</label>
-                                <input
+                                <label htmlFor={`${formId}-12-${sectionIndex}-${exerciseIndex}`} className="text-xs font-medium text-muted-foreground">Poids</label>
+                                <Input id={`${formId}-12-${sectionIndex}-${exerciseIndex}`}
                                   type="text"
-                                  className="w-full px-3 py-2 text-sm bg-slate-800/50 border border-slate-700/50 text-white placeholder:text-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                  className="w-full px-3 py-2 text-sm bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                                   value={exercise.weight || ''}
                                   onChange={(e) => updateExercise(sectionIndex, exerciseIndex, { weight: e.target.value })}
                                   placeholder="20kg, BW..."
                                 />
                               </div>
                               <div>
-                                <label className="text-xs font-medium text-slate-500">Distance</label>
-                                <input
+                                <label htmlFor={`${formId}-13-${sectionIndex}-${exerciseIndex}`} className="text-xs font-medium text-muted-foreground">Distance</label>
+                                <Input id={`${formId}-13-${sectionIndex}-${exerciseIndex}`}
                                   type="text"
-                                  className="w-full px-3 py-2 text-sm bg-slate-800/50 border border-slate-700/50 text-white placeholder:text-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                  className="w-full px-3 py-2 text-sm bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                                   value={exercise.distance || ''}
                                   onChange={(e) => updateExercise(sectionIndex, exerciseIndex, { distance: e.target.value })}
                                   placeholder="50m, 400m..."
                                 />
                               </div>
                               <div>
-                                <label className="text-xs font-medium text-slate-500">Durée</label>
-                                <input
+                                <label htmlFor={`${formId}-14-${sectionIndex}-${exerciseIndex}`} className="text-xs font-medium text-muted-foreground">Durée</label>
+                                <Input id={`${formId}-14-${sectionIndex}-${exerciseIndex}`}
                                   type="text"
-                                  className="w-full px-3 py-2 text-sm bg-slate-800/50 border border-slate-700/50 text-white placeholder:text-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                  className="w-full px-3 py-2 text-sm bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                                   value={exercise.duration || ''}
                                   onChange={(e) => updateExercise(sectionIndex, exerciseIndex, { duration: e.target.value })}
                                   placeholder="30s, 1min..."
@@ -365,46 +373,47 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                               </div>
                             </div>
                             <div>
-                              <label className="text-xs font-medium text-slate-500">Détails</label>
-                              <input
+                              <label htmlFor={`${formId}-15-${sectionIndex}-${exerciseIndex}`} className="text-xs font-medium text-muted-foreground">Détails</label>
+                              <Input id={`${formId}-15-${sectionIndex}-${exerciseIndex}`}
                                 type="text"
-                                className="w-full px-3 py-2 text-sm bg-slate-800/50 border border-slate-700/50 text-white placeholder:text-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+                                className="w-full px-3 py-2 text-sm bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                                 value={exercise.details || ''}
                                 onChange={(e) => updateExercise(sectionIndex, exerciseIndex, { details: e.target.value })}
                                 placeholder="Notes, tempo, consignes..."
                               />
                             </div>
                           </div>
-                          <button
+                          <Button variant="ghost"
                             type="button"
+                            aria-label={`Supprimer l'exercice ${exercise.name || exerciseIndex + 1}`}
                             onClick={() => removeExercise(sectionIndex, exerciseIndex)}
-                            className="p-1 text-slate-500 hover:text-red-400 transition-colors mt-1"
+                            className="p-1 text-muted-foreground hover:text-destructive transition-colors mt-1"
                           >
                             ×
-                          </button>
+                          </Button>
                         </div>
 
                       </div>
 
                     ))}
                     <div className="flex justify-end gap-2">
-                      <button
+                      <Button variant="ghost"
                         type="button"
-                        onClick={() => openExerciseLibrary(sectionIndex)}
-                        className="px-3 py-1.5 text-xs font-medium bg-white/5 border border-white/10 text-slate-300 rounded-lg hover:bg-white/10 transition-all"
+                        onClick={(event) => openExerciseLibrary(sectionIndex, event.currentTarget)}
+                        className="px-3 py-1.5 text-xs font-medium bg-card border border-border text-foreground rounded-lg hover:bg-card transition-all"
                       >
                         📚 Bibliothèque
-                      </button>
-                      <button
+                      </Button>
+                      <Button variant="ghost"
                         type="button"
                         onClick={() => addExercise(sectionIndex)}
-                        className="px-3 py-1.5 text-xs font-medium bg-orange-500/10 border border-orange-500/30 text-orange-400 rounded-lg hover:bg-orange-500/20 transition-all"
+                        className="px-3 py-1.5 text-xs font-medium bg-primary/10 border border-primary/30 text-primary rounded-lg hover:bg-primary/20 transition-all"
                       >
                         + Ajouter
-                      </button>
+                      </Button>
                     </div>
                     {(!section.exercises || section.exercises.length === 0) && (
-                      <p className="text-xs text-slate-500 text-center py-6 border border-dashed border-slate-700/50 rounded-xl">
+                      <p className="text-xs text-muted-foreground text-center py-6 border border-dashed border-border rounded-xl">
                         Aucun exercice. Clique sur &quot;+ Ajouter&quot; pour commencer.
                       </p>
                     )}
@@ -417,16 +426,16 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
       </div>
 
       {/* Add section button */}
-      <button
+      <Button variant="ghost"
         type="button"
         onClick={addSection}
-        className="w-full py-3 px-4 bg-white/5 border border-dashed border-slate-700/50 text-slate-400 font-medium rounded-xl hover:bg-white/10 hover:text-white transition-all"
+        className="w-full py-3 px-4 bg-card border border-dashed border-border text-muted-foreground font-medium rounded-xl hover:bg-secondary hover:text-foreground transition-all"
       >
         + Ajouter une section
-      </button>
+      </Button>
 
       {blocks.sections.length === 0 && (
-        <p className="text-sm text-slate-500 text-center py-8 border border-dashed border-slate-700/50 rounded-xl">
+        <p className="text-sm text-muted-foreground text-center py-8 border border-dashed border-border rounded-xl">
           Aucune section. Clique sur &quot;+ Ajouter une section&quot; pour construire ton WOD.
         </p>
       )}
@@ -435,6 +444,7 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
       <ExercisesSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onRestoreFocus={() => libraryTriggerRef.current?.focus()}
         onAddExercise={addExerciseFromLibrary}
       />
     </div>

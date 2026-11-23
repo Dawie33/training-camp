@@ -1,3 +1,6 @@
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { WorkoutDisplay } from '@/components/workout/display/WorkoutDisplay'
 import { ExerciseDifficulty } from '@/domain/entities/exercise'
 import { GeneratedWorkout } from '@/services'
@@ -24,7 +27,7 @@ interface GeneratedWorkoutResultProps {
   onSave: () => void
 }
 
-const editSelectClass = 'w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50'
+const editSelectClass = 'w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/50'
 
 /**
  * Affiche le workout généré par l'IA (ou un état vide avant génération), avec bascule
@@ -43,12 +46,12 @@ export function GeneratedWorkoutResult({
 }: GeneratedWorkoutResultProps) {
   if (!generatedWorkout) {
     return (
-      <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl p-8 lg:p-12 text-center border border-slate-700/50 border-dashed">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-900/50 border border-slate-700/50 flex items-center justify-center">
-          <span className="text-2xl font-bold text-slate-600">AI</span>
+      <div className="bg-card rounded-xl lg:rounded-lg p-8 lg:p-12 text-center border border-border border-dashed">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-background border border-border flex items-center justify-center">
+          <span className="text-2xl font-bold text-muted-foreground">AI</span>
         </div>
-        <p className="text-slate-400 font-medium">Le workout généré apparaîtra ici</p>
-        <p className="text-sm text-slate-600 mt-1">Configurez les paramètres et cliquez sur "Générer"</p>
+        <p className="text-muted-foreground font-medium">Le workout généré apparaîtra ici</p>
+        <p className="text-sm text-muted-foreground mt-1">Configurez les paramètres et cliquez sur "Générer"</p>
       </div>
     )
   }
@@ -56,45 +59,45 @@ export function GeneratedWorkoutResult({
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header du workout généré */}
-      <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl border border-slate-700/50 overflow-hidden">
+      <div className="bg-card rounded-xl lg:rounded-lg border border-border overflow-hidden">
         {/* Bandeau succès */}
-        <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/10 border-b border-slate-700/50 px-4 lg:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-green-400 text-sm font-semibold">Workout généré avec succès</span>
+        <div className="bg-secondary border-b border-border px-4 lg:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-primary text-sm font-semibold">Workout généré avec succès</span>
             {personalized && (
-              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-medium rounded-full border border-green-500/30">
+              <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded-full border border-primary/30">
                 Généré sur mesure pour vous
               </span>
             )}
           </div>
-          <div className="flex gap-2">
-            <button
+          <div className="flex flex-wrap gap-2">
+            <Button variant="ghost"
               onClick={onToggleEdit}
-              className="px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-700/50 text-slate-300 hover:bg-slate-700/50 hover:text-white text-xs font-medium transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-background border border-border text-foreground hover:bg-muted hover:text-foreground text-xs font-medium transition-colors"
             >
               {isEditing ? 'Prévisualiser' : 'Modifier'}
-            </button>
-            <button
+            </Button>
+            <Button variant="default"
               onClick={onSave}
               disabled={loading}
-              className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Sauvegarde...' : 'Sauvegarder'}
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Titre + meta */}
         <div className="p-4 lg:p-6 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-1.5 h-10 bg-orange-500 rounded-full flex-shrink-0 mt-1" />
+            <div className="w-1.5 h-10 bg-primary rounded-full flex-shrink-0 mt-1" />
             <div className="flex-1 min-w-0">
               {isEditing ? (
-                <input
+                <Input
                   type="text"
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
-                  className="text-2xl lg:text-3xl font-bold bg-slate-900/50 border border-slate-700/50 rounded-xl px-3 py-2 w-full text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  className="h-14 text-2xl md:text-2xl lg:text-3xl font-bold bg-background border border-border rounded-xl px-3 py-2 w-full text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
                   placeholder="Nom du workout"
                 />
               ) : (
@@ -102,15 +105,15 @@ export function GeneratedWorkoutResult({
               )}
 
               {isEditing ? (
-                <textarea
+                <Textarea
                   value={editedDescription}
                   onChange={(e) => setEditedDescription(e.target.value)}
-                  className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-3 py-2 mt-3 text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 resize-none min-h-[60px]"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 mt-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none min-h-[60px]"
                   placeholder="Description du workout"
                 />
               ) : (
                 editedDescription && (
-                  <p className="text-slate-400 text-sm lg:text-base mt-2 italic">{editedDescription}</p>
+                  <p className="text-muted-foreground text-sm lg:text-base mt-2 italic">{editedDescription}</p>
                 )
               )}
             </div>
@@ -120,8 +123,8 @@ export function GeneratedWorkoutResult({
           {isEditing ? (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Difficulté</label>
-                <select
+                <label htmlFor="field-generatedworkoutresult-0" className="block text-xs font-medium text-muted-foreground mb-1">Difficulté</label>
+                <select id="field-generatedworkoutresult-0"
                   value={editedDifficulty}
                   onChange={(e) => setEditedDifficulty(e.target.value as ExerciseDifficulty)}
                   className={editSelectClass}
@@ -133,8 +136,8 @@ export function GeneratedWorkoutResult({
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Durée (min)</label>
-                <input
+                <label htmlFor="field-generatedworkoutresult-1" className="block text-xs font-medium text-muted-foreground mb-1">Durée (min)</label>
+                <Input id="field-generatedworkoutresult-1"
                   type="number"
                   value={editedDuration}
                   onChange={(e) => setEditedDuration(Number(e.target.value))}
@@ -144,8 +147,8 @@ export function GeneratedWorkoutResult({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Intensité</label>
-                <select
+                <label htmlFor="field-generatedworkoutresult-2" className="block text-xs font-medium text-muted-foreground mb-1">Intensité</label>
+                <select id="field-generatedworkoutresult-2"
                   value={editedIntensity}
                   onChange={(e) => setEditedIntensity(e.target.value as 'low' | 'moderate' | 'high' | 'very_high')}
                   className={editSelectClass}
@@ -159,21 +162,21 @@ export function GeneratedWorkoutResult({
             </div>
           ) : (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs lg:text-sm font-semibold">
+              <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-xs lg:text-sm font-semibold">
                 {generatedWorkout.workout_type?.replace(/_/g, ' ')}
               </span>
-              <span className="px-3 py-1 bg-slate-700/50 text-slate-300 rounded-full text-xs lg:text-sm">
+              <span className="px-3 py-1 bg-muted text-foreground rounded-full text-xs lg:text-sm">
                 {editedDifficulty}
               </span>
-              <span className="text-slate-500 text-xs lg:text-sm">{editedDuration} min</span>
-              <span className="text-slate-500 text-xs lg:text-sm">Intensité : {editedIntensity}</span>
+              <span className="text-muted-foreground text-xs lg:text-sm">{editedDuration} min</span>
+              <span className="text-muted-foreground text-xs lg:text-sm">Intensité : {editedIntensity}</span>
             </div>
           )}
 
           {!isEditing && generatedWorkout.tags && generatedWorkout.tags.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
               {generatedWorkout.tags.map((tag: string, idx: number) => (
-                <span key={idx} className="px-2 py-0.5 bg-slate-900/50 border border-slate-700/50 rounded-md text-xs text-slate-500">
+                <span key={idx} className="px-2 py-0.5 bg-background border border-border rounded-md text-xs text-muted-foreground">
                   {tag}
                 </span>
               ))}
@@ -185,7 +188,7 @@ export function GeneratedWorkoutResult({
       {/* Structure du workout */}
       <div className="space-y-4">
         {isEditing ? (
-          <div className="bg-slate-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-slate-700/50">
+          <div className="bg-card rounded-xl lg:rounded-lg p-4 lg:p-6 border border-border">
             <h3 className="font-bold mb-4 text-lg">Structure du Workout</h3>
             <BlocksEditor value={editedBlocks} onChange={setEditedBlocks} />
           </div>
@@ -195,7 +198,7 @@ export function GeneratedWorkoutResult({
               return <WorkoutDisplay blocks={JSON.parse(editedBlocks)} showTitle={false} />
             } catch {
               return (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
+                <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive text-sm">
                   Erreur de format dans les blocks
                 </div>
               )
