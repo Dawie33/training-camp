@@ -97,7 +97,7 @@ export function GeneratedWorkoutResult({
                   type="text"
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
-                  className="text-2xl lg:text-3xl font-bold bg-background border border-border rounded-xl px-3 py-2 w-full text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  className="h-14 text-2xl md:text-2xl lg:text-3xl font-bold bg-background border border-border rounded-xl px-3 py-2 w-full text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
                   placeholder="Nom du workout"
                 />
               ) : (

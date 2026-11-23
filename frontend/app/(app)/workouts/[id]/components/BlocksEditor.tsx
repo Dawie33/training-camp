@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import type { Exercise as ExerciseType } from '@/domain/entities/exercise'
 import type { Exercise, WorkoutBlocks, WorkoutSection } from '@/domain/entities/workout-structure'
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { ExercisesSidebar } from './ExercisesSidebar'
 
 interface BlocksEditorProps {
@@ -39,6 +39,7 @@ const TIMECAP_TYPES = ['for_time', 'amrap', 'emom']
  */
 export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
   const formId = useId()
+  const libraryTriggerRef = useRef<HTMLButtonElement | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set([0]))
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeSectionIndex, setActiveSectionIndex] = useState<number | null>(null)
@@ -135,7 +136,8 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
     })
   }
 
-  const openExerciseLibrary = (sectionIndex: number) => {
+  const openExerciseLibrary = (sectionIndex: number, trigger: HTMLButtonElement) => {
+    libraryTriggerRef.current = trigger
     setActiveSectionIndex(sectionIndex)
     setSidebarOpen(true)
   }
@@ -397,7 +399,7 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost"
                         type="button"
-                        onClick={() => openExerciseLibrary(sectionIndex)}
+                        onClick={(event) => openExerciseLibrary(sectionIndex, event.currentTarget)}
                         className="px-3 py-1.5 text-xs font-medium bg-card border border-border text-foreground rounded-lg hover:bg-card transition-all"
                       >
                         📚 Bibliothèque
@@ -442,6 +444,7 @@ export function BlocksEditor({ value, onChange, label }: BlocksEditorProps) {
       <ExercisesSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onRestoreFocus={() => libraryTriggerRef.current?.focus()}
         onAddExercise={addExerciseFromLibrary}
       />
     </div>

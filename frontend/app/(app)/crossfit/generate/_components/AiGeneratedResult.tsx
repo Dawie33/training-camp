@@ -93,7 +93,7 @@ export function AiGeneratedResult({
                   type="text"
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
-                  className="text-2xl lg:text-3xl font-bold bg-secondary/40 border border-border rounded-md px-3 py-2 w-full text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="h-14 text-2xl md:text-2xl lg:text-3xl font-bold bg-secondary/40 border border-border rounded-md px-3 py-2 w-full text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="Nom du workout"
                 />
               ) : (

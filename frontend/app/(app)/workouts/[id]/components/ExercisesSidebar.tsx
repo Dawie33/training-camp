@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 interface ExercisesSidebarProps {
   isOpen: boolean
   onClose: () => void
+  onRestoreFocus: () => void
   onAddExercise: (exercise: Exercise) => void
 }
 
@@ -38,7 +39,7 @@ const CATEGORY_COLORS: Record<string, string> = {
  * Panneau latéral listant les exercices du référentiel (recherche + filtre par
  * catégorie) pour les ajouter à la section active du `BlocksEditor`.
  */
-export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSidebarProps) {
+export function ExercisesSidebar({ isOpen, onClose, onRestoreFocus, onAddExercise }: ExercisesSidebarProps) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -76,7 +77,14 @@ export function ExercisesSidebar({ isOpen, onClose, onAddExercise }: ExercisesSi
 
   return (
     <Sheet open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
-      <SheetContent aria-describedby={undefined} className="w-full max-w-sm gap-0">
+      <SheetContent
+        aria-describedby={undefined}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          onRestoreFocus()
+        }}
+        className="w-full max-w-sm gap-0"
+      >
         {/* Header */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-4">
