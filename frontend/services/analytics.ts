@@ -218,6 +218,26 @@ export interface HyroxSimulationProgress {
   delta_pct: number | null
 }
 
+export interface RunningEndurancePoint {
+  activity_date: string
+  pace_min_km: number
+  avg_heart_rate: number
+  reference_bpm: number
+  previous_date: string | null
+  pace_change_pct: number | null
+}
+
+export interface RunningEnduranceResult {
+  weeks: {
+    week_start: string
+    zone2_minutes: number
+    runs: number
+    excluded_runs: number
+  }[]
+  points: RunningEndurancePoint[]
+  eligible_runs: number
+}
+
 export interface RunningResult {
   available: boolean
   total_runs: number
@@ -231,6 +251,7 @@ export interface RunningResult {
   /** Positif = plus lent */
   pace_change_pct: number | null
   zones: RunningZoneShare[] | null
+  endurance: RunningEnduranceResult
   segments: RunSegmentAnalysis[]
   hyrox_simulations: HyroxSimulationProgress[]
 }

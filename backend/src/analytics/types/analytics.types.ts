@@ -262,6 +262,27 @@ export interface HyroxSimulationProgress {
   delta_pct: number | null
 }
 
+export interface RunningEndurancePoint {
+  activity_date: string
+  pace_min_km: number
+  avg_heart_rate: number
+  reference_bpm: number
+  previous_date: string | null
+  /** Comparaison à FC moyenne proche (±3 bpm), même sport et même FC max du profil. */
+  pace_change_pct: number | null
+}
+
+export interface RunningEnduranceResult {
+  weeks: {
+    week_start: string
+    zone2_minutes: number
+    runs: number
+    excluded_runs: number
+  }[]
+  points: RunningEndurancePoint[]
+  eligible_runs: number
+}
+
 export interface RunningResult {
   /** Au moins une activité de course importée depuis un .fit sur la période. */
   available: boolean
@@ -282,6 +303,7 @@ export interface RunningResult {
   pace_change_pct: number | null
   /** Répartition du temps de course par zone cardiaque, null si aucun fichier ne porte de zones fiables. */
   zones: RunningZoneShare[] | null
+  endurance: RunningEnduranceResult
   /** Séances découpées en segments, de la plus récente à la plus ancienne (5 au plus). */
   segments: RunSegmentAnalysis[]
   /** Simulations Hyrox par format, sans limite de période (on en fait rarement), la plus récente d'abord. */

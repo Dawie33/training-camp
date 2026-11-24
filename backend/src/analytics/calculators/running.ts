@@ -2,11 +2,14 @@ import {
   HyroxSimulation,
   HyroxSimulationProgress,
   RunningResult,
+  RunningEnduranceResult,
   RunningZoneShare,
   RunSegmentAnalysis,
   RunType,
   RunTypeCounts,
 } from '../types/analytics.types'
+import { enumerateWeeks, weekStart } from './training-volume'
+import { toParisDate } from 'src/common/utils/date-only'
 
 /**
  * Course à pied, lue dans les fichiers .fit importés au log de séance (`results.coros.activities`).
@@ -36,6 +39,8 @@ export interface FitActivityInput {
   duration_seconds: number | null
   distance_meters: number | null
   hr_zones: RunZone[] | null
+  avg_heart_rate: number | null
+  profile_max_hr: number | null
   laps: RunLap[]
 }
 
@@ -86,6 +91,13 @@ export function readFitActivities(results: Record<string, unknown> | null): FitA
   const raw = (coros as Record<string, unknown>).activities
   if (!Array.isArray(raw)) return []
   const zonesAreReliable = hasReliableMaxHr(coros as Record<string, unknown>)
+  const totals = (coros as Record<string, unknown>).totals
+  const reference =
+    typeof totals === 'object' && totals !== null ? (totals as Record<string, unknown>).hr_max_reference : null
+  const profileMaxHr =
+    typeof reference === 'object' && reference !== null && (reference as Record<string, unknown>).source === 'profile'
+      ? readNumber((reference as Record<string, unknown>).bpm)
+      : null
 
   return raw.flatMap(item => {
     if (typeof item !== 'object' || item === null) return []
@@ -123,6 +135,8 @@ export function readFitActivities(results: Record<string, unknown> | null): FitA
         sport: typeof activity.sport === 'string' ? activity.sport : null,
         duration_seconds: readNumber(activity.duration_seconds),
         distance_meters: readNumber(activity.distance_meters),
+        avg_heart_rate: readNumber(activity.avg_heart_rate),
+        profile_max_hr: profileMaxHr && profileMaxHr > 0 ? profileMaxHr : null,
         hr_zones: zones && zones.length > 0 ? zones : null,
         laps,
       },
@@ -340,6 +354,95 @@ function computeZones(activities: FitActivityInput[]): RunningZoneShare[] | null
 }
 
 /**
+ * Le temps Z2 est observé sur les courses continues d'au moins 20 min, pas extrapolé depuis la FC moyenne.
+ * L'efficacité ne compare que les sorties faciles : FC moyenne en Z2, 70 % du temps mesuré en Z1/Z2,
+ * couverture cardiaque d'au moins 80 %. Sans échantillons, aucune allure « en Z2 » ne peut être reconstruite.
+ */
+function computeEndurance(sessions: RunningSessionInput[], periodStart: Date, now: Date): RunningEnduranceResult {
+  const weeks = enumerateWeeks(periodStart, now).map(week_start => ({
+    week_start,
+    zone2_minutes: 0,
+    runs: 0,
+    excluded_runs: 0,
+  }))
+  const byWeek = new Map(weeks.map(week => [week.week_start, week]))
+  const candidates: {
+    date: string
+    sport: string | null
+    pace: number
+    hr: number
+    maxHr: number
+  }[] = []
+
+  for (const session of sessions) {
+    const continuous = classifyRunSession(session) === 'continuous' && !hasStations(session)
+    for (const activity of runsOf(session)) {
+      const date = new Date(activity.start_time ?? session.started_at)
+      const at = date.getTime()
+      if (!Number.isFinite(at) || at < periodStart.getTime() || at > now.getTime()) continue
+      const week = byWeek.get(weekStart(date))
+      if (!week) continue
+
+      const pace = segmentPace(activity.duration_seconds, activity.distance_meters)
+      const duration = activity.duration_seconds ?? 0
+      const zones = activity.hr_zones
+      const measured = zones?.reduce((sum, zone) => sum + zone.seconds, 0) ?? 0
+      const maxHr = activity.profile_max_hr
+      if (
+        !continuous ||
+        pace === null ||
+        duration < 1200 ||
+        !maxHr ||
+        !zones ||
+        measured < duration * 0.8 ||
+        measured > duration * 1.05
+      ) {
+        week.excluded_runs += 1
+        continue
+      }
+
+      week.runs += 1
+      week.zone2_minutes += zones.filter(zone => zone.zone === 2).reduce((sum, zone) => sum + zone.seconds, 0) / 60
+      const easySeconds = zones.filter(zone => zone.zone <= 2).reduce((sum, zone) => sum + zone.seconds, 0)
+      const hr = activity.avg_heart_rate
+      if (!hr || hr <= Math.round(maxHr * 0.6) || hr > Math.round(maxHr * 0.7) || easySeconds / measured < 0.7) {
+        continue
+      }
+      candidates.push({ date: date.toISOString(), sport: activity.sport, pace, hr, maxHr })
+    }
+  }
+
+  candidates.sort((a, b) => a.date.localeCompare(b.date))
+  const points = candidates.map((candidate, index) => {
+    // Ne compare pas deux fichiers de la même sortie, ni des sports ou références différents.
+    const previous = candidates
+      .slice(0, index)
+      .reverse()
+      .find(
+        point =>
+          toParisDate(point.date) !== toParisDate(candidate.date) &&
+          point.sport === candidate.sport &&
+          point.maxHr === candidate.maxHr &&
+          Math.abs(point.hr - candidate.hr) <= 3
+      )
+    return {
+      activity_date: candidate.date,
+      pace_min_km: round(candidate.pace, 2),
+      avg_heart_rate: candidate.hr,
+      reference_bpm: candidate.maxHr,
+      previous_date: previous?.date ?? null,
+      pace_change_pct: previous ? changePct(previous.pace, candidate.pace) : null,
+    }
+  })
+
+  return {
+    weeks: weeks.map(week => ({ ...week, zone2_minutes: round(week.zone2_minutes, 1) })),
+    points: points.reverse().slice(0, 5),
+    eligible_runs: candidates.length,
+  }
+}
+
+/**
  * Diagnostic de course à pied : volume, types de sortie, allure des sorties continues, zones cardiaques,
  * tenue d'allure entre segments et simulations Hyrox.
  *
@@ -406,6 +509,7 @@ export function computeRunning(sessions: RunningSessionInput[], periodStart: Dat
     previous_pace_min_km: previousPace,
     pace_change_pct: recentPace !== null && previousPace !== null ? changePct(previousPace, recentPace) : null,
     zones: computeZones(periodRunActivities),
+    endurance: computeEndurance(sessions, periodStart, now),
     segments: segments.sort((a, b) => b.session_date.localeCompare(a.session_date)).slice(0, MAX_SEGMENT_SESSIONS),
     hyrox_simulations: computeHyroxSimulations(sessions, nowMs),
   }

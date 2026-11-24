@@ -167,6 +167,61 @@ function SegmentRow({ segment }: { segment: RunSegmentAnalysis }) {
   )
 }
 
+function EnduranceBlock({ data }: { data: RunningResult }) {
+  const { weeks, points, eligible_runs } = data.endurance
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium text-foreground">Endurance : temps en zone 2 par semaine</p>
+      <p className="text-xs text-muted-foreground">
+        Courses continues de 20 min minimum, avec FC max du profil et au moins 80 % de couverture cardiaque.
+        Zones actuelles en % de FC max, sans utiliser la FC de repos. La semaine en cours est partielle.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {weeks.map(week => (
+          <div key={week.week_start} className="border border-border rounded-lg p-2 text-xs">
+            <p className="text-muted-foreground">Semaine du {formatDate(`${week.week_start}T12:00:00Z`)}</p>
+            <p className="font-mono text-foreground">
+              {week.runs > 0 ? `${week.zone2_minutes} min en Z2` : 'Aucune sortie exploitable'}
+            </p>
+            <p className="text-muted-foreground">
+              {plural(week.runs, 'course retenue', 'courses retenues')}
+              {week.excluded_runs > 0 && ` · ${plural(week.excluded_runs, 'exclue', 'exclues')}`}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="text-sm font-medium text-foreground">Allure à FC comparable en endurance fondamentale</p>
+      <p className="text-xs text-muted-foreground">
+        FC moyenne en Z2 et au moins 70 % du temps mesuré en Z1/Z2. Comparaison à ±3 bpm, même sport et même
+        FC max de référence. Indice descriptif, sensible au terrain, à la météo et à la fatigue ; ce n&apos;est
+        pas l&apos;allure mesurée uniquement en Z2.
+      </p>
+      {points.length === 0 ? (
+        <EmptyHint>
+          Pas encore de sortie répondant aux critères d&apos;endurance fondamentale. Un footing principalement
+          en Z3 ne compte pas comme une sortie Z2.
+        </EmptyHint>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">{plural(eligible_runs, 'sortie éligible', 'sorties éligibles')}</p>
+          {points.map(point => (
+            <div key={point.activity_date} className="border border-border rounded-lg p-3 text-sm space-y-1">
+              <p className="text-foreground">
+                {formatDate(point.activity_date)} · {formatPace(point.pace_min_km)} /km · {point.avg_heart_rate} bpm
+              </p>
+              {point.pace_change_pct !== null && point.previous_date ? (
+                <SpeedChange pct={point.pace_change_pct} suffix={`vs le ${formatDate(point.previous_date)}`} />
+              ) : (
+                <p className="text-xs text-muted-foreground">Pas encore de sortie à FC comparable</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SimulationCard({ simulation }: { simulation: HyroxSimulationProgress }) {
   const { latest } = simulation
   return (
@@ -264,6 +319,7 @@ export function RunningPanel({ data }: { data: RunningResult }) {
     >
       <SummaryTiles data={data} />
       <ZonesBar data={data} />
+      <EnduranceBlock data={data} />
 
       {data.segments.length > 0 && (
         <div className="space-y-2">

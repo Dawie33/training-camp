@@ -39,6 +39,28 @@ Avec **un seul** fichier `.fit`, sa durée pré-remplit le chrono du WOD. Avec *
 
 Sans RPE ni résultats par exercice, certains indicateurs du diagnostic restent vides. C'est attendu, pas un bug.
 
+### Diagnostic de course : endurance
+
+Le diagnostic affiche le **temps réellement mesuré en zone 2 par semaine** sur les courses continues
+d'au moins 20 minutes. Fractionnés, formats à stations, allures inexploitables (notamment un relais
+dont la durée inclut les pauses) et imports sans FC max du **profil** sont exclus. Il faut au moins
+80 % de couverture cardiaque ; une semaine sans course exploitable est signalée, pas présentée comme
+une mesure de zéro minute. La semaine en cours est partielle.
+
+Les zones restent celles de l'import, en pourcentage de FC max : Z2 correspond à environ 60–70 %.
+La FC de repos ne modifie pas ces zones. Une estimation par l'âge ou la FC max de la séance ne suffit
+pas pour les nouveaux indicateurs d'endurance ; les anciennes zones ne sont jamais recalculées.
+
+L'**allure à FC comparable** ne retient que les sorties dont la FC moyenne est en Z2 et dont au moins
+70 % du temps mesuré est en Z1/Z2. Chaque sortie est comparée à la précédente éligible à ±3 bpm,
+du même sport, avec la même FC max de référence, sur un autre jour. Sans paire comparable, aucune
+tendance n'est annoncée. Cet indice descriptif n'est ni une mesure d'allure exclusivement en Z2,
+ni une preuve de progression physiologique : terrain, chaleur et fatigue peuvent le modifier.
+
+Les nouveaux indicateurs utilisent la date de départ de l'activité FIT, ou celle de la séance si
+elle est absente. Les fractions déjà présentes dans le diagnostic restent séparées ; les notes
+libres ne sont pas interprétées automatiquement comme un test 5 km.
+
 ## Compétences (skills)
 
 Le travail technique suit un circuit à part :

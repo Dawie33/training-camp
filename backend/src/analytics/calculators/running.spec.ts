@@ -20,6 +20,8 @@ function run(km: number, pace: number, extra: Partial<FitActivityInput> = {}): F
     duration_seconds: km * pace * 60,
     distance_meters: km * 1000,
     hr_zones: null,
+    avg_heart_rate: null,
+    profile_max_hr: null,
     laps: [],
     ...extra,
   }
@@ -31,6 +33,8 @@ const rowing: FitActivityInput = {
   duration_seconds: 300,
   distance_meters: null,
   hr_zones: null,
+  avg_heart_rate: null,
+  profile_max_hr: null,
   laps: [],
 }
 
@@ -62,6 +66,7 @@ describe('readFitActivities', () => {
             sport: 'running',
             duration_seconds: 1800,
             distance_meters: 6000,
+            avg_heart_rate: 130,
             hr_zones: [{ zone: 2, label: 'Easy', seconds: 1200, high_bpm: 140 }],
             laps: [{ index: 1, duration_seconds: 300, distance_meters: 1000, intensity: 'active' }],
           },
@@ -77,6 +82,8 @@ describe('readFitActivities', () => {
         duration_seconds: 1800,
         distance_meters: 6000,
         hr_zones: [{ zone: 2, label: 'Easy', seconds: 1200 }],
+        avg_heart_rate: 130,
+        profile_max_hr: 190,
         laps: [{ duration_seconds: 300, distance_meters: 1000, intensity: 'active' }],
       },
     ])
@@ -90,10 +97,12 @@ describe('readFitActivities', () => {
 
     // Sortie facile dont le pic à 162 bpm devient la FC max : elle passerait à 83 % en zone 5
     expect(read({ hr_max_reference: { bpm: 162, source: 'session' } })[0].hr_zones).toBeNull()
+    expect(read({ hr_max_reference: { bpm: 162, source: 'session' } })[0].profile_max_hr).toBeNull()
     expect(read({})[0].hr_zones).toBeNull()
     expect(read({ hr_max_reference: { bpm: 185, source: 'age' } })[0].hr_zones).toEqual([
       { zone: 5, label: 'VO2 Max', seconds: 2222 },
     ])
+    expect(read({ hr_max_reference: { bpm: 185, source: 'age' } })[0].profile_max_hr).toBeNull()
   })
 
   it('renvoie une liste vide sans import .fit ou avec un format inattendu', () => {
@@ -448,5 +457,137 @@ describe('computeRunning — simulations Hyrox', () => {
     // La demi-simulation ne se compare pas à la complète
     expect(result.hyrox_simulations[1].previous).toBeNull()
     expect(result.hyrox_simulations[1].delta_pct).toBeNull()
+  })
+})
+
+describe('computeRunning — endurance', () => {
+  const easy = (pace = 7, hr = 130, maxHr = 198) =>
+    run(5, pace, {
+      avg_heart_rate: hr,
+      profile_max_hr: maxHr,
+      hr_zones: [
+        { zone: 1, label: 'Recovery', seconds: 60 },
+        { zone: 2, label: 'Easy', seconds: 5 * pace * 60 - 60 },
+      ],
+    })
+
+  it('compte les secondes Z2 par semaine de Paris et garde les semaines sans mesure', () => {
+    const start = new Date('2026-10-05T00:00:00Z')
+    const result = computeRunning(
+      [
+        { started_at: '2026-10-11T22:30:00Z', activities: [easy()] },
+        { started_at: '2026-10-12T08:00:00Z', activities: [easy()] },
+      ],
+      start,
+      now
+    ).endurance
+    expect(result.weeks).toEqual([
+      { week_start: '2026-10-05', zone2_minutes: 0, runs: 0, excluded_runs: 0 },
+      { week_start: '2026-10-12', zone2_minutes: 68, runs: 2, excluded_runs: 0 },
+      { week_start: '2026-10-19', zone2_minutes: 0, runs: 0, excluded_runs: 0 },
+      { week_start: '2026-10-26', zone2_minutes: 0, runs: 0, excluded_runs: 0 },
+    ])
+  })
+
+  it('utilise la date FIT et compare les sorties faciles à FC proche, même sport et même référence', () => {
+    const result = computeRunning(
+      [
+        session(2, [{ ...easy(7, 130), start_time: '2026-10-10T08:00:00Z' }]),
+        session(2, [{ ...easy(6, 133), start_time: '2026-10-20T08:00:00Z' }]),
+        session(1, [easy(6, 137)]),
+        session(1, [{ ...easy(6, 133), sport: 'trail_running' }]),
+        session(1, [easy(6, 133, 200)]),
+      ],
+      periodStart,
+      now
+    ).endurance
+    const compared = result.points.find(point => point.activity_date === '2026-10-20T08:00:00.000Z')
+    expect(compared).toMatchObject({
+      previous_date: '2026-10-10T08:00:00.000Z',
+      avg_heart_rate: 133,
+      pace_change_pct: -14.3,
+    })
+    expect(result.points.filter(point => point.pace_change_pct !== null)).toHaveLength(1)
+  })
+
+  it('mesure le temps Z2 des sorties continues sans prendre un footing Z3 pour de l’EF', () => {
+    const footing = run(6.70321, 2702.84 / 60 / 6.70321, {
+      avg_heart_rate: 153,
+      profile_max_hr: 198,
+      hr_zones: [
+        { zone: 1, label: 'Recovery', seconds: 41 },
+        { zone: 2, label: 'Easy', seconds: 137 },
+        { zone: 3, label: 'Aerobic', seconds: 1557 },
+        { zone: 4, label: 'Threshold', seconds: 968 },
+      ],
+    })
+    const result = computeRunning([session(2, [footing])], periodStart, now).endurance
+    expect(result.points).toEqual([])
+    expect(result.weeks.at(-1)).toMatchObject({ zone2_minutes: 2.3, runs: 1, excluded_runs: 0 })
+  })
+
+  it('écarte fractionnés, stations, pauses, sorties courtes et couverture cardiaque insuffisante', () => {
+    const result = computeRunning(
+      [
+        session(1, [{ ...easy(), laps: [lap(0.4, 5, 'interval')] }]),
+        session(1, [easy(), rowing]),
+        session(1, [easy(18)]),
+        session(1, [run(2, 7, { ...easy(), duration_seconds: 840, distance_meters: 2000 })]),
+        session(1, [{ ...easy(), hr_zones: [{ zone: 2, label: 'Easy', seconds: 1000 }] }]),
+        session(1, [{ ...easy(), profile_max_hr: null }]),
+        session(1, [{ ...easy(), hr_zones: null }]),
+      ],
+      periodStart,
+      now
+    ).endurance
+    expect(result.points).toEqual([])
+    expect(result.weeks.at(-1)).toMatchObject({ runs: 0, excluded_runs: 7, zone2_minutes: 0 })
+  })
+
+  it('respecte les seuils de 20 minutes, 80 % de couverture et 70 % de temps facile', () => {
+    const activity = run(3, 20 / 3, {
+      avg_heart_rate: 130,
+      profile_max_hr: 198,
+      hr_zones: [
+        { zone: 2, label: 'Easy', seconds: 672 },
+        { zone: 3, label: 'Aerobic', seconds: 288 },
+      ],
+    })
+    const result = computeRunning(
+      [
+        session(1, [activity]),
+        session(2, [{ ...activity, hr_zones: [{ zone: 2, label: 'Easy', seconds: 959 }] }]),
+        session(3, [{ ...activity, avg_heart_rate: 140 }]),
+        session(4, [
+          {
+            ...activity,
+            hr_zones: [
+              { zone: 2, label: 'Easy', seconds: 671 },
+              { zone: 3, label: 'Aerobic', seconds: 289 },
+            ],
+          },
+        ]),
+        session(-1, [easy()]),
+        session(120, [easy()]),
+      ],
+      periodStart,
+      now
+    ).endurance
+    expect(result.eligible_runs).toBe(1)
+    expect(result.points[0].previous_date).toBeNull()
+  })
+
+  it('ne compare pas deux fichiers du même jour ni une activité datée hors de la période', () => {
+    const result = computeRunning(
+      [
+        session(1, [{ ...easy(), start_time: '2026-10-28T23:30:00Z' }]),
+        session(1, [{ ...easy(6), start_time: '2026-10-29T18:00:00Z' }]),
+        session(1, [{ ...easy(), start_time: '2026-01-01T08:00:00Z' }]),
+      ],
+      periodStart,
+      now
+    ).endurance
+    expect(result.eligible_runs).toBe(2)
+    expect(result.points.every(point => point.pace_change_pct === null)).toBe(true)
   })
 })
