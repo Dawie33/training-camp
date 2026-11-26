@@ -23,7 +23,7 @@ function DashboardContent() {
       <div className="max-w-[1800px] mx-auto p-4 sm:p-6 lg:p-8 space-y-5">
         <motion.header variants={fadeInUp}>
           <div className="eyebrow mb-3">{dateNow} · Où tu en es aujourd&apos;hui</div>
-          <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-none tracking-tight">
+          <h1 className="font-display text-5xl sm:text-6xl font-semibold leading-none tracking-tight break-words">
             Salut, {user?.user?.firstName || 'Champion'}
           </h1>
         </motion.header>
@@ -48,7 +48,7 @@ function DashboardContent() {
         <motion.section
           variants={fadeInUp}
           aria-label="Suivi de performance"
-          className={`grid gap-3 grid-cols-[repeat(auto-fit,minmax(480px,1fr))] transition-opacity ${refreshing ? 'opacity-60' : ''}`}
+          className={`grid gap-3 grid-cols-[repeat(auto-fit,minmax(min(100%,480px),1fr))] transition-opacity ${refreshing ? 'opacity-60' : ''}`}
         >
           {/* Ce qu'il reste à saisir passe en premier : c'est ce qui débloque le reste du diagnostic */}
           {overview && <MissingDataCard overview={overview} />}

@@ -25,7 +25,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-dvh overflow-hidden">
       {/* Barre supérieure — masquée sur mobile, où la barre du bas prend le relais */}
       {!isFullscreen && (
         <div className="hidden lg:block shrink-0">
@@ -33,7 +33,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       )}
 
-      <main className={`flex-1 overflow-y-auto w-full ${!isFullscreen ? 'pb-20 lg:pb-0' : ''}`}>
+      <main className={`flex-1 min-h-0 overflow-y-auto w-full ${!isFullscreen ? 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0' : ''}`}>
         {children}
       </main>
 
