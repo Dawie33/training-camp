@@ -36,7 +36,7 @@ export function BentoCard({
 
   const content = (
     <div
-      className={`group relative h-full rounded-2xl border ${surface} p-5 transition-colors ${
+      className={`group relative min-w-0 h-full rounded-2xl border ${surface} p-4 sm:p-5 break-words transition-colors ${
         href ? 'hover:border-foreground/25' : ''
       } ${className}`}
     >
@@ -67,7 +67,7 @@ export function BentoCard({
   if (!href) return content
 
   return (
-    <Link href={href} aria-label={hrefLabel ?? title} className="block h-full">
+    <Link href={href} aria-label={hrefLabel ?? title} className="block min-w-0 h-full">
       {content}
     </Link>
   )

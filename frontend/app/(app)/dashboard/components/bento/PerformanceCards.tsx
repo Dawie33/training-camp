@@ -81,7 +81,7 @@ function WeakPointCard({ data }: { data: StrengthRatiosResult }) {
 
   return (
     <BentoCard eyebrow="Point faible du moment" title={weakest.label} href="/tracking" accent>
-      <div className="flex items-baseline gap-2.5 mb-2.5">
+      <div className="flex flex-wrap items-baseline gap-2.5 mb-2.5">
         <span className="font-display text-5xl font-semibold leading-none tracking-tight text-foreground">
           {weakest.value_pct}
           <span className="text-2xl font-normal text-muted-foreground ml-1">%</span>
@@ -176,7 +176,7 @@ function VolumeCard({ volume }: { volume: TrainingVolumeResult }) {
 
   return (
     <BentoCard eyebrow="Volume hebdomadaire">
-      <div className="flex items-baseline gap-5 mb-1">
+      <div className="flex flex-wrap items-baseline gap-5 mb-1">
         <BentoStat value={volume.total_sessions} label="séances" />
         <BentoStat value={volume.avg_per_week} label="par semaine" />
         <BentoStat value={`${volume.consistency_pct} %`} label="régularité" />
@@ -273,7 +273,7 @@ function StrengthBalanceCard({ data }: { data: StrengthRatiosResult }) {
 
           return (
             <div key={ratio.key} className="flex items-center gap-3">
-              <span className="w-36 shrink-0 text-xs text-muted-foreground truncate">
+              <span className="w-24 sm:w-36 shrink-0 text-xs text-muted-foreground truncate">
                 {ratio.label}
                 {ratio.based_on_estimate && ' (estimé)'}
               </span>

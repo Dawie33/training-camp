@@ -30,13 +30,13 @@
   --sx-color-surface: transparent;
   --sx-color-surface-dim: transparent;
   --sx-color-surface-bright: transparent;
-  --sx-color-surface-container: transparent;
-  --sx-color-surface-container-low: transparent;
-  --sx-color-surface-container-high: transparent;
+  --sx-color-surface-container: var(--clay-muted);
+  --sx-color-surface-container-low: var(--clay-surface);
+  --sx-color-surface-container-high: var(--clay-surface);
   --sx-color-surface-container-highest: transparent;
   --sx-color-surface-variant: var(--clay-muted);
   --sx-color-surface-tint: var(--clay-primary);
-  --sx-color-background: transparent;
+  --sx-color-background: var(--clay-surface);
 
   --sx-color-on-surface: var(--clay-fg);
   --sx-color-on-surface-variant: var(--clay-fg-muted);
@@ -87,6 +87,38 @@
 .sx-react-calendar-wrapper .sx__view-selection-item.is-selected {
   color: var(--clay-primary);
   border-color: var(--clay-primary);
+}
+
+.sx-react-calendar-wrapper .sx__view-selection-items,
+.sx-react-calendar-wrapper .sx__date-picker-popup {
+  border: 1px solid var(--clay-border);
+  border-radius: 6px;
+}
+
+.sx-react-calendar-wrapper .sx__view-selection-items {
+  inset-inline-end: 0;
+  min-width: 100%;
+}
+
+@media (max-width: 639px) {
+  .sx-react-calendar-wrapper .sx__calendar-header,
+  .sx-react-calendar-wrapper .sx__calendar-header-content {
+    gap: 12px;
+  }
+
+  .sx-react-calendar-wrapper .sx__calendar-header {
+    padding: 12px 0;
+  }
+
+  .sx-react-calendar-wrapper .sx__date-picker-popup {
+    width: min(20.75rem, calc(100vw - 4rem));
+    max-height: 60dvh;
+    padding: 12px;
+  }
+
+  .sx-react-calendar-wrapper .sx__date-picker__day {
+    min-width: 0;
+  }
 }
 
 /* Month grid */
