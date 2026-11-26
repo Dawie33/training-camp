@@ -16,7 +16,7 @@ const recommendation = {
   coaching_insight: 'Travaille la position de front rack.',
   suggested_duration: 50,
   suggested_focus: 'front rack',
-  suggested_instructions: null,
+  suggested_instructions: 'Prévoir une progression technique en front rack.',
 }
 
 const todaySchedule = { id: 'schedule-1', workout_id: 'workout-1', workout_name: 'Front Rack Chipper' }
@@ -134,6 +134,11 @@ describe('DailySessionService', () => {
       trx
     )
     expect(scheduleService.findByDate).toHaveBeenLastCalledWith('user-1', expect.any(String), trx)
+    expect(generator.generatePersonalizedWorkout).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ coachInstructions: recommendation.suggested_instructions })
+    )
+    expect(generator.generatePersonalizedWorkout.mock.calls[0][1]).not.toHaveProperty('additionalInstructions')
     expect(result).toEqual({ generated: true, schedule: todaySchedule })
   })
 
@@ -267,6 +272,11 @@ describe('DailySessionService', () => {
       expect(scheduleService.setCoachProposal).toHaveBeenCalledWith('schedule-1', 'user-1', expected, trx)
       expect(scheduleService.create).not.toHaveBeenCalled()
       expect(scheduleService.setCoachRecommendation).not.toHaveBeenCalled()
+      expect(generator.generatePersonalizedWorkout).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ coachInstructions: recommendation.suggested_instructions })
+      )
+      expect(generator.generatePersonalizedWorkout.mock.calls[0][1]).not.toHaveProperty('additionalInstructions')
     })
 
     it('enregistre un conseil de repos sans générer de WOD', async () => {

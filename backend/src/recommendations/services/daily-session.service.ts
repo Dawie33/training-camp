@@ -213,7 +213,7 @@ export class DailySessionService {
       workoutType: recommendation.recommended_type,
       duration: recommendation.suggested_duration,
       focus: recommendation.suggested_focus ?? undefined,
-      additionalInstructions: recommendation.suggested_instructions ?? undefined,
+      coachInstructions: recommendation.suggested_instructions ?? undefined,
     })
 
     return async trx => {

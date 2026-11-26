@@ -29,6 +29,7 @@ export interface WorkoutGenerationParams {
   equipment?: string[]
   focus?: string | string[]
   additionalInstructions?: string
+  coachInstructions?: string
   skipSkillBlock?: boolean
 }
 
@@ -57,6 +58,7 @@ export class AIWorkoutGeneratorService {
       equipment: params.equipment,
       focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
       athleteConstraints: params.additionalInstructions,
+      coachInstructions: params.coachInstructions,
     })
     return this.callOpenAI('génération de workout', systemPrompt, userPrompt, GeneratedWorkoutSchema)
   }
@@ -95,6 +97,7 @@ export class AIWorkoutGeneratorService {
       equipment,
       focus: Array.isArray(params.focus) ? params.focus.join(', ') : params.focus,
       athleteConstraints: params.additionalInstructions,
+      coachInstructions: params.coachInstructions,
       skillInstruction: skillInstruction ?? undefined,
     })
     return this.callOpenAI('génération de workout personnalisé', systemPrompt, userPrompt, GeneratedWorkoutSchema)

@@ -460,7 +460,7 @@ Exemple :
 6. **Durée réaliste** : Total 30-60 minutes incluant warmup/cooldown
 7. **Format OBLIGATOIRE** : Le champ \`format\` est **obligatoire** pour toutes les sections autres que \`warmup\` et \`cooldown\`. Valeurs acceptées : \`"AMRAP Xmin"\`, \`"EMOM Xmin"\`, \`"For Time (cap Xmin)"\`, \`"Tabata"\`, \`"Chipper"\`, \`"Straight Sets"\`, \`"E2MOM Xmin"\`, \`"Circuit"\`, \`"Build to Heavy"\`. Pour \`warmup\` et \`cooldown\` uniquement : \`null\`.
 8. **Tâche insérée entre les rounds** : si le WOD comporte un mouvement fixe à répéter après CHAQUE round (buy-in/cash-out du type "Perform 30 double-unders after each round"), ne l'ajoute PAS comme exercice classique du round ni dans \`rest_between_rounds\` (qui est un temps de repos passif en secondes). Utilise le champ \`"between_rounds_task"\` de la section pour le décrire en texte libre.
-9. **Hiérarchie des consignes** : contraintes de l'athlète (consignes de la demande, blessures, limitations) > travail technique imposé > diagnostic et ratios > méthodologie générale. Si le travail technique contredit une contrainte (ex : skill muscle-up alors que l'athlète demande de ménager les épaules), supprime le travail technique plutôt que d'enfreindre la contrainte. Les options de scaling respectent aussi les contraintes (ex : pas de jumping pull-up si l'athlète demande "pas de saut").
+9. **Hiérarchie des consignes** : contraintes de l'athlète (consignes de la demande, blessures, limitations) > travail technique imposé > diagnostic et ratios > méthodologie générale. Si le travail technique contredit une contrainte (ex : skill muscle-up alors que l'athlète demande de ménager les épaules), supprime le travail technique plutôt que d'enfreindre la contrainte. Les options de scaling respectent aussi les contraintes (ex : pas de jumping pull-up si l'athlète demande "pas de saut"). Les consignes du coach IA sont des suggestions : elles ne remplacent ni les contraintes de l'athlète, ni cette hiérarchie, ni la structure du type de séance.
 
 ## 9. PROTOCOLES VO2MAX
 
@@ -659,6 +659,7 @@ export interface CrossFitWorkoutParams {
   focus?: string // Ex: "upper body", "legs", "olympic lifts"
   benchmarkName?: string // Si type=benchmark, nom du benchmark
   athleteConstraints?: string // Consignes saisies par l'athlète : prioritaires sur tout le reste
+  coachInstructions?: string
   skillInstruction?: string // Travail technique ajouté automatiquement depuis les skills actifs
 }
 
@@ -684,6 +685,7 @@ export function buildCrossFitWorkoutPrompt(params: CrossFitWorkoutParams): strin
     focus,
     benchmarkName,
     athleteConstraints,
+    coachInstructions,
     skillInstruction,
   } = params
 
@@ -757,6 +759,12 @@ Pour le bloc intervalles :
 
   prompt += `\n\nCrée un workout CrossFit structuré, équilibré et adapté à ce niveau.
 Respecte la méthodologie CrossFit et fournis des scaling options pour tous les mouvements.`
+
+  if (coachInstructions) {
+    prompt += `\n\n## CONSIGNES DU COACH IA (SUGGESTIONS)\n${coachInstructions}\n` +
+      "Applique ces suggestions uniquement si elles respectent les contraintes de l'athlète," +
+      ' la hiérarchie des consignes et la structure du type de séance demandé.'
+  }
 
   if (athleteConstraints) {
     prompt += `\nAvant de répondre, vérifie chaque exercice ET chaque option de scaling contre les contraintes de l'athlète : "${athleteConstraints}".`

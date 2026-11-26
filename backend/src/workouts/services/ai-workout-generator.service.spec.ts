@@ -120,6 +120,38 @@ describe('AIWorkoutGeneratorService.generatePersonalizedWorkout', () => {
     expect(prompt).toContain("CONTRAINTES DE L'ATHLÈTE (PRIORITAIRES)")
     expect(prompt.indexOf('ne sollicite pas les épaules')).toBeLessThan(prompt.indexOf('TRAVAIL TECHNIQUE'))
   })
+
+  it.each(['generic', 'personalized'])(
+    'sépare les suggestions du coach des contraintes prioritaires (%s)',
+    async mode => {
+      const params = {
+        workoutType: 'technique_metcon',
+        duration: 60,
+        additionalInstructions: 'ne sollicite pas les épaules',
+        coachInstructions: 'privilégier un travail de front rack',
+      }
+      if (mode === 'generic') await service.generateWorkout(params)
+      else await service.generatePersonalizedWorkout('user-1', params)
+
+      const prompt = sentUserPrompt()
+      const coachStart = prompt.indexOf('## CONSIGNES DU COACH IA (SUGGESTIONS)')
+      expect(coachStart).toBeGreaterThan(-1)
+      expect(prompt.slice(0, coachStart)).not.toContain(params.coachInstructions)
+      expect(prompt.slice(coachStart)).toContain(params.coachInstructions)
+      expect(prompt).toContain("CONTRAINTES DE L'ATHLÈTE (PRIORITAIRES)\nne sollicite pas les épaules")
+      expect(prompt).toContain('la hiérarchie des consignes et la structure du type de séance demandé')
+    }
+  )
+
+  it('ne transforme pas une suggestion seule du coach en contrainte athlète', async () => {
+    await service.generatePersonalizedWorkout('user-1', {
+      duration: 45,
+      coachInstructions: 'privilégier le rameur',
+    })
+
+    expect(sentUserPrompt()).toContain('## CONSIGNES DU COACH IA (SUGGESTIONS)\nprivilégier le rameur')
+    expect(sentUserPrompt()).not.toContain("CONTRAINTES DE L'ATHLÈTE (PRIORITAIRES)")
+  })
 })
 
 describe('AIWorkoutGeneratorService — WOD inconnu ou texte inexploitable', () => {

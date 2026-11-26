@@ -40,6 +40,11 @@ Si un créneau existe déjà, qu'il soit planifié à la main ou généré plus 
 | Durée suggérée | Entier de 20 à 90 minutes (récupération active pour le repos) |
 | Focus et consignes | Facultatifs, transmis au générateur de WOD |
 
+Les consignes proposées par le coach IA sont transmises séparément des contraintes
+saisies par l'athlète. Ce sont des suggestions : elles ne peuvent remplacer ni les
+contraintes de l'athlète, ni la hiérarchie des consignes, ni la structure du type
+de séance demandé. Les instructions saisies manuellement restent prioritaires.
+
 ## Autres automatismes du même type
 
 Aucun cron serveur n'est utilisé : l'hébergement Render n'est pas toujours actif. Ces tâches se déclenchent donc depuis l'application.

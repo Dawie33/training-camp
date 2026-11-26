@@ -29,7 +29,19 @@ Les décisions déjà persistées pour la journée ne sont pas recalculées.
 Les tests couvrent les modalités absentes, les séances non typées ou historiques,
 un historique non trié, le passage de minuit et les lignes du prompt.
 
-Les améliorations M1, M4 et M5 listées ci-dessous restent ouvertes.
+**M5 corrigé** : les recommandations transmettent désormais leurs instructions
+via le paramètre interne `coachInstructions`, distinct des `additionalInstructions`
+saisies par l'athlète. Les générations générique et personnalisée rendent ces
+suggestions dans un bloc séparé, subordonné aux contraintes de l'athlète,
+à la hiérarchie des consignes et à la structure du type de séance.
+Le contrat des DTO publics reste inchangé.
+
+**Validation M5** : sept suites ciblées, 80 tests réussis ; typecheck backend
+et `git diff --check` réussis. Les tests couvrent les deux chemins de génération,
+une suggestion sans contrainte athlète, la séance automatique et la proposition.
+Ils vérifient le prompt transmis, sans appel réel au fournisseur IA.
+
+Les améliorations M1 et M4 listées ci-dessous restent ouvertes.
 Cette actualisation ne clôture pas à elle seule #49 et ne remplace pas
 les limites de validation PostgreSQL documentées le 17 novembre.
 
