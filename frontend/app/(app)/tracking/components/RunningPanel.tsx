@@ -1,7 +1,9 @@
 'use client'
 
 import { HyroxSimulationProgress, RunningResult, RunSegmentAnalysis } from '@/services/analytics'
+import { Button } from '@/components/ui/button'
 import { Footprints, Timer, TrendingDown, TrendingUp } from 'lucide-react'
+import { useId, useState } from 'react'
 import { EmptyHint, Section } from './diagnostic-ui'
 
 /** Couleur de chaque zone cardiaque, de la récupération (1) au VO2 max (5). */
@@ -169,6 +171,10 @@ function SegmentRow({ segment }: { segment: RunSegmentAnalysis }) {
 
 function EnduranceBlock({ data }: { data: RunningResult }) {
   const { weeks, points, eligible_runs } = data.endurance
+  const [showHistory, setShowHistory] = useState(false)
+  const weeksId = useId()
+  const visibleWeeks = showHistory ? weeks : weeks.slice(-8)
+
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium text-foreground">Endurance : temps en zone 2 par semaine</p>
@@ -176,8 +182,8 @@ function EnduranceBlock({ data }: { data: RunningResult }) {
         Courses continues de 20 min minimum, avec FC max du profil et au moins 80 % de couverture cardiaque.
         Zones actuelles en % de FC max, sans utiliser la FC de repos. La semaine en cours est partielle.
       </p>
-      <div className="flex flex-wrap gap-2">
-        {weeks.map(week => (
+      <div id={weeksId} className="flex flex-wrap gap-2">
+        {visibleWeeks.map(week => (
           <div key={week.week_start} className="border border-border rounded-lg p-2 text-xs">
             <p className="text-muted-foreground">Semaine du {formatDate(`${week.week_start}T12:00:00Z`)}</p>
             <p className="font-mono text-foreground">
@@ -190,6 +196,18 @@ function EnduranceBlock({ data }: { data: RunningResult }) {
           </div>
         ))}
       </div>
+      {weeks.length > 8 && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-expanded={showHistory}
+          aria-controls={weeksId}
+          onClick={() => setShowHistory(previous => !previous)}
+        >
+          {showHistory ? "Masquer l'historique" : "Voir l'historique"}
+        </Button>
+      )}
       <p className="text-sm font-medium text-foreground">Allure à FC comparable en endurance fondamentale</p>
       <p className="text-xs text-muted-foreground">
         FC moyenne en Z2 et au moins 70 % du temps mesuré en Z1/Z2. Comparaison à ±3 bpm, même sport et même
