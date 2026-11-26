@@ -10,6 +10,5 @@ import { DailyCoachStore } from './services/daily-coach-store.service'
   imports: [UserContextModule, WorkoutsModule],
   controllers: [RecommendationsController],
   providers: [RecommendationsService, DailySessionService, DailyCoachStore],
-  exports: [RecommendationsService, DailySessionService],
 })
 export class RecommendationsModule {}

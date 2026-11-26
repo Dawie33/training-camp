@@ -41,8 +41,6 @@ export class RecommendationsService {
 
       const result: NextSessionRecommendation = {
         recommendation,
-        session_stats: stats,
-        generated_at: new Date().toISOString(),
       }
 
       return async () => result
@@ -50,24 +48,13 @@ export class RecommendationsService {
   }
 
   private computeSessionStats(ctx: UserAIContext, today = toParisDate(new Date())): SessionStats {
-    const ALL_SPORTS = ['crossfit'] as const
-
-    const bySport: Record<string, number> = {}
-    const lastDateBySport: Record<string, string | null> = {}
+    let lastDate: string | null = null
     const lastDateByType: Record<string, string | null> = Object.fromEntries(
       recommendedWorkoutTypes.map(type => [type, null])
     )
 
-    for (const sport of ALL_SPORTS) {
-      bySport[sport] = 0
-      lastDateBySport[sport] = null
-    }
-
     for (const s of ctx.recentSessions) {
-      bySport[s.sport] = (bySport[s.sport] ?? 0) + 1
-      if (!lastDateBySport[s.sport] || s.date > lastDateBySport[s.sport]!) {
-        lastDateBySport[s.sport] = s.date
-      }
+      if (!lastDate || s.date > lastDate) lastDate = s.date
       if (s.workout_type && Object.hasOwn(lastDateByType, s.workout_type)) {
         const last = lastDateByType[s.workout_type]
         if (!last || s.date > last) lastDateByType[s.workout_type] = s.date
@@ -76,15 +63,9 @@ export class RecommendationsService {
 
     const daysSince = (last: string | null): number | null =>
       last ? Math.floor((new Date(today).getTime() - new Date(last).getTime()) / (1000 * 60 * 60 * 24)) : null
-    const daysSinceLast: Record<string, number | null> = {}
-    for (const sport of ALL_SPORTS) {
-      daysSinceLast[sport] = daysSince(lastDateBySport[sport])
-    }
-
     return {
       total_sessions_21d: ctx.recentSessions.length,
-      by_sport: bySport,
-      days_since_last: daysSinceLast,
+      days_since_last: daysSince(lastDate),
       days_since_last_by_type: Object.fromEntries(
         Object.entries(lastDateByType).map(([type, last]) => [type, daysSince(last)])
       ),

@@ -1,7 +1,5 @@
 import { z } from 'zod'
 
-export const RecommendedSportSchema = z.enum(['crossfit', 'rest'])
-
 export const recommendedWorkoutTypes = ['technique_metcon', 'strength_max', 'conditioning', 'vo2max', 'core'] as const
 
 const recommendationFields = {
@@ -47,13 +45,10 @@ export type CoachProposal = z.infer<typeof CoachProposalSchema>
 
 export interface SessionStats {
   total_sessions_21d: number
-  by_sport: Record<string, number>
-  days_since_last: Record<string, number | null>
+  days_since_last: number | null
   days_since_last_by_type: Record<string, number | null>
 }
 
 export interface NextSessionRecommendation {
   recommendation: AIRecommendation
-  session_stats: SessionStats
-  generated_at: string
 }

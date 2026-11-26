@@ -4,10 +4,6 @@ import { buildProfilePreferenceLines, formatPhysicalLimitations } from 'src/comm
 import type { UserAIContext } from 'src/user-context/types/user-context.types'
 import { SessionStats } from '../schemas/recommendation.schema'
 
-const SPORT_LABELS: Record<string, string> = {
-  crossfit: 'CrossFit',
-}
-
 export function buildRecommendationSystemPrompt(): string {
   return `Tu es un coach CrossFit expert. Le travail de force fonctionnelle fait partie intégrante du CrossFit : il se programme comme un bloc de séance, jamais comme une discipline séparée.
 
@@ -62,7 +58,6 @@ Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 }
 
 export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: SessionStats, day: string): string {
-  const sportLabels = SPORT_LABELS
   const levelMap: Record<string, string> = {
     beginner: 'Débutant',
     intermediate: 'Intermédiaire',
@@ -90,15 +85,9 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
   lines.push('')
   lines.push('## RÉPARTITION DES ENTRAÎNEMENTS (21 derniers jours)')
   lines.push(`Total séances : ${stats.total_sessions_21d}`)
-  lines.push('Par sport :')
-
-  const ALL_SPORTS = ['crossfit']
-  for (const sport of ALL_SPORTS) {
-    const count = stats.by_sport[sport] ?? 0
-    const days = stats.days_since_last[sport]
-    const daysStr = days == null ? 'aucune séance sur 21 jours' : days === 0 ? "aujourd'hui" : `il y a ${days}j`
-    lines.push(`- ${sportLabels[sport]} : ${count} séance(s) — dernière ${daysStr}`)
-  }
+  const days = stats.days_since_last
+  const daysStr = days === null ? 'aucune séance sur 21 jours' : days === 0 ? "aujourd'hui" : `il y a ${days}j`
+  lines.push(`CrossFit : ${stats.total_sessions_21d} séance(s) — dernière ${daysStr}`)
 
   lines.push('')
   lines.push('## DERNIÈRE SÉANCE PAR TYPE (21 derniers jours)')
@@ -114,7 +103,7 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
     for (const s of ctx.recentSessions.slice(0, 10)) {
       const effort = s.perceived_effort ? `, RPE ${s.perceived_effort}/10` : ''
       const type = s.workout_type ? ` — ${s.workout_type}` : ''
-      lines.push(`- ${s.date} : ${sportLabels[s.sport] ?? s.sport}${type}, ${s.duration_minutes}min${effort}`)
+      lines.push(`- ${s.date} : CrossFit${type}, ${s.duration_minutes}min${effort}`)
     }
   }
 
@@ -125,7 +114,7 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
     for (const r of ctx.progressionReports.slice(0, 3)) {
       const trend =
         r.overall_trend === 'improving' ? '↑ progression' : r.overall_trend === 'declining' ? '↓ baisse' : '→ stable'
-      lines.push(`- ${sportLabels[r.sport] ?? r.sport} : ${trend}`)
+      lines.push(`- ${r.sport === 'crossfit' ? 'CrossFit' : r.sport} : ${trend}`)
       if (r.weak_points.length) lines.push(`  Points faibles : ${r.weak_points.join(', ')}`)
     }
   }

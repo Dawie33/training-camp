@@ -8,14 +8,16 @@ import { DailyCoachStore } from './daily-coach-store.service'
 describe('RecommendationsService.computeSessionStats', () => {
   let service: RecommendationsService
   const store = { run: jest.fn() }
+  const openai = { createJsonCompletion: jest.fn() }
+  const userContext = { getUserAIContext: jest.fn() }
 
   beforeEach(async () => {
     jest.clearAllMocks()
     const moduleRef = await Test.createTestingModule({
       providers: [
         RecommendationsService,
-        { provide: OpenAIClientService, useValue: {} },
-        { provide: UserContextService, useValue: {} },
+        { provide: OpenAIClientService, useValue: openai },
+        { provide: UserContextService, useValue: userContext },
         { provide: DailyCoachStore, useValue: store },
       ],
     }).compile()
@@ -23,6 +25,51 @@ describe('RecommendationsService.computeSessionStats', () => {
   })
 
   afterEach(() => jest.useRealTimers())
+
+  it('conserve les statistiques dans le prompt sans les persister dans le résultat de recommandation', async () => {
+    const ctx: UserAIContext = {
+      sport_level: 'intermediate',
+      oneRepMaxes: [],
+      benchmarkResults: {},
+      global_goals: {},
+      injuries: [],
+      physical_limitations: {},
+      equipment_available: [],
+      training_preferences: {},
+      recentSessions: [{ date: '2026-10-05', sport: 'crossfit', duration_minutes: 45 }],
+      recentAnalyses: [],
+      activeSkills: [],
+      completedSkillNames: [],
+      progressionReports: [],
+      diagnostic: {
+        ratio_imbalances: [],
+        underworked_domains: [],
+        load_zone: null,
+        load_change_pct: null,
+        most_scaled_movements: [],
+        benchmark_trends: [],
+        sessions_per_week: 0,
+        consistency_pct: 0,
+        running: null,
+      },
+    }
+    const recommendation = {
+      recommended_sport: 'rest',
+      recommended_type: 'active_recovery',
+      urgency: 'low',
+      reason: 'Récupération',
+      coaching_insight: 'Repos actif',
+      suggested_duration: 20,
+    }
+    userContext.getUserAIContext.mockResolvedValue(ctx)
+    openai.createJsonCompletion.mockResolvedValue(recommendation)
+    store.run.mockImplementationOnce(async (_user, _day, _operation, prepare) => (await prepare())())
+
+    await expect(service.getNextSessionRecommendation('u', '2026-10-06')).resolves.toEqual({ recommendation })
+    expect(openai.createJsonCompletion.mock.calls[0][0].messages[1].content).toContain(
+      'CrossFit : 1 séance(s) — dernière il y a 1j'
+    )
+  })
 
   it('change de clé uniquement à minuit à Paris, pas à minuit UTC', async () => {
     jest.useFakeTimers({ now: new Date('2026-10-05T21:59:59Z') })
@@ -45,7 +92,7 @@ describe('RecommendationsService.computeSessionStats', () => {
   ])('calcule les jours depuis les séances %j', (recentSessions, days) => {
     jest.useFakeTimers({ now: new Date('2026-10-06T10:00:00Z') })
     const stats = service['computeSessionStats']({ recentSessions } as UserAIContext)
-    expect(stats.days_since_last.crossfit).toBe(days)
+    expect(stats.days_since_last).toBe(days)
     expect(stats.total_sessions_21d).toBe(recentSessions.length)
   })
 
@@ -58,7 +105,7 @@ describe('RecommendationsService.computeSessionStats', () => {
     const stats = service['computeSessionStats'](ctx)
 
     // Assert
-    expect(stats.days_since_last).toEqual({ crossfit: 1 })
+    expect(stats.days_since_last).toBe(1)
     expect(stats.total_sessions_21d).toBe(1)
   })
 
@@ -71,8 +118,7 @@ describe('RecommendationsService.computeSessionStats', () => {
     const stats = service['computeSessionStats'](ctx)
 
     expect(stats.total_sessions_21d).toBe(15)
-    expect(stats.by_sport.crossfit).toBe(15)
-    expect(stats.days_since_last.crossfit).toBe(1)
+    expect(stats.days_since_last).toBe(1)
   })
 
   it('calcule les délais par type avec le jour demandé, même si minuit est passé pendant la préparation', () => {

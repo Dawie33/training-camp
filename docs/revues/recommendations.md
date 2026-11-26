@@ -57,7 +57,22 @@ Les cas invalides sont testés sur la lecture immédiate, le résultat persistan
 et la relecture sous verrou. Un test préserve une proposition historique
 antérieure aux bornes actuelles de génération.
 
-L'amélioration M1 listée ci-dessous reste ouverte.
+**M1 corrigé** : suppression des boucles et dictionnaires multi-sport dans la
+recommandation, des statistiques `by_sport`, du schéma de sport inutilisé et
+des exports Nest sans consommateur. Les statistiques restent internes au prompt ;
+les nouvelles décisions ne persistent plus les champs inutilisés `session_stats`
+et `generated_at`. L'enveloppe `{ recommendation }` est conservée pour relire les
+anciennes décisions quotidiennes sans migration. `recommended_sport` reste
+inchangé : il distingue une séance du repos et appartient au contrat IA.
+Les libellés des anciens bilans non CrossFit restent affichables.
+
+**Validation M1** : sept suites ciblées, 77 tests réussis, dont
+`app.module.spec.ts` après retrait des exports ; typecheck backend et
+`git diff --check` réussis. Un test exécute la préparation de recommandation et
+vérifie que le prompt conserve les statistiques, mais que le résultat à persister
+ne contient que la recommandation.
+
+Les améliorations B4, M1, M4 et M5 sont désormais traitées dans le code.
 Cette actualisation ne clôture pas à elle seule #49 et ne remplace pas
 les limites de validation PostgreSQL documentées le 17 novembre.
 

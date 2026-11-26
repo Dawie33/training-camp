@@ -146,8 +146,7 @@ describe('UserContextService.getUserAIContext', () => {
         context,
         {
           total_sessions_21d: 2,
-          by_sport: { crossfit: 2 },
-          days_since_last: { crossfit: 0 },
+          days_since_last: 0,
           days_since_last_by_type: { conditioning: 0, strength_max: 3, core: null },
         },
         '2026-06-14'
