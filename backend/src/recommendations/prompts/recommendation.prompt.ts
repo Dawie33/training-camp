@@ -27,10 +27,12 @@ Un programme équilibré sur 3 semaines doit couvrir :
 - 3 séances haute intensité en 5 jours → recommander récupération active
 - Jamais deux jours consécutifs de même stress articulaire ou contractile
 
-## Règles d'urgence (days_since_last)
-- **Urgence haute** : > 10 jours sans travail de force
-- **Urgence moyenne** : 8-14 jours sans une modalité
-- **Urgence faible** : 3-7 jours sans une modalité (rotation normale)
+## Règles d'urgence par type de séance (days_since_last_by_type)
+- **Urgence haute** : > 10 jours sans strength_max ; > 14 jours pour les autres modalités
+- **Urgence moyenne** : 8-10 jours sans strength_max ; 8-14 jours pour les autres modalités
+- **Urgence faible** : 0-7 jours sans une modalité (rotation normale)
+- Une modalité absente de la fenêtre de 21 jours n'a pas de délai exact connu : ne pas inventer sa dernière date.
+- Ces priorités de rotation ne priment jamais sur les règles de récupération et les limitations de l'athlète.
 
 ## Types de séance
 - **crossfit** : technique_metcon, strength_max, conditioning, vo2max, core (pas de benchmark : programmation mensuelle séparée)
@@ -59,7 +61,7 @@ Retourne UNIQUEMENT ce JSON :
 Retourne UNIQUEMENT le JSON, sans texte avant ou après.`
 }
 
-export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: SessionStats): string {
+export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: SessionStats, day: string): string {
   const sportLabels = SPORT_LABELS
   const levelMap: Record<string, string> = {
     beginner: 'Débutant',
@@ -69,6 +71,7 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
   }
 
   const lines: string[] = []
+  lines.push(`Date du jour à Paris : ${day}`)
   lines.push(...buildProfilePreferenceLines(ctx))
   const limitations = formatPhysicalLimitations(ctx.physical_limitations)
   if (limitations) lines.push(limitations)
@@ -93,8 +96,15 @@ export function buildRecommendationUserPrompt(ctx: UserAIContext, stats: Session
   for (const sport of ALL_SPORTS) {
     const count = stats.by_sport[sport] ?? 0
     const days = stats.days_since_last[sport]
-    const daysStr = days === null ? 'jamais' : days === 0 ? "aujourd'hui" : `il y a ${days}j`
+    const daysStr = days == null ? 'aucune séance sur 21 jours' : days === 0 ? "aujourd'hui" : `il y a ${days}j`
     lines.push(`- ${sportLabels[sport]} : ${count} séance(s) — dernière ${daysStr}`)
+  }
+
+  lines.push('')
+  lines.push('## DERNIÈRE SÉANCE PAR TYPE (21 derniers jours)')
+  for (const [type, days] of Object.entries(stats.days_since_last_by_type)) {
+    const last = days === null ? 'aucune séance sur 21 jours' : days === 0 ? "aujourd'hui" : `il y a ${days}j`
+    lines.push(`- ${type} : ${last}`)
   }
 
   // Sessions récentes

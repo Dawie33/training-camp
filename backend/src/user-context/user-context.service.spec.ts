@@ -142,11 +142,20 @@ describe('UserContextService.getUserAIContext', () => {
         expect(prompt).toContain(text)
       }
       expect(prompt).not.toContain('1990-06-15')
-      const recommendationPrompt = buildRecommendationUserPrompt(context, {
-        total_sessions_21d: 0,
-        by_sport: {},
-        days_since_last: {},
-      })
+      const recommendationPrompt = buildRecommendationUserPrompt(
+        context,
+        {
+          total_sessions_21d: 2,
+          by_sport: { crossfit: 2 },
+          days_since_last: { crossfit: 0 },
+          days_since_last_by_type: { conditioning: 0, strength_max: 3, core: null },
+        },
+        '2026-06-14'
+      )
+      expect(recommendationPrompt).toContain('Date du jour à Paris : 2026-06-14')
+      expect(recommendationPrompt).toContain("- conditioning : aujourd'hui")
+      expect(recommendationPrompt).toContain('- strength_max : il y a 3j')
+      expect(recommendationPrompt).toContain('- core : aucune séance sur 21 jours')
       for (const text of ['55 min', '4 seances', 'monday', 'Amplitude cheville limitee']) {
         expect(recommendationPrompt).toContain(text)
       }

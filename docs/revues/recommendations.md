@@ -16,7 +16,20 @@ les recommandations, les consommateurs de génération et `app.module.spec.ts` ;
 typecheck backend réussi. Les tests vérifient le chargement non plafonné,
 le comptage au-delà de dix séances et la limite du détail envoyé au générateur.
 
-Les améliorations B4, M1, M4 et M5 listées ci-dessous restent ouvertes.
+**B4 corrigé** : le prompt reçoit la journée parisienne de l'opération et les jours
+écoulés par type de séance, calculés sur l'ensemble de la fenêtre. Une modalité
+absente est signalée comme absente sur 21 jours, jamais comme « jamais pratiquée ».
+Les seuils d'urgence ne se chevauchent plus : force haute après 10 jours,
+moyenne de 8 à 10 ; autres modalités hautes après 14 jours, moyennes de 8 à 14.
+Les règles de récupération et les limitations restent prioritaires.
+La date est conservée pendant la préparation même si celle-ci passe minuit.
+Les décisions déjà persistées pour la journée ne sont pas recalculées.
+
+**Validation B4** : six suites ciblées, 69 tests réussis ; typecheck backend réussi.
+Les tests couvrent les modalités absentes, les séances non typées ou historiques,
+un historique non trié, le passage de minuit et les lignes du prompt.
+
+Les améliorations M1, M4 et M5 listées ci-dessous restent ouvertes.
 Cette actualisation ne clôture pas à elle seule #49 et ne remplace pas
 les limites de validation PostgreSQL documentées le 17 novembre.
 

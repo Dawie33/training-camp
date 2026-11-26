@@ -4,7 +4,12 @@ import { toParisDate } from 'src/common/utils/date-only'
 import type { UserAIContext } from 'src/user-context/types/user-context.types'
 import { UserContextService } from 'src/user-context/user-context.service'
 import { buildRecommendationSystemPrompt, buildRecommendationUserPrompt } from '../prompts/recommendation.prompt'
-import { AIRecommendationSchema, NextSessionRecommendation, SessionStats } from '../schemas/recommendation.schema'
+import {
+  AIRecommendationSchema,
+  NextSessionRecommendation,
+  recommendedWorkoutTypes,
+  SessionStats,
+} from '../schemas/recommendation.schema'
 import { DailyCoachStore } from './daily-coach-store.service'
 
 @Injectable()
@@ -21,13 +26,13 @@ export class RecommendationsService {
   ): Promise<NextSessionRecommendation> {
     return this.store.run(userId, day, 'recommendation', async () => {
       const ctx = await this.userContextService.getUserAIContext(userId)
-      const stats = this.computeSessionStats(ctx)
+      const stats = this.computeSessionStats(ctx, day)
 
       const recommendation = await this.openaiClientService.createJsonCompletion({
         purpose: 'recommandation du coach',
         messages: [
           { role: 'system', content: buildRecommendationSystemPrompt() },
-          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats) },
+          { role: 'user', content: buildRecommendationUserPrompt(ctx, stats, day) },
         ],
         temperature: 0.4,
         maxOutputTokens: 800,
@@ -44,11 +49,14 @@ export class RecommendationsService {
     })
   }
 
-  private computeSessionStats(ctx: UserAIContext): SessionStats {
+  private computeSessionStats(ctx: UserAIContext, today = toParisDate(new Date())): SessionStats {
     const ALL_SPORTS = ['crossfit'] as const
 
     const bySport: Record<string, number> = {}
     const lastDateBySport: Record<string, string | null> = {}
+    const lastDateByType: Record<string, string | null> = Object.fromEntries(
+      recommendedWorkoutTypes.map(type => [type, null])
+    )
 
     for (const sport of ALL_SPORTS) {
       bySport[sport] = 0
@@ -60,24 +68,26 @@ export class RecommendationsService {
       if (!lastDateBySport[s.sport] || s.date > lastDateBySport[s.sport]!) {
         lastDateBySport[s.sport] = s.date
       }
+      if (s.workout_type && Object.hasOwn(lastDateByType, s.workout_type)) {
+        const last = lastDateByType[s.workout_type]
+        if (!last || s.date > last) lastDateByType[s.workout_type] = s.date
+      }
     }
 
-    const today = toParisDate(new Date())
+    const daysSince = (last: string | null): number | null =>
+      last ? Math.floor((new Date(today).getTime() - new Date(last).getTime()) / (1000 * 60 * 60 * 24)) : null
     const daysSinceLast: Record<string, number | null> = {}
     for (const sport of ALL_SPORTS) {
-      const last = lastDateBySport[sport]
-      if (!last) {
-        daysSinceLast[sport] = null
-      } else {
-        const diffMs = new Date(today).getTime() - new Date(last).getTime()
-        daysSinceLast[sport] = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-      }
+      daysSinceLast[sport] = daysSince(lastDateBySport[sport])
     }
 
     return {
       total_sessions_21d: ctx.recentSessions.length,
       by_sport: bySport,
       days_since_last: daysSinceLast,
+      days_since_last_by_type: Object.fromEntries(
+        Object.entries(lastDateByType).map(([type, last]) => [type, daysSince(last)])
+      ),
     }
   }
 }

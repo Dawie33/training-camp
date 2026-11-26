@@ -74,4 +74,28 @@ describe('RecommendationsService.computeSessionStats', () => {
     expect(stats.by_sport.crossfit).toBe(15)
     expect(stats.days_since_last.crossfit).toBe(1)
   })
+
+  it('calcule les délais par type avec le jour demandé, même si minuit est passé pendant la préparation', () => {
+    jest.useFakeTimers({ now: new Date('2026-10-06T22:01:00Z') })
+    const ctx = {
+      recentSessions: [
+        { date: '2026-10-03', sport: 'crossfit', workout_type: 'strength_max' },
+        { date: '2026-10-06', sport: 'crossfit', workout_type: 'conditioning' },
+        { date: '2026-10-05', sport: 'crossfit', workout_type: 'strength_max' },
+        { date: '2026-10-06', sport: 'crossfit', workout_type: 'legacy_type' },
+        { date: '2026-10-06', sport: 'crossfit' },
+      ],
+    } as UserAIContext
+
+    const stats = service['computeSessionStats'](ctx, '2026-10-06')
+
+    expect(stats.days_since_last_by_type).toEqual({
+      technique_metcon: null,
+      strength_max: 1,
+      conditioning: 0,
+      vo2max: null,
+      core: null,
+    })
+    expect(stats.total_sessions_21d).toBe(5)
+  })
 })
