@@ -2,6 +2,24 @@
 
 Revue sécurité et qualité du module `backend/src/recommendations/` et de ses usages côté frontend (issue #49).
 
+## Actualisation du 26 novembre 2026
+
+**Statistiques sur 21 jours corrigées** : le contexte utilisateur chargeait seulement
+10 séances, puis appliquait un second plafond de 20. Le total et la répartition
+présentés au coach comme couvrant 21 jours étaient donc tronqués dès la onzième séance.
+La requête conserve désormais toutes les séances terminées de la fenêtre de 21 jours ;
+seuls les détails des prompts sont plafonnés (10 pour la recommandation,
+20 pour la génération de workout).
+
+**Validation** : neuf suites ciblées, 98 tests réussis, dont le contexte utilisateur,
+les recommandations, les consommateurs de génération et `app.module.spec.ts` ;
+typecheck backend réussi. Les tests vérifient le chargement non plafonné,
+le comptage au-delà de dix séances et la limite du détail envoyé au générateur.
+
+Les améliorations B4, M1, M4 et M5 listées ci-dessous restent ouvertes.
+Cette actualisation ne clôture pas à elle seule #49 et ne remplace pas
+les limites de validation PostgreSQL documentées le 17 novembre.
+
 ## Actualisation du 17 novembre 2026
 
 Les sections 1 à 5 ci-dessous conservent **le constat historique**, non l'état actuel. Corrections apportées :

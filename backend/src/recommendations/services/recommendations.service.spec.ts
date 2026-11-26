@@ -61,4 +61,17 @@ describe('RecommendationsService.computeSessionStats', () => {
     expect(stats.days_since_last).toEqual({ crossfit: 1 })
     expect(stats.total_sessions_21d).toBe(1)
   })
+
+  it('compte plus de 10 séances sans limiter les statistiques au détail du prompt', () => {
+    jest.useFakeTimers({ now: new Date('2026-10-06T10:00:00Z') })
+    const ctx = {
+      recentSessions: Array.from({ length: 15 }, () => ({ date: '2026-10-05', sport: 'crossfit' })),
+    } as UserAIContext
+
+    const stats = service['computeSessionStats'](ctx)
+
+    expect(stats.total_sessions_21d).toBe(15)
+    expect(stats.by_sport.crossfit).toBe(15)
+    expect(stats.days_since_last.crossfit).toBe(1)
+  })
 })

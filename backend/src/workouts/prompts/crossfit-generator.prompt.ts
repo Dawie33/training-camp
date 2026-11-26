@@ -83,7 +83,7 @@ export function buildAthleteContextSection(context: UserAIContext): string {
     }
     lines.push('')
     lines.push('**Activité récente (21 jours, tous sports confondus)** :')
-    for (const s of context.recentSessions) {
+    for (const s of context.recentSessions.slice(0, 20)) {
       const effort = s.perceived_effort ? `, RPE ${s.perceived_effort}/10` : ''
       const type = s.workout_type ? ` (${s.workout_type})` : ''
       const label = sportLabels[s.sport] ?? s.sport

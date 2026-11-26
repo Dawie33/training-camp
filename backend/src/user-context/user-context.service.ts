@@ -121,8 +121,7 @@ export class UserContextService {
         .where('ws.user_id', userId)
         .whereNotNull('ws.completed_at')
         .whereRaw("ws.started_at >= NOW() - INTERVAL '21 days'")
-        .orderBy('ws.started_at', 'desc')
-        .limit(10),
+        .orderBy('ws.started_at', 'desc'),
 
       this.knex('workout_sessions as ws')
         .leftJoin('workouts as w', 'ws.workout_id', 'w.id')
@@ -185,7 +184,7 @@ export class UserContextService {
       }
     )
 
-    const recentSessionsMapped = [...cfMapped].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20)
+    const recentSessionsMapped = [...cfMapped].sort((a, b) => b.date.localeCompare(a.date))
 
     const recentAnalyses: RecentAnalysis[] = (recentAnalysesRaw ?? [])
       .map((row: { started_at: string; ai_analysis: unknown; workout_name?: string }) => {

@@ -310,7 +310,7 @@ describe('UserContextService.getUserAIContext', () => {
     expect(result.recentAnalyses[0].date).toBe('2026-10-06')
   })
 
-  it('limite les séances récentes à 20, en gardant les plus récentes', async () => {
+  it('conserve toutes les séances de la fenêtre pour les statistiques, sans limite de nombre', async () => {
     // Arrange
     const cfSessions = Array.from({ length: 25 }, (_, i) => {
       const day = String(i + 1).padStart(2, '0')
@@ -328,9 +328,14 @@ describe('UserContextService.getUserAIContext', () => {
     const result = await service.getUserAIContext('user-1')
 
     // Assert
-    expect(result.recentSessions).toHaveLength(20)
+    expect(result.recentSessions).toHaveLength(25)
     expect(result.recentSessions[0].date).toBe('2026-01-25')
-    expect(result.recentSessions[19].date).toBe('2026-01-06')
+    expect(result.recentSessions[24].date).toBe('2026-01-01')
+    const sessionsQuery = knexMock.mock.results[2].value
+    expect(sessionsQuery.limit).not.toHaveBeenCalled()
+    expect(sessionsQuery.whereRaw).toHaveBeenCalledWith("ws.started_at >= NOW() - INTERVAL '21 days'")
+    expect(buildAthleteContextSection(result)).toContain('2026-01-06')
+    expect(buildAthleteContextSection(result)).not.toContain('2026-01-05')
   })
 
   it("recentAnalyses : parse ai_analysis qu'il soit JSON string ou déjà objet", async () => {
