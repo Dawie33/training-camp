@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common'
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import knex, { Knex } from 'knex'
 import { AIWorkoutGeneratorService } from 'src/workouts/services/ai-workout-generator.service'
@@ -62,7 +62,14 @@ describe('DailySessionService', () => {
     it('cherche le créneau du jour parisien entre minuit et 2 h (encore la veille en UTC)', async () => {
       // 22 h 30 UTC le 5 octobre = 0 h 30 le 6 octobre à Paris
       jest.useFakeTimers({ now: new Date('2026-10-05T22:30:00Z'), doNotFake: ['nextTick', 'setImmediate'] })
-      scheduleService.findByDate.mockResolvedValue({ ...todaySchedule, coach_proposal: { workout_id: null } })
+      scheduleService.findByDate.mockResolvedValue({
+        ...todaySchedule,
+        coach_proposal: {
+          ...recommendation,
+          workout_id: null,
+          workout_name: null,
+        },
+      })
 
       await service.checkAndGenerateDailySession('user-1')
       await service.generateProposal('user-1')
@@ -213,6 +220,58 @@ describe('DailySessionService', () => {
       coaching_insight: recommendation.coaching_insight,
       suggested_duration: 50,
     }
+
+    it.each([false, {}, { workout_id: 'workout-9' }])(
+      'refuse une proposition persistée invalide sans appeler l’IA : %j',
+      async coach_proposal => {
+        scheduleService.findByDate.mockResolvedValue({ ...todaySchedule, coach_proposal })
+
+        await expect(service.generateProposal('user-1')).rejects.toEqual(
+          new InternalServerErrorException('Proposition du coach indisponible')
+        )
+        expect(generator.generatePersonalizedWorkout).not.toHaveBeenCalled()
+        expect(store.run).not.toHaveBeenCalled()
+      }
+    )
+
+    it('refuse un résultat persistant invalide avant de le rattacher au créneau', async () => {
+      scheduleService.findByDate.mockResolvedValue(todaySchedule)
+      store.run.mockImplementation(async (_user, _day, _op, _prepare, replay) =>
+        replay(trx, { workout_id: 'workout-9' })
+      )
+
+      await expect(service.generateProposal('user-1')).rejects.toBeInstanceOf(InternalServerErrorException)
+      expect(scheduleService.setCoachProposal).not.toHaveBeenCalled()
+    })
+
+    it('refuse une proposition invalide apparue sur le créneau pendant la génération', async () => {
+      scheduleService.findByDate.mockResolvedValue(todaySchedule)
+      recommendationsService.getNextSessionRecommendation.mockResolvedValue({ recommendation })
+      generator.generatePersonalizedWorkout.mockResolvedValue({ name: 'WOD', blocks: {} })
+      trx.mockImplementation(() => ({
+        where: jest.fn().mockReturnThis(),
+        forUpdate: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue({ ...todaySchedule, coach_proposal: {} }),
+      }))
+
+      await expect(service.generateProposal('user-1')).rejects.toBeInstanceOf(InternalServerErrorException)
+      expect(workoutsService.create).not.toHaveBeenCalled()
+      expect(scheduleService.setCoachProposal).not.toHaveBeenCalled()
+    })
+
+    it('conserve une proposition historique antérieure aux restrictions de génération', async () => {
+      const historical = {
+        ...snapshot,
+        recommended_type: 'strength_accessory',
+        suggested_duration: 120,
+        workout_id: 'workout-9',
+        workout_name: 'Ancien WOD',
+      }
+      scheduleService.findByDate.mockResolvedValue({ ...todaySchedule, coach_proposal: historical })
+
+      await expect(service.generateProposal('user-1')).resolves.toEqual(historical)
+      expect(store.run).not.toHaveBeenCalled()
+    })
 
     it('rattache une proposition persistante au creneau de remplacement sans IA', async () => {
       const proposal = { ...snapshot, workout_id: 'workout-9', workout_name: 'Existing WOD' }

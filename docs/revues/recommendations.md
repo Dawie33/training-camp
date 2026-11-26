@@ -41,7 +41,23 @@ et `git diff --check` réussis. Les tests couvrent les deux chemins de générat
 une suggestion sans contrainte athlète, la séance automatique et la proposition.
 Ils vérifient le prompt transmis, sans appel réel au fournisseur IA.
 
-Les améliorations M1 et M4 listées ci-dessous restent ouvertes.
+**M4 corrigé** : `findByDate` et les lectures verrouillées du coach utilisent
+`ScheduleRow`, avec les champs JSON persistés typés `unknown`. Les propositions
+sont validées par Zod avant restitution ou rattachement à un autre créneau ;
+une valeur invalide est journalisée et produit une erreur HTTP 500 générique,
+sans nouvelle génération. Les anciens types de séance et durées positives
+restent lisibles : les restrictions actuelles de génération ne sont pas
+réappliquées à l'historique. Les conversions `as string` et `as CoachProposal`
+ont été retirées. Les types frontend portent les références à leurs contrats
+backend ; le commentaire du contrôleur désignait déjà `TodaySessionCard`.
+
+**Validation M4** : sept suites ciblées, 71 tests réussis, dont
+`app.module.spec.ts` et la planification ; typecheck backend réussi.
+Les cas invalides sont testés sur la lecture immédiate, le résultat persistant
+et la relecture sous verrou. Un test préserve une proposition historique
+antérieure aux bornes actuelles de génération.
+
+L'amélioration M1 listée ci-dessous reste ouverte.
 Cette actualisation ne clôture pas à elle seule #49 et ne remplace pas
 les limites de validation PostgreSQL documentées le 17 novembre.
 

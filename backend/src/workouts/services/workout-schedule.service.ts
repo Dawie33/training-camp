@@ -5,6 +5,7 @@ import { toDateOnly } from 'src/common/utils/date-only'
 import { GoogleCalendarService } from '../../google-calendar/google-calendar.service'
 import { CreateScheduleDto, ScheduleQueryDto, UpdateScheduleDto } from '../dto/schedule.dto'
 import { applyVisibility } from './workout-visibility'
+import type { ScheduleRow } from '../types/workout-schedule.types'
 
 /**
  * Gère la planification des workouts sur le calendrier utilisateur, la synchronisation
@@ -131,7 +132,7 @@ export class WorkoutScheduleService {
    * @param date Date au format YYYY-MM-DD
    * @returns La planification pour cette date ou null
    */
-  async findByDate(userId: string, date: string, transaction?: Knex.Transaction) {
+  async findByDate(userId: string, date: string, transaction?: Knex.Transaction): Promise<ScheduleRow | null> {
     const schedule = await (transaction ?? this.knex)('user_workout_schedule')
       .select(
         'user_workout_schedule.*',
@@ -149,7 +150,7 @@ export class WorkoutScheduleService {
       .leftJoin('personalized_workouts', 'user_workout_schedule.personalized_workout_id', 'personalized_workouts.id')
       .where('user_workout_schedule.user_id', userId)
       .where('user_workout_schedule.scheduled_date', date)
-      .first()
+      .first<ScheduleRow>()
 
     return schedule || null
   }

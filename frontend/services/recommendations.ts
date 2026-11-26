@@ -1,7 +1,9 @@
 import { apiClient } from './apiClient'
 import type { WorkoutSchedule } from './schedule'
 
-/** Ce que le coach IA a retenu pour la séance du jour. */
+/** Ce que le coach IA a retenu pour la séance du jour.
+ * Synchronisé avec CoachRecommendationSnapshot dans backend/src/recommendations/schemas/recommendation.schema.ts.
+ */
 export interface CoachRecommendation {
   recommended_type: string
   urgency: 'low' | 'medium' | 'high'
@@ -10,13 +12,16 @@ export interface CoachRecommendation {
   suggested_duration: number
 }
 
-/** WOD que le coach aurait programmé quand le créneau du jour est pris par une autre séance. */
+/** WOD que le coach aurait programmé quand le créneau du jour est pris par une autre séance.
+ * Synchronisé avec CoachProposal dans backend/src/recommendations/schemas/recommendation.schema.ts.
+ */
 export interface CoachProposal extends CoachRecommendation {
   /** Null quand le coach conseillait du repos. */
   workout_id: string | null
   workout_name: string | null
 }
 
+/** Synchronisé avec DailySessionResult dans backend/src/recommendations/services/daily-session.service.ts. */
 export interface DailySessionResult {
   generated: boolean
   reason?: 'already_scheduled' | 'rest_recommended' | 'failed'

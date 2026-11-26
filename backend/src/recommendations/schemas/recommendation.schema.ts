@@ -28,6 +28,23 @@ export const AIRecommendationSchema = z.discriminatedUnion('recommended_sport', 
 
 export type AIRecommendation = z.infer<typeof AIRecommendationSchema>
 
+// Les snapshots historiques précèdent les bornes actuelles de génération IA.
+export const CoachRecommendationSnapshotSchema = z.object({
+  recommended_type: z.string().min(1),
+  urgency: recommendationFields.urgency,
+  reason: recommendationFields.reason,
+  coaching_insight: recommendationFields.coaching_insight,
+  suggested_duration: z.number().int().positive(),
+})
+
+export const CoachProposalSchema = CoachRecommendationSnapshotSchema.extend({
+  workout_id: z.string().min(1).nullable(),
+  workout_name: z.string().min(1).nullable(),
+})
+
+export type CoachRecommendationSnapshot = z.infer<typeof CoachRecommendationSnapshotSchema>
+export type CoachProposal = z.infer<typeof CoachProposalSchema>
+
 export interface SessionStats {
   total_sessions_21d: number
   by_sport: Record<string, number>
