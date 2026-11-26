@@ -21,6 +21,8 @@ import {
 
 export class GenerateSkillProgramDto {
   @IsString()
+  @MinLength(1)
+  @MaxLength(100)
   skillName!: string
 
   @IsEnum(['gymnastics', 'olympic_lifting', 'strength', 'mobility'])
@@ -28,10 +30,12 @@ export class GenerateSkillProgramDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   currentCapabilities?: string
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   constraints?: string
 
   @IsOptional()
@@ -40,7 +44,9 @@ export class GenerateSkillProgramDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(50)
   @IsString({ each: true })
+  @MaxLength(100, { each: true })
   availableEquipment?: string[]
 }
 

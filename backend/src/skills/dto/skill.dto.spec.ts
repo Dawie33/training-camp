@@ -1,5 +1,5 @@
 import { ValidationPipe } from '@nestjs/common'
-import { CreateSkillProgramDto, CreateSkillProgressLogDto, UpdateSkillStepDto } from './skill.dto'
+import { CreateSkillProgramDto, CreateSkillProgressLogDto, GenerateSkillProgramDto, UpdateSkillStepDto } from './skill.dto'
 
 const program = () => ({
   skill_name: 'Muscle-up',
@@ -11,6 +11,33 @@ const pipe = new ValidationPipe({ transform: true, whitelist: true, forbidNonWhi
 const validateProgram = (value: unknown) => pipe.transform(value, { type: 'body', metatype: CreateSkillProgramDto })
 
 describe('Skills DTO validation', () => {
+  const validateGeneration = (value: unknown) =>
+    pipe.transform(value, { type: 'body', metatype: GenerateSkillProgramDto })
+
+  it('accepts generation inputs at the size limits', async () => {
+    const data = {
+      skillName: 'a'.repeat(100),
+      skillCategory: 'gymnastics',
+      currentCapabilities: 'a'.repeat(1000),
+      constraints: 'a'.repeat(1000),
+      availableEquipment: Array.from({ length: 50 }, () => 'a'.repeat(100)),
+    }
+    await expect(validateGeneration(data)).resolves.toMatchObject(data)
+  })
+
+  it.each([
+    { skillName: '' },
+    { skillName: 'a'.repeat(101) },
+    { currentCapabilities: 'a'.repeat(1001) },
+    { constraints: 'a'.repeat(1001) },
+    { availableEquipment: Array.from({ length: 51 }, () => 'barbell') },
+    { availableEquipment: ['a'.repeat(101)] },
+  ])('rejects oversized or empty generation input %#', async overrides => {
+    await expect(
+      validateGeneration({ skillName: 'Muscle-up', skillCategory: 'gymnastics', ...overrides })
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
   it('accepts programming fields on nested steps', async () => {
     const data = program()
     Object.assign(data.steps[0], { frequency: '3x', when_to_train: 'Avant', warmup: 'Mobilite' })

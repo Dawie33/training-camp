@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import type { AuthenticatedUser } from '../../common/types/authenticated-user'
@@ -29,13 +29,13 @@ export class SkillsController {
   // Static routes MUST come before :id parameterized routes
   @Get('progress/step/:stepId')
   @UseGuards(JwtAuthGuard)
-  async getStepLogs(@Param('stepId') stepId: string, @CurrentUser() user: AuthenticatedUser) {
+  async getStepLogs(@Param('stepId', ParseUUIDPipe) stepId: string, @CurrentUser() user: AuthenticatedUser) {
     return this.service.getStepLogs(stepId, user.id)
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.service.findOne(id, user.id)
   }
 
@@ -61,8 +61,8 @@ export class SkillsController {
   @Patch(':id/steps/:stepId')
   @UseGuards(JwtAuthGuard)
   async updateStep(
-    @Param('id') id: string,
-    @Param('stepId') stepId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('stepId', ParseUUIDPipe) stepId: string,
     @Body() dto: UpdateSkillStepDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
@@ -72,7 +72,7 @@ export class SkillsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   async updateProgram(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSkillProgramDto,
     @CurrentUser() user: AuthenticatedUser
   ) {
@@ -81,13 +81,13 @@ export class SkillsController {
 
   @Delete('progress/:logId')
   @UseGuards(JwtAuthGuard)
-  async deleteLog(@Param('logId') logId: string, @CurrentUser() user: AuthenticatedUser) {
+  async deleteLog(@Param('logId', ParseUUIDPipe) logId: string, @CurrentUser() user: AuthenticatedUser) {
     return this.service.deleteLog(logId, user.id)
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async deleteProgram(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+  async deleteProgram(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.service.deleteProgram(id, user.id)
   }
 }
