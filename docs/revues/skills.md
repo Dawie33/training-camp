@@ -4,6 +4,23 @@ Revue sécurité et qualité du module `backend/src/skills/` et de ses usages c�
 Les sections détaillées ci-dessous conservent le diagnostic initial ; l'état des corrections figure dans
 le tableau suivant et prévaut sur les anciennes références de lignes et cases à cocher.
 
+## Complément du 26 novembre 2026
+
+- **A1 corrigé** : tous les paramètres de route `id`, `stepId` et `logId` passent
+  par `ParseUUIDPipe`. Un identifiant malformé renvoie HTTP 400 avant tout appel
+  au service, y compris les deux identifiants de la route de modification d'étape.
+- **A2 corrigé** : la génération accepte un nom de 1 à 100 caractères, des capacités
+  et contraintes de 1 000 caractères maximum chacune, et jusqu'à 50 équipements
+  de 100 caractères chacun. Le budget de sortie IA reste inchangé faute de mesure
+  justifiant de l'augmenter.
+- **Validation** : 58 tests réussis, huit suites (module skills et
+  `app.module.spec.ts`), typecheck backend et `git diff --check` réussis.
+  Les tests couvrent les limites exactes, leur dépassement, les routes invalides
+  et le passage d'identifiants valides au service.
+
+Les points A4 et A6 restent à traiter. Les limites de validation et choix produit
+documentés ci-dessous restent applicables.
+
 ## État des corrections — 17 novembre 2026
 
 Complément du 18 novembre : les trois retours fonctionnels sur la PR #104 sont corrigés.
